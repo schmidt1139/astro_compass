@@ -52,3 +52,45 @@ function plot_ephem( Eph::Ephemeris, xy_scale::Float64, flag_plot_CB_rad::Bool, 
     return list_plots;
     
 end
+
+function add_ODE_sol_to_ephem!( eph::Ephemeris, sol, flag_only_final_step::Bool )
+
+    num_vectors = length(sol);
+
+    #println("Solution vector length: " * string( num_vectors ) );
+
+    if ( flag_only_final_step == false )
+
+        for vec_i in range(1,num_vectors)
+
+            vector = sol[vec_i];
+
+            t_eph = sol.t[vec_i];
+            x_eph = vector[1];
+            y_eph = vector[2];
+            vx_eph = vector[3];
+            vy_eph = vector[4];
+
+            eph = add_data( eph, t_eph, x_eph, y_eph, vx_eph, vy_eph );
+            
+            #line = "t: " * string( sol.t[vec_i] ) * "   x: " * string( x_eph ) * "   y: " * string( y_eph ) * "   vx: " * string( vx_eph ) * "   vy: " * string( vy_eph );
+            #println( line );
+
+        end
+    
+    else
+
+        vec_i = num_vectors;
+        vector = sol[vec_i];
+
+        t_eph = sol.t[vec_i];
+        x_eph = vector[1];
+        y_eph = vector[2];
+        vx_eph = vector[3];
+        vy_eph = vector[4];
+
+        eph = add_data( eph, t_eph, x_eph, y_eph, vx_eph, vy_eph );
+
+    end
+
+end

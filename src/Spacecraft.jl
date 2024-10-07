@@ -58,110 +58,6 @@ function Calculate_Net_Gravitational_Force( position::Array{Float64}, list_celes
     
 end
 
-function ode_prop_f_1B!(du, u, p, t)
-
-    #current state vector
-    x = u[1];
-    y = u[2];
-    vx = u[3];
-    vy = u[4];
-
-    #mu parameter for central body
-    μ = p[1];
-
-    #derivative of position components are velocity components
-    du[1] = vx;
-    du[2] = vy;
-
-    #acceleration terms
-
-    #position magnitude and directions
-    r = sqrt( x^2 + y^2 )
-
-    x_hat = x / r;
-    y_hat = y / r;
-
-    du[3] = - μ * x_hat / r^2;
-    du[4] = - μ * y_hat / r^2;
-
-    
-end
-
-function ode_prop_f!(du, u, p, t)
-
-    #get list of celestial bodies in parameter list
-    list_CBs = p[1];
-
-    #current state vector
-    x = u[1];
-    y = u[2];
-    vx = u[3];
-    vy = u[4];
-
-    arr_a_net = [ 0.0, 0.0 ];
-
-    flag_collision = false;
-
-
-    #go through list of central bodies and add up accelerations
-    for cb in list_CBs
-
-        #gravitational parameter
-        μ = cb.mu;
-
-        #inertial position of central body
-        cb_x = cb.position[1];
-        cb_y = cb.position[2];
-
-        #relative position of the spacecraft with respect to the cb
-        x_rel = cb_x - x;
-        y_rel = cb_y - y;
-
-        #position magnitude
-        r_rel = sqrt( x_rel^2 + y_rel^2 );
-
-        if ( r_rel < cb.r )
-            flag_collision = true;
-        end
-
-        #position direction
-        x_hat = x_rel / r_rel;
-        y_hat = y_rel / r_rel;
-
-        x_dd_cb = - μ * x_hat / r_rel^2;
-        y_dd_cb = - μ * y_hat / r_rel^2;
-
-        arr_a_net[1] = arr_a_net[1] + x_dd_cb;
-        arr_a_net[2] = arr_a_net[2] + y_dd_cb;
-
-    end
-
-
-    if ( flag_collision == true )
-
-        #derivative of position components are velocity components
-        du[1] = 0.0;
-        du[2] = 0.0;
-
-        #acceleration terms
-        du[3] = 0.0;
-        du[4] = 0.0;
-
-    else
-
-        #derivative of position components are velocity components
-        du[1] = vx;
-        du[2] = vy;
-
-        #acceleration terms
-        du[3] = - arr_a_net[1];
-        du[4] = - arr_a_net[2];
-
-    end
-
-    
-end
-
 
 function RK4_Propagate( SC::Spacecraft, list_celestial_bodies::Array{Celestial_Body} );
 
@@ -515,6 +411,142 @@ function ManeuverSpacecraft( SC::Spacecraft, dV::Array{Float64}, CB::Celestial_B
     return SC, flag_maneuver, str_maneuver_report;
 
     
+end
+
+
+function StepToPeriapsis_old( SC::Spacecraft, list_celestial_bodies::Array{Celestial_Body}, et_total::Float64, time_limit::Float64, eph::Ephemeris, A::Array{Float64},
+    flag_save_plot_data::Bool = false, maneuver_history::Array{String} = Array{String}(undef, 0) );
+    
+    flag_impact::Bool = false;
+    flag_terminal::Bool = false;
+    flag_maneuver::Bool = false;
+    elapsed_time::Float64 = 0.0;
+    flag_stop::Bool = false;
+    flag_escape::Bool = false;
+    ang_dist_traveled::Float64 = 0.0;
+    flag_start_ang_count::Bool = false;
+
+    #error handling
+    nan_indices = findall(isnan, SC.position );
+    if ( isempty( nan_indices ) == false )
+        println("Total elapsed time: " * string(et_total) );
+        println("A: " * string(A) );
+    end
+
+    #maneuver the spacecraft
+    SC, flag_maneuver, str_man_sum = ManeuverSpacecraft( SC, A, list_celestial_bodies[1], et_total );
+
+    if ( flag_save_plot_data == true && flag_maneuver == true )
+        push!(maneuver_history, str_man_sum );
+    end
+
+    #perform an initial check of the orbital elements
+    a, e, ω, θ = Calculate_Planar_OE( SC, list_celestial_bodies[1] );
+
+    #determine orbital period if there is one
+    if ( a > 0 )
+        T = 2*π*sqrt( a^3 / list_celestial_bodies[1].mu );
+    else
+        T = Inf;
+    end
+
+    #println( "Step to periapsis: T: " * string(T) );
+
+    θ_prev = θ;
+
+    while ( flag_stop == false )
+
+        #println("Elapsed t: " * string(elapsed_time) * "   " * string( θ*180/π ) * "   ADT: " * string(ang_dist_traveled) );
+
+        a, e, ω, θ = Calculate_Planar_OE( SC, list_celestial_bodies[1] );
+
+        d_theta = ( θ - θ_prev ) * 180/π ;
+
+        if ( flag_start_ang_count == false && θ_prev != 0.0 )
+            flag_start_ang_count = true;
+        end
+
+        if ( flag_start_ang_count == true )
+            if ( d_theta < 0 )
+                ang_dist_traveled = ang_dist_traveled + d_theta + 360;
+            else
+                ang_dist_traveled = ang_dist_traveled + d_theta;
+            end
+        end
+
+        #if the save plotting data flag is active then save plotting data
+        if ( flag_save_plot_data == true )
+            eph = add_data( eph, et_total, SC.position[1], SC.position[2], SC.velocity[1], SC.velocity[2] );
+        end
+
+
+        #check for a collision with any central body
+        for central_body in list_celestial_bodies
+
+            r_vec_rel::Array{Float64} = SC.position - central_body.position;
+            r_current::Float64 = norm( r_vec_rel );
+
+            if ( r_current < central_body.r )
+                #println("Impacted central body");
+                flag_impact = true
+            end
+
+        end
+
+        if ( flag_impact == true )
+
+            flag_stop = true;
+
+        else
+
+            arr_pos_update::Array{Float64}, arr_vel_update::Array{Float64} = RK4_Propagate( SC, list_celestial_bodies );
+            SC.position = arr_pos_update;
+            SC.velocity = arr_vel_update;
+
+            elapsed_time = elapsed_time + SC.step_size;
+
+        end
+
+        elapsed_time = elapsed_time + SC.step_size;
+        et_total = et_total + SC.step_size;
+
+        #check stop conditions
+        if ( elapsed_time > time_limit )
+            flag_stop = true;
+            flag_escape = true;
+        elseif ( a < 0 )
+            #flag_stop = true;
+            #flag_escape = true;
+        end
+
+
+        if ( d_theta < 0 && elapsed_time > T/10 )
+            flag_stop = true;
+        end;
+
+        θ_prev = θ;
+        
+    end
+
+    #determine reward
+    CB = list_celestial_bodies[1];
+    max_dist = 4 * list_celestial_bodies[1].r;
+    r, flag_terminal = reward( SC, CB, flag_impact, flag_escape, max_dist );
+
+    #=
+    println("Impact?: " * string(flag_impact ) );
+    println("Escape?: " * string( flag_escape ) );
+    println("Elapsed time: " * string(elapsed_time) );
+    println("Time limit: " * string(time_limit ) );
+    println("Terminal? " * string(flag_terminal ) );
+    println("Theta: " * string( θ*180/pi )  );
+    =#
+    
+
+    #error("STOP");
+    return SC, eph, et_total, flag_terminal, r, maneuver_history;
+
+
 end
 
 
