@@ -142,14 +142,22 @@ function ode_prop_f!(du, u, p, t)
 end
 
 
-function step_SC_to_elapsed_time( SC::Spacecraft, t0::Float64, elapsed_time::Float64, list_celestial_bodies::Array{Celestial_Body}, flag_fixed_step::Bool,
-    flag_write_states_to_ephem::Bool, eph::Ephemeris )
+function step_SC_to_elapsed_time( SC::Spacecraft, t0::Float64, elapsed_time::Float64, list_celestial_bodies::Vector{Celestial_Body}, flag_fixed_step::Bool,
+    flag_write_states_to_ephem::Bool, eph = nothing );
+
+    #error handling
+    if ( eph === nothing && flag_write_states_to_ephem == true)
+        error("An input ephemeris must be provided to write states");
+    end
 
     #ode timespan
     t_span = ( t0, elapsed_time );
 
     #parameters for ODE propagator
     params = [ list_celestial_bodies ];
+
+    #define empty solution data struct
+    sol = [];
 
     #initial state vec
     u0 = [ SC.position[1], SC.position[2], SC.velocity[1], SC.velocity[2] ];
@@ -209,6 +217,12 @@ function step_SC_to_elapsed_time( SC::Spacecraft, t0::Float64, elapsed_time::Flo
 
     end
 
-    return SC, sol, eph;
+    if (flag_write_states_to_ephem == true);
+        return SC, sol, eph;
+    else
+        return SC, sol;
+    end
     
 end
+
+

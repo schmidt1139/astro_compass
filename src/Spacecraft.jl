@@ -1,6 +1,7 @@
 mutable struct Spacecraft
 
     name::String;               #Name of the body
+    epoch::Float64;             #Current epoch of the spacecraft
     position::Array{Float64};   #position vector in km
     velocity::Array{Float64};   #velocity vector in km/s
     mass::Float64;              #mass of the Spacecraft in kg
@@ -13,7 +14,7 @@ end
 
 function deepcopy( SC::Spacecraft )
 
-    return Spacecraft( SC.name, SC.position, SC.velocity, SC.mass, SC.fuel_mass, SC.fuel_ISP, SC.net_force, SC.step_size );
+    return Spacecraft( SC.name, SC.epoch, SC.position, SC.velocity, SC.mass, SC.fuel_mass, SC.fuel_ISP, SC.net_force, SC.step_size );
     
 end
 
@@ -173,7 +174,18 @@ function Calculate_Planar_OE( SC::Spacecraft, CB::Celestial_Body )
         dotp = dot( e_hat, r_hat );
         if ( dotp < -1 ) dotp = -1; end
 
-        θ = 2 * π - acos( dot( e_hat, r_hat ) );
+        try 
+            θ = 2 * π - acos( dot( e_hat, r_hat ) );
+        catch e
+            
+            if isa(e, DomainError)
+                θ = π;
+            else
+                rethrow(e);
+            end
+
+        end
+
     end
 
 
@@ -297,35 +309,64 @@ function GetMaxDVMag( SC::Spacecraft )
 end
 
 
-function ManeuverSpacecraft( SC::Spacecraft, dV::Array{Float64}, CB::Celestial_Body, t::Float64 )
+function ManeuverSpacecraft( SC::Spacecraft, dV::Array{Float64}, CB::Celestial_Body, str_mnvr_ref_frame::String )
+
+    #=
+    ManeuverSpacecraft function
+    -----------------------------------------------------------------------------------
+    This function maneuvers a spacecraft object given an input delta-V vector. 
+
+    Inputs
+    -----------------------------------------------------------------------------------
+    SC:                     Spacecraft Object
+    dV:                     Delta-V Component Vector
+    CB:                     Central Body Object
+    str_mnvr_ref_frame:     Reference Frame of the Maneuver
+
+    Outputs
+    -----------------------------------------------------------------------------------
+    SC:                     The resultant spacecraft object
+    flag_maneuver:          Flag indicating whether or not a maneuver successfully occured
+    str_maneuver_report:    A string containing the maneuver specifics
+    =#
+
+    t = SC.epoch;
 
     flag_maneuver::Bool = false
     g_0::Float64 = 9.80665; #m/s^2
 
-    r_SC = [ SC.position[1] - CB.position[1], SC.position[2] - CB.position[2], 0.0 ];
-    v_SC = [ SC.velocity[1] - CB.velocity[1], SC.velocity[2] - CB.velocity[2], 0.0 ];
-    r_hat = r_SC / norm( r_SC );
-    h_hat = cross( r_SC, v_SC ) / norm( cross( r_SC, v_SC ) );
-    y_hat = cross( h_hat, r_hat ) / norm( cross( h_hat, r_hat ) );
+    if ( str_mnvr_ref_frame == "LVLH" )
 
+        r_SC = [ SC.position[1] - CB.position[1], SC.position[2] - CB.position[2], 0.0 ];
+        v_SC = [ SC.velocity[1] - CB.velocity[1], SC.velocity[2] - CB.velocity[2], 0.0 ];
+        r_hat = r_SC / norm( r_SC );
+        h_hat = cross( r_SC, v_SC ) / norm( cross( r_SC, v_SC ) );
+        y_hat = cross( h_hat, r_hat ) / norm( cross( h_hat, r_hat ) );
+
+        DCM_I_LVLH = vcat( r_hat', y_hat', h_hat' );
+        nan_indices = findall(isnan, DCM_I_LVLH);
+
+        #check for NaN 
+        if ( isempty(nan_indices) == false )
+            println( "r_SC: " * string(r_SC) );
+            println( "v_SC: " * string(v_SC) );
+            display(DCM_I_LVLH);
+        end
+
+        #convert delta-V to LVLH
+        DCM_LVLH_I = inv( DCM_I_LVLH );
+        dV_vector_LVLH = reshape( [dV[1], dV[2], 0.0 ], 3, 1 );
+        dV_vector_I = DCM_LVLH_I * dV_vector_LVLH;
+
+    elseif ( str_mnvr_ref_frame == "Inertial" )
+
+        dV_vector_I = dV;
     
+    else
 
-    DCM_I_LVLH = vcat( r_hat', y_hat', h_hat' );
+        error("Unrecongnized ref frame: " * str_mnvr_ref_frame )
 
-    nan_indices = findall(isnan, DCM_I_LVLH);
-
-    #check for NaN 
-    if ( isempty(nan_indices) == false )
-        println( "r_SC: " * string(r_SC) );
-        println( "v_SC: " * string(v_SC) );
-        display(DCM_I_LVLH);
     end
-
-    DCM_LVLH_I = inv( DCM_I_LVLH );
-
-
-    dV_vector_LVLH = reshape( [dV[1], dV[2], 0.0 ], 3, 1 );
-    dV_vector_I = DCM_LVLH_I * dV_vector_LVLH;
 
     #reset dV to inertial frame
     dV = [ dV_vector_I[1], dV_vector_I[2] ];
