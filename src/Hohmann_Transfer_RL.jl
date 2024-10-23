@@ -29,12 +29,13 @@ function Hohmann_Transfer_RL();
 
     #RL parameters
     γ::Float64                  = 0.99;
-    ϵ                           = 0.5;
-    learn_rate                  = 0.01; #learn_rate
-    total_episodes              = 20;
-    episodes_between_training   = 10;
-    training_epochs             = 5;
-    training_sample_size        = 5;
+    ϵ_high                      = 0.9;
+    learn_rate                  = 0.001; #learn_rate
+    total_episodes              = 799;
+    episodes_between_training   = 40;
+    training_epochs             = 4000;
+    training_sample_size        = 100;
+    ϵ_floor                     = 0.0;
 
     ACTOR = Chain(
         Dense(6, 6, tanh),
@@ -71,6 +72,9 @@ function Hohmann_Transfer_RL();
     range_dv2::Vector{Float64} = [-1.0, 1.0];
     list_ranges::Vector{Array{Float64}} = [ range_timespan_wait, range_dv1, range_timespan_transfer, range_dv2 ];
 
+    #plotting settings
+    count_plot_final_eps = total_episodes - 1;
+
     count_episodes = 1;
     count_episodes_since_training = 0;
     buffer = [];
@@ -90,18 +94,23 @@ function Hohmann_Transfer_RL();
         #initial state_space
         S::Vector{Float64} = [ SC1.position[1], SC1.position[2], SC1.velocity[1], SC1.velocity[2], Moon.mu, target_sma  ];
 
+        #determine epsilon
+        m_ϵ = ( ϵ_floor - ϵ_high ) / ( total_episodes );
+        ϵ = m_ϵ * count_episodes + ϵ_high;
+        println(" ϵ: " * string(ϵ) );
+
         #Action (either random or sampled from actor network)
         if ( rand() < ϵ )
             A = HT_RL_rand_action( list_ranges );
-            println("Random action");
-            display(A);
+            println(" Random action");
+            #display(A);
         else
             S_nn = convert( Vector{Float32}, S );
             A_nn = ACTOR(S_nn);
             A = convert( Vector{Float64}, A_nn );
             A = HT_RL_apply_actor_constraints( A, list_ranges );
-            println("Actor action");
-            display(A);
+            println(" Actor action");
+            #display(A);
         end
         
         #A = [ timespan_wait_0, dV_1, timespan_transfer_0, dV_2 ];
@@ -117,25 +126,31 @@ function Hohmann_Transfer_RL();
         #add experience to buffer
         push!(buffer, experience_tuple);
 
+        #=
         println( "S:  " * string(S) );
         println( "A:  " * string(A) );
         println( "S': " * string(S_prime) );
         println( "r:  " * string(r) );
         println( "" );
+        =#
 
-        #Optional Plotting
-        #---------------------------------------------------------------------------------------------------------------------------------
-        #Hohmann transfer step function
-        propagator_settings["flag_write_ephemeris_states"] = true;
-        S_prime, r, flag_terminal, eph = HT_RL_step( S, A, γ, SC1, list_celestial_bodies, propagator_settings, eph, timespan_extra_prop_days );
+        if ( count_episodes > count_plot_final_eps )
+            #Optional Plotting
+            #---------------------------------------------------------------------------------------------------------------------------------
+            #Hohmann transfer step function
+            propagator_settings["flag_write_ephemeris_states"] = true;
+            S_prime, r, flag_terminal, eph = HT_RL_step( S, A, γ, SC1, list_celestial_bodies, propagator_settings, eph, timespan_extra_prop_days );
 
-        #plot the ephem
-        list_plots = plot_ephem( eph, Moon.r, true, "Moon" );
 
-        for plot_i in range(1, length( list_plots ) );
-            display(list_plots[plot_i]);
+            #plot the ephem
+            list_plots = plot_ephem( eph, Moon.r, true, "Moon" );
+
+            for plot_i in range(1, length( list_plots ) );
+                display(list_plots[plot_i]);
+            end
+            #---------------------------------------------------------------------------------------------------------------------------------
+
         end
-        #---------------------------------------------------------------------------------------------------------------------------------
         
         push!(arr_episodes, count_episodes);
         push!(arr_r, r);
@@ -153,9 +168,11 @@ function Hohmann_Transfer_RL();
             #pull from experience buffer
             data = rand( buffer, training_sample_size );
 
-            function HT_RL_loss( r )
+            function HT_RL_loss( ACTOR, S, A, S_prime, r, flag_terminal )
+                
                 l = 1 - r;
                 return l;
+
             end
 
             for i_train in 1:training_epochs
@@ -165,14 +182,16 @@ function Hohmann_Transfer_RL();
             #dump the old buffer
             buffer = [];
 
+            #evaluate the actor
+            p_r = plot(arr_episodes, arr_r );
+            display(p_r);
+
+
         end
 
         #sleep(4);
 
     end
-
-    p_r = plot(arr_episodes, arr_r);
-    display(p_r);
 
 end
 
