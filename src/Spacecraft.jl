@@ -167,7 +167,14 @@ function Calculate_Planar_OE( SC::Spacecraft, CB::Celestial_Body )
         dotp = dot( e_hat, r_hat );
         if ( dotp < -1 ) dotp = -1; end
 
-        θ = acos( dot( e_hat, r_hat ) );
+        if ( abs( dot( e_hat, r_hat ) ) < 1.0  )
+            θ = acos( dot( e_hat, r_hat ) );
+        elseif ( dot( e_hat, r_hat ) < -1.0 )
+            θ = π
+        else
+            θ = 0
+        end
+
 
     else
 
