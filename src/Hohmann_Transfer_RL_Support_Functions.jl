@@ -105,7 +105,6 @@ function HT_RL_step( S::Vector{Float64}, A::Vector{Float64}, γ::Float64, SC1::S
 
     #extract action vector components
     dV1                 = A[1];
-    dV2                 = A[2];
 
     #assign initial state vector to spacecraft
     SC1.position = position_sc_0;

@@ -31,17 +31,16 @@ function Hohmann_Transfer_RL();
     RL_settings                                = Dict();
     γ::Float64                                 = 0.9999;
     ϵ_high::Float64                            = 0.9;
-    learn_rate::Float64                        = 0.1;
-    total_episodes::Int                        = 10;
+    learn_rate::Float64                        = 0.01;
+    total_episodes::Int                        = 1000;
     episodes_between_training::Int             = 10;
-    training_epochs::Int                       = 1;
+    training_epochs::Int                       = 100;
     training_sample_size::Int                  = 10;
     eval_episodes::Int                         = 1;
-    ϵ_floor::Float64                           = 0.8;
+    ϵ_floor::Float64                           = 0.0;
     traj_depth::Float64                        = 24;
-    range_dv1::Vector{Float64}                 = [ -0.001, 0.001 ];
-    range_dv2::Vector{Float64}                 = [-0.001, 0.001 ];
-    list_ranges::Vector{Array{Float64}}        = [  range_dv1, range_dv2 ];
+    range_dv1::Vector{Float64}                 = [ -0.1, 0.1 ];
+    list_ranges::Vector{Array{Float64}}        = [  range_dv1 ];
     target_sma::Float64                        = 14 * Moon.r;
 
 
@@ -62,7 +61,7 @@ function Hohmann_Transfer_RL();
     ACTOR = Chain(
         Dense(6, 6, tanh),
         Dense(6, 6, tanh),
-        Dense(6, 2 )
+        Dense(6, 1 )
     )
 
     CRITIC = Chain(
@@ -72,7 +71,9 @@ function Hohmann_Transfer_RL();
     )
 
     display(ACTOR);
-    display(CRITIC);
+    #display(CRITIC);
+
+    opt = Flux.setup(Adam(), ACTOR)
 
     #spacecraft parameters
     isp_SC = 220.0;
@@ -153,9 +154,18 @@ function Hohmann_Transfer_RL();
             #pull from experience buffer
             data = rand( buffer, training_sample_size );
 
+            #=
+            for b in data
+                a_buffer = b[2];
+                r_buffer = b[4];
+                println("a: " * string(a_buffer) * "   r: " * string(r_buffer) );
+            end
+            =#
+
             function HT_RL_loss( ACTOR, S, A, S_prime, r, flag_terminal )
                 
-                l = -r;
+                #l = 1 - r;
+                l = 1.0 - ACTOR(S)[1];
 
                 #=
                 println("S: " * string(S) );
@@ -169,9 +179,31 @@ function Hohmann_Transfer_RL();
 
             end
 
+            println("Sample state")
+            s_test = data[1][1];
+            a_buffer = data[1][2];
+            a_actor_pre_train = convert( Vector{Float64}, ACTOR(s_test) );
+            println("S: " * string(s_test) );
+            println("A buffer: " * string(a_buffer) );
+            println("A actor pre-train: " * string(a_actor_pre_train) );
+
+            
             for i_train in 1:training_epochs
                 Flux.Optimise.train!( HT_RL_loss, ACTOR, data, Descent(learn_rate) );
             end
+            
+
+            for i_train in 1:training_epochs
+
+                for d in data
+                    #println(string(d));
+                end
+
+            end
+
+            a_actor_post_train = convert( Vector{Float64}, ACTOR(s_test) );
+            println("A actor post-train: " * string(a_actor_post_train) );  
+            error("Stop");
 
             #dump the old buffer
             buffer = [];
