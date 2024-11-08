@@ -24,7 +24,7 @@ function NN_Test();
 
     for epoch in range(1,training_samples)
 
-        n = 100;                                         #sample size
+        n = 100;                                        #sample size
         x = rand(n);                                    #arguments
         x = sort(x);
         x_nn_plot = sort(x);                            #NN plotting

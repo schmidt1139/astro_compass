@@ -71,7 +71,7 @@ function Hohmann_Transfer_RL();
     )
 
     display(ACTOR);
-    #display(CRITIC);
+    display(CRITIC);
 
     opt = Flux.setup(Adam(), ACTOR)
 
