@@ -1,4 +1,4 @@
-function reward( SC::Spacecraft, CB::Celestial_Body, flag_impact::Bool, desired_range_limit::Float64 )
+function reward_SC( SC::Spacecraft, CB::Celestial_Body, flag_impact::Bool, desired_range_limit::Float64 )
 
     flag_terminal::Bool = false;
 
