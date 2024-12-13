@@ -2,6 +2,7 @@ using ReinforcementLearning;
 using Random;
 using Plots;
 using LinearAlgebra;
+using IntervalSets;
 
 include("Ephemeris.jl");
 include("Celestial_Body.jl");
@@ -87,12 +88,27 @@ RLBase.state( env::Hohmann_Transfer_Env, ::Observation, ::DefaultPlayer) = env.s
 
 #need to define state space for Hohmann transfer problem (X,Y,VX,VY,cb_mu,SMA_target)
 function RLBase.state_space(env::Hohmann_Transfer_Env)
-    ((-env.params.position_extrema, env.params.position_extrema),
-    (-env.params.position_extrema, env.params.position_extrema),
-    (-env.params.velocity_extrema, env.params.velocity_extrema),
-    (-env.params.velocity_extrema, env.params.velocity_extrema),
-    (0,Inf),
-    (0,Inf))
+
+    
+    #=
+    (-env.params.position_extrema .. env.params.position_extrema,
+    -env.params.position_extrema .. env.params.position_extrema,
+    -env.params.velocity_extrema .. env.params.velocity_extrema,
+    -env.params.velocity_extrema .. env.params.velocity_extrema,
+    0.0 .. 1000000.0,
+    0.0 .. 1000000.0)
+    =#
+
+    interval_1 = -env.params.position_extrema .. env.params.position_extrema
+    interval_2 = -env.params.position_extrema .. env.params.position_extrema
+    interval_3 = -env.params.velocity_extrema .. env.params.velocity_extrema
+    interval_4 = -env.params.velocity_extrema .. env.params.velocity_extrema
+    interval_5 = 0.0 .. 1.0e6
+    interval_6 = -1.0e6 .. 1.0e6
+
+    S = ( ( ( ( ( interval_1 × interval_2 ) × interval_3 ) × interval_4 ) × interval_5 ) × interval_6 )
+
+
 end
 
 #defining action space
@@ -210,8 +226,8 @@ function _step!( env::Hohmann_Transfer_Env, dV )
     #terminate if max steps exceeded or position/vel exceeds bounds
     if ( env.t >= env.params.max_steps )
         env.done = true;
-    elseif ( abs(x_p) >= position_extrema || abs(y_p >= position_extrema) 
-        || abs(vx_p) >= velocity_extrema || abs(vy_p >= velocity_extrema ) )
+    elseif ( abs(x_p) >= env.params.position_extrema || abs(y_p >= env.params.position_extrema ) 
+        || abs(vx_p) >= env.params.velocity_extrema || abs(vy_p >= env.params.velocity_extrema ) )
         env.done = true;
     end
 
@@ -265,6 +281,33 @@ end
 
 #reward_test();
 
-
+#declare Hohmann Transfer Environment object
 env = Hohmann_Transfer_Env()
 
+#check if the environment is runnable
+RLBase.test_runnable!( env )
+
+#=
+s = [7119.325609474477, 6692.095629695555, 1.6608655292679837, -0.13627812104494702, 4903.0, 24360.0]
+
+S_intervals = (-1.0e6 .. 1.0e6, -1.0e6 .. 1.0e6, -100.0 .. 100.0, -100.0 .. 100.0, 0.0 .. 1.0e6, 0.0 .. 1.0e6)
+
+interval_1 = -1.0e6 .. 1.0e6
+interval_2 = -1.0e6 .. 1.0e6
+interval_3 = -100.0 .. 100.0
+interval_4 = -100.0 .. 100.0
+interval_5 = 0.0 .. 1.0e6
+interval_6 = -1.0e6 .. 1.0e6
+
+
+#S_product = (-1.0e6 .. 1.0e6) × (-1.0e6 .. 1.0e6)
+S_product = ( ( ( ( ( interval_1 × interval_2 ) × interval_3 ) × interval_4 ) × interval_5 ) × interval_6 )
+
+display(S_product)
+
+
+flag = s in S_intervals
+display( flag )
+flag = s in S_product
+display( flag )
+=#

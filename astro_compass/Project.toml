@@ -1,3 +1,4 @@
 [deps]
+IntervalSets = "8197267c-284f-5f27-9208-e0e47529a953"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 ReinforcementLearning = "158674fc-8238-5cab-b5ba-03dfc80d1318"
