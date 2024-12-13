@@ -89,16 +89,6 @@ RLBase.state( env::Hohmann_Transfer_Env, ::Observation, ::DefaultPlayer) = env.s
 #need to define state space for Hohmann transfer problem (X,Y,VX,VY,cb_mu,SMA_target)
 function RLBase.state_space(env::Hohmann_Transfer_Env)
 
-    
-    #=
-    (-env.params.position_extrema .. env.params.position_extrema,
-    -env.params.position_extrema .. env.params.position_extrema,
-    -env.params.velocity_extrema .. env.params.velocity_extrema,
-    -env.params.velocity_extrema .. env.params.velocity_extrema,
-    0.0 .. 1000000.0,
-    0.0 .. 1000000.0)
-    =#
-
     interval_1 = -env.params.position_extrema .. env.params.position_extrema
     interval_2 = -env.params.position_extrema .. env.params.position_extrema
     interval_3 = -env.params.velocity_extrema .. env.params.velocity_extrema
@@ -108,12 +98,11 @@ function RLBase.state_space(env::Hohmann_Transfer_Env)
 
     S = ( ( ( ( ( interval_1 × interval_2 ) × interval_3 ) × interval_4 ) × interval_5 ) × interval_6 )
 
-
 end
 
 #defining action space
 #first '<:AbstractFloat' corresponds to the state vector type
-#action is of range -1 to 1
+#action is of range -1 to 1 (corresponds to dV in velocity direction)
 RLBase.action_space(::Hohmann_Transfer_Env{<:AbstractFloat,<:AbstractFloat}) = (-1.0,1.0);
 
 
@@ -149,16 +138,6 @@ function RLBase.reward(env::Hohmann_Transfer_Env{T}) where {T}
     sma_diff            = a - target_sma;
     reward              = reward + exp( - sma_diff^2 / (17000)^2 );
 
-    #=
-    println("Reward test function");
-    println("a: " * string(a) );
-    println("e: " * string(e) );
-    println("w: " * string(ω) );
-    println("θ: " * string(θ) );
-    println("r_p: " * string(r_p) );
-    println("reward: " * string(reward) );
-    =#
-
     return reward;
 
 end
@@ -176,12 +155,7 @@ function _step!( env::Hohmann_Transfer_Env, dV )
     env.t += 1;
 
     #unpack the state vector
-    x = env.state[1];
-    y = env.state[2];
-    vx = env.state[3];
-    vy = env.state[4];
-    mu = env.state[5];
-    target_sma = env.state[6];
+    x = env.state[1]; y = env.state[2]; vx = env.state[3]; vy = env.state[4]; mu = env.state[5]; target_sma = env.state[6];
 
     #create spacecraft and central body objects using state vector
     Moon = Celestial_Body( "Moon", [0.0,0.0], [0.0,0.0], mu, 1740 );
@@ -201,12 +175,7 @@ function _step!( env::Hohmann_Transfer_Env, dV )
     spacecraft, sol = step_SC_to_elapsed_time( spacecraft, 0.0, spacecraft.step_size, list_celestial_bodies, false, false );
 
     #record new state in env
-    x_p = spacecraft.position[1];
-    y_p = spacecraft.position[2];
-    vx_p = spacecraft.velocity[1];
-    vy_p = spacecraft.velocity[2];
-    mu_p = mu;
-    target_sma_p = target_sma;
+    x_p = spacecraft.position[1]; y_p = spacecraft.position[2]; vx_p = spacecraft.velocity[1]; vy_p = spacecraft.velocity[2]; mu_p = mu; target_sma_p = target_sma;
 
     #clamp states and terminate if we exceed bounds
     x_p = clamp( x_p, -env.params.position_extrema, env.params.position_extrema );
@@ -215,13 +184,7 @@ function _step!( env::Hohmann_Transfer_Env, dV )
     vy_p = clamp( vy_p, -env.params.velocity_extrema, env.params.velocity_extrema );
 
     #set new state vector in env
-    env.state[1] = x_p;
-    env.state[2] = y_p;
-    env.state[3] = vx_p;
-    env.state[4] = vy_p;
-    env.state[5] = mu_p; #mu unchanged
-    env.state[6] = target_sma_p; #target unchanged
-
+    env.state[1] = x_p; env.state[2] = y_p; env.state[3] = vx_p; env.state[4] = vy_p; env.state[5] = mu_p; #mu unchanged env.state[6] = target_sma_p; #target unchanged
 
     #terminate if max steps exceeded or position/vel exceeds bounds
     if ( env.t >= env.params.max_steps )
@@ -286,6 +249,19 @@ env = Hohmann_Transfer_Env()
 
 #check if the environment is runnable
 RLBase.test_runnable!( env )
+
+#check running with a random policy
+run(RandomPolicy(action_space(env)), env, StopAfterNEpisodes(1_000))
+
+#get reward per episode of random policy run
+hook = TotalRewardPerEpisode()
+
+#provide hook to get reward data from random policy
+run(RandomPolicy(action_space(env)), env, StopAfterNEpisodes(1_000), hook)
+
+#plot rewards
+plot(hook.rewards, label="Total Reward per Episode")
+
 
 #=
 s = [7119.325609474477, 6692.095629695555, 1.6608655292679837, -0.13627812104494702, 4903.0, 24360.0]
