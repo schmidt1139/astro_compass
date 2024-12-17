@@ -129,8 +129,6 @@ function RLBase.reward(env::Hohmann_Transfer_Env{T}) where {T}
     reward = 0.0;
 
     if ( pos_mag < central_body.r || r_p < central_body.r )
-        flag_impact = true;
-        flag_terminal = true;
         reward = - 100.0;
     end
 
@@ -186,6 +184,17 @@ function _step!( env::Hohmann_Transfer_Env, dV )
     #set new state vector in env
     env.state[1] = x_p; env.state[2] = y_p; env.state[3] = vx_p; env.state[4] = vy_p; env.state[5] = mu_p; #mu unchanged env.state[6] = target_sma_p; #target unchanged
 
+    #check terminal conditions - sets env.done to true if a terminal condition is met
+    _check_terminal_conditions!( env, spacecraft, list_celestial_bodies, x_p, y_p, vx_p, vy_p );
+
+    #return nothing
+    nothing
+
+end
+
+function _check_terminal_conditions!( env::Hohmann_Transfer_Env, SC::Spacecraft, list_CB::Vector{Celestial_Body},
+    x_p, y_p, vx_p, vy_p )
+
     #terminate if max steps exceeded or position/vel exceeds bounds
     if ( env.t >= env.params.max_steps )
         env.done = true;
@@ -194,11 +203,22 @@ function _step!( env::Hohmann_Transfer_Env, dV )
         env.done = true;
     end
 
-    #return nothing
-    nothing
+    for cb in list_CB 
 
+        r_vec = SC.position - cb.position;     #relative position vector
+        r_mag = norm( r_vec );                      #position magnitude
+
+        #find orbital elements
+        a, e, ω, θ = Calculate_Planar_OE( SC, cb );
+        r_p        = a * ( 1 - e );
+
+        if ( r_mag < cb.r || r_p < cb.r )
+            env.done = true;
+        end
+
+    end
+    
 end
-
 
 function reward_test()
 
