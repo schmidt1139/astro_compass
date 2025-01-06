@@ -3,6 +3,11 @@ using Random;
 using Plots;
 using LinearAlgebra;
 using IntervalSets;
+using Optimisers;
+using Flux;
+using Flux.Optimise;
+
+
 
 include("Ephemeris.jl");
 include("Celestial_Body.jl");
@@ -16,6 +21,15 @@ struct Hohmann_Transfer_Env_Params{T}
     position_extrema::T 
     velocity_extrema::T
 end
+
+#=
+#define the policy Neural Net Approximator
+struct NeuralNetworkApproximator
+    model::Chain                                    # The neural network model
+    optimiser
+end
+=#
+
 
 mutable struct Hohmann_Transfer_Env{T,ACT} <: AbstractEnv
     params::Hohmann_Transfer_Env_Params{T}
@@ -192,6 +206,8 @@ function _step!( env::Hohmann_Transfer_Env, dV )
 
 end
 
+
+
 function _check_terminal_conditions!( env::Hohmann_Transfer_Env, SC::Spacecraft, list_CB::Vector{Celestial_Body},
     x_p, y_p, vx_p, vy_p )
 
@@ -262,48 +278,3 @@ function reward_test()
 
 end
 
-#reward_test();
-
-#declare Hohmann Transfer Environment object
-env = Hohmann_Transfer_Env()
-
-#check if the environment is runnable
-RLBase.test_runnable!( env )
-
-#check running with a random policy
-run(RandomPolicy(action_space(env)), env, StopAfterNEpisodes(1_000))
-
-#get reward per episode of random policy run
-hook = TotalRewardPerEpisode()
-
-#provide hook to get reward data from random policy
-run(RandomPolicy(action_space(env)), env, StopAfterNEpisodes(1_000), hook)
-
-#plot rewards
-plot(hook.rewards, label="Total Reward per Episode")
-
-
-#=
-s = [7119.325609474477, 6692.095629695555, 1.6608655292679837, -0.13627812104494702, 4903.0, 24360.0]
-
-S_intervals = (-1.0e6 .. 1.0e6, -1.0e6 .. 1.0e6, -100.0 .. 100.0, -100.0 .. 100.0, 0.0 .. 1.0e6, 0.0 .. 1.0e6)
-
-interval_1 = -1.0e6 .. 1.0e6
-interval_2 = -1.0e6 .. 1.0e6
-interval_3 = -100.0 .. 100.0
-interval_4 = -100.0 .. 100.0
-interval_5 = 0.0 .. 1.0e6
-interval_6 = -1.0e6 .. 1.0e6
-
-
-#S_product = (-1.0e6 .. 1.0e6) × (-1.0e6 .. 1.0e6)
-S_product = ( ( ( ( ( interval_1 × interval_2 ) × interval_3 ) × interval_4 ) × interval_5 ) × interval_6 )
-
-display(S_product)
-
-
-flag = s in S_intervals
-display( flag )
-flag = s in S_product
-display( flag )
-=#
