@@ -89,6 +89,86 @@ def spacecraft_EOM_f_2D_2B( t,y,params ):
     
     #end def spacecraft_EOM( x, y, vx, vy, mu ):
         
+        
+def Calc_Planar_OE(x,y,vx,vy,mu_cb):
+    
+    #position and velocity magnitudes
+    r = ( x**2 + y**2 )**0.5;
+    v = ( vx**2 + vy**2 )**0.5;
+    
+    #spacecraft position, vel, and z vectors
+    sc_pos = np.array([ x, y, 0.0 ]);
+    sc_vel = np.array([ vx, vy, 0.0 ]);
+    z_hat = np.array([ 1.0, 0.0, 0.0 ]);
+    r_hat = sc_pos / r;
+    
+    #angular momentum
+    h_vec = np.cross( sc_pos, sc_vel );
+    h = np.linalg.norm(h_vec);
+    h_hat = h_vec / h;
+    
+    #node line
+    N = np.cross( z_hat, h_hat );
+    N_hat = N / np.linalg.norm(N);
+    
+    #specific energy
+    eps = v**2 / 2 + mu_cb/r;
+    
+    #eccentricity vector
+    e_vec = np.cross(sc_vel,h_vec) / mu_cb - sc_pos/r;
+    e = np.linalg.norm(e_vec);
+    e_hat = e_vec/e;
+    
+    #semi major axis
+    rp = h**2 / mu_cb / ( 1 + e * np.cos(0) );
+    ra = h**2 / mu_cb / ( 1 + e * np.cos( np.pi ) );
+    a = 1/2 * ( rp + ra );
+    
+    #argument of periapsis
+    if ( e_vec[2] >= 0.0 ):
+        w = np.acos( np.dot( N_hat, e_hat ) );
+    else:
+        w = 2 * np.pi - np.acos( np.dot( N_hat, e_hat ) );
+    
+    w_deg = np.rad2deg(w);
+    
+    #true anomaly - extra error handling included,
+    #mainly needed for hyperbolic instances
+    if ( np.dot( sc_pos, sc_vel ) >= 0.0 ):
+        
+        dotp = np.dot(e_hat,r_hat);
+        
+        if (dotp < -1 ):
+            dotp = -1;
+            
+        if ( abs( np.dot(e_hat,r_hat) ) < 1.0 ):
+            theta = np.acos( np.dot( e_hat,r_hat ) );
+        elif ( np.dot(e_hat,r_hat) < -1.0 ):
+            theta = np.pi;
+        else:
+            theta = 0.0;         
+            
+    else:
+        
+        dotp = np.dot(e_hat,r_hat);
+        if (dotp < -1 ):
+            dotp = -1;
+            
+        theta = 2 * np.pi - np.acos( np.dot( e_hat, r_hat ) );
+        
+        #end if ( np.dot( sc_pos, sc_vel ) >= 0.0 ):
+    
+    theta_deg = np.rad2deg(theta);
+    
+    print(a)
+    print(e)
+    print(w_deg)
+    print(theta_deg)
+    
+    return a, e, w, theta;
+    
+    #end def Calc_Planar_OE():
+        
 
 class HohmannTransferEnv(gym.Env):
     
@@ -117,6 +197,8 @@ class HohmannTransferEnv(gym.Env):
         #end def __init__(self):
             
     def _get_info(self, ode_solution, delta_r ):
+        
+        #to-do: add orbital elements as optional and append to output dictionary
         
         return {
             "Elapsed time":self.elapsed_t,
@@ -205,6 +287,15 @@ class HohmannTransferEnv(gym.Env):
         #update the state and elapsed time
         self.elapsed_t = self.elapsed_t + self.step_size;
         self._state = y_final;
+        
+        #state vector
+        x = self._state[0];
+        y = self._state[1];
+        vx = self._state[2];
+        vy = self._state[3];
+        
+        #calculate orbital elements
+        a, e, w, theta = Calc_Planar_OE( x, y, vx, vy, self.arr_mu[0] );
         
         #return observation, reward, terminated, truncated, info
         

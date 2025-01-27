@@ -29,9 +29,9 @@ et = 0.0;
 
 eph = Ephemeris( info["planet_radii"] );
 
-while (steps < 5000):
+while (steps < 1):
     
-    observation, reward, terminated, truncated, info = env.step(-0.001);
+    observation, reward, terminated, truncated, info = env.step(0.01);
     elapsed_time = info['Elapsed time'];
     
     eph.add_data(elapsed_time, observation[0], observation[1], observation[2], observation[3] );
