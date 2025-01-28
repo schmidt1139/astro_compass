@@ -117,7 +117,12 @@ def Calc_Planar_OE(x,y,vx,vy,mu_cb):
     #eccentricity vector
     e_vec = np.cross(sc_vel,h_vec) / mu_cb - sc_pos/r;
     e = np.linalg.norm(e_vec);
-    e_hat = e_vec/e;
+    
+    if ( e == 0.0 ):
+        e_hat = e_vec*0.0;
+    else:
+        e_hat = e_vec/e;
+    
     
     #semi major axis
     rp = h**2 / mu_cb / ( 1 + e * np.cos(0) );
@@ -160,10 +165,10 @@ def Calc_Planar_OE(x,y,vx,vy,mu_cb):
     
     theta_deg = np.rad2deg(theta);
     
-    print(a)
-    print(e)
-    print(w_deg)
-    print(theta_deg)
+    # print(a)
+    # print(e)
+    # print(w_deg)
+    # print(theta_deg)
     
     return a, e, w, theta;
     
@@ -183,11 +188,14 @@ class HohmannTransferEnv(gym.Env):
         
         self._state = np.array([0,0,0,0,0,0], dtype = np.float32 );
         
+        self._keplerian_elements = np.array([0,0,0,0,0,0], dtype = np.float32 );
+        
         # list of environment parameters
         self.arr_mu = np.array([4903.0]);
         self.planet_radii = np.array([1740.0]);
         self.elapsed_t = 0.0;
         self.step_size = 60.0;
+        
         
         #define the action space
         low_array_action = np.array([-np.inf], dtype = np.float32 );
@@ -204,7 +212,11 @@ class HohmannTransferEnv(gym.Env):
             "Elapsed time":self.elapsed_t,
             "ODE Solution":ode_solution,
             "delta_state":delta_r,
-            "planet_radii":self.planet_radii
+            "planet_radii":self.planet_radii,
+            "a":self._keplerian_elements[0],
+            "e":self._keplerian_elements[1],
+            "w":np.rad2deg( self._keplerian_elements[2] ),
+            "theta":np.rad2deg( self._keplerian_elements[3] ),
             }
         
         #end def _get_info(self):
@@ -224,19 +236,52 @@ class HohmannTransferEnv(gym.Env):
         
         self._state = np.array( [x,y,vx,vy,mu,sma_target], dtype = np.float32 );
         
+        #calculate orbital elements
+        a, e, w, theta = Calc_Planar_OE( x, y, vx, vy, mu );
+        
+        self._keplerian_elements[0] = a;
+        self._keplerian_elements[1] = e;
+        self._keplerian_elements[2] = w;
+        self._keplerian_elements[3] = theta;
+        
         observation = self._state;
-        info = self._get_info(None,None);
+        info = self._get_info(None,None,);
         
         return observation, info
         
-        #end def reset(self, seed: Optional[int] = None, options: Optional[dict] = None):
+        #end def reset(self, seed: Optional[int] = None, options: 
       
     def calc_reward(self):
         
         #determine reward based on state input, also check if state is terminal
         
+        #unpack state vector
+        x = self._state[0];
+        y = self._state[1];
+        sma_target = self._state[5];
+        
+        a = self._keplerian_elements[0];
+
+        
+        #central body parameters
+        cb_rad = self.planet_radii[0];
+        
+        r = ( x**2 + y**2 )**0.5;
+        
         terminated = False;
-        reward = 1.0;
+        
+        #Check if a collision has taken place, terminate with negative reward 
+        #Otherwise, compute a reward based on distance from target SMA
+        if ( r < cb_rad ):
+            reward = -100;
+            terminated = True;
+            #end if ( r < cb_rad ):
+        else:
+            #exponential decaying reward based on the difference between target
+            #SMA and current SMA 
+            sma_diff = a - sma_target;
+            reward = np.exp( -sma_diff**2 / (17000)**2 );
+            
         
         return reward, terminated;
         
@@ -263,6 +308,8 @@ class HohmannTransferEnv(gym.Env):
         y = self._state[1];
         vx = self._state[2];
         vy = self._state[3];
+        mu = self._state[4];
+        sma_target = self._state[5];
         
         #action is defined to be delta-V in vel direction
         arr_dV_in_track = self._apply_dV_in_VNB_frame( action, x, y, vx, vy );
@@ -273,40 +320,47 @@ class HohmannTransferEnv(gym.Env):
         #step the spacecraft forward
         t_span = (0.0,self.step_size);
         y0 = np.array( [x, y, vx, vy] );
-        params = np.array( [self.arr_mu[0], self.planet_radii[0], 0.0, 0.0] );
+        params = np.array( [self.arr_mu[0], self.planet_radii[0], 0.0, 0.0], dtype=np.float32 );
         
         #solve ODE
         solution = solve_ivp( spacecraft_EOM_f_2D_2B, t_span, y0, method='RK45', args=(params,) );
         
         #extract the final state vector from ODE solution (last column in y)
-        y_final = solution.y[:,-1];
+        y_final = (solution.y[:,-1]).astype(np.float32);
         
         #change in state vector
         delta_r = y_final - y0;
         
+        #state vector components
+        x = y_final[0];
+        y = y_final[1];
+        vx = y_final[2];
+        vy = y_final[3];
+        
         #update the state and elapsed time
         self.elapsed_t = self.elapsed_t + self.step_size;
-        self._state = y_final;
+        self._state[0] = x;
+        self._state[1] = y;
+        self._state[2] = vx;
+        self._state[3] = vy;
+        #self._state[4]  and self._state[5] are constant
         
-        #state vector
-        x = self._state[0];
-        y = self._state[1];
-        vx = self._state[2];
-        vy = self._state[3];
+        #calculate the new orbital elements
+        a, e, w, theta = Calc_Planar_OE( x, y, vx, vy, mu );
         
-        #calculate orbital elements
-        a, e, w, theta = Calc_Planar_OE( x, y, vx, vy, self.arr_mu[0] );
+        self._keplerian_elements[0] = a;
+        self._keplerian_elements[1] = e;
+        self._keplerian_elements[2] = w;
+        self._keplerian_elements[3] = theta;
         
-        #return observation, reward, terminated, truncated, info
+        #determine reward and terminated status
+        reward, terminated = self.calc_reward();
         
         #the observation is just the state vector
         observation = self._state;
         
         #extract other environment information
         info = self._get_info(solution, delta_r);
-        
-        #determine reward and terminated status
-        reward, terminated = self.calc_reward();
         
         #set truncated permanently to false since this is handled externally
         truncated = False;
