@@ -142,24 +142,23 @@ def Calc_Planar_OE(x,y,vx,vy,mu_cb):
     if ( np.dot( sc_pos, sc_vel ) >= 0.0 ):
         
         dotp = np.dot(e_hat,r_hat);
-        
         if (dotp < -1 ):
             dotp = -1;
+        elif (dotp > 1):
+            dotp = 1;    
             
-        if ( abs( np.dot(e_hat,r_hat) ) < 1.0 ):
-            theta = np.acos( np.dot( e_hat,r_hat ) );
-        elif ( np.dot(e_hat,r_hat) < -1.0 ):
-            theta = np.pi;
-        else:
-            theta = 0.0;         
+        theta = np.acos( dotp );
             
     else:
         
+        #check acos domain
         dotp = np.dot(e_hat,r_hat);
         if (dotp < -1 ):
             dotp = -1;
+        elif (dotp > 1):
+            dotp = 1;
             
-        theta = 2 * np.pi - np.acos( np.dot( e_hat, r_hat ) );
+        theta = 2 * np.pi - np.acos( dotp );
         
         #end if ( np.dot( sc_pos, sc_vel ) >= 0.0 ):
     
