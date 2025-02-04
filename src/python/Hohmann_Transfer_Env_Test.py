@@ -6,6 +6,7 @@ import matplotlib.pyplot as plot;
 from gymnasium import envs
 from gymnasium.envs.registration import register
 from Ephemeris import Ephemeris
+from stable_baselines3 import A2C
 
 #register the environment if it isn't registered
 if ( ("HohmannTransferEnv-v0" in envs.registry.keys()) == False ):
