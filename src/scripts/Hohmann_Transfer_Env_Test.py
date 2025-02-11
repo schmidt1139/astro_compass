@@ -2,11 +2,18 @@
 import numpy as np;
 import gymnasium as gym;
 import matplotlib.pyplot as plot;
+import sys
+import os
 
 from gymnasium import envs
 from gymnasium.envs.registration import register
-from Ephemeris import Ephemeris
 from stable_baselines3 import A2C
+
+# Adding python src code directory
+sys.path.append(os.path.abspath("../python"))
+
+from Ephemeris import Ephemeris
+
 
 #register the environment if it isn't registered
 if ( ("HohmannTransferEnv-v0" in envs.registry.keys()) == False ):
@@ -24,7 +31,7 @@ env = gym.make("HohmannTransferEnv-v0");
 
 
 steps_per_traj = 10000;
-num_traj = 100;
+num_traj = 10;
 
 
 

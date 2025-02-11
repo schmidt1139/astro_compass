@@ -22,7 +22,7 @@ def spacecraft_EOM_f_2D_2B( t,y,params ):
     -----------------------------------------------------------------------------------
     t:      Elapsed time
     y:      Input state vector
-    arr_mu: The list of parameters
+    params: The list of parameters
     
     Outputs
     -----------------------------------------------------------------------------------
