@@ -2,10 +2,11 @@
 import numpy as np
 import gymnasium as gym 
 
-
 from gymnasium import spaces
 from typing import Optional
 from scipy.integrate import solve_ivp
+
+from Spacecraft import Spacecraft
 
 
 def spacecraft_EOM_f_2D_2B( t,y,params ):
