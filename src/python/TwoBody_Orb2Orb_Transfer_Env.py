@@ -189,11 +189,11 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         
         self._keplerian_elements = np.array([0,0,0,0,0,0], dtype = np.float32 );
         
-        # list of environment parameters
-        self.arr_mu = np.array([4903.0]);
-        self.planet_radii = np.array([1740.0]);
+        # list of environment parameters (Sun is the central body)
+        self.arr_mu = np.array([1.3e11]);           #solar mu [km^3/s^2]
+        self.planet_radii = np.array([6.957e5]);    #solar radius [km]
         self.elapsed_t = 0.0;
-        self.step_size = 60.0;
+        self.step_size = 3600.0;
         
         
         #define the action space
@@ -227,11 +227,11 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         
         #set the initial parameters
         x = 0.0;
-        y = 7000.0;
-        vx = (4903/y) ** 0.5;
+        y = 227939366; #Mars SMA
+        vx = (1.3e11/y) ** 0.5;
         vy = 0.0;
-        mu = 4903.0;
-        sma_target = 14*1740;
+        mu = 1.3e11;
+        sma_target = 149598023; #Earth SMA
         
         self._state = np.array( [x,y,vx,vy,mu,sma_target], dtype = np.float32 );
         
