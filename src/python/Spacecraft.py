@@ -14,7 +14,6 @@ class Spacecraft:
         self.vy = self.vy;
         self.mass = mass;
         
-        #end def __init__(self):
             
     #static method for calculating spacecraft EOM for Hohmann transfer env   
     def spacecraft_EOM_f_2D_2B( t,y,params ):
@@ -49,7 +48,6 @@ class Spacecraft:
             y_cb = params[3];
         else:
             raise Exception('Invalid number of parameters');
-            #end if ( num_params == 3 ):
             
         #unpack the state vector
         x_sc = y[0];
@@ -93,12 +91,7 @@ class Spacecraft:
                     
             return dy.astype(np.float32);
             
-            #end if ( r_rel < radius_cb ):
-            
-        
-        #end def spacecraft_EOM( x, y, vx, vy, mu ):
-            
-    #end class spacecraft:
+
         
         
     def calc_Planar_OE(x,y,vx,vy,mu_cb):
@@ -171,7 +164,7 @@ class Spacecraft:
                 
             theta = 2 * np.pi - np.acos( dotp );
             
-            #end if ( np.dot( sc_pos, sc_vel ) >= 0.0 ):
+
         
         theta_deg = np.rad2deg(theta);
         
@@ -181,5 +174,3 @@ class Spacecraft:
         # print(theta_deg)
         
         return a, e, w, theta;
-        
-        #end def Calc_Planar_OE():
