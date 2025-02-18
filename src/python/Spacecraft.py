@@ -10,13 +10,13 @@ class Spacecraft:
         #State vector coordinates
         self.x = x;
         self.y = y;
-        self.vx = self.vx;
-        self.vy = self.vy;
+        self.vx = vx;
+        self.vy = vy;
         self.mass = mass;
         
             
     #static method for calculating spacecraft EOM for Hohmann transfer env   
-    def spacecraft_EOM_f_2D_2B( t,y,params ):
+    def spacecraft_EOM_f_2D_2B( self,t,y,params ):
         
         '''
         ode propagation function
@@ -94,15 +94,21 @@ class Spacecraft:
 
         
         
-    def calc_Planar_OE(x,y,vx,vy,mu_cb):
+    def calc_Planar_OE(self,x_cb,y_cb,vx_cb,vy_cb,mu_cb):
+        
+        #determine coordinates relative to central body
+        x_rel = self.x - x_cb;
+        y_rel = self.y - y_cb;
+        vx_rel = self.vx - vx_cb;
+        vy_rel = self.vy - vy_cb;
         
         #position and velocity magnitudes
-        r = ( x**2 + y**2 )**0.5;
-        v = ( vx**2 + vy**2 )**0.5;
+        r = ( x_rel**2 + y_rel**2 )**0.5;
+        v = ( vx_rel**2 + vy_rel**2 )**0.5;
         
         #spacecraft position, vel, and z vectors
-        sc_pos = np.array([ x, y, 0.0 ]);
-        sc_vel = np.array([ vx, vy, 0.0 ]);
+        sc_pos = np.array([ x_rel, y_rel, 0.0 ]);
+        sc_vel = np.array([ vx_rel, vy_rel, 0.0 ]);
         z_hat = np.array([ 1.0, 0.0, 0.0 ]);
         r_hat = sc_pos / r;
         
@@ -122,6 +128,8 @@ class Spacecraft:
         e_vec = np.cross(sc_vel,h_vec) / mu_cb - sc_pos/r;
         e = np.linalg.norm(e_vec);
         
+        #If e is zero, we will get an error dividing by zero, so the ecc vector
+        #is set at {0,0,0} if the magnitude is zero.
         if ( e == 0.0 ):
             e_hat = e_vec*0.0;
         else:
