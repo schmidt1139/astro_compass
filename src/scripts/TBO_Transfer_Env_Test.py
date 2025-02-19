@@ -23,7 +23,6 @@ if ( ("TwoBody_Orb2Orb_Transfer_Env-v0" in envs.registry.keys()) == False ):
         entry_point="TwoBody_Orb2Orb_Transfer_Env:TwoBody_Orb2Orb_Transfer_Env",
     )
     
-    #end
 
 
 #initialize the environment
@@ -80,7 +79,6 @@ def test_runnable_env( env, num_trajectories, num_steps_per_traj ):
             #print( elapsed_time, a, e, reward );
             steps = steps + 1;
             
-            #end while (steps < steps_per_traj):
                 
         arr_episodes = np.append(arr_episodes, count_traj);
         arr_reward_totals = np.append(arr_reward_totals, r_tot);
@@ -95,9 +93,6 @@ def test_runnable_env( env, num_trajectories, num_steps_per_traj ):
             fig = eph.plot_xy(info["planet_radii"]);
             plot.show(fig);
             
-        
-        
-        #end for count_traj in range(1,num_traj):
      
     fig_reward, ax = plot.subplots(figsize=(6, 6));
     
@@ -113,7 +108,6 @@ def test_runnable_env( env, num_trajectories, num_steps_per_traj ):
     
             
     print("Test successful");
-    #end def test_runnable_env( env, num_trajectories, num_steps_per_traj ):
 
 
 test_runnable_env(env, num_traj, steps_per_traj);

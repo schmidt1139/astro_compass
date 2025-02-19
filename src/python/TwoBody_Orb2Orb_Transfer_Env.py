@@ -40,7 +40,7 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         high_array_action = np.array([np.inf], dtype = np.float32 );
         self.action_space = gym.spaces.Box( low = low_array_action, high = high_array_action );
         
-        #end def __init__(self):
+
             
     def _get_info(self, ode_solution, delta_r ):
         
@@ -57,7 +57,7 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
             "theta":np.rad2deg( self._keplerian_elements[3] ),
             }
         
-        #end def _get_info(self):
+
             
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None):
         
@@ -104,7 +104,7 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         
         return observation, info
         
-        #end def reset(self, seed: Optional[int] = None, options: 
+
       
     def calc_reward(self):
         
@@ -140,7 +140,7 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         
         return reward, terminated;
         
-        #end def calc_reward(self):
+
             
     def _apply_dV_in_VNB_frame(self, dV, X_i, Y_i, VX_i, VY_i):
         
@@ -155,7 +155,7 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         
         return dV_vec;
         
-        #end def apply_dV_in_VNB_frame(action, X, Y, VX, VY):
+
     
     def step(self, action):
         
@@ -232,10 +232,7 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         
         return observation, reward, terminated, truncated, info;
         
-        #end def step(self, action):
-    
-    #end class HohmannTransferEnv(gym.Env):
-        
+
         
         
         
