@@ -159,7 +159,7 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
     
     def step(self, action):
         
-        #unpack the
+        #unpack the state vector
         x = self._state[0];
         y = self._state[1];
         vx = self._state[2];
@@ -209,6 +209,15 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         self._state[2] = vx;
         self._state[3] = vy;
         #self._state[4]  and self._state[5] are constant
+        
+        #update the spacecraft object
+        sc.x = self._state[0];
+        sc.y = self._state[1];
+        sc.vx = self._state[2];
+        sc.vy = self._state[3];
+        
+        #update the environment spacecraft object
+        self._spacecraft = sc;
         
         #calculate the new orbital elements
         a, e, w, theta = sc.calc_Planar_OE( x_cb, y_cb, vx_cb, vy_cb, mu );
