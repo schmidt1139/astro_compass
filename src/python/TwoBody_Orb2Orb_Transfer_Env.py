@@ -8,6 +8,9 @@ from typing import Optional
 from scipy.integrate import solve_ivp
 
 from Spacecraft import Spacecraft
+from Propagation import *
+
+Spacecraft.spacecraft_EOM_f_2D_2B = spacecraft_EOM_f_2D_2B;
         
 
 class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
