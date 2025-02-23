@@ -91,6 +91,7 @@ def spacecraft_EOM_f_2D_2B( self,t,y,params ):
     
     Outputs
     -----------------------------------------------------------------------------------
+    Derivates for state vector
     '''
     
     dy = np.zeros(4, dtype = np.float32 );
