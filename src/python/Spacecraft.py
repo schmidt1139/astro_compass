@@ -36,7 +36,6 @@ class Spacecraft:
         self.y = y;
         self.vx = vx;
         self.vy = vy;
-        self.mass = mass;
         
         
         
