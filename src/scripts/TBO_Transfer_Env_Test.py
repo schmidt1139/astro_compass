@@ -29,8 +29,8 @@ if ( ("TwoBody_Orb2Orb_Transfer_Env-v0" in envs.registry.keys()) == False ):
 env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0");
 
 
-steps_per_traj = 365*24;
-num_traj = 10;
+steps_per_traj = 365*24*3;
+num_traj = 1;
 
 
 
@@ -61,7 +61,7 @@ def test_runnable_env( env, num_trajectories, num_steps_per_traj ):
             #test maneuver that is returned will be sampled from a Gaussian normal
             #distribution with a mean of 0 and a standard deviation of 1. We 
             #devide by 1000 in this test case to give relatively small maneuvers.
-            action = env.action_space.sample() / 100;
+            action = env.action_space.sample();
             
             observation, reward, terminated, truncated, info = env.step(action);
     
@@ -74,7 +74,7 @@ def test_runnable_env( env, num_trajectories, num_steps_per_traj ):
             if ( terminated == True ):
                 break;
             
-            eph.add_data(elapsed_time, observation[0], observation[1], observation[2], observation[3] );
+            eph.add_polar_data(elapsed_time, observation[0], observation[1], observation[2], observation[3] );
             
             #print( elapsed_time, a, e, reward );
             steps = steps + 1;
