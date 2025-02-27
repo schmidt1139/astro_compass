@@ -1,6 +1,6 @@
 import numpy as np;
 
-def spacecraft_EOM_radial_2D_EB( self,t,y,params ):
+def spacecraft_EOM_radial_2D_EB( t,y,params ):
     
     '''
     ode propagation function

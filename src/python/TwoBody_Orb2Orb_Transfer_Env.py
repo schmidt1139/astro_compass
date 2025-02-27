@@ -10,7 +10,6 @@ from scipy.integrate import solve_ivp
 from Spacecraft import Spacecraft
 from Propagation import *
 
-Spacecraft.spacecraft_EOM_radial_2D_EB = spacecraft_EOM_radial_2D_EB;
         
 
 class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
@@ -196,7 +195,7 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         
         
         #solve ODE
-        solution = solve_ivp( sc.spacecraft_EOM_radial_2D_EB, t_span, y0, method='RK45', args=(params,) );
+        solution = solve_ivp( spacecraft_EOM_radial_2D_EB, t_span, y0, method='RK45', args=(params,) );
         
         #extract the final state vector from ODE solution (last column in y)
         y_final = (solution.y[:,-1]).astype(np.float32);
