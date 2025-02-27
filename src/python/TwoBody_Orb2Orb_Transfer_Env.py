@@ -10,7 +10,7 @@ from scipy.integrate import solve_ivp
 from Spacecraft import Spacecraft
 from Propagation import *
 
-Spacecraft.spacecraft_EOM_f_2D_2B = spacecraft_EOM_f_2D_2B;
+Spacecraft.spacecraft_EOM_radial_2D_EB = spacecraft_EOM_radial_2D_EB;
         
 
 class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
