@@ -2,10 +2,7 @@ import numpy as np;
 
 class Spacecraft:
     
-    def __init__(self, 
-                 r = 2.32495e8, theta = 0.0, r_dot = 0.0, v_theta = 24.67175,
-                 mass=3366.0, C1=1.33/1000, C2=3872.0
-                 ):
+    def __init__(self, r, theta, r_dot, v_theta, mass, C1, C2 ):
         
         #Initialize the state of the spacecraft
         self.update_state(r, theta, r_dot, v_theta, mass);
