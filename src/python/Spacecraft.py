@@ -2,96 +2,38 @@ import numpy as np;
 
 class Spacecraft:
     
-    def __init__(self, 
-                 x=0.0, y=227939366, vx=23.8815223674669, vy=0.0,
-                 mass=1000.0
-                 ):
+    def __init__(self, r, theta, r_dot, v_theta, mass, C1, C2 ):
         
-        #State vector coordinates
+        #Initialize the state of the spacecraft
+        self.update_state(r, theta, r_dot, v_theta, mass);
+        
+        #Set propulsion parameters
+        self.max_thrust         = C1;
+        self.specific_impulse   = C2;
+        
+    def update_state(self,r,theta,r_dot,v_theta,mass):
+        
+        #Set state vector polar coordinates coordinates
+        self.r = r;
+        self.theta = theta;
+        self.r_dot = r_dot;
+        self.v_theta = v_theta;
+        
+        #Set the spacecraft mass
+        self.mass = mass;
+        
+        #convert polar coordinates to cartesian
+        x = r * np.cos(theta);
+        y = r * np.sin(theta);
+        vx = r_dot * np.cos(theta) - v_theta * r * np.sin(theta);
+        vy = r_dot * np.sin(theta) + v_theta * r * np.cos(theta);
+        
+        #Set state vector cartesian coordinates
         self.x = x;
         self.y = y;
         self.vx = vx;
         self.vy = vy;
-        self.mass = mass;
         
-            
-    #static method for calculating spacecraft EOM for Hohmann transfer env   
-    def spacecraft_EOM_f_2D_2B( self,t,y,params ):
-        
-        '''
-        ode propagation function
-        -----------------------------------------------------------------------------------
-        This is a special case force model function for use in propagating a
-        spacecraft. This function assumes that there are only two dimensions
-        (x and y) and that there are only two bodies: the spacecraft and the 
-        central body.
-        
-        Inputs
-        -----------------------------------------------------------------------------------
-        t:      Elapsed time
-        y:      Input state vector
-        params: The list of parameters
-        
-        Outputs
-        -----------------------------------------------------------------------------------
-        '''
-        
-        dy = np.zeros(4, dtype = np.float32 );
-        params = params.astype(np.float32);
-        
-        num_params = len(params);
-        
-        if ( num_params == 4 ):
-            mu_cb = params[0];
-            radius_cb = params[1];
-            x_cb = params[2];
-            y_cb = params[3];
-        else:
-            raise Exception('Invalid number of parameters');
-            
-        #unpack the state vector
-        x_sc = y[0];
-        y_sc = y[1];
-        vx_sc = y[2];
-        vy_sc = y[3];
-        
-        #determine relative position
-        x_rel = x_sc - x_cb;
-        y_rel = y_sc - y_cb;
-        
-        #relative position magnitude
-        r_rel = ( x_rel**2 + y_rel**2 )**(0.5);
-        
-        #define a flag to track if the spacecraft has collided with the central body
-        flag_collision = False;
-        
-        if ( r_rel < radius_cb ):
-            
-            flag_collision = True;
-            
-            dy[0] = 0.0;
-            dy[1] = 0.0;
-            dy[2] = 0.0;
-            dy[3] = 0.0;
-            
-            return dy.astype(np.float32);
-        
-        else:
-            
-            x_hat_rel = x_rel / r_rel;
-            y_hat_rel = y_rel / r_rel;
-            
-            ddx = - mu_cb * x_hat_rel / r_rel**2;
-            ddy = - mu_cb * y_hat_rel / r_rel**2;
-            
-            dy[0] = vx_sc;
-            dy[1] = vy_sc;
-            dy[2] = ddx;
-            dy[3] = ddy;
-                    
-            return dy.astype(np.float32);
-            
-
         
         
     def calc_Planar_OE(self,x_cb,y_cb,vx_cb,vy_cb,mu_cb):
