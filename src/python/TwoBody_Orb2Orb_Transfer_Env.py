@@ -39,8 +39,11 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         
         
         #define the action space
-        low_array_action = np.array([-np.inf], dtype = np.float32 );
-        high_array_action = np.array([np.inf], dtype = np.float32 );
+        #The action space consists of two variables:
+        #    1) a control throlle input (scaled from 0 to 1)
+        #    2) a thrust vector (0 to 2pi)
+        low_array_action = np.array( [0.0,0.0], dtype = np.float32 ); 
+        high_array_action = np.array( [1.0, 2*np.pi], dtype = np.float32 );
         self.action_space = gym.spaces.Box( low = low_array_action, high = high_array_action );
         
 
