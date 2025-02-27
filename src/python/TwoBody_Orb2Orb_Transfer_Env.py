@@ -18,13 +18,13 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
     def __init__(self):
         
         #define limits of the state parameters
-        low_array = np.array([-np.inf,-np.inf,-np.inf,-np.inf,-np.inf,-np.inf], dtype = np.float32 );
-        high_array = np.array([np.inf,np.inf,np.inf,np.inf,np.inf,np.inf], dtype = np.float32 );
+        low_array = np.full(7, -np.inf, dtype=np.float32); #lower bounds for state space
+        high_array = np.full(7, np.inf, dtype=np.float32); #upper-bounds for state space
         
-        #define the state space (in this case the observation is the state)
+        #define the state space (in this case the observation is the state) 5x5
         self.observation_space = gym.spaces.Box( low = low_array, high = high_array );
         
-        self._state = np.array([0,0,0,0,0,0], dtype = np.float32 );
+        self._state = np.full(7, 0.0, dtype=np.float32); #initialize state vector
         
         #spacecraft object
         self._spacecraft = Spacecraft();
