@@ -3,16 +3,39 @@ import numpy as np;
 class Spacecraft:
     
     def __init__(self, 
-                 x=0.0, y=227939366, vx=23.8815223674669, vy=0.0,
-                 mass=1000.0
+                 r = 2.32495e8, theta = 0.0, r_dot = 0.0, v_theta = 24.67175,
+                 mass=3366.0, C1=1.33/1000, C2=3872.0
                  ):
         
-        #State vector coordinates
+        #Initialize the state of the spacecraft
+        self.update_state(r, theta, r_dot, v_theta, mass);
+        
+        #Set propulsion parameters
+        self.max_thrust         = C1;
+        self.specific_impulse   = C2;
+        
+    def update_state(self,r,theta,r_dot,v_theta,mass):
+        
+        #Set state vector polar coordinates coordinates
+        self.r = r;
+        self.theta = theta;
+        self.r_dot = r_dot;
+        self.v_theta = v_theta;
+        
+        #Set the spacecraft mass
+        self.mass = mass;
+        
+        #convert polar coordinates to cartesian
+        x = r * np.cos(theta);
+        y = r * np.sin(theta);
+        vx = r_dot * np.cos(theta) - v_theta * r * np.sin(theta);
+        vy = r_dot * np.sin(theta) + v_theta * r * np.cos(theta);
+        
+        #Set state vector cartesian coordinates
         self.x = x;
         self.y = y;
         self.vx = vx;
         self.vy = vy;
-        self.mass = mass;
         
         
         
