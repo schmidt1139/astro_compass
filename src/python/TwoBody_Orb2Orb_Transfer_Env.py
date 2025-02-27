@@ -26,9 +26,6 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         
         self._state = np.full(7, 0.0, dtype=np.float32); #initialize state vector
         
-        #spacecraft object
-        self._spacecraft = Spacecraft();
-        
         self._keplerian_elements = np.array([0,0,0,0,0,0], dtype = np.float32 );
         
         # list of environment parameters (Sun is the central body)
@@ -77,6 +74,8 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         v_theta     = 24.67175;         #Tangential velocity
         mass        = 3366.0;           #Assumed spacecraft total mass
         sma_target  = 149598023;        #Earth SMA
+        C1          = 1.33/1000;        #Spacecraft max thrust
+        C2          = 3872.0;           #Spacecraft specific impulse
         
         mu          = self.arr_mu[0];
         
@@ -93,7 +92,7 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         self._arr_cb = np.array( [x_cb, y_cb, vx_cb, vy_cb], dtype = np.float32 );
         
         #Initialize a spacecraft object with the state of the environment
-        sc = Spacecraft( r, theta, r_dot, v_theta, mass );
+        sc = Spacecraft( r, theta, r_dot, v_theta, mass, C1, C2 );
         
         #Update the spacecraft in the environment
         self._spacecraft = sc;
