@@ -71,13 +71,14 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         super().reset(seed=seed)
         
         #set the initial parameters
-        x = 0.0;
-        y = 227939366; #Mars SMA
-        vx = (1.3e11/y) ** 0.5;
-        vy = 0.0;
-        mu = self.arr_mu[0];
-        mass = 1000.0;
-        sma_target = 149598023; #Earth SMA
+        r           = 2.32495e8         #Mars distance
+        theta       = 0.0;              #Default initial theta
+        r_dot       = 0.0;              #Initial radial velocity
+        v_theta     = 24.67175;         #Tangential velocity
+        mass        = 3366.0;           #Assumed spacecraft total mass
+        sma_target  = 149598023;        #Earth SMA
+        
+        mu          = self.arr_mu[0];
         
         #set the location of the central body
         x_cb = 0.0;
@@ -86,13 +87,13 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         vy_cb = 0.0;
         
         #set the initial state of the environment
-        self._state = np.array( [x,y,vx,vy,mu,sma_target], dtype = np.float32 );
+        self._state = np.array( [r,theta,r_dot,v_theta,mass,mu,sma_target], dtype = np.float32 );
         
         #set the location of the central body
         self._arr_cb = np.array( [x_cb, y_cb, vx_cb, vy_cb], dtype = np.float32 );
         
         #Initialize a spacecraft object with the state of the environment
-        sc = Spacecraft( x, y, vx, vy, mass );
+        sc = Spacecraft( r, theta, r_dot, v_theta, mass );
         
         #Update the spacecraft in the environment
         self._spacecraft = sc;
