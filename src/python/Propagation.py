@@ -1,7 +1,6 @@
 import numpy as np;
 
-
-def spacecraft_EOM_radial_2D_EB( self,t,y,params ):
+def spacecraft_EOM_radial_2D_EB( t,y,params ):
     
     '''
     ode propagation function
@@ -67,10 +66,6 @@ def spacecraft_EOM_radial_2D_EB( self,t,y,params ):
         
     #return derivative array
     return dy.astype(np.float32);
-    
-    
-    
-
 
 #method for calculating spacecraft EOM for Hohmann transfer env   
 def spacecraft_EOM_f_2D_2B( self,t,y,params ):
@@ -91,7 +86,6 @@ def spacecraft_EOM_f_2D_2B( self,t,y,params ):
     
     Outputs
     -----------------------------------------------------------------------------------
-    Derivates for state vector
     '''
     
     dy = np.zeros(4, dtype = np.float32 );

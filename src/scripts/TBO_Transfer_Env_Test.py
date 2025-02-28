@@ -30,7 +30,7 @@ env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0");
 
 
 steps_per_traj = 365*24*3;
-num_traj = 10;
+num_traj = 1;
 
 
 

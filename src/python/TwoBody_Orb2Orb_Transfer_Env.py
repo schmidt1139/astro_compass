@@ -10,7 +10,6 @@ from scipy.integrate import solve_ivp
 from Spacecraft import Spacecraft
 from Propagation import *
 
-Spacecraft.spacecraft_EOM_radial_2D_EB = spacecraft_EOM_radial_2D_EB;
         
 
 class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
@@ -18,16 +17,13 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
     def __init__(self):
         
         #define limits of the state parameters
-        low_array = np.array([-np.inf,-np.inf,-np.inf,-np.inf,-np.inf,-np.inf,-np.inf], dtype = np.float32 );
-        high_array = np.array([np.inf,np.inf,np.inf,np.inf,np.inf,np.inf,np.inf], dtype = np.float32 );
+        low_array = np.full(7, -np.inf, dtype=np.float32); #lower bounds for state space
+        high_array = np.full(7, np.inf, dtype=np.float32); #upper-bounds for state space
         
         #define the state space (in this case the observation is the state) 5x5
         self.observation_space = gym.spaces.Box( low = low_array, high = high_array );
         
-        self._state = np.array([0,0,0,0,0,0,0], dtype = np.float32 );
-        
-        #spacecraft object
-        self._spacecraft = Spacecraft();
+        self._state = np.full(7, 0.0, dtype=np.float32); #initialize state vector
         
         self._keplerian_elements = np.array([0,0,0,0,0,0], dtype = np.float32 );
         
@@ -77,6 +73,8 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         v_theta     = 24.67175;         #Tangential velocity
         mass        = 3366.0;           #Assumed spacecraft total mass
         sma_target  = 149598023;        #Earth SMA
+        C1          = 1.33/1000;        #Spacecraft max thrust
+        C2          = 3872.0;           #Spacecraft specific impulse
         
         mu          = self.arr_mu[0];
         
@@ -93,7 +91,7 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         self._arr_cb = np.array( [x_cb, y_cb, vx_cb, vy_cb], dtype = np.float32 );
         
         #Initialize a spacecraft object with the state of the environment
-        sc = Spacecraft( r, theta, r_dot, v_theta, mass );
+        sc = Spacecraft( r, theta, r_dot, v_theta, mass, C1, C2 );
         
         #Update the spacecraft in the environment
         self._spacecraft = sc;
@@ -197,7 +195,7 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         
         
         #solve ODE
-        solution = solve_ivp( sc.spacecraft_EOM_radial_2D_EB, t_span, y0, method='RK45', args=(params,) );
+        solution = solve_ivp( spacecraft_EOM_radial_2D_EB, t_span, y0, method='RK45', args=(params,) );
         
         #extract the final state vector from ODE solution (last column in y)
         y_final = (solution.y[:,-1]).astype(np.float32);
@@ -205,24 +203,13 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         #change in state vector
         delta_r = y_final - y0;
         
-        #state vector components
-        r           = y_final[0];
-        theta       = y_final[1];
-        r_dot       = y_final[2];
-        v_theta     = y_final[3];
-        mass        = y_final[4];
-        
         #update the state and elapsed time
-        self.elapsed_t = self.elapsed_t + self.step_size;
-        self._state[0] = r;
-        self._state[1] = theta;
-        self._state[2] = r_dot;
-        self._state[3] = v_theta;
-        self._state[4] = mass;
-        #self._state[5]  and self._state[6] are constant
+        self.elapsed_t  = self.elapsed_t + self.step_size;
+        self._state     = np.append(y_final, [mu,sma_target]);
+        #self._state[4]  and self._state[5] are constant
         
         #update the spacecraft object
-        sc.update_state(r, theta, r_dot, v_theta, mass);
+        sc.update_state(*y_final);
         
         #update the environment spacecraft object
         self._spacecraft = sc;
