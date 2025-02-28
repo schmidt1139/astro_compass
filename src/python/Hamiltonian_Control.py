@@ -23,11 +23,13 @@ class Hamiltonian_Controller_TBT:
         print(f"v_theta_0: {v_theta_0}");
         print(f"m_0: {m_0}");
     
-    def __init__(self, env: TwoBody_Orb2Orb_Transfer_Env, init_observation, init_info ):
+    def __init__(self, env: TwoBody_Orb2Orb_Transfer_Env, init_observation, 
+                 init_info, input_TOF ):
         
-        self.env = env;
-        self.init_observation = init_observation;
-        self.init_info = init_info;
+        self.env = env;                             #The Two body transfer gym environment
+        self.init_observation = init_observation;   #The initial state of the env
+        self.init_info = init_info;                 #Initial env info dict
+        self.input_TOF = input_TOF;                 #User input time of flight [s]
         print("Hamiltonian targeter created\n");
         
         self.extract_env_initial_conditions();

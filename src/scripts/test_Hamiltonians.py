@@ -30,10 +30,11 @@ if ( ("TwoBody_Orb2Orb_Transfer_Env-v0" in envs.registry.keys()) == False ):
 env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0");
 
 
-steps_per_traj = 1000;
 num_traj = 1;
 
-
+#The prescribed time of flight for the transfer trajectory [s]
+input_TOF = 1.1 * 365.25 * 24 * 60 * 60;
+steps_per_traj = np.ceil( input_TOF / env.unwrapped.step_size );
 
 
 
@@ -55,7 +56,8 @@ def test_Hamiltonian_Solution( env, num_trajectories, num_steps_per_traj ):
         init_observation, init_info = env.reset();
         
         #compute Hamiltonian Solution
-        H_controller = Hamiltonian_Controller_TBT(env, init_observation, init_info);
+        H_controller = Hamiltonian_Controller_TBT(env, init_observation, 
+                                                  init_info, input_TOF);
     
     
         while (steps < steps_per_traj):
