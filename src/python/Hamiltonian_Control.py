@@ -65,4 +65,37 @@ class Hamiltonian_Controller_TBT:
         self.extract_env_boundary_conditions();
         
         
-    
+    def shooting_iteration(self):
+
+        #suppy an initial guess for the co-states
+        lam_guess = self.arr_lam_0; 
+        
+        #construct full state vector at t=0
+        arr_full_y0 = np.hstack( (self.arr_y0, self.arr_lam_0) );
+        
+        #define time span
+        t_span = (0,self.input_TOF);
+        t_eval = np.linspace(*t_span, 1000);
+        
+        C1 = self.init_info["max_thrust"];
+        C2 = self.init_info["ISP"];
+        
+        #set up parameter array
+        params = np.array( [self.mu, C1, C2 ], dtype=np.float32 );
+        
+        #integrate forward in time
+        sol = solve_ivp(Hamiltonian_EOM_TBT, t_span, arr_full_y0, method='RK45', args=(params,), t_eval=t_eval);
+        
+        #extract final state
+        r_f_p, theta_f_p, r_dot_f_p, v_theta_f_p, m_f_p = sol.y[:5,-1];
+        
+        #pack final state into an array
+        y_f = [r_f_p, theta_f_p, r_dot_f_p, v_theta_f_p, m_f_p];
+        
+        residuals = np.array([
+        r_f_p - self.r_f,                       # Final radius constraint
+        r_dot_f_p - self.r_dot_f,               # Final radial velocity constraint
+        v_theta_f_p - self.v_theta_f,           # Final tangential velocity constraint
+        ])
+        
+        return residuals, y_f;
