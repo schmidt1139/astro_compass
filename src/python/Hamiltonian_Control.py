@@ -25,6 +25,7 @@ class Hamiltonian_Controller_TBT:
         self.v_theta_f      = v_theta_f;
         
         
+        
         print("Boundary Conditions");
         print(f"R0: {r_0}");
         print(f"theta_0: {theta_0}");
@@ -44,7 +45,18 @@ class Hamiltonian_Controller_TBT:
         self.input_TOF = input_TOF;                 #User input time of flight [s]
         print("Hamiltonian targeter created\n");
         
+        #extract the state vector boundary conditions from the problem
         self.extract_env_boundary_conditions();
+        
+        #supply heuristic initial guess for the shooting method for the co-states
+        lam_r_0         = -10^(-4);
+        lam_theta_0     = 0;
+        lam_r_dot_0     = 10^(-2);
+        lam_v_theta_0   = 1;
+        lam_m_0         = -10^(-3);
+        
+        self.arr_lam_0 = np.array([lam_r_0, lam_theta_0, lam_r_dot_0, lam_v_theta_0, 
+                              lam_m_0]);
         
         
     
