@@ -57,6 +57,8 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
             "e":self._keplerian_elements[1],
             "w":np.rad2deg( self._keplerian_elements[2] ),
             "theta":np.rad2deg( self._keplerian_elements[3] ),
+            "max_thrust":self._spacecraft.max_thrust,
+            "ISP": self._spacecraft.specific_impulse
             }
         
 
