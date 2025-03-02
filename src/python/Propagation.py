@@ -144,3 +144,85 @@ def spacecraft_EOM_f_2D_2B( self,t,y,params ):
         return dy.astype(np.float32);
 
 
+def Hamiltonian_EOM_TBT( t,y,params ):
+    
+    '''
+    Two-Body Orbit Transfer Hamiltonian ode propagation function
+    -----------------------------------------------------------------------------------
+    This is a set of equations of motion that govern a spacecraft in the 
+    2-dimensional problem using the polar form while performing optimal control
+    using a Hamiltonian control algorithm. The state vector consists of a 
+    spacecraft's planar state vector along with the associated co-states that 
+    must be propagated with the state variables as well.
+    
+    Inputs
+    -----------------------------------------------------------------------------------
+    t:      Elapsed time
+    y:      Input state vector (r,theta,r_dot,v_theta,m,lambda_r,
+                                lambda_theta,lambda_r_dot,lambda_v_theta,
+                                lambda_m)
+    params: The list of parameters
+    
+    Outputs
+    -----------------------------------------------------------------------------------
+    Derivatives for state vector dy
+    '''
+    
+    #get the set of parameters
+    params = params.astype(np.float32);
+    num_params = len(params);
+    
+    #check parameter length
+    if( num_params != 3 ):
+        raise Exception('Invalid number of parameters');
+        
+    #unpack the parameters
+    mu_cb = params[0];      #Central body gravitational parameter (km^3/s^2)
+    C1 = params[1];         #Maximum spacecraft thrust
+    C2 = params[2];         #Specific impulse
+    g0 = 9.80665;           #Gravity at sea level (m/s^2)
+    
+    #unpack the state vector
+    r, theta, r_dot, v_theta, m = y[:5];
+    lambda_r, lambda_theta, lambda_r_dot, lambda_v_theta, lambda_m = y[5:10];
+    
+    #calculate the optimal control actions
+    beta    = np.atan(lambda_r_dot/lambda_v_theta);
+    u       = - lambda_m * C1 / C2;
+    u       = u + C1 * ( lambda_r_dot * np.sin(beta) + lambda_v_theta * np.cos(beta) ) / m;
+    u       = np.clip(u, 0, 1);
+    
+    #state vector EOM
+    d_r         = r_dot;
+    d_theta     = v_theta / r;
+    d_r_dot     = v_theta**2 / r - mu_cb / r**2 + C1 / m * u * np.sin(beta);
+    d_v_theta   = - r_dot * v_theta / r + C1 / m * u * np.cos(beta);
+    d_m         = - C1 * u / g0 / C2; #kg/s
+    
+    #co-state vector EOM
+    d_lambda_r          = - 2 * lambda_r * mu_cb / r**3 + lambda_r_dot * v_theta**2 / r**2;
+    d_lambda_r          = d_lambda_r +  + lambda_v_theta*r_dot*v_theta / r**2;
+    d_lambda_theta      = 0;
+    d_lambda_r_dot      = - lambda_r + lambda_v_theta*v_theta/r;
+    d_lambda_v_theta    = - lambda_theta - 2*lambda_r_dot*v_theta/r + lambda_v_theta*r_dot/r;
+    d_lambda_m          = ( lambda_r_dot * C1 * u * np.sin(beta) + lambda_v_theta * C1 * u * np.cos(beta) ) / m**2;
+    
+    #initialize derivative vector
+    dy = np.zeros(10, dtype = np.float32 );
+    
+    #assign derivatives to output vector
+    dy[0] = d_r;
+    dy[1] = d_theta;
+    dy[2] = d_r_dot;
+    dy[3] = d_v_theta;
+    dy[4] = d_m;
+    dy[5] = d_lambda_r;
+    dy[6] = d_lambda_theta;
+    dy[7] = d_lambda_r_dot;
+    dy[8] = d_lambda_v_theta;
+    dy[9] = d_lambda_m;
+    
+    
+    return dy.astype(np.float32);
+    
+    
