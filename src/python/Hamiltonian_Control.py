@@ -1,4 +1,6 @@
 from TwoBody_Orb2Orb_Transfer_Env import *
+from Propagation import Hamiltonian_EOM_TBT
+import numpy as np;
 
 
 class Hamiltonian_Controller_TBT:
@@ -24,7 +26,21 @@ class Hamiltonian_Controller_TBT:
         self.r_dot_f        = r_dot_f;
         self.v_theta_f      = v_theta_f;
         
+        #spacecraft initial state
+        self.arr_y0         = np.array([r_0, theta_0, r_dot_0, v_theta_0, m_0]);
         
+        #supply heuristic initial guess for the shooting method for the co-states
+        lam_r_0         = -10**(-4);
+        lam_theta_0     = 0;
+        lam_r_dot_0     = 10**(-2);
+        lam_v_theta_0   = 1;
+        lam_m_0         = -10**(-3);
+        
+        #initial co-state vector
+        self.arr_lam_0 = np.array([lam_r_0, lam_theta_0, lam_r_dot_0, lam_v_theta_0, lam_m_0]);
+        
+        #mu value
+        self.mu = mu;
         
         print("Boundary Conditions");
         print(f"R0: {r_0}");
@@ -47,16 +63,6 @@ class Hamiltonian_Controller_TBT:
         
         #extract the state vector boundary conditions from the problem
         self.extract_env_boundary_conditions();
-        
-        #supply heuristic initial guess for the shooting method for the co-states
-        lam_r_0         = -10^(-4);
-        lam_theta_0     = 0;
-        lam_r_dot_0     = 10^(-2);
-        lam_v_theta_0   = 1;
-        lam_m_0         = -10^(-3);
-        
-        self.arr_lam_0 = np.array([lam_r_0, lam_theta_0, lam_r_dot_0, lam_v_theta_0, 
-                              lam_m_0]);
         
         
     
