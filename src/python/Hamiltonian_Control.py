@@ -1,7 +1,7 @@
 from TwoBody_Orb2Orb_Transfer_Env import *
 from Propagation import Hamiltonian_EOM_TBT
+from scipy.optimize import root
 import numpy as np;
-
 
 class Hamiltonian_Controller_TBT:
     
@@ -65,17 +65,18 @@ class Hamiltonian_Controller_TBT:
         self.extract_env_boundary_conditions();
         
         
-    def shooting_iteration(self):
-
-        #suppy an initial guess for the co-states
-        lam_guess = self.arr_lam_0; 
+    def shooting_iteration(self, lam_guess):
         
         #construct full state vector at t=0
-        arr_full_y0 = np.hstack( (self.arr_y0, self.arr_lam_0) );
+        arr_full_y0 = np.hstack( (self.arr_y0, lam_guess) );
         
         #define time span
         t_span = (0,self.input_TOF);
         t_eval = np.linspace(*t_span, 1000);
+        
+        #prescribed boundary conditions for lambda_m and lambda_theta
+        lam_m_f = -1;
+        lam_theta_f = lam_guess[1]; #lambda theta isn't changing, so value should be init guess
         
         C1 = self.init_info["max_thrust"];
         C2 = self.init_info["ISP"];
@@ -89,6 +90,9 @@ class Hamiltonian_Controller_TBT:
         #extract final state
         r_f_p, theta_f_p, r_dot_f_p, v_theta_f_p, m_f_p = sol.y[:5,-1];
         
+        #extract final co-state
+        lam_r_f_p, lam_theta_f_p, lam_r_dot_f_p, lam_v_theta_f_p, lam_m_f_p = sol.y[5:10,-1];
+        
         #pack final state into an array
         y_f = [r_f_p, theta_f_p, r_dot_f_p, v_theta_f_p, m_f_p];
         
@@ -96,6 +100,28 @@ class Hamiltonian_Controller_TBT:
         r_f_p - self.r_f,                       # Final radius constraint
         r_dot_f_p - self.r_dot_f,               # Final radial velocity constraint
         v_theta_f_p - self.v_theta_f,           # Final tangential velocity constraint
+        lam_theta_f_p - lam_theta_f,            # Co-state for theta shouldn't change
+        lam_m_f_p - lam_m_f                     # Final mass co-state should be -1
         ])
         
-        return residuals, y_f;
+        return residuals;
+    
+    def hamiltonian_root_finder(self):
+        
+        lam_guess_0 = self.arr_lam_0;
+        
+        lam_sol = root( self.shooting_iteration, lam_guess_0, method='lm' );
+        
+        # Check if the solution was successful
+        if lam_sol.success:
+            lam_solution = lam_sol.x
+        else:
+            raise Exception("Solver failed:", lam_sol.message)
+        
+        return lam_solution;
+            
+        
+        
+        
+        
+        
