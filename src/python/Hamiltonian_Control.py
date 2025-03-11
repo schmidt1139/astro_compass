@@ -114,16 +114,12 @@ class Hamiltonian_Controller_TBT:
         arr_full_y0 = np.hstack( (self.arr_y0_nd, lam_guess_scaled) );
         
         #define time span
-        t_span = (0,self.input_TOF);
         t_span = (0,self.input_TOF_nd);
         t_eval = np.linspace(*t_span, 1000);
         
         #prescribed boundary conditions for lambda_m and lambda_theta
         lam_m_f = 0.0;
         lam_theta_f = lam_guess[1]; #lambda theta isn't changing, so value should be init guess
-        
-        C1 = self.init_info["max_thrust"];
-        C2 = self.init_info["ISP"];
         
         #set up parameter array
         params = np.array( [self.mu_nd, self.C1_nd, self.C2_nd ], dtype=np.float32 );
@@ -183,7 +179,6 @@ class Hamiltonian_Controller_TBT:
         
         lam_guess_0 = self.arr_lam_0;
         
-        lam_sol = root( self.shooting_iteration, lam_guess_0, method='lm' );
         
         # Check if the solution was successful
         if lam_sol.success:
