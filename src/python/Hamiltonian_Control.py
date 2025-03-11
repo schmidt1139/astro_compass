@@ -70,8 +70,6 @@ class Hamiltonian_Controller_TBT:
         #initial co-state vector
         self.arr_lam_0 = np.array([lam_r_0, lam_theta_0, lam_r_dot_0, lam_v_theta_0, lam_m_0]);
         
-        #mu value
-        self.mu = mu;
         
         print("Boundary Conditions");
         print(f"R0: {r_0}");
