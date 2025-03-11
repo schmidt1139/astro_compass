@@ -74,14 +74,23 @@ class Hamiltonian_Controller_TBT:
         self.scale_factors = [1, 1, 1, 1, 1];
         
         print("Boundary Conditions");
-        print(f"R0: {r_0}");
-        print(f"theta_0: {theta_0}");
-        print(f"r_dot_0: {r_dot_0}");
-        print(f"v_theta_0: {v_theta_0}");
-        print(f"m_0: {m_0}");
-        print(f"r_f: {r_f}");
-        print(f"r_dot_f: {r_dot_f}");
-        print(f"v_theta_f: {v_theta_f}");
+        print(f"R0 nd: {self.r_0_nd}");
+        print(f"theta_0 nd: {self.theta_0_nd}");
+        print(f"r_dot_0 nd: {self.r_dot_0_nd}");
+        print(f"v_theta_0 nd: {self.v_theta_0_nd}");
+        print(f"m_0 nd: {self.m_0_nd}");
+        print(f"t_star: {self.t_star}");
+        print("");
+        print(f"r_f nd: {self.r_f_nd}");
+        print(f"r_dot_f nd: {self.r_dot_f_nd}");
+        print(f"v_theta_f nd: {self.v_theta_f_nd}");
+        print("");
+        print("C1 nd: ", self.C1_nd );
+        print("C2 nd: ", self.C2_nd );
+        print("");
+        print("Initial co-state vector guess");
+        print(self.arr_lam_0);
+        print("\n\n\n");
     
     def __init__(self, env: TwoBody_Orb2Orb_Transfer_Env, init_observation, 
                  init_info, input_TOF ):
