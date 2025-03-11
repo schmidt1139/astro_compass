@@ -126,27 +126,56 @@ class Hamiltonian_Controller_TBT:
         C2 = self.init_info["ISP"];
         
         #set up parameter array
-        params = np.array( [self.mu, C1, C2 ], dtype=np.float32 );
+        params = np.array( [self.mu_nd, self.C1_nd, self.C2_nd ], dtype=np.float32 );
         
         #integrate forward in time
-        sol = solve_ivp(Hamiltonian_EOM_TBT, t_span, arr_full_y0, method='RK45', args=(params,), t_eval=t_eval);
+        sol = solve_ivp(Hamiltonian_EOM_TBT_nd, t_span, arr_full_y0, method='RK45', args=(params,), t_eval=t_eval );
         
         #extract final state
-        r_f_p, theta_f_p, r_dot_f_p, v_theta_f_p, m_f_p = sol.y[:5,-1];
+        r_f_p_nd, theta_f_p, r_dot_f_p_nd, v_theta_f_p_nd, m_f_p_nd = sol.y[:5,-1];
         
         #extract final co-state
-        lam_r_f_p, lam_theta_f_p, lam_r_dot_f_p, lam_v_theta_f_p, lam_m_f_p = sol.y[5:10,-1];
+        lam_r_f_p, lam_theta_f_p, lam_r_dot_f_p, lam_theta_f_p_nd, lam_m_f_p_nd = sol.y[5:10,-1];
         
         #pack final state into an array
-        y_f = [r_f_p, theta_f_p, r_dot_f_p, v_theta_f_p, m_f_p];
+        y_f = [r_f_p_nd, theta_f_p, r_dot_f_p_nd, v_theta_f_p_nd, m_f_p_nd];
+        
+        #scale final co-state for mass
+        lam_m_f_p_scaled = lam_m_f_p_nd;
         
         residuals = np.array([
-        r_f_p - self.r_f,                       # Final radius constraint
-        r_dot_f_p - self.r_dot_f,               # Final radial velocity constraint
-        v_theta_f_p - self.v_theta_f,           # Final tangential velocity constraint
-        lam_theta_f_p - lam_theta_f,            # Co-state for theta shouldn't change
-        lam_m_f_p - lam_m_f                     # Final mass co-state should be -1
+        r_f_p_nd - self.r_f_nd,                 # Final radius constraint
+        r_dot_f_p_nd - self.r_dot_f_nd,         # Final radial velocity constraint
+        v_theta_f_p_nd - self.v_theta_f_nd,     # Final tangential velocity constraint
+        lam_theta_f_p_nd - lam_theta_f,            # Co-state for theta shouldn't change
+        lam_m_f_p_scaled - lam_m_f              # Final mass co-state should be 0
         ])
+        
+        # print("r_f_p_nd: ", r_f_p_nd);
+        # print("theta_f_p_nd", theta_f_p);
+        # print("r_dot_f_p_nd: ", r_dot_f_p_nd);
+        # print("v_theta_f_p_nd: ", v_theta_f_p_nd);
+        # print("m_f_p_nd: ", m_f_p_nd);
+        # print("");
+        # print("lam_r_f_p: ", lam_r_f_p);
+        # print("lam_theta_f_p: ", lam_theta_f_p);
+        # print("lam_r_dot_f_p: ", lam_r_dot_f_p);
+        # print("lam_v_theta_f_p: ", lam_v_theta_f_p);
+        # print("lam_m_f_p: ", lam_m_f_p);
+        # print("");
+        # print("lam_theta_f: ", lam_theta_f);
+        # print("lam_m_f: ", lam_m_f );
+        # print("")
+        #print("Res norm: ", np.linalg.norm(residuals));
+        #print("");
+        # print("Lam guess", lam_guess );
+        # print("Residual lambda m: ", residuals[4] );
+        # print("");
+        print(lam_guess);
+        print(residuals);
+        print("");
+        # print("Res norm: ", np.linalg.norm(residuals));
+        # print("\n\n\n");
         
         return residuals;
     
