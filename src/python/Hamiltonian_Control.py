@@ -1,12 +1,14 @@
 from TwoBody_Orb2Orb_Transfer_Env import *
 from Propagation import Hamiltonian_EOM_TBT
 from scipy.optimize import root
+from scipy.optimize import fsolve
 import numpy as np;
 
 class Hamiltonian_Controller_TBT:
     
     def extract_env_boundary_conditions(self):
         
+        #extract initial conditions
         r_0         = self.init_observation[0];
         theta_0     = self.init_observation[1];
         r_dot_0     = self.init_observation[2];
@@ -17,16 +19,12 @@ class Hamiltonian_Controller_TBT:
         r_dot_f     = 0.0;
         v_theta_f   = (mu/r_f) ** 0.5;
         
-        self.r_0            = r_0;
-        self.theta_0        = theta_0;
-        self.r_dot_0        = r_dot_0;
-        self.v_theta_0      = v_theta_0;
-        self.m_0            = m_0;
-        self.r_f            = r_f;
-        self.r_dot_f        = r_dot_f;
-        self.v_theta_f      = v_theta_f;
-        
-        #spacecraft initial state
+        #constants
+        self.sma_Earth      = 149598023; #Earth SMA in km
+        self.mu             = mu; #gravitational parameter in km^3/s^2
+        self.t_star         = ( self.sma_Earth**3 / self.mu ) ** 0.5; #non-dimensional time in s
+        self.m_star         = m_0; #kg
+        g0                  = 9.80665 / 1000; #km/s^2
         self.arr_y0         = np.array([r_0, theta_0, r_dot_0, v_theta_0, m_0]);
         
         #supply heuristic initial guess for the shooting method for the co-states
