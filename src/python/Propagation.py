@@ -168,6 +168,9 @@ def Hamiltonian_EOM_TBT( t,y,params ):
     Derivatives for state vector dy
     '''
     
+    #Scale factors for non-physical parameters
+    scale_factor_lambda_m = 1;
+    
     #get the set of parameters
     params = params.astype(np.float32);
     num_params = len(params);
@@ -185,6 +188,9 @@ def Hamiltonian_EOM_TBT( t,y,params ):
     #unpack the state vector
     r, theta, r_dot, v_theta, m = y[:5];
     lambda_r, lambda_theta, lambda_r_dot, lambda_v_theta, lambda_m = y[5:10];
+    
+    #scale variables as needed
+    lambda_m = lambda_m * scale_factor_lambda_m;
     
     #calculate the optimal control actions
     beta    = np.atan(lambda_r_dot/lambda_v_theta);
