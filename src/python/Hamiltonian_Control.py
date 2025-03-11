@@ -56,7 +56,9 @@ class Hamiltonian_Controller_TBT:
         self.C2_nd = C2 * g0 * self.velocity_nd_f;
         self.mu_nd = 1.0;
         
+        #spacecraft initial state vectors (raw and scaled)
         self.arr_y0         = np.array([r_0, theta_0, r_dot_0, v_theta_0, m_0]);
+        self.arr_y0_nd      = np.array([self.r_0_nd, self.theta_0_nd, self.r_dot_0_nd, self.v_theta_0_nd, self.m_0_nd]);
         
         #supply heuristic initial guess for the shooting method for the co-states
         lam_r_0         = -10**(-4);
