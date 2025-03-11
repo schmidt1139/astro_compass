@@ -199,8 +199,27 @@ class Hamiltonian_Controller_TBT:
         
         return lam_solution;
             
+    def hamiltonian_solution_finder(self):
+       
+        #determine initial states for co-states
+        self.arr_lam_sol = self.hamiltonian_root_finder();
+        
+        print("Initial co-state values found");
+        
+        #construct full state vector at t=0 with converged co-states
+        arr_full_y0 = np.hstack( (self.arr_y0, self.arr_lam_sol) );
+        
+        #define time span
+        t_span          = (0,self.input_TOF_nd);
+        t_eval = np.linspace(*t_span, 1000);
+        
+        #set up parameter array
+        params = np.array( [self.mu_nd, self.C1_nd, self.C2_nd ], dtype=np.float32 );
+        
+        #integrate forward in time
+        sol = solve_ivp(Hamiltonian_EOM_TBT, t_span, arr_full_y0, method='RK45', args=(params,), t_eval=t_eval );
+        
+        #extract the solution arrays
         
         
-        
-        
-        
+        return sol;
