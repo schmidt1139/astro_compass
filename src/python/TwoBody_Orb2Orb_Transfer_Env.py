@@ -75,8 +75,8 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         v_theta     = 24.67175;         #Tangential velocity
         mass        = 3366.0;           #Assumed spacecraft total mass
         sma_target  = 149598023;        #Earth SMA
-        C1          = 1.33/1000;        #Spacecraft max thrust
-        C2          = 3872.0;           #Spacecraft specific impulse
+        C1          = 1.33/1000;        #Spacecraft max thrust (in kN)
+        C2          = 3872.0;           #Spacecraft specific impulse (s)
         
         mu          = self.arr_mu[0];
         
