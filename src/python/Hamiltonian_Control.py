@@ -179,12 +179,23 @@ class Hamiltonian_Controller_TBT:
         
         lam_guess_0 = self.arr_lam_0;
         
+        #lam_sol, info, ier, msg = fsolve(self.shooting_iteration, lam_guess_0, full_output=1);
+        #lam_sol = root(self.shooting_iteration, lam_guess_0, method='lm');
+        lam_sol = root(self.shooting_iteration, lam_guess_0 );
+        fjac = lam_sol.fjac;
+        cn = np.linalg.cond(fjac);
         
         # Check if the solution was successful
-        if lam_sol.success:
-            lam_solution = lam_sol.x
+        if (lam_sol.success):
+            print(lam_sol);
+            print(fjac);
+            print(cn);
+            lam_solution = lam_sol.x;
         else:
-            raise Exception("Solver failed:", lam_sol.message)
+            print(lam_sol);
+            print(fjac);
+            print(cn);
+            raise Exception("Solver failed:");
         
         return lam_solution;
             
