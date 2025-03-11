@@ -69,7 +69,39 @@ class Ephemeris():
         ax.legend();
         ax.grid(False);
         
+        self.fig_xy = fig;
+        self.ax_xy = ax;
+        
         return fig;
+    
+    def plot_xy_ref_orbit(self, orbit_sma, label ):
+        
+        fig = self.fig_xy;
+        ax = self.ax_xy;
+        
+        arr_x_ref = np.array([]);
+        arr_y_ref = np.array([]);
+        
+        pts = 1000;
+        
+        #plot central body
+        for i in range(0,pts):
+            
+            theta = 2*np.pi*i / pts;
+            x_ref = orbit_sma * np.cos(theta);
+            y_ref = orbit_sma * np.sin(theta);
+            
+            arr_x_ref = np.append( arr_x_ref, x_ref);
+            arr_y_ref = np.append( arr_y_ref, y_ref);
+            
+        
+        ax.plot( arr_x_ref, arr_y_ref, label=label, linestyle='dashed' );
+        ax.legend(loc='upper left');
+        
+        self.fig_xy = fig;
+        self.ax_xy = ax;
+        
+        return self.fig_xy;
         
         
         #end def __init__(self):
