@@ -180,9 +180,9 @@ def Hamiltonian_EOM_TBT( t,y,params ):
         raise Exception('Invalid number of parameters');
         
     #unpack the parameters
-    mu_cb = params[0];      #Central body gravitational parameter (km^3/s^2)
-    C1 = params[1];         #Maximum spacecraft thrust
-    C2 = params[2];         #Specific impulse
+    mu_cb = params[0];      #Central body gravitational parameter (m^3/s^2)
+    C1 = params[1];         #Maximum spacecraft thrust in N
+    C2 = params[2];         #Specific impulse (s)
     g0 = 9.80665;           #Gravity at sea level (m/s^2)
     
     #unpack the state vector
