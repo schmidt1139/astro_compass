@@ -70,6 +70,8 @@ class Hamiltonian_Controller_TBT:
         #initial co-state vector
         self.arr_lam_0 = np.array([lam_r_0, lam_theta_0, lam_r_dot_0, lam_v_theta_0, lam_m_0]);
         
+        #set scale factors
+        self.scale_factors = [1, 1, 1, 1, 1];
         
         print("Boundary Conditions");
         print(f"R0: {r_0}");
@@ -96,8 +98,11 @@ class Hamiltonian_Controller_TBT:
         
     def shooting_iteration(self, lam_guess):
         
+        #scale lambdas as necessary
+        lam_guess_scaled = lam_guess*self.scale_factors;
+        
         #construct full state vector at t=0
-        arr_full_y0 = np.hstack( (self.arr_y0, lam_guess) );
+        arr_full_y0 = np.hstack( (self.arr_y0_nd, lam_guess_scaled) );
         
         #define time span
         t_span = (0,self.input_TOF);
