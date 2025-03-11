@@ -115,6 +115,7 @@ class Hamiltonian_Controller_TBT:
         
         #define time span
         t_span = (0,self.input_TOF);
+        t_span = (0,self.input_TOF_nd);
         t_eval = np.linspace(*t_span, 1000);
         
         #prescribed boundary conditions for lambda_m and lambda_theta
