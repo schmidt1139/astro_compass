@@ -119,7 +119,7 @@ class Hamiltonian_Controller_TBT:
         t_eval = np.linspace(*t_span, 1000);
         
         #prescribed boundary conditions for lambda_m and lambda_theta
-        lam_m_f = -1;
+        lam_m_f = 0.0;
         lam_theta_f = lam_guess[1]; #lambda theta isn't changing, so value should be init guess
         
         C1 = self.init_info["max_thrust"];
