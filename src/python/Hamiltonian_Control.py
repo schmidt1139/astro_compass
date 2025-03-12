@@ -48,7 +48,7 @@ class Hamiltonian_Controller_TBT:
         self.input_TOF_nd   = self.input_TOF * self.time_nd_f;
         
         #Parameters
-        C1 = self.init_info["max_thrust"] * 1000; #max thrust in N
+        C1 = self.init_info["max_thrust"]; #max thrust in kN
         C2 = self.init_info["ISP"]; #specific impulse of thruster in seconds
         
         #Non-Dimensionalize Parameters
