@@ -212,7 +212,7 @@ def test_non_dim_propagation( env, num_trajectories, num_steps_per_traj ):
     print(f"m_0 nd: {m_0_nd}");
     print("");
     print("Parameters (nd)");
-    print(f"C1_nd nd: {C1_nd}");
+    print(f"C1_nd: {C1_nd}");
     print(f"C2: {C2}");
     print(f"v_e: {ve}");
     print(f"ve_nd: {ve_nd}");
