@@ -61,11 +61,11 @@ class Hamiltonian_Controller_TBT:
         self.arr_y0_nd      = np.array([self.r_0_nd, self.theta_0_nd, self.r_dot_0_nd, self.v_theta_0_nd, self.m_0_nd]);
         
         #supply heuristic initial guess for the shooting method for the co-states
-        lam_r_0         = -10**(-4);
-        lam_theta_0     = 0;
-        lam_r_dot_0     = 10**(-2);
-        lam_v_theta_0   = 1;
-        lam_m_0         = -10**(-3);
+        lam_r_0         = 0.1;
+        lam_theta_0     = 0.1;
+        lam_r_dot_0     = 0.1;
+        lam_v_theta_0   = 0.1;
+        lam_m_0         = -0.1;
         
         #initial co-state vector
         self.arr_lam_0 = np.array([lam_r_0, lam_theta_0, lam_r_dot_0, lam_v_theta_0, lam_m_0]);
