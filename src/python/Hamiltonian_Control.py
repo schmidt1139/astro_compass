@@ -204,14 +204,18 @@ class Hamiltonian_Controller_TBT:
         return lam_solution;
             
     def hamiltonian_solution_finder(self):
+        
        
         #determine initial states for co-states
         self.arr_lam_sol = self.hamiltonian_root_finder();
         
-        print("Initial co-state values found");
+        print("Initial co-state values found...");
         
-        #construct full state vector at t=0 with converged co-states
-        arr_full_y0 = np.hstack( (self.arr_y0, self.arr_lam_sol) );
+        #scale lambdas as necessary
+        lam_sol_scaled = self.arr_lam_sol*self.scale_factors;
+        
+        #construct full state vector at t=0
+        arr_full_y0 = np.hstack( (self.arr_y0_nd, lam_sol_scaled) );
         
         #define time span
         t_span          = (0,self.input_TOF_nd);
