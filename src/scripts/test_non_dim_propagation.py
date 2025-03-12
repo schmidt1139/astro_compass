@@ -195,6 +195,15 @@ def test_non_dim_propagation( env, num_trajectories, num_steps_per_traj ):
     ax.legend();
     
     fig, ax = plot.subplots(figsize=(6, 6));
+    ax.plot( arr_time, arr_r_nd, label="r" );
+    ax.plot( arr_time, arr_theta_nd, label="theta" );
+    ax.plot( arr_time, arr_r_dot_nd, label="r dot" );
+    ax.plot( arr_time, arr_v_theta_nd, label="v theta" );
+    ax.plot( arr_time, arr_m_nd, label="m" );
+    ax.set_title("Non-Dim States over time");   
+    ax.legend();
+    
+    fig, ax = plot.subplots(figsize=(6, 6));
     ax.plot( arr_time, arr_m_nd );
     ax.set_title("Mass Fraction over time");  
     
