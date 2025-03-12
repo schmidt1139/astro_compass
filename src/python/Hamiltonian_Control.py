@@ -127,6 +127,10 @@ class Hamiltonian_Controller_TBT:
         #integrate forward in time
         sol = solve_ivp(Hamiltonian_EOM_TBT_nd, t_span, arr_full_y0, method='RK45', args=(params,), t_eval=t_eval );
         
+        if ( sol.status == -1 ):
+            print(sol.message);
+            raise Exception("Integration failed");
+        
         #extract final state
         r_f_p_nd, theta_f_p, r_dot_f_p_nd, v_theta_f_p_nd, m_f_p_nd = sol.y[:5,-1];
         
@@ -219,7 +223,9 @@ class Hamiltonian_Controller_TBT:
         #integrate forward in time
         sol = solve_ivp(Hamiltonian_EOM_TBT, t_span, arr_full_y0, method='RK45', args=(params,), t_eval=t_eval );
         
-        #extract the solution arrays
+        if ( sol.status == -1 ):
+            print(sol.message);
+            raise Exception("Integration failed");
         
         
         return sol;

@@ -111,6 +111,11 @@ def test_non_dim_propagation( env, num_trajectories, num_steps_per_traj ):
     #integrate forward in time
     sol = solve_ivp(Hamiltonian_EOM_TBT_nd, t_span, arr_full_y0, method='RK45', args=(params,), t_eval=t_eval );
     
+    
+    if ( sol.status == -1 ):
+        print(sol.message);
+        raise Exception("Integration failed");
+    
     arr_time    = sol.t;
     variables   = sol.y;
     arr_r_nd    = variables[0];
