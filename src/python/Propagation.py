@@ -365,3 +365,91 @@ def Hamiltonian_EOM_TBT_nd( t,y,params ):
         
     
     return dy.astype(np.float32);
+
+
+def Hamiltonian_EOM_TBT_v2( t,state,params ):
+    
+    '''
+    Two-Body Orbit Transfer Hamiltonian ode propagation function
+    -----------------------------------------------------------------------------------
+    This is a set of equations of motion that govern a spacecraft in the 
+    2-dimensional problem using the polar form while performing optimal control
+    using a Hamiltonian control algorithm. The state vector consists of a 
+    spacecraft's planar state vector along with the associated co-states that 
+    must be propagated with the state variables as well.
+    
+    Inputs
+    -----------------------------------------------------------------------------------
+    t:      Elapsed time
+    y:      Input state vector (x,y,vx,vy,m,lambda_x, lambda_y,lambda_vx,
+                                lambda_vy, lambda_m)
+    params: The list of parameters
+    
+    Outputs
+    -----------------------------------------------------------------------------------
+    Derivatives for state vector dy
+    '''
+    
+    #get the number of parameters
+    num_params = len(params);
+    
+    #check parameter length
+    if( num_params != 7 ):
+        raise Exception('Invalid number of parameters');
+    
+    #unpack the parameters
+    mu      = params[0];     #gravitational parameter of the central body
+    T_max   = params[1];     #max thrust of the spacecraft
+    ISP     = params[2];     #spacecraft specific impulse
+    l_star  = params[3];     #characteristic length
+    m_star  = params[4];     #characteristic mass
+    t_star  = params[5];     #characteristic time
+    g0      = params[6];     #acceleration at Earth surface
+    
+    
+    #unpack the state vector
+    x, y, vx, vy, m = state[:5];
+    
+    #unpack the co-state vector
+    lam_x, lam_y, lam_vx, lam_vy, lam_m = state[5:10];
+    
+    #create vectors
+    r_vec = np.array([x, y]);
+    v_vec = np.array([vx, vy]);
+    lam_r_vec = np.array([lam_x, lam_y]);
+    lam_v_vec = np.array([lam_vx, lam_vy]);
+    
+    #Derivative calculation preliminaries
+    r               = np.linalg.norm( r_vec );
+    r_dot_lam_v     = np.dot(r_vec, lam_v_vec );
+    lam_v_mag       = np.linalg.norm( lam_v_vec );
+    
+    #Determine control--------------------------------------------------------
+    #Alpha vector is opposite of ideal thrust direction - lambda v unit vector
+    alpha_vec = - lam_v_vec / lam_v_mag;
+    
+    #Switching function
+    rho = lam_m + ISP * g0 * lam_v_mag / m - 1;
+    
+    #Determine u based on switching function
+    if ( rho >= 0 ):
+        u = 1.0;
+    else:
+        u = 0.0;
+    
+    #state vector derivative calculations
+    dr_vec = v_vec;
+    dv_vec = - mu / r**3 * r_vec + u * T_max / m * alpha_vec;
+    dm  = - T_max * u / ISP / g0;
+    
+    #co-state vector derivatives
+    d_lam_r_vec     = mu / r**3 * lam_v_vec - 3 * mu * r_dot_lam_v / r**5 * r_vec;
+    d_lam_v_vec     = - lam_r_vec;
+    d_lam_m         = - T_max * u / m**2 * lam_v_mag;
+    
+    #pack derivatives into output array
+    derivs = np.array( [ dr_vec[0], dr_vec[1], dv_vec[0], dv_vec[1], dm, 
+                       d_lam_r_vec[0], d_lam_r_vec[1], d_lam_v_vec[0], 
+                       d_lam_v_vec[1], d_lam_m ] );
+    
+    return derivs;
