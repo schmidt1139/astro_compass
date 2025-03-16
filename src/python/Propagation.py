@@ -316,7 +316,7 @@ def Hamiltonian_EOM_TBT_nd( t,y,params ):
     d_theta     = v_theta / r;
     d_r_dot     = v_theta**2 / r - mu_cb / r**2 + C1 / m * u * np.sin(beta);
     d_v_theta   = - r_dot * v_theta / r + C1 / m * u * np.cos(beta);
-    d_m         = - C1 * u / C2;
+    d_m         = - C1 * u / C2 / g0;
     
     #co-state vector EOM
     d_lambda_r          = - 2 * lambda_r_dot * mu_cb / r**3 + lambda_r_dot * v_theta**2 / r**2;
