@@ -193,7 +193,7 @@ def Hamiltonian_EOM_TBT( t,y,params ):
     lambda_m = lambda_m * scale_factor_lambda_m;
     
     #calculate the optimal control actions
-    beta    = np.atan(lambda_r_dot/lambda_v_theta);
+    beta    = np.atan2(lambda_r_dot,lambda_v_theta);
     u       = - lambda_m * C1 / C2;
     u       = u + C1 * ( lambda_r_dot * np.sin(beta) + lambda_v_theta * np.cos(beta) ) / m;
     u       = np.clip(u, 0, 1);
@@ -288,7 +288,7 @@ def Hamiltonian_EOM_TBT_nd( t,y,params ):
     lambda_m = lambda_m * scale_factor_lambda_m;
     
     #calculate the optimal control actions
-    beta    = np.atan( lambda_r_dot/lambda_v_theta );
+    beta    = np.atan2( lambda_r_dot, lambda_v_theta );
     u       = - lambda_m * C1 / C2;
     u       = u + C1 * ( lambda_r_dot * np.sin(beta) + lambda_v_theta * np.cos(beta) ) / m;
     u       = np.clip(u, 0, 1);
