@@ -44,6 +44,11 @@ class Ephemeris():
         arr_x_cb = np.array([]);
         arr_y_cb = np.array([]);
         
+        max_x = max(abs(self.arr_x));
+        max_y = max(abs(self.arr_y));
+        
+        max_lim = 1.1* max( [max_x,max_y] );
+        
         pts = 1000;
         
         #plot central body
@@ -66,6 +71,8 @@ class Ephemeris():
         ax.set_title("Trajectory");
         ax.set_xlabel("X [km]");
         ax.set_ylabel("Y [km]");
+        ax.set_xlim([-max_lim,max_lim]);
+        ax.set_ylim([-max_lim,max_lim]);
         ax.legend();
         ax.grid(False);
         
