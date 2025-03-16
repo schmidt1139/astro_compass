@@ -271,18 +271,21 @@ def Hamiltonian_EOM_TBT_nd( t,y,params ):
     params = params.astype(np.float32);
     num_params = len(params);
     
+    
+    
     #check parameter length
-    if( num_params != 3 ):
+    if( num_params != 6 ):
         raise Exception('Invalid number of parameters');
         
     #unpack the parameters
-    mu_cb = params[0];      #Central body gravitational parameter (unity)
-    C1 = params[1];         #Maximum spacecraft thrust non-dim
-    C2 = params[2];         #Non-dim effective exhaust velocity
+    mu_cb = params[0];      #Central body gravitational parameter
+    C1 = params[1];         #Maximum spacecraft thrust (N)
+    C2 = params[2];         #Specific impulse (s)
+    l_star = params[3];     #Characteristic length (m)
+    m_star = params[4];     #Characteristic mass (kg)
+    t_star = params[5];     #Characteristic time (s)
     
-    #unpack the state vector
-    r, theta, r_dot, v_theta, m = y[:5];
-    lambda_r, lambda_theta, lambda_r_dot, lambda_v_theta, lambda_m = y[5:10];
+    g0 = 9.80665;           #Acceleration at Earth surface (m/s^2)
     
     #scale variables as needed
     lambda_m = lambda_m * scale_factor_lambda_m;
