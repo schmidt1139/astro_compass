@@ -287,8 +287,23 @@ def Hamiltonian_EOM_TBT_nd( t,y,params ):
     
     g0 = 9.80665;           #Acceleration at Earth surface (m/s^2)
     
-    #scale variables as needed
-    lambda_m = lambda_m * scale_factor_lambda_m;
+    #unpack the state vector
+    r_nd, theta_nd, r_dot_nd, v_theta_nd, m_nd = y[:5];
+    lambda_r_nd, lambda_theta_nd, lambda_r_dot_nd, lambda_v_theta_nd, lambda_m_nd = y[5:10];
+    
+    #scale state vector
+    r       = r_nd * l_star;
+    theta   = theta_nd;
+    r_dot   = r_dot_nd * l_star / t_star;
+    v_theta = v_theta_nd * l_star / t_star;
+    m       = m_nd * m_star;
+    
+    #scale co-states
+    lambda_r        = lambda_r_nd * l_star;
+    lambda_theta    = lambda_theta_nd;
+    lambda_r_dot    = lambda_r_dot_nd * l_star / t_star;
+    lambda_v_theta  = lambda_v_theta_nd * l_star / t_star;
+    lambda_m        = lambda_m_nd * m_star;
     
     #calculate the optimal control actions
     beta    = np.atan2( lambda_r_dot, lambda_v_theta );
@@ -316,17 +331,33 @@ def Hamiltonian_EOM_TBT_nd( t,y,params ):
     #initialize derivative vector
     dy = np.zeros(10, dtype = np.float32 );
     
+    #scale state vector for output
+    d_r_nd = d_r / l_star;
+    d_theta_nd = d_theta;
+    d_r_dot_nd = d_r_dot * t_star / l_star;
+    d_v_theta_nd = d_v_theta * t_star / l_star;
+    d_m_nd = d_m / m_star;
+    
+    #scale co-state vector
+    d_lambda_r_nd       = d_lambda_r / l_star;
+    d_lambda_theta_nd   = d_lambda_theta;
+    d_lambda_r_dot_nd   = d_lambda_r_dot * t_star / l_star;
+    d_lambda_v_theta_nd = d_lambda_v_theta * t_star / l_star;
+    d_lambda_m_nd       = d_lambda_m / m_star;
+    
     #assign derivatives to output vector
-    dy[0] = d_r;
-    dy[1] = d_theta;
-    dy[2] = d_r_dot;
-    dy[3] = d_v_theta;
-    dy[4] = d_m;
-    dy[5] = d_lambda_r;
-    dy[6] = d_lambda_theta;
-    dy[7] = d_lambda_r_dot;
-    dy[8] = d_lambda_v_theta;
-    dy[9] = d_lambda_m;
+    dy[0] = d_r_nd;
+    dy[1] = d_theta_nd;
+    dy[2] = d_r_dot_nd;
+    dy[3] = d_v_theta_nd;
+    dy[4] = d_m_nd;
+    dy[5] = d_lambda_r_nd;
+    dy[6] = d_lambda_theta_nd;
+    dy[7] = d_lambda_r_dot_nd;
+    dy[8] = d_lambda_v_theta_nd;
+    dy[9] = d_lambda_m_nd;
+    
+    dy = dy;
     
     #error handling
     if ( d_m > 0 ):
