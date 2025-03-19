@@ -71,19 +71,12 @@ class Hamiltonian_Controller_TBT:
         self.v_theta_f_nd   = v_theta_f / self.l_star * self.t_star;
         
         print("Boundary Conditions");
-        print(f"R0 nd: {self.r_0_nd}");
-        print(f"theta_0 nd: {self.theta_0_nd}");
-        print(f"r_dot_0 nd: {self.r_dot_0_nd}");
-        print(f"v_theta_0 nd: {self.v_theta_0_nd}");
-        print(f"m_0 nd: {self.m_0_nd}");
+        print(f"arr_y nd: {arr_y0_nd}");
         print(f"t_star: {self.t_star}");
         print("");
-        print(f"r_f nd: {self.r_f_nd}");
-        print(f"r_dot_f nd: {self.r_dot_f_nd}");
-        print(f"v_theta_f nd: {self.v_theta_f_nd}");
-        print("");
-        print("C1 nd: ", self.C1_nd );
-        print("C2 nd: ", self.C2_nd );
+        print(f"r_f_nd: {self.r_f_nd}");
+        print("r_dot_f_nd: ", self.r_dot_f_nd );
+        print("v_theta_f_nd: ", self.v_theta_f_nd );
         print("");
         print("Initial co-state vector guess");
         print(self.arr_lam_0);
