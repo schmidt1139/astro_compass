@@ -121,11 +121,6 @@ class Hamiltonian_Controller_TBT:
         #extract final co-state
         lam_x_f_nd_p, lam_y_f_nd_p, lam_vx_f_nd_p, lam_vy_f_nd_p, lam_m_f_nd_p = sol.y[5:10,-1];
         
-        #pack final state into an array
-        y_f = [r_f_p_nd, theta_f_p, r_dot_f_p_nd, v_theta_f_p_nd, m_f_p_nd];
-        
-        #scale final co-state for mass
-        lam_m_f_p_scaled = lam_m_f_p_nd;
         
         residuals = np.array([
         r_f_p_nd - self.r_f_nd,                 # Final radius constraint
