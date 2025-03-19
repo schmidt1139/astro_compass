@@ -29,8 +29,8 @@ class Hamiltonian_Controller_TBT:
         g0                  = 9.80665; #m/s^2
         
         #Parameters
-        C1 = self.init_info["max_thrust"]; #max thrust in kN
-        C2 = self.init_info["ISP"]; #specific impulse of thruster in seconds
+        T_max = self.init_info["max_thrust"]*1000; #max thrust in N
+        ISP = self.init_info["ISP"]; #specific impulse of thruster in seconds
         
         
         #spacecraft initial state vectors (raw and scaled)
