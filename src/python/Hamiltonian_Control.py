@@ -32,17 +32,17 @@ class Hamiltonian_Controller_TBT:
         T_max = self.init_info["max_thrust"]*1000; #max thrust in N
         ISP = self.init_info["ISP"]; #specific impulse of thruster in seconds
         
+        #supply heuristic initial guess for the shooting method for the co-states
+        lam_x0 = 1.0;
+        lam_y0 = 1.0;
+        lam_vx0 = -1.0;
+        lam_vy0 = 1.0;
+        lam_m0 = 1.0;
         
         #spacecraft initial state vectors (raw and scaled)
         self.arr_y0         = np.array([r_0, theta_0, r_dot_0, v_theta_0, m_0]);
         self.arr_y0_nd      = np.array([self.r_0_nd, self.theta_0_nd, self.r_dot_0_nd, self.v_theta_0_nd, self.m_0_nd]);
         
-        #supply heuristic initial guess for the shooting method for the co-states
-        lam_r_0         = 0.1;
-        lam_theta_0     = 0.1;
-        lam_r_dot_0     = 0.1;
-        lam_v_theta_0   = 0.1;
-        lam_m_0         = -0.1;
         
         #initial co-state vector
         self.arr_lam_0 = np.array([lam_r_0, lam_theta_0, lam_r_dot_0, lam_v_theta_0, lam_m_0]);
