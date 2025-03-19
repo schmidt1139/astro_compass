@@ -129,11 +129,11 @@ class Hamiltonian_Controller_TBT:
                                                                         vy_f_nd_p );
         
         residuals = np.array([
-        r_f_p_nd - self.r_f_nd,                 # Final radius constraint
-        r_dot_f_p_nd - self.r_dot_f_nd,         # Final radial velocity constraint
-        v_theta_f_p_nd - self.v_theta_f_nd,     # Final tangential velocity constraint
-        lam_theta_f_p_nd - lam_theta_f,            # Co-state for theta shouldn't change
-        lam_m_f_p_scaled - lam_m_f              # Final mass co-state should be 0
+        r_f_nd_p - self.r_f_nd,             # Final radius constraint
+        vr_f_nd_p - self.r_dot_f_nd,        # Final radial velocity constraint
+        vtheta_f_nd_p - self.v_theta_f_nd,  # Final tangential velocity constraint
+        0.0,                                # Co-state for theta shouldn't change
+        lam_m_f_nd_p - lam_m_f              # Final mass co-state should be 0
         ])
         
         # print("r_f_p_nd: ", r_f_p_nd);
