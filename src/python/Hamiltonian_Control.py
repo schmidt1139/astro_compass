@@ -158,6 +158,7 @@ class Hamiltonian_Controller_TBT:
         # print("");
         print(lam_guess);
         print(residuals);
+        print(np.linalg.norm(residuals));
         print("");
         # print("Res norm: ", np.linalg.norm(residuals));
         # print("\n\n\n");
