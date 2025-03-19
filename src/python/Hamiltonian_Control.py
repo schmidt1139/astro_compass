@@ -48,6 +48,27 @@ class Hamiltonian_Controller_TBT:
         
         #set scale factors
         self.scale_factors = [1, 1, 1, 1, 1];
+        #Non-Dimensionalize State Vector and Parameters
+        nd_outputs = non_dimensionalize( arr_y0, g0, mu, T_max, ISP, 
+                                        self.input_TOF, self.l_star, 
+                                        self.m_star, self.t_star );
+        
+        #Unpack state vector
+        arr_y0_nd, g0_nd, mu_nd, T_max_nd, ISP_nd, input_TOF_nd = nd_outputs;
+        self.arr_y0_nd = arr_y0_nd;
+        self.g0_nd = g0_nd;
+        self.mu_nd = mu_nd;
+        self.T_max_nd = T_max_nd;
+        self.ISP_nd = ISP_nd;
+        self.input_TOF_nd = input_TOF_nd;
+        
+        #Pack initial co-state vector
+        self.arr_lam_0 = np.array([lam_x0, lam_y0, lam_vx0, lam_vy0, lam_m0]);
+        
+        #Non-dimensionalize final boundary states
+        self.r_f_nd         = r_f / self.l_star;
+        self.r_dot_f_nd     = r_dot_f / self.l_star * self.t_star;
+        self.v_theta_f_nd   = v_theta_f / self.l_star * self.t_star;
         
         print("Boundary Conditions");
         print(f"R0 nd: {self.r_0_nd}");
