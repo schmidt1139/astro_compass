@@ -39,13 +39,12 @@ class Hamiltonian_Controller_TBT:
         lam_vy0 = 1.0;
         lam_m0 = 1.0;
         
-        #spacecraft initial state vectors (raw and scaled)
-        self.arr_y0         = np.array([r_0, theta_0, r_dot_0, v_theta_0, m_0]);
-        self.arr_y0_nd      = np.array([self.r_0_nd, self.theta_0_nd, self.r_dot_0_nd, self.v_theta_0_nd, self.m_0_nd]);
+        #convert initial state to cartesian
+        x0, y0, vx0, vy0 = polar_to_cartesian(r_0, theta_0, r_dot_0, v_theta_0 );
         
+        #Create initial state array
+        arr_y0 = np.array([x0, y0, vx0, vy0, m_0]);
         
-        #initial co-state vector
-        self.arr_lam_0 = np.array([lam_r_0, lam_theta_0, lam_r_dot_0, lam_v_theta_0, lam_m_0]);
         
         #set scale factors
         self.scale_factors = [1, 1, 1, 1, 1];
