@@ -121,6 +121,12 @@ class Hamiltonian_Controller_TBT:
         #extract final co-state
         lam_x_f_nd_p, lam_y_f_nd_p, lam_vx_f_nd_p, lam_vy_f_nd_p, lam_m_f_nd_p = sol.y[5:10,-1];
         
+        #convert state to polar coordinates
+        r_f_nd_p, theta_f_nd_p, vr_f_nd_p, vtheta_f_nd_p = cartesian_to_polar( 
+                                                                        x_f_nd_p,
+                                                                        y_f_nd_p,
+                                                                        vx_f_nd_p,
+                                                                        vy_f_nd_p );
         
         residuals = np.array([
         r_f_p_nd - self.r_f_nd,                 # Final radius constraint
