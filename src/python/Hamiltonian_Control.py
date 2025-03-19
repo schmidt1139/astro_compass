@@ -46,8 +46,6 @@ class Hamiltonian_Controller_TBT:
         arr_y0 = np.array([x0, y0, vx0, vy0, m_0]);
         
         
-        #set scale factors
-        self.scale_factors = [1, 1, 1, 1, 1];
         #Non-Dimensionalize State Vector and Parameters
         nd_outputs = non_dimensionalize( arr_y0, g0, mu, T_max, ISP, 
                                         self.input_TOF, self.l_star, 
@@ -94,14 +92,10 @@ class Hamiltonian_Controller_TBT:
         #extract the state vector boundary conditions from the problem
         self.extract_env_boundary_conditions();
         
-        
-    def shooting_iteration(self, lam_guess):
-        
-        #scale lambdas as necessary
-        lam_guess_scaled = lam_guess*self.scale_factors;
+    def shooting_iteration(self, lam_guess ):
         
         #construct full state vector at t=0
-        arr_full_y0 = np.hstack( (self.arr_y0_nd, lam_guess_scaled) );
+        arr_full_y0 = np.hstack( (self.arr_y0_nd, lam_guess) );
         
         #define time span
         t_span = (0,self.input_TOF_nd);
