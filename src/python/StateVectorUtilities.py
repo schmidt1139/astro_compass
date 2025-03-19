@@ -1,5 +1,24 @@
 import numpy as np;
 
+def polar_to_cartesian( r, theta, v_r, v_theta ):
+    
+    #cartesian state vector
+    x  = r * np.cos(theta);
+    y  = r * np.sin(theta);
+    vx = v_r * np.cos(theta) - v_theta * np.cos(np.pi/2 - theta);
+    vy = v_r * np.sin(theta) + v_theta * np.sin(np.pi/2 - theta);
+    
+    return x, y, vx, vy;
+
+def cartesian_to_polar( x, y, vx, vy ):
+    
+    r       = ( x**2 + y**2 )**0.5;
+    theta   = np.atan2( y, x );
+    v_r     = ( x * vx + y * vy ) / r;
+    v_theta = ( x * vy - y * vx ) / r;
+    
+    return r, theta, v_r, v_theta;
+
 def non_dimensionalize( arr_y, g0, mu, T_max, ISP, TOF, l_star, m_star, t_star ):
     
     #unpack the state vector
