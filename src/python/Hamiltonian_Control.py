@@ -22,11 +22,11 @@ class Hamiltonian_Controller_TBT:
         
         
         #constants
-        self.sma_Earth      = 149598023; #Earth SMA in km
-        self.mu             = mu; #gravitational parameter in km^3/s^2
-        self.t_star         = ( self.sma_Earth**3 / self.mu ) ** 0.5; #non-dimensional time in s
+        self.l_star         = 149598023 * 1000; #Earth SMA in m
+        self.mu             = mu; #gravitational parameter in m^3/s^2
+        self.t_star         = ( self.l_star**3 / self.mu ) ** 0.5; #non-dimensional time in s
         self.m_star         = m_0; #kg
-        g0                  = 9.80665 / 1000; #km/s^2
+        g0                  = 9.80665; #m/s^2
         
         #establish non-dimensionalization factors
         self.position_nd_f  = 1 / self.sma_Earth;
