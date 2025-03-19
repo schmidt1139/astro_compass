@@ -28,35 +28,10 @@ class Hamiltonian_Controller_TBT:
         self.m_star         = m_0; #kg
         g0                  = 9.80665; #m/s^2
         
-        #establish non-dimensionalization factors
-        self.position_nd_f  = 1 / self.sma_Earth;
-        self.velocity_nd_f  = self.t_star / self.sma_Earth;
-        self.mass_nd_f      = 1 / self.m_star;
-        self.time_nd_f      = 1 / self.t_star;
-        
-        #Non-dimensionalize initial states
-        self.r_0_nd         = r_0 * self.position_nd_f;
-        self.theta_0_nd     = theta_0;
-        self.r_dot_0_nd     = r_dot_0 * self.velocity_nd_f;
-        self.v_theta_0_nd   = v_theta_0 * self.velocity_nd_f;
-        self.m_0_nd         = m_0 * self.mass_nd_f;
-        
-        #Non-dimensionalize final state constraints
-        self.r_f_nd         = r_f * self.position_nd_f;
-        self.r_dot_f_nd     = r_dot_f * self.velocity_nd_f;
-        self.v_theta_f_nd   = v_theta_f * self.velocity_nd_f;
-        
-        #Non-Dim TOF
-        self.input_TOF_nd   = self.input_TOF * self.time_nd_f;
-        
         #Parameters
         C1 = self.init_info["max_thrust"]; #max thrust in kN
         C2 = self.init_info["ISP"]; #specific impulse of thruster in seconds
         
-        #Non-Dimensionalize Parameters
-        self.C1_nd = C1 * ( 1 / self.m_star ) * ( 1 / self.sma_Earth ) * self.t_star**2;
-        self.C2_nd = C2 * g0 * self.velocity_nd_f;
-        self.mu_nd = 1.0;
         
         #spacecraft initial state vectors (raw and scaled)
         self.arr_y0         = np.array([r_0, theta_0, r_dot_0, v_theta_0, m_0]);
