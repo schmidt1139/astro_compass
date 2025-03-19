@@ -197,25 +197,23 @@ class Hamiltonian_Controller_TBT:
         
         print("Initial co-state values found...");
         
-        #scale lambdas as necessary
-        lam_sol_scaled = self.arr_lam_sol*self.scale_factors;
         
         #construct full state vector at t=0
-        arr_full_y0 = np.hstack( (self.arr_y0_nd, lam_sol_scaled) );
+        arr_full_y0 = np.hstack( (self.arr_y0_nd, self.arr_lam_sol) );
         
         #define time span
         t_span          = (0,self.input_TOF_nd);
         t_eval = np.linspace(*t_span, 1000);
         
         #set up parameter array
-        params = np.array( [self.mu_nd, self.C1_nd, self.C2_nd ], dtype=np.float32 );
+        params = np.array( [self.mu_nd, self.T_max_nd, self.ISP_nd, 
+                            self.l_star, self.m_star, self.t_star, self.g0_nd ] );
         
         #integrate forward in time
-        sol = solve_ivp(Hamiltonian_EOM_TBT_nd, t_span, arr_full_y0, method='RK45', args=(params,), t_eval=t_eval );
+        sol = solve_ivp(Hamiltonian_EOM_TBT_v2, t_span, arr_full_y0, method='RK45', args=(params,), t_eval=t_eval );
         
         if ( sol.status == -1 ):
             print(sol.message);
             raise Exception("Integration failed");
-        
-        
+               
         return sol;
