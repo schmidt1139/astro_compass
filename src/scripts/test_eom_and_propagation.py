@@ -91,7 +91,7 @@ lam_m = 0.5;
 lam_guess = np.array( [lam_x0, lam_y0, lam_vx, lam_vy, lam_m ] );
 
 #initial state vector
-arr_y0 =  np.array( [x0, y0, r_dot_0, v_theta_0, m_0 ] );
+arr_y0 =  np.array( [x0, y0, vx0, vy0, m_0 ] );
 
 #non-dim state and parameters
 arr_y_nd, g0_nd, mu_nd, T_max_nd, ISP_nd, input_TOF_nd = non_dimensionalize( arr_y0, g0, mu, T_max, ISP, input_TOF, l_star, m_star, t_star );
