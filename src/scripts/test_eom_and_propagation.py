@@ -83,12 +83,17 @@ vx0 = r_dot_0 * np.cos(theta_0) - v_theta_0 * np.cos(np.pi/2 - theta_0);
 vy0 = r_dot_0 * np.sin(theta_0) + v_theta_0 * np.sin(np.pi/2 - theta_0);
 
 #inital lambda guess
-lam_x0 = 0.01;
-lam_y0 = 0.01;
-lam_vx = -0.2;
-lam_vy = 0.01;
-lam_m = 0.5;
-lam_guess = np.array( [lam_x0, lam_y0, lam_vx, lam_vy, lam_m ] );
+lam_x0 = -5.802;
+lam_y0 = -2.215;
+lam_vx0 = -9.447;
+lam_vy0 = -0.9179;
+lam_m0 = 4.969;
+# lam_x0 = 1.0;
+# lam_y0 = 1.0;
+# lam_vx0 = -1.0;
+# lam_vy0 = 1.0;
+# lam_m0 = 1.0;
+lam_guess = np.array( [lam_x0, lam_y0, lam_vx0, lam_vy0, lam_m0 ] );
 
 #initial state vector
 arr_y0 =  np.array( [x0, y0, vx0, vy0, m_0 ] );
