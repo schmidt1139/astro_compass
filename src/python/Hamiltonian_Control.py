@@ -103,7 +103,6 @@ class Hamiltonian_Controller_TBT:
         
         #prescribed boundary conditions for lambda_m and lambda_theta
         lam_m_f = 0.0;
-        lam_theta_f = lam_guess[1]; #lambda theta isn't changing, so value should be init guess
         
         #set up parameter array
         params = np.array( [self.mu_nd, self.C1_nd, self.C2_nd ], dtype=np.float32 );
