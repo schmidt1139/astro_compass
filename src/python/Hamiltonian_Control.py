@@ -115,11 +115,11 @@ class Hamiltonian_Controller_TBT:
             print(sol.message);
             raise Exception("Integration failed");
         
-        #extract final state
-        r_f_p_nd, theta_f_p, r_dot_f_p_nd, v_theta_f_p_nd, m_f_p_nd = sol.y[:5,-1];
+        #extract final cartesian state
+        x_f_nd_p, y_f_nd_p, vx_f_nd_p, vy_f_nd_p, m_f_nd_p = sol.y[:5,-1];
         
         #extract final co-state
-        lam_r_f_p, lam_theta_f_p, lam_r_dot_f_p, lam_theta_f_p_nd, lam_m_f_p_nd = sol.y[5:10,-1];
+        lam_x_f_nd_p, lam_y_f_nd_p, lam_vx_f_nd_p, lam_vy_f_nd_p, lam_m_f_nd_p = sol.y[5:10,-1];
         
         #pack final state into an array
         y_f = [r_f_p_nd, theta_f_p, r_dot_f_p_nd, v_theta_f_p_nd, m_f_p_nd];
