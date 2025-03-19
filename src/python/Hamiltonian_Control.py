@@ -10,15 +10,16 @@ class Hamiltonian_Controller_TBT:
     def extract_env_boundary_conditions(self):
         
         #extract initial conditions
-        r_0         = self.init_observation[0];
-        theta_0     = self.init_observation[1];
-        r_dot_0     = self.init_observation[2];
-        v_theta_0   = self.init_observation[3];
-        m_0         = self.init_observation[4];
-        mu          = self.init_observation[5];
-        r_f         = self.init_observation[6];
-        r_dot_f     = 0.0;
-        v_theta_f   = (mu/r_f) ** 0.5;
+        r_0         = self.init_observation[0] * 1000;    #radius in m
+        theta_0     = self.init_observation[1];           #theta in rad
+        r_dot_0     = self.init_observation[2] * 1000;    #radial vel in m/s
+        v_theta_0   = self.init_observation[3] * 1000;    #tangential vel in m/s
+        m_0         = self.init_observation[4];           #mass in kg
+        mu          = self.init_observation[5] * 1000**3; #gravitational param    
+        r_f         = self.init_observation[6] * 1000;    #final r in m
+        r_dot_f     = 0.0; #final radial r in m/s
+        v_theta_f   = (mu/r_f) ** 0.5; #final tangential vel in m/s
+        
         
         #constants
         self.sma_Earth      = 149598023; #Earth SMA in km
