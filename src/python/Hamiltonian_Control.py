@@ -183,15 +183,39 @@ class Hamiltonian_Controller_TBT:
         
         return residuals;
     
-    def hamiltonian_root_finder(self):
+    def hamiltonian_root_finder(self, eps, lam_guess ):
         
-        lam_guess_0 = self.arr_lam_0;
+        try_max         = 10;
+        try_count       = 1;
+        flag_continue   = True;
         
-        #lam_sol, info, ier, msg = fsolve(self.shooting_iteration, lam_guess_0, full_output=1);
-        #lam_sol = root(self.shooting_iteration, lam_guess_0, method='lm');
-        lam_sol = root(self.shooting_iteration, lam_guess_0 );
-        fjac = lam_sol.fjac;
-        cn = np.linalg.cond(fjac);
+        while( flag_continue ):
+
+            #Call root finder method with the current eps (smoothing parameter)
+            #and the current root finder tolerance value. If the root finder
+            #function fails to reach a solution, the process is repeated with
+            #a relaxed tolerance value. This process is repeated until the 
+            #a maximum try count is reached or if the 
+            lam_sol = root(self.shooting_iteration, lam_guess, eps, tol=self.root_tol );
+            fjac    = lam_sol.fjac;
+            cn      = np.linalg.cond(fjac);
+            
+            if (lam_sol.success):
+                
+                flag_continue = False;
+                
+            elif ( (try_count < try_max) and self.root_tol <= self.root_tol_max ):
+                
+                self.root_tol   = self.root_tol * 10;
+                try_count       = try_count + 1;
+                print(f"Increasing root tolerance value: {self.root_tol:.4e}");
+                
+            else:
+                
+                print("Maximum attempts reached for root finding method");
+                print("self.root_tol: ", self.root_tol );
+                flag_continue = False;
+                
         
         # Check if the solution was successful
         if (lam_sol.success):
