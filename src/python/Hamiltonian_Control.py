@@ -154,33 +154,6 @@ class Hamiltonian_Controller_TBT:
         lam_m_f_nd_p - lam_m_f              # Final mass co-state should be 0
         ])
         
-        # print("r_f_p_nd: ", r_f_p_nd);
-        # print("theta_f_p_nd", theta_f_p);
-        # print("r_dot_f_p_nd: ", r_dot_f_p_nd);
-        # print("v_theta_f_p_nd: ", v_theta_f_p_nd);
-        # print("m_f_p_nd: ", m_f_p_nd);
-        # print("");
-        # print("lam_r_f_p: ", lam_r_f_p);
-        # print("lam_theta_f_p: ", lam_theta_f_p);
-        # print("lam_r_dot_f_p: ", lam_r_dot_f_p);
-        # print("lam_v_theta_f_p: ", lam_v_theta_f_p);
-        # print("lam_m_f_p: ", lam_m_f_p);
-        # print("");
-        # print("lam_theta_f: ", lam_theta_f);
-        # print("lam_m_f: ", lam_m_f );
-        # print("")
-        #print("Res norm: ", np.linalg.norm(residuals));
-        #print("");
-        # print("Lam guess", lam_guess );
-        # print("Residual lambda m: ", residuals[4] );
-        # print("");
-        print(lam_guess);
-        print(residuals);
-        print(np.linalg.norm(residuals));
-        print("");
-        # print("Res norm: ", np.linalg.norm(residuals));
-        # print("\n\n\n");
-        
         return residuals;
     
     def hamiltonian_root_finder(self, eps, lam_guess ):
@@ -219,14 +192,15 @@ class Hamiltonian_Controller_TBT:
         
         # Check if the solution was successful
         if (lam_sol.success):
-            print(lam_sol);
-            print(fjac);
-            print(cn);
+            
             lam_solution = lam_sol.x;
+            
         else:
-            print(lam_sol);
+            print("Lambda solution: ", lam_sol);
             print(fjac);
-            print(cn);
+            print("Jacobian condition number: ", cn);
+            print("Root tolerance reached: ", self.root_tol);
+            print("Try count: ", try_count);
             raise Exception("Solver failed:");
         
         return lam_solution;
