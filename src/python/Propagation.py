@@ -453,3 +453,9 @@ def Hamiltonian_EOM_TBT_v2( t,state,params ):
                        d_lam_v_vec[1], d_lam_m ] );
     
     return derivs;
+
+def smoothing_function( rho, eps ):
+    
+    u_smooth = 1/2 * ( 1 + np.tanh( rho / eps ) );
+    
+    return u_smooth;
