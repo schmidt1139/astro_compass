@@ -17,6 +17,7 @@ from Ephemeris import Ephemeris
 from Hamiltonian_Control import Hamiltonian_Controller_TBT
 from scipy.integrate import solve_ivp
 from Propagation import Hamiltonian_EOM_TBT_v2
+from Propagation import smoothing_function
 from StateVectorUtilities import non_dimensionalize
 
 
@@ -83,17 +84,15 @@ vx0 = r_dot_0 * np.cos(theta_0) - v_theta_0 * np.cos(np.pi/2 - theta_0);
 vy0 = r_dot_0 * np.sin(theta_0) + v_theta_0 * np.sin(np.pi/2 - theta_0);
 
 #inital lambda guess
-lam_x0 = -5.802;
-lam_y0 = -2.215;
-lam_vx0 = -9.447;
-lam_vy0 = -0.9179;
-lam_m0 = 4.969;
-# lam_x0 = 1.0;
-# lam_y0 = 1.0;
-# lam_vx0 = -1.0;
-# lam_vy0 = 1.0;
-# lam_m0 = 1.0;
+lam_x0 = 0.286298956079894;
+lam_y0 = -0.0214548070543362;
+lam_vx0 = -0.0689585667746195;
+lam_vy0 = 0.6266476511221035;
+lam_m0 = 0.14579433945759;
 lam_guess = np.array( [lam_x0, lam_y0, lam_vx0, lam_vy0, lam_m0 ] );
+
+#smoothing parameter
+eps = 6.103515625e-05;
 
 #initial state vector
 arr_y0 =  np.array( [x0, y0, vx0, vy0, m_0 ] );
@@ -109,7 +108,8 @@ t_span = (0,input_TOF_nd);
 t_eval = np.linspace(*t_span, 1000);
 
 #set up parameter array
-params = np.array( [mu_nd, T_max_nd, ISP_nd, sma_Earth, m_star, t_star, g0_nd ] );
+params = np.array( [mu_nd, T_max_nd, ISP_nd, sma_Earth, m_star, t_star, g0_nd,
+                    eps ] );
 
 #check initial derivatives
 derivs = Hamiltonian_EOM_TBT_v2( 0.0, arr_full_y0, params );
@@ -183,11 +183,13 @@ for index, t in enumerate(arr_time):
     #Switching function
     rho = lam_m_i + ISP_nd * g0_nd * lam_v_mag / m_i_nd - 1;
     
-    #Control policy
-    if (rho >= 0.0 ):
-        u = 1.0;
+    if (eps == 0.0 ):  
+        if ( rho >= 0 ):
+            u = 1.0;
+        else:
+            u = 0.0;       
     else:
-        u = 0.0;
+        u = smoothing_function( rho, eps );
     
     #Add data to ephemeris object
     eph.add_data( t, x_i, y_i, vx_i, vy_i );
