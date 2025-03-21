@@ -232,13 +232,41 @@ class Hamiltonian_Controller_TBT:
         return lam_solution;
             
     def hamiltonian_solution_finder(self):
+    
+        #Initial smoothing parameters for the solution finder. The number of 
+        #smoothing iterations that has been performed is tracked with the k
+        #counter. The initial epsilon value is taken from the object property
+        #self.eps_0.
+        k   = 1;
+        eps = self.eps_0;
         
-       
-        #determine initial states for co-states
-        self.arr_lam_sol = self.hamiltonian_root_finder();
+        #provide initial co-state guess
+        arr_lam_sol_0 = self.arr_lam_0;
         
-        print("Initial co-state values found...");
+        while ( (k <= self.max_k) and (eps > self.eps_threshold) ):
+            
+            #update/decrease epsilon by gamma factor if it is not the first
+            #iteration
+            if( k != 1 ):
+                eps = eps * self.gamma;
+            
+            #determine initial boundary values for co-states
+            arr_lam_sol_k = self.hamiltonian_root_finder(eps, arr_lam_sol_0 );
+            
+            #print solution
+            report_line = f"k: {k}   eps: {eps:.4e}   arr_lam_sol_k: {arr_lam_sol_k}";
+            print(report_line);
+            
+            #next initial guess is the previous solution
+            arr_lam_sol_0 = arr_lam_sol_k;
+            
+            #update k counter
+            k = k + 1;
         
+        #assign co-state solution to Hamiltonian object after smoothing
+        #iteration is complete.
+        self.eps = eps;
+        self.arr_lam_sol = arr_lam_sol_k;
         
         #construct full state vector at t=0
         arr_full_y0 = np.hstack( (self.arr_y0_nd, self.arr_lam_sol) );
@@ -249,7 +277,8 @@ class Hamiltonian_Controller_TBT:
         
         #set up parameter array
         params = np.array( [self.mu_nd, self.T_max_nd, self.ISP_nd, 
-                            self.l_star, self.m_star, self.t_star, self.g0_nd ] );
+                            self.l_star, self.m_star, self.t_star, self.g0_nd,
+                            self.eps ] );
         
         #integrate forward in time
         sol = solve_ivp(Hamiltonian_EOM_TBT_v2, t_span, arr_full_y0, method='RK45', args=(params,), t_eval=t_eval );
@@ -258,4 +287,7 @@ class Hamiltonian_Controller_TBT:
             print(sol.message);
             raise Exception("Integration failed");
                
-        return sol;
+        return self.arr_lam_sol, self.eps, sol;
+                          
+        
+        
