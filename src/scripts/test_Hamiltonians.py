@@ -54,4 +54,8 @@ H_controller = Hamiltonian_Controller_TBT(env, init_observation,
                                           init_info, input_TOF);
 
 
-H_controller.hamiltonian_solution_finder();
+h_sol, eps, sol = H_controller.hamiltonian_solution_finder();
+
+np.set_printoptions(precision=16)
+print("Solution for initial co-states: ", h_sol);
+print("Final smoothing parameter used in solution generation: ", eps);
