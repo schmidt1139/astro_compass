@@ -394,7 +394,7 @@ def Hamiltonian_EOM_TBT_v2( t,state,params ):
     num_params = len(params);
     
     #check parameter length
-    if( num_params != 7 ):
+    if( num_params != 8 ):
         raise Exception('Invalid number of parameters');
     
     #unpack the parameters
@@ -405,6 +405,7 @@ def Hamiltonian_EOM_TBT_v2( t,state,params ):
     m_star  = params[4];     #characteristic mass
     t_star  = params[5];     #characteristic time
     g0      = params[6];     #acceleration at Earth surface
+    eps     = params[7];
     
     
     #unpack the state vector
@@ -431,11 +432,18 @@ def Hamiltonian_EOM_TBT_v2( t,state,params ):
     #Switching function
     rho = lam_m + ISP * g0 * lam_v_mag / m - 1;
     
-    #Determine u based on switching function
-    if ( rho >= 0 ):
-        u = 1.0;
+    #Determine u based on switching function and smoothing parameter. If the 
+    #smoothing parameter is exactly zero, then no smoothing is to be performed
+    #on the throttle u. If eps is non-zero, then smoothing is to be applied
+    #to u according to the smoothing method used.
+    
+    if (eps == 0.0 ):  
+        if ( rho >= 0 ):
+            u = 1.0;
+        else:
+            u = 0.0;       
     else:
-        u = 0.0;
+        u = smoothing_function( rho, eps );
     
     #state vector derivative calculations
     dr_vec = v_vec;
