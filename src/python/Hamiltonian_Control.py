@@ -2,6 +2,7 @@ from TwoBody_Orb2Orb_Transfer_Env import *
 from Propagation import Hamiltonian_EOM_TBT
 from scipy.optimize import root
 from scipy.optimize import fsolve
+from StateVectorUtilities import *
 import numpy as np;
 
 class Hamiltonian_Controller_TBT:
@@ -9,84 +10,71 @@ class Hamiltonian_Controller_TBT:
     def extract_env_boundary_conditions(self):
         
         #extract initial conditions
-        r_0         = self.init_observation[0];
-        theta_0     = self.init_observation[1];
-        r_dot_0     = self.init_observation[2];
-        v_theta_0   = self.init_observation[3];
-        m_0         = self.init_observation[4];
-        mu          = self.init_observation[5];
-        r_f         = self.init_observation[6];
-        r_dot_f     = 0.0;
-        v_theta_f   = (mu/r_f) ** 0.5;
+        r_0         = self.init_observation[0] * 1000;    #radius in m
+        theta_0     = self.init_observation[1];           #theta in rad
+        r_dot_0     = self.init_observation[2] * 1000;    #radial vel in m/s
+        v_theta_0   = self.init_observation[3] * 1000;    #tangential vel in m/s
+        m_0         = self.init_observation[4];           #mass in kg
+        mu          = self.init_observation[5] * 1000**3; #gravitational param    
+        r_f         = self.init_observation[6] * 1000;    #final r in m
+        r_dot_f     = 0.0; #final radial r in m/s
+        v_theta_f   = (mu/r_f) ** 0.5; #final tangential vel in m/s
+        
         
         #constants
-        self.sma_Earth      = 149598023; #Earth SMA in km
-        self.mu             = mu; #gravitational parameter in km^3/s^2
-        self.t_star         = ( self.sma_Earth**3 / self.mu ) ** 0.5; #non-dimensional time in s
+        self.l_star         = 149598023 * 1000; #Earth SMA in m
+        self.mu             = mu; #gravitational parameter in m^3/s^2
+        self.t_star         = ( self.l_star**3 / self.mu ) ** 0.5; #non-dimensional time in s
         self.m_star         = m_0; #kg
-        g0                  = 9.80665 / 1000; #km/s^2
-        
-        #establish non-dimensionalization factors
-        self.position_nd_f  = 1 / self.sma_Earth;
-        self.velocity_nd_f  = self.t_star / self.sma_Earth;
-        self.mass_nd_f      = 1 / self.m_star;
-        self.time_nd_f      = 1 / self.t_star;
-        
-        #Non-dimensionalize initial states
-        self.r_0_nd         = r_0 * self.position_nd_f;
-        self.theta_0_nd     = theta_0;
-        self.r_dot_0_nd     = r_dot_0 * self.velocity_nd_f;
-        self.v_theta_0_nd   = v_theta_0 * self.velocity_nd_f;
-        self.m_0_nd         = m_0 * self.mass_nd_f;
-        
-        #Non-dimensionalize final state constraints
-        self.r_f_nd         = r_f * self.position_nd_f;
-        self.r_dot_f_nd     = r_dot_f * self.velocity_nd_f;
-        self.v_theta_f_nd   = v_theta_f * self.velocity_nd_f;
-        
-        #Non-Dim TOF
-        self.input_TOF_nd   = self.input_TOF * self.time_nd_f;
+        g0                  = 9.80665; #m/s^2
         
         #Parameters
-        C1 = self.init_info["max_thrust"]; #max thrust in kN
-        C2 = self.init_info["ISP"]; #specific impulse of thruster in seconds
-        
-        #Non-Dimensionalize Parameters
-        self.C1_nd = C1 * ( 1 / self.m_star ) * ( 1 / self.sma_Earth ) * self.t_star**2;
-        self.C2_nd = C2 * g0 * self.velocity_nd_f;
-        self.mu_nd = 1.0;
-        
-        #spacecraft initial state vectors (raw and scaled)
-        self.arr_y0         = np.array([r_0, theta_0, r_dot_0, v_theta_0, m_0]);
-        self.arr_y0_nd      = np.array([self.r_0_nd, self.theta_0_nd, self.r_dot_0_nd, self.v_theta_0_nd, self.m_0_nd]);
+        T_max = self.init_info["max_thrust"]*1000; #max thrust in N
+        ISP = self.init_info["ISP"]; #specific impulse of thruster in seconds
         
         #supply heuristic initial guess for the shooting method for the co-states
-        lam_r_0         = 0.1;
-        lam_theta_0     = 0.1;
-        lam_r_dot_0     = 0.1;
-        lam_v_theta_0   = 0.1;
-        lam_m_0         = -0.1;
+        lam_x0 = 1.0;
+        lam_y0 = 1.0;
+        lam_vx0 = -1.0;
+        lam_vy0 = 1.0;
+        lam_m0 = 1.0;
         
-        #initial co-state vector
-        self.arr_lam_0 = np.array([lam_r_0, lam_theta_0, lam_r_dot_0, lam_v_theta_0, lam_m_0]);
+        #convert initial state to cartesian
+        x0, y0, vx0, vy0 = polar_to_cartesian(r_0, theta_0, r_dot_0, v_theta_0 );
         
-        #set scale factors
-        self.scale_factors = [1, 1, 1, 1, 1];
+        #Create initial state array
+        arr_y0 = np.array([x0, y0, vx0, vy0, m_0]);
+        
+        
+        #Non-Dimensionalize State Vector and Parameters
+        nd_outputs = non_dimensionalize( arr_y0, g0, mu, T_max, ISP, 
+                                        self.input_TOF, self.l_star, 
+                                        self.m_star, self.t_star );
+        
+        #Unpack state vector
+        arr_y0_nd, g0_nd, mu_nd, T_max_nd, ISP_nd, input_TOF_nd = nd_outputs;
+        self.arr_y0_nd = arr_y0_nd;
+        self.g0_nd = g0_nd;
+        self.mu_nd = mu_nd;
+        self.T_max_nd = T_max_nd;
+        self.ISP_nd = ISP_nd;
+        self.input_TOF_nd = input_TOF_nd;
+        
+        #Pack initial co-state vector
+        self.arr_lam_0 = np.array([lam_x0, lam_y0, lam_vx0, lam_vy0, lam_m0]);
+        
+        #Non-dimensionalize final boundary states
+        self.r_f_nd         = r_f / self.l_star;
+        self.r_dot_f_nd     = r_dot_f / self.l_star * self.t_star;
+        self.v_theta_f_nd   = v_theta_f / self.l_star * self.t_star;
         
         print("Boundary Conditions");
-        print(f"R0 nd: {self.r_0_nd}");
-        print(f"theta_0 nd: {self.theta_0_nd}");
-        print(f"r_dot_0 nd: {self.r_dot_0_nd}");
-        print(f"v_theta_0 nd: {self.v_theta_0_nd}");
-        print(f"m_0 nd: {self.m_0_nd}");
+        print(f"arr_y nd: {arr_y0_nd}");
         print(f"t_star: {self.t_star}");
         print("");
-        print(f"r_f nd: {self.r_f_nd}");
-        print(f"r_dot_f nd: {self.r_dot_f_nd}");
-        print(f"v_theta_f nd: {self.v_theta_f_nd}");
-        print("");
-        print("C1 nd: ", self.C1_nd );
-        print("C2 nd: ", self.C2_nd );
+        print(f"r_f_nd: {self.r_f_nd}");
+        print("r_dot_f_nd: ", self.r_dot_f_nd );
+        print("v_theta_f_nd: ", self.v_theta_f_nd );
         print("");
         print("Initial co-state vector guess");
         print(self.arr_lam_0);
@@ -104,14 +92,10 @@ class Hamiltonian_Controller_TBT:
         #extract the state vector boundary conditions from the problem
         self.extract_env_boundary_conditions();
         
-        
-    def shooting_iteration(self, lam_guess):
-        
-        #scale lambdas as necessary
-        lam_guess_scaled = lam_guess*self.scale_factors;
+    def shooting_iteration(self, lam_guess ):
         
         #construct full state vector at t=0
-        arr_full_y0 = np.hstack( (self.arr_y0_nd, lam_guess_scaled) );
+        arr_full_y0 = np.hstack( (self.arr_y0_nd, lam_guess) );
         
         #define time span
         t_span = (0,self.input_TOF_nd);
@@ -119,36 +103,37 @@ class Hamiltonian_Controller_TBT:
         
         #prescribed boundary conditions for lambda_m and lambda_theta
         lam_m_f = 0.0;
-        lam_theta_f = lam_guess[1]; #lambda theta isn't changing, so value should be init guess
         
         #set up parameter array
-        params = np.array( [self.mu_nd, self.C1_nd, self.C2_nd ], dtype=np.float32 );
+        params = np.array( [self.mu_nd, self.T_max_nd, self.ISP_nd, 
+                            self.l_star, self.m_star, self.t_star, self.g0_nd ] );
         
         #integrate forward in time
-        sol = solve_ivp(Hamiltonian_EOM_TBT_nd, t_span, arr_full_y0, method='RK45', args=(params,), t_eval=t_eval );
+        sol = solve_ivp(Hamiltonian_EOM_TBT_v2, t_span, arr_full_y0, method='RK45', args=(params,), t_eval=t_eval );
         
         if ( sol.status == -1 ):
             print(sol.message);
             raise Exception("Integration failed");
         
-        #extract final state
-        r_f_p_nd, theta_f_p, r_dot_f_p_nd, v_theta_f_p_nd, m_f_p_nd = sol.y[:5,-1];
+        #extract final cartesian state
+        x_f_nd_p, y_f_nd_p, vx_f_nd_p, vy_f_nd_p, m_f_nd_p = sol.y[:5,-1];
         
         #extract final co-state
-        lam_r_f_p, lam_theta_f_p, lam_r_dot_f_p, lam_theta_f_p_nd, lam_m_f_p_nd = sol.y[5:10,-1];
+        lam_x_f_nd_p, lam_y_f_nd_p, lam_vx_f_nd_p, lam_vy_f_nd_p, lam_m_f_nd_p = sol.y[5:10,-1];
         
-        #pack final state into an array
-        y_f = [r_f_p_nd, theta_f_p, r_dot_f_p_nd, v_theta_f_p_nd, m_f_p_nd];
-        
-        #scale final co-state for mass
-        lam_m_f_p_scaled = lam_m_f_p_nd;
+        #convert state to polar coordinates
+        r_f_nd_p, theta_f_nd_p, vr_f_nd_p, vtheta_f_nd_p = cartesian_to_polar( 
+                                                                        x_f_nd_p,
+                                                                        y_f_nd_p,
+                                                                        vx_f_nd_p,
+                                                                        vy_f_nd_p );
         
         residuals = np.array([
-        r_f_p_nd - self.r_f_nd,                 # Final radius constraint
-        r_dot_f_p_nd - self.r_dot_f_nd,         # Final radial velocity constraint
-        v_theta_f_p_nd - self.v_theta_f_nd,     # Final tangential velocity constraint
-        lam_theta_f_p_nd - lam_theta_f,            # Co-state for theta shouldn't change
-        lam_m_f_p_scaled - lam_m_f              # Final mass co-state should be 0
+        r_f_nd_p - self.r_f_nd,             # Final radius constraint
+        vr_f_nd_p - self.r_dot_f_nd,        # Final radial velocity constraint
+        vtheta_f_nd_p - self.v_theta_f_nd,  # Final tangential velocity constraint
+        0.0,                                # Co-state for theta shouldn't change
+        lam_m_f_nd_p - lam_m_f              # Final mass co-state should be 0
         ])
         
         # print("r_f_p_nd: ", r_f_p_nd);
@@ -173,6 +158,7 @@ class Hamiltonian_Controller_TBT:
         # print("");
         print(lam_guess);
         print(residuals);
+        print(np.linalg.norm(residuals));
         print("");
         # print("Res norm: ", np.linalg.norm(residuals));
         # print("\n\n\n");
@@ -211,25 +197,23 @@ class Hamiltonian_Controller_TBT:
         
         print("Initial co-state values found...");
         
-        #scale lambdas as necessary
-        lam_sol_scaled = self.arr_lam_sol*self.scale_factors;
         
         #construct full state vector at t=0
-        arr_full_y0 = np.hstack( (self.arr_y0_nd, lam_sol_scaled) );
+        arr_full_y0 = np.hstack( (self.arr_y0_nd, self.arr_lam_sol) );
         
         #define time span
         t_span          = (0,self.input_TOF_nd);
         t_eval = np.linspace(*t_span, 1000);
         
         #set up parameter array
-        params = np.array( [self.mu_nd, self.C1_nd, self.C2_nd ], dtype=np.float32 );
+        params = np.array( [self.mu_nd, self.T_max_nd, self.ISP_nd, 
+                            self.l_star, self.m_star, self.t_star, self.g0_nd ] );
         
         #integrate forward in time
-        sol = solve_ivp(Hamiltonian_EOM_TBT_nd, t_span, arr_full_y0, method='RK45', args=(params,), t_eval=t_eval );
+        sol = solve_ivp(Hamiltonian_EOM_TBT_v2, t_span, arr_full_y0, method='RK45', args=(params,), t_eval=t_eval );
         
         if ( sol.status == -1 ):
             print(sol.message);
             raise Exception("Integration failed");
-        
-        
+               
         return sol;
