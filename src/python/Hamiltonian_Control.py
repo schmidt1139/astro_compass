@@ -3,6 +3,7 @@ from Propagation import Hamiltonian_EOM_TBT
 from scipy.optimize import root
 from scipy.optimize import fsolve
 from StateVectorUtilities import *
+from Ephemeris import *
 import numpy as np;
 
 class Hamiltonian_Controller_TBT:
@@ -263,5 +264,73 @@ class Hamiltonian_Controller_TBT:
                
         return self.arr_lam_sol, self.eps, sol;
                           
+    
+    def generate_output_ephemeris(self, ephemeris):
+        
+        #only write ephemeris if the controller has found a solution
+        if ( self.flag_solved == False ):
+            raise Exception("Controller has not solved, cannot write ephemeris");
+            
+        #extract time and state variables from solution
+        arr_time    = self.final_sol.t;
+        variables   = self.final_sol.y;    
+        arr_u       = [];
+        arr_rho     = [];
+        alpha_vec_x = [];
+        alpha_vec_y = [];
+        
+        #step through states and add to ephem object
+        for index, t in enumerate(arr_time):
+            
+            #states
+            x_i = variables[0,index] * self.l_star;
+            y_i = variables[1,index] * self.l_star;
+            vx_i = variables[2,index] * self.l_star / self.t_star;
+            vy_i = variables[3,index] * self.l_star / self.t_star;
+            m_i_nd = variables[4,index];
+            m_i = m_i_nd * self.m_star;
+            
+            #co-states
+            lam_x_i = variables[5,index];
+            lam_y_i = variables[6,index];
+            lam_vx_i = variables[7,index];
+            lam_vy_i = variables[8,index];
+            lam_m_i = variables[9,index];
+            
+            r_i = np.linalg.norm([x_i, y_i]);
+            r_vec = np.array([x_i, y_i, 0]);
+            v_vec = np.array([vx_i, vy_i, 0]);
+            lam_v_vec = np.array([lam_vx_i, lam_vy_i]);
+            lam_v_mag = np.linalg.norm(lam_v_vec);
+            
+            #Find alpha vector
+            alpha_vec = - lam_v_vec / lam_v_mag;
+            
+            #Switching function
+            rho = lam_m_i + self.ISP_nd * self.g0_nd * lam_v_mag / m_i_nd - 1;
+            
+            if ( self.eps == 0.0 ):  
+                if ( rho >= 0 ):
+                    u = 1.0;
+                else:
+                    u = 0.0;       
+            else:
+                u = smoothing_function( rho, self.eps );
+            
+            r_i = np.linalg.norm([x_i, y_i]);
+            r_vec = np.array([x_i, y_i, 0]);
+            v_vec = np.array([vx_i, vy_i, 0]);
+            lam_v_vec = np.array([lam_vx_i, lam_vy_i]);
+            lam_v_mag = np.linalg.norm(lam_v_vec);
+            
+            ephemeris.add_data( t, x_i, y_i, vx_i, vy_i, m_i );
+            
+            arr_u.append(u);
+            arr_rho.append(rho);
+            alpha_vec_x.append(alpha_vec[0]);
+            alpha_vec_y.append(alpha_vec[1]);
+            
+        return ephemeris, arr_time, arr_u, arr_rho, alpha_vec_x, alpha_vec_y;
+    
         
         
