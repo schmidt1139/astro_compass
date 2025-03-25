@@ -81,6 +81,10 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         C1          = 1.33/1000;        #Spacecraft max thrust (in kN)
         C2          = 3872.0;           #Spacecraft specific impulse (s)
         
+        #randomly select theta
+        theta = self.np_random.uniform(low=0.0, high=1.0) * 2 *np.pi;
+
+        
         #set the location of the central body
         x_cb = 0.0;
         y_cb = 0.0;
