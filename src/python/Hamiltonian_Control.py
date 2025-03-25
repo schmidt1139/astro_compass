@@ -86,6 +86,9 @@ class Hamiltonian_Controller_TBT:
         self.r_dot_f_nd     = r_dot_f / self.l_star * self.t_star;
         self.v_theta_f_nd   = v_theta_f / self.l_star * self.t_star;
         
+        #solution found flag (default to false)
+        self.flag_solved = False;
+        
         print("Boundary Conditions");
         print(f"arr_y nd: {arr_y0_nd}");
         print(f"t_star: {self.t_star}");
@@ -264,11 +267,15 @@ class Hamiltonian_Controller_TBT:
         #integrate forward in time
         sol = solve_ivp(Hamiltonian_EOM_TBT_v2, t_span, arr_full_y0, method='RK45', args=(params,), t_eval=t_eval );
         
+        #assign solution to controller object and set solution flag to true
+        self.final_sol      = sol;
+        self.flag_solved    = True;
+        
         if ( sol.status == -1 ):
             print(sol.message);
             raise Exception("Integration failed");
                
-        return self.arr_lam_sol, self.eps, sol;
+        return self.flag_solved, self.arr_lam_sol, self.eps, sol;
                           
     
     def generate_output_ephemeris(self, ephemeris):
