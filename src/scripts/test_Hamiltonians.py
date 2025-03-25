@@ -42,7 +42,13 @@ steps_per_traj = np.ceil( input_TOF / env.unwrapped.step_size );
 np.set_printoptions(precision=3)  # Limit to 3 decimal places
 
 #reset the TBT env
-init_observation, init_info = env.reset();
+seed = 111;
+init_observation, init_info = env.reset(seed=seed);
+
+#ephemeris
+eph = Ephemeris();
+
+print(init_observation);
 
 #extract some parameters of interest
 sun_rad = env.unwrapped.planet_radii[0];
