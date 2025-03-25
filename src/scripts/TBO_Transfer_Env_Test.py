@@ -74,7 +74,7 @@ def test_runnable_env( env, num_trajectories, num_steps_per_traj ):
             if ( terminated == True ):
                 break;
             
-            eph.add_polar_data(elapsed_time, observation[0], observation[1], observation[2], observation[3] );
+            eph.add_polar_data(elapsed_time, observation[0], observation[1], observation[2], observation[3], observation[4] );
             
             #print( elapsed_time, a, e, reward );
             steps = steps + 1;

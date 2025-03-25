@@ -166,6 +166,8 @@ for index, t in enumerate(arr_time):
     lam_vy_i = variables[8,index];
     lam_m_i = variables[9,index];
     
+    m_i = m_i_nd * m_star;
+    
     r_i = np.linalg.norm([x_i, y_i]);
     r_vec = np.array([x_i, y_i, 0]);
     v_vec = np.array([vx_i, vy_i, 0]);
@@ -192,7 +194,7 @@ for index, t in enumerate(arr_time):
         u = smoothing_function( rho, eps );
     
     #Add data to ephemeris object
-    eph.add_data( t, x_i, y_i, vx_i, vy_i );
+    eph.add_data( t, x_i, y_i, vx_i, vy_i, m_i );
     
     #append to arrays
     arr_E.append(E);
