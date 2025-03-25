@@ -215,8 +215,14 @@ class Hamiltonian_Controller_TBT:
         k   = 1;
         eps = self.eps_0;
         
+        #The first step is to check the initial co-state guess, if it does not
+        #lie sufficiently close to the real solution and the root finder fails, 
+        #we re-try until a solution is achieved.
+        arr_lam_sol_0 = self.check_initial_costate_guess();
+        
         #provide initial co-state guess
         arr_lam_sol_0 = self.arr_lam_0;
+        arr_lam_sol_k = arr_lam_sol_0;
         
         while ( (k <= self.max_k) and (eps > self.eps_threshold) ):
             
@@ -332,5 +338,48 @@ class Hamiltonian_Controller_TBT:
             
         return ephemeris, arr_time, arr_u, arr_rho, alpha_vec_x, alpha_vec_y;
     
+    def check_initial_costate_guess(self):
+        
+        print("Checking initial co-state guess");
+        
+        flag_good_first_guess   = False;
+        counter_first_guess     = 0;
+        max_iters               = 100;
+        mean_co_state_guess     = 0.0;
+        std_co_state_guess      = 0.01;
+        len_co_state_guess      = len(self.arr_lam_0);
+        bias_co_states          = np.array([ 0.0, 0.0, 0.0, 0.0, 0.0]);
+        lam_guess               = self.arr_lam_0;
+        
+        while( flag_good_first_guess == False ):
+            
+            counter_first_guess = counter_first_guess + 1;
+            
+            if ( counter_first_guess > max_iters ):
+                raise Exception("Cannot find good initial co-state guess");
+            
+            #randomize the first guess if the first guess is no good
+            if ( counter_first_guess > 1 ):
+                lam_guess = np.random.normal(loc=mean_co_state_guess, 
+                                             scale=std_co_state_guess,
+                                             size=len_co_state_guess);
+                
+                #add bias array
+                lam_guess = lam_guess + bias_co_states;
+            
+            lam_sol     = root(self.shooting_iteration, lam_guess, self.eps_0, tol=self.root_tol );
+            fjac        = lam_sol.fjac;
+            cn          = np.linalg.cond(fjac);
+            success     = lam_sol.success;
+            
+            if ( abs(max(lam_sol.x)) > 1 ):
+                success = False;
+            
+            if ( success ):
+                print("Attempt ", counter_first_guess, "   Lambda: ", lam_guess, " passed" );
+                return lam_guess;
+            else:
+                print("Lambda: ", counter_first_guess, "   lam_guess ", lam_guess, " failed" );
+        
         
         
