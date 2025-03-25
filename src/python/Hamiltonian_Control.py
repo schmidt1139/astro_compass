@@ -42,20 +42,20 @@ class Hamiltonian_Controller_TBT:
         #root_tol: The root finder function zero tolerance (increased if solver struggles)
         #root_tol_max: The max root tolerance, if this value is reached and there 
         #              is still no convergence the targeting procedure fails.
-        self.eps_threshold = 10**(-4);
-        self.gamma  = 0.5;
-        self.eps_0  = 1.0;
+        self.eps_threshold = 10**(-3);
+        self.gamma  = 0.97;
+        self.eps_0  = 0.6;
         self.eps    = self.eps_0;
         self.max_k  = 640;
         self.root_tol = 1e-8;
         self.root_tol_max = 1e-3;
         
         #supply heuristic initial guess for the shooting method for the co-states
-        lam_x0 = 0.1;
-        lam_y0 = 0.1;
-        lam_vx0 = 0.1;
-        lam_vy0 = 0.1;
-        lam_m0 = 0.1;
+        lam_x0 = 0.286298956079894;
+        lam_y0 = -0.0214548070543362;
+        lam_vx0 = -0.0689585667746195;
+        lam_vy0 = 0.6266476511221035;
+        lam_m0 = 0.14579433945759;
         
         #convert initial state to cartesian
         x0, y0, vx0, vy0 = polar_to_cartesian(r_0, theta_0, r_dot_0, v_theta_0 );
@@ -236,10 +236,6 @@ class Hamiltonian_Controller_TBT:
             
             #determine initial boundary values for co-states
             arr_lam_sol_k = self.hamiltonian_root_finder(eps, arr_lam_sol_0 );
-            
-            #print solution
-            report_line = f"k: {k}   eps: {eps:.4e}   arr_lam_sol_k: {arr_lam_sol_k}";
-            print(report_line);
             
             #next initial guess is the previous solution
             arr_lam_sol_0 = arr_lam_sol_k;
