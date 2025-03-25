@@ -76,6 +76,7 @@ l_star      = sma_Earth;
 m_star      = m_0;                          #initial mass in kg
 t_star      = (l_star**3/mu)**0.5;          #characteristic time in s
 ve          = g0 * ISP;
+years_in_s  = 365.25 * 24 * 60 * 60;
 
 #cartesian state vector
 x0  = r_0 * np.cos(theta_0);
@@ -155,10 +156,12 @@ eph = Ephemeris();
 #plotting solution output data
 for index, t in enumerate(arr_time):
     
+    t_i = t * t_star;
     x_i = variables[0,index] * l_star;
     y_i = variables[1,index] * l_star;
     vx_i = variables[2,index] * l_star / t_star;
     vy_i = variables[3,index] * l_star / t_star;
+    
     m_i_nd = variables[4,index];
     lam_x_i = variables[5,index];
     lam_y_i = variables[6,index];
@@ -209,44 +212,44 @@ for index, t in enumerate(arr_time):
 
 
 fig, ax = plot.subplots(figsize=(6, 6));
-ax.plot( arr_time, arr_x, label="x" );
-ax.plot( arr_time, arr_y, label="y" );
-ax.plot( arr_time, arr_vx, label="vx" );
-ax.plot( arr_time, arr_vy, label="vy" );
-ax.plot( arr_time, arr_m, label="m" );
+ax.plot( arr_time*t_star/years_in_s, arr_x, label="x" );
+ax.plot( arr_time*t_star/years_in_s, arr_y, label="y" );
+ax.plot( arr_time*t_star/years_in_s, arr_vx, label="vx" );
+ax.plot( arr_time*t_star/years_in_s, arr_vy, label="vy" );
+ax.plot( arr_time*t_star/years_in_s, arr_m, label="m" );
 ax.set_title("Non-Dim States over time");   
 ax.legend();
 
 fig, ax = plot.subplots(figsize=(6, 6));
-ax.plot( arr_time, arr_lam_x, label="x" );
-ax.plot( arr_time, arr_lam_y, label="y" );
-ax.plot( arr_time, arr_lam_vx, label="vx" );
-ax.plot( arr_time, arr_lam_vy, label="vy" );
-ax.plot( arr_time, arr_lam_m, label="m" );
+ax.plot( arr_time*t_star/years_in_s, arr_lam_x, label="x" );
+ax.plot( arr_time*t_star/years_in_s, arr_lam_y, label="y" );
+ax.plot( arr_time*t_star/years_in_s, arr_lam_vx, label="vx" );
+ax.plot( arr_time*t_star/years_in_s, arr_lam_vy, label="vy" );
+ax.plot( arr_time*t_star/years_in_s, arr_lam_m, label="m" );
 ax.set_title("Non-Dim Co-States over time");   
 ax.legend();
 
 fig, ax = plot.subplots(figsize=(6, 6));
-ax.plot( arr_time, arr_E );
-ax.plot( arr_time, arr_E0 );
+ax.plot( arr_time*t_star/years_in_s, arr_E );
+ax.plot( arr_time*t_star/years_in_s, arr_E0 );
 ax.set_title("Orbit Energy over Time");   
 
 fig, ax = plot.subplots(figsize=(6, 6));
-ax.plot( arr_time, arr_alpha_x, label="alpha_x" );
-ax.plot( arr_time, arr_alpha_y, label="alpha_y" );
+ax.plot( arr_time*t_star/years_in_s, arr_alpha_x, label="alpha_x" );
+ax.plot( arr_time*t_star/years_in_s, arr_alpha_y, label="alpha_y" );
 ax.set_title("Alpha Vector (Maneuver Direction) over Time"); 
 ax.legend();  
 
 fig, ax = plot.subplots(figsize=(6, 6));
-ax.plot( arr_time, arr_m );
+ax.plot( arr_time*t_star/years_in_s, arr_m );
 ax.set_title("Spacecraft Mass Fraction over Time"); 
 
 fig, ax = plot.subplots(figsize=(6, 6));
-ax.plot( arr_time, arr_u );
+ax.plot( arr_time*t_star/years_in_s, arr_u );
 ax.set_title("Spacecraft Thrust Throttle over Time"); 
 
 fig, ax = plot.subplots(figsize=(6, 6));
-ax.plot( arr_time, arr_rho );
+ax.plot( arr_time*t_star/years_in_s, arr_rho );
 ax.set_title("Switching Function over Time"); 
 
 #Ephemeris plotting
