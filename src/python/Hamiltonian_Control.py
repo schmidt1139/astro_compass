@@ -195,6 +195,11 @@ class Hamiltonian_Controller_TBT:
                 lam_sol = root(self.shooting_iteration, lam_guess, eps, 
                                tol=self.root_tol, method=self.root_method );
             
+            #check if targeter is actually within tolerance if there is an early
+            #exit
+            if ( np.linalg.norm(lam_sol.fun) < self.root_tol ):
+                lam_sol.success = True;
+            
             if ( self.root_method != "broyden1"):
                 
                 fjac    = lam_sol.fjac;
