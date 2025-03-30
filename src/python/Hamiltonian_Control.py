@@ -186,9 +186,19 @@ class Hamiltonian_Controller_TBT:
             #function fails to reach a solution, the process is repeated with
             #a relaxed tolerance value. This process is repeated until the 
             #a maximum try count is reached or if the 
-            lam_sol = root(self.shooting_iteration, lam_guess, eps, tol=self.root_tol );
-            fjac    = lam_sol.fjac;
-            cn      = np.linalg.cond(fjac);
+            
+            if ( self.root_method != "hybr"):
+                lam_sol = root(self.shooting_iteration, lam_guess, eps, 
+                               tol=self.root_tol, method=self.root_method,
+                               options={'maxiter': self.root_max_iters} );
+            else:
+                lam_sol = root(self.shooting_iteration, lam_guess, eps, 
+                               tol=self.root_tol, method=self.root_method );
+            
+            if ( self.root_method != "broyden1"):
+                
+                fjac    = lam_sol.fjac;
+                cn      = np.linalg.cond(fjac);
             
             if (lam_sol.success):
                 
@@ -402,12 +412,14 @@ class Hamiltonian_Controller_TBT:
                 lam_guess = lam_guess + bias_co_states;
             
             lam_sol     = root(self.shooting_iteration, lam_guess, self.eps_0, tol=self.root_tol );
-            fjac        = lam_sol.fjac;
-            cn          = np.linalg.cond(fjac);
-            success     = lam_sol.success;
             
             if ( abs(max(lam_sol.x)) > 1 ):
                 success = False;
+            if (self.root_method != "broyden1"):
+                fjac        = lam_sol.fjac;
+                cn          = np.linalg.cond(fjac);
+                
+            success     = lam_sol.success;
             
             if ( success ):
                 self._log_controller_info("Attempt " + str( counter_first_guess ) + "   Lambda: " + str( lam_guess ) + " passed" );
