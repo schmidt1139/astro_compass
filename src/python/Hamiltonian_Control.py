@@ -406,7 +406,7 @@ class Hamiltonian_Controller_TBT:
         mean_co_state_guess     = 0.0;
         std_co_state_guess      = 0.01;
         len_co_state_guess      = len(self.arr_lam_0);
-        bias_co_states          = np.array([ 0.0, 0.0, 0.0, 0.0, 0.0]);
+        bias_co_states          = np.array([ 0.0, 0.0, 0.0, 0.0, 0.1]);
         lam_guess               = self.arr_lam_0;
         
         while( flag_good_first_guess == False ):
