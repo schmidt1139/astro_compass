@@ -59,17 +59,6 @@ def non_dimensionalize( arr_y, g0, mu, T_max, ISP, TOF, l_star, m_star, t_star )
     #pack nd array
     arr_y_nd = np.array([x_nd, y_nd, vx_nd, vy_nd, m_nd]);
     
-    print("l_star: ", l_star);
-    print("m_star: ", m_star);
-    print("t_star: ", t_star);
-    print("arr_y_nd: ", arr_y_nd );
-    print("g0_nd: ", g0_nd );
-    print("mu_nd: ", mu_nd );
-    print("T_max: ", T_max );
-    print("ISP_nd: ", ISP_nd );
-    print("TOF_nd: ", TOF_nd );
-    print("");
-    
     #return outputs
     return arr_y_nd, g0_nd, mu_nd, T_max_nd, ISP_nd, TOF_nd;
     
