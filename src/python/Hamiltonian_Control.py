@@ -50,13 +50,6 @@ class Hamiltonian_Controller_TBT:
         self.root_tol = 1e-8;
         self.root_tol_max = 1e-3;
         
-        #supply heuristic initial guess for the shooting method for the co-states
-        lam_x0 = 0.286298956079894;
-        lam_y0 = -0.0214548070543362;
-        lam_vx0 = -0.0689585667746195;
-        lam_vy0 = 0.6266476511221035;
-        lam_m0 = 0.14579433945759;
-        
         #convert initial state to cartesian
         x0, y0, vx0, vy0 = polar_to_cartesian(r_0, theta_0, r_dot_0, v_theta_0 );
         
@@ -77,6 +70,13 @@ class Hamiltonian_Controller_TBT:
         self.T_max_nd = T_max_nd;
         self.ISP_nd = ISP_nd;
         self.input_TOF_nd = input_TOF_nd;
+        
+        #initial co-state guess
+        lam_x0 = 0.1;
+        lam_y0 = 0.1;
+        lam_vx0 = 0.1;
+        lam_vy0 = 0.1;
+        lam_m0 = 0.1;
         
         #Pack initial co-state vector
         self.arr_lam_0 = np.array([lam_x0, lam_y0, lam_vx0, lam_vy0, lam_m0]);
