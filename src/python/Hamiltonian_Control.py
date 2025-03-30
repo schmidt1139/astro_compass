@@ -220,7 +220,11 @@ class Hamiltonian_Controller_TBT:
                 self._log_controller_info("Maximum attempts reached for root finding method");
                 self._log_controller_info("self.root_tol: " + str( self.root_tol ) );
                 flag_continue = False;
-                
+         
+        # The throttle should be constained after the first iteration. The cap
+        # on the throttle is lifted to get an initial solution
+        if ( self. flag_constrain_u == False ):
+            self. flag_constrain_u == True;
         
         # Check if the solution was successful
         if (lam_sol.success):
