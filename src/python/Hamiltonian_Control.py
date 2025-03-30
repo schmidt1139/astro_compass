@@ -427,8 +427,6 @@ class Hamiltonian_Controller_TBT:
             
             lam_sol     = root(self.shooting_iteration, lam_guess, self.eps_0, tol=self.root_tol );
             
-            if ( abs(max(lam_sol.x)) > 1 ):
-                success = False;
             if (self.root_method != "broyden1"):
                 fjac        = lam_sol.fjac;
                 cn          = np.linalg.cond(fjac);
