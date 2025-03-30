@@ -266,7 +266,7 @@ class Hamiltonian_Controller_TBT:
         arr_lam_sol_0 = self.arr_lam_0;
         arr_lam_sol_k = arr_lam_sol_0;
         
-        while ( (k <= self.max_k) and (eps > self.eps_threshold) ):
+        while ( (k <= self.max_k ) and (eps > self.eps_threshold) ):
             
             #update/decrease epsilon by gamma factor if it is not the first
             #iteration
@@ -310,7 +310,6 @@ class Hamiltonian_Controller_TBT:
         
         #assign solution to controller object and set solution flag to true
         self.final_sol      = sol;
-        self.flag_solved    = True;
         
         if ( sol.status == -1 or self.flag_stop_targeting == True ):
             self._log_controller_info(sol.message);
