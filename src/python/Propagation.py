@@ -394,18 +394,20 @@ def Hamiltonian_EOM_TBT_v2( t,state,params ):
     num_params = len(params);
     
     #check parameter length
-    if( num_params != 8 ):
+    if( num_params != 10 ):
         raise Exception('Invalid number of parameters');
     
     #unpack the parameters
-    mu      = params[0];     #gravitational parameter of the central body
-    T_max   = params[1];     #max thrust of the spacecraft
-    ISP     = params[2];     #spacecraft specific impulse
-    l_star  = params[3];     #characteristic length
-    m_star  = params[4];     #characteristic mass
-    t_star  = params[5];     #characteristic time
-    g0      = params[6];     #acceleration at Earth surface
-    eps     = params[7];
+    mu      = params[0];            #gravitational parameter of the central body
+    T_max   = params[1];            #max thrust of the spacecraft
+    ISP     = params[2];            #spacecraft specific impulse
+    l_star  = params[3];            #characteristic length
+    m_star  = params[4];            #characteristic mass
+    t_star  = params[5];            #characteristic time
+    g0      = params[6];            #acceleration at Earth surface
+    eps     = params[7];            #smoothing parameter
+    flag_constrain_u = params[8];   #Boolean indicating if 0<u<1 is enforced
+    switch_smoothing_method = params[9];   #Smoothing method
     
     
     #unpack the state vector

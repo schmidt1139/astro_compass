@@ -128,7 +128,8 @@ class Hamiltonian_Controller_TBT:
         #set up parameter array
         params = np.array( [self.mu_nd, self.T_max_nd, self.ISP_nd, 
                             self.l_star, self.m_star, self.t_star, self.g0_nd,
-                            eps ] );
+                            eps, self.flag_constrain_u, 
+                            self.smoothing_method ] );
         
         #integrate forward in time
         sol = solve_ivp(Hamiltonian_EOM_TBT_v2, t_span, arr_full_y0, method='RK45', args=(params,), t_eval=t_eval );
@@ -258,7 +259,8 @@ class Hamiltonian_Controller_TBT:
         #set up parameter array
         params = np.array( [self.mu_nd, self.T_max_nd, self.ISP_nd, 
                             self.l_star, self.m_star, self.t_star, self.g0_nd,
-                            self.eps ] );
+                            self.eps, self.flag_constrain_u,
+                            self.smoothing_method] );
         
         #integrate forward in time
         sol = solve_ivp(Hamiltonian_EOM_TBT_v2, t_span, arr_full_y0, method='RK45', args=(params,), t_eval=t_eval );
