@@ -209,7 +209,7 @@ class Hamiltonian_Controller_TBT:
                 
                 flag_continue = False;
                 
-            elif ( (try_count < try_max) and self.root_tol <= self.root_tol_max ):
+            elif ( (try_count < try_max ) and self.root_tol < self.root_tol_max ):
                 
                 self.root_tol   = self.root_tol * 10;
                 try_count       = try_count + 1;
