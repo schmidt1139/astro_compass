@@ -33,23 +33,6 @@ class Hamiltonian_Controller_TBT:
         T_max = self.init_info["max_thrust"]*1000; #max thrust in N
         ISP = self.init_info["ISP"]; #specific impulse of thruster in seconds
         
-        #Smoothing parameters
-        #eps_threshold: The min value of smoothing parameter needed to reach a solution
-        #gamma: The value to multiply eps by to gradually decrease it to eps_threshold
-        #eps_0: The value of epsilon to start at
-        #eps: The current value of epsilon
-        #max_k: The maximum number of smoothing iterations to perform (ensures exit)
-        #root_tol: The root finder function zero tolerance (increased if solver struggles)
-        #root_tol_max: The max root tolerance, if this value is reached and there 
-        #              is still no convergence the targeting procedure fails.
-        self.eps_threshold = 10**(-3);
-        self.gamma  = 0.97;
-        self.eps_0  = 0.6;
-        self.eps    = self.eps_0;
-        self.max_k  = 640;
-        self.root_tol = 1e-8;
-        self.root_tol_max = 1e-3;
-        
         #convert initial state to cartesian
         x0, y0, vx0, vy0 = polar_to_cartesian(r_0, theta_0, r_dot_0, v_theta_0 );
         
@@ -114,6 +97,31 @@ class Hamiltonian_Controller_TBT:
         
         #extract the state vector boundary conditions from the problem
         self.extract_env_boundary_conditions();
+        
+        #Smoothing parameters
+        #eps_threshold: The min value of smoothing parameter needed to reach a solution
+        #gamma: The value to multiply eps by to gradually decrease it to eps_threshold
+        #eps_0: The value of epsilon to start at
+        #eps: The current value of epsilon
+        #max_k: The maximum number of smoothing iterations to perform (ensures exit)
+        #root_tol: The root finder function zero tolerance (increased if solver struggles)
+        #root_tol_max: The max root tolerance, if this value is reached and there 
+        #is still no convergence the targeting procedure fails.
+        self.gamma  = 1 - (1/2)**(6);
+        self.eps_threshold = 0.0025;
+        self.eps_0  = 0.5;
+        self.eps    = self.eps_0;
+        self.max_k  = 640;
+        self.root_tol = 0.5e-8;
+        self.root_tol_max = 0.005;
+        self.flag_constrain_u = True;
+        self.root_method = "hybr"; #Choose from "hybr", "lm", "broyden1"
+        self.root_max_iters = 1000;
+        self.smoothing_method = 0; #Choose from 0 (tanh), 1 (homotopic)
+        self.flag_stop_targeting = False;
+        self.ivp_solve_rtol = 10**(-3);
+        self.ivp_solve_atol = 10**(-6);
+        
         
     def shooting_iteration(self, lam_guess_shooting, eps ):
         
