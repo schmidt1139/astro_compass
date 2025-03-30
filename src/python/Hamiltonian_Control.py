@@ -142,7 +142,9 @@ class Hamiltonian_Controller_TBT:
                             self.smoothing_method ] );
         
         #integrate forward in time
-        sol = solve_ivp(Hamiltonian_EOM_TBT_v2, t_span, arr_full_y0, method='RK45', args=(params,), t_eval=t_eval );
+        sol = solve_ivp(Hamiltonian_EOM_TBT_v2, t_span, arr_full_y0, 
+                        method='RK45', args=(params,), t_eval=t_eval, 
+                        rtol = self.ivp_solve_rtol);
         
         if ( sol.status == -1 ):
             print(sol.message);
@@ -278,7 +280,9 @@ class Hamiltonian_Controller_TBT:
                             self.smoothing_method] );
         
         #integrate forward in time
-        sol = solve_ivp(Hamiltonian_EOM_TBT_v2, t_span, arr_full_y0, method='RK45', args=(params,), t_eval=t_eval );
+        sol = solve_ivp(Hamiltonian_EOM_TBT_v2, t_span, arr_full_y0, 
+                        method='RK45', args=(params,), t_eval=t_eval,
+                        rtol=self.ivp_solve_rtol );
         
         #assign solution to controller object and set solution flag to true
         self.final_sol      = sol;
