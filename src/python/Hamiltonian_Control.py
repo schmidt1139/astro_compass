@@ -89,26 +89,28 @@ class Hamiltonian_Controller_TBT:
         #solution found flag (default to false)
         self.flag_solved = False;
         
-        print("Boundary Conditions");
-        print(f"arr_y nd: {arr_y0_nd}");
-        print(f"t_star: {self.t_star}");
-        print("");
-        print(f"r_f_nd: {self.r_f_nd}");
-        print("r_dot_f_nd: ", self.r_dot_f_nd );
-        print("v_theta_f_nd: ", self.v_theta_f_nd );
-        print("");
-        print("Initial co-state vector guess");
-        print(self.arr_lam_0);
-        print("\n\n\n");
+        self._log_controller_info("Boundary Conditions");
+        self._log_controller_info(f"arr_y nd: {arr_y0_nd}");
+        self._log_controller_info(f"t_star: {self.t_star}");
+        self._log_controller_info("");
+        self._log_controller_info(f"r_f_nd: {self.r_f_nd}");
+        self._log_controller_info("r_dot_f_nd: " + str( self.r_dot_f_nd ) );
+        self._log_controller_info("v_theta_f_nd: " + str( self.v_theta_f_nd ) );
+        self._log_controller_info("Initial co-state vector guess " + str(self.arr_lam_0) );
+        
+        
     
     def __init__(self, env: TwoBody_Orb2Orb_Transfer_Env, init_observation, 
                  init_info, input_TOF ):
+        
+        #Targeter log string array
+        self.log = [];
         
         self.env = env;                             #The Two body transfer gym environment
         self.init_observation = init_observation;   #The initial state of the env
         self.init_info = init_info;                 #Initial env info dict
         self.input_TOF = input_TOF;                 #User input time of flight [s]
-        print("Hamiltonian targeter created\n");
+        self._log_controller_info("Hamiltonian Targeter Initialized");
         
         #extract the state vector boundary conditions from the problem
         self.extract_env_boundary_conditions();
@@ -186,12 +188,12 @@ class Hamiltonian_Controller_TBT:
                 
                 self.root_tol   = self.root_tol * 10;
                 try_count       = try_count + 1;
-                print(f"Increasing root tolerance value: {self.root_tol:.4e}");
+                self._log_controller_info(f"Increasing root tolerance value: {self.root_tol:.4e}");
                 
             else:
                 
-                print("Maximum attempts reached for root finding method");
-                print("self.root_tol: ", self.root_tol );
+                self._log_controller_info("Maximum attempts reached for root finding method");
+                self._log_controller_info("self.root_tol: " + str( self.root_tol ) );
                 flag_continue = False;
                 
         
@@ -201,12 +203,17 @@ class Hamiltonian_Controller_TBT:
             lam_solution = lam_sol.x;
             
         else:
-            print("Lambda solution: ", lam_sol);
-            print(fjac);
-            print("Jacobian condition number: ", cn);
-            print("Root tolerance reached: ", self.root_tol);
-            print("Try count: ", try_count);
-            raise Exception("Solver failed:");
+            
+            lam_solution = lam_sol.x;
+            self._log_controller_info("Lambda solution: " + str( lam_sol ) );
+            
+            if ( self.root_method != "broyden1"):
+                self._log_controller_info( str( fjac ) );
+                self._log_controller_info( "Jacobian condition number: " + str(cn) );
+                self._log_controller_info( "Root tolerance reached: " + str( self.root_tol ) );
+            
+            
+            self._log_controller_info("Try count: " + str(try_count));
         
         return lam_solution;
             
@@ -269,11 +276,16 @@ class Hamiltonian_Controller_TBT:
         self.final_sol      = sol;
         self.flag_solved    = True;
         
-        if ( sol.status == -1 ):
-            print(sol.message);
-            raise Exception("Integration failed");
+        if ( sol.status == -1 or self.flag_stop_targeting == True ):
+            self._log_controller_info(sol.message);
+            self.flag_solved    = False;
+            self._log_controller_info("Targeter failed to converge");
+            self._log_controller_info("Epsilon reached: " + str(self.eps));
+        else:
+            self.flag_solved    = True;
+            self._log_controller_info("Targeter converged");
                
-        return self.flag_solved, self.arr_lam_sol, self.eps, sol;
+        return self.flag_solved, self.arr_lam_sol, self.eps, sol, self.log;
                           
     
     def generate_output_ephemeris(self, ephemeris):
@@ -350,7 +362,7 @@ class Hamiltonian_Controller_TBT:
     
     def check_initial_costate_guess(self):
         
-        print("Checking initial co-state guess");
+        self._log_controller_info("Checking initial co-state guess");
         
         flag_good_first_guess   = False;
         counter_first_guess     = 0;
@@ -386,10 +398,11 @@ class Hamiltonian_Controller_TBT:
                 success = False;
             
             if ( success ):
-                print("Attempt ", counter_first_guess, "   Lambda: ", lam_guess, " passed" );
+                self._log_controller_info("Attempt " + str( counter_first_guess ) + "   Lambda: " + str( lam_guess ) + " passed" );
                 return lam_guess;
             else:
-                print("Lambda: ", counter_first_guess, "   lam_guess ", lam_guess, " failed" );
+                self._log_controller_info("Lambda: " + str( counter_first_guess ) + "   lam_guess " + str( lam_guess ) + " failed" );
         
+    def _log_controller_info( self, info ):
         
-        
+        self.log.append(info);
