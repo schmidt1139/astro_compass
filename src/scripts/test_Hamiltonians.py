@@ -61,7 +61,7 @@ H_controller = Hamiltonian_Controller_TBT(env, init_observation,
 
 
 #compute solution
-flag_solved, h_sol, eps, sol = H_controller.hamiltonian_solution_finder();
+flag_solved, h_sol, eps, sol, log = H_controller.hamiltonian_solution_finder();
 
 #write output ephemeris
 eph_out, arr_time, arr_u, arr_rho, arr_alpha_x, arr_alpha_y = H_controller.generate_output_ephemeris(eph);
@@ -92,3 +92,9 @@ eph_out.plot_xy_ref_orbit(sma_Mars, "Mars Orbit" );
 np.set_printoptions(precision=16)
 print("Solution for initial co-states: ", h_sol);
 print("Final smoothing parameter used in solution generation: ", eps);
+print("Printing targeter log...\n");
+
+for item in log:
+    print(item);
+    
+print(sol);
