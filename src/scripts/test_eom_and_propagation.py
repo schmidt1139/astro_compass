@@ -17,7 +17,7 @@ from Ephemeris import Ephemeris
 from Hamiltonian_Control import Hamiltonian_Controller_TBT
 from scipy.integrate import solve_ivp
 from Propagation import Hamiltonian_EOM_TBT_v2
-from Propagation import smoothing_function
+from Propagation import smoothing_function_tanh
 from StateVectorUtilities import non_dimensionalize
 
 
@@ -108,9 +108,13 @@ arr_full_y0 = np.hstack( (arr_y_nd, lam_guess) );
 t_span = (0,input_TOF_nd);
 t_eval = np.linspace(*t_span, 1000);
 
+#Additional parameters
+flag_constrain_u        = True;
+switch_smoothing_method = 0; #0 -> tanh
+
 #set up parameter array
 params = np.array( [mu_nd, T_max_nd, ISP_nd, sma_Earth, m_star, t_star, g0_nd,
-                    eps ] );
+                    eps, flag_constrain_u, switch_smoothing_method ] );
 
 #check initial derivatives
 derivs = Hamiltonian_EOM_TBT_v2( 0.0, arr_full_y0, params );
@@ -194,7 +198,7 @@ for index, t in enumerate(arr_time):
         else:
             u = 0.0;       
     else:
-        u = smoothing_function( rho, eps );
+        u = smoothing_function_tanh( rho, eps );
     
     #Add data to ephemeris object
     eph.add_data( t, x_i, y_i, vx_i, vy_i, m_i );
