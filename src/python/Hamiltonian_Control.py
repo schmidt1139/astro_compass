@@ -324,7 +324,12 @@ class Hamiltonian_Controller_TBT:
                 else:
                     u = 0.0;       
             else:
-                u = smoothing_function( rho, self.eps );
+                #check the smoothing method
+                if( self.smoothing_method == 0 ):
+                    u = smoothing_function_tanh( rho, self.eps );
+                elif( self.smoothing_method == 1 ):
+                    u = smoothing_function_homotopic(rho, self.eps, 
+                                                     self.flag_constrain_u);
             
             r_i = np.linalg.norm([x_i, y_i]);
             r_vec = np.array([x_i, y_i, 0]);

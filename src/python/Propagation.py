@@ -443,7 +443,12 @@ def Hamiltonian_EOM_TBT_v2( t,state,params ):
         else:
             u = 0.0;       
     else:
-        u = smoothing_function( rho, eps );
+        
+        #check the smoothing method
+        if( switch_smoothing_method == 0 ):
+            u = smoothing_function_tanh( rho, eps );
+        elif( switch_smoothing_method == 1 ):
+            u = smoothing_function_homotopic(rho, eps, flag_constrain_u);
     
     #state vector derivative calculations
     dr_vec = v_vec;
@@ -459,11 +464,30 @@ def Hamiltonian_EOM_TBT_v2( t,state,params ):
     derivs = np.array( [ dr_vec[0], dr_vec[1], dv_vec[0], dv_vec[1], dm, 
                        d_lam_r_vec[0], d_lam_r_vec[1], d_lam_v_vec[0], 
                        d_lam_v_vec[1], d_lam_m ] );
+
     
     return derivs;
 
-def smoothing_function( rho, eps ):
+def smoothing_function_tanh( rho, eps ):
     
     u_smooth = 1/2 * ( 1 + np.tanh( rho / eps ) );
     
     return u_smooth;
+
+def smoothing_function_homotopic( rho, eps, flag_constrain_u ):
+    
+    #If u is unconstrained
+    if ( flag_constrain_u == False ):
+        u_smooth = 1/2 + (rho / 2 * eps);
+        
+    #Throttle input is bounded between 0 and 1
+    else:
+        
+        if ( rho > eps ):
+            u_smooth = 1;
+        elif( rho < -eps ):
+            u_smooth = 0;
+        else:
+           u_smooth = 1/2 + (rho / 2 * eps);
+        
+    return u_smooth;    
