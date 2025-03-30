@@ -243,6 +243,8 @@ class Hamiltonian_Controller_TBT:
             
             
             self._log_controller_info("Try count: " + str(try_count));
+            self.flag_stop_targeting = True;
+            
         
         return lam_solution;
             
@@ -279,6 +281,9 @@ class Hamiltonian_Controller_TBT:
             
             #update k counter
             k = k + 1;
+            
+            if (self.flag_stop_targeting == True ):
+                break;
         
         #assign co-state solution to Hamiltonian object after smoothing
         #iteration is complete.
