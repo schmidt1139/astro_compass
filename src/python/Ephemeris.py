@@ -14,9 +14,12 @@ class Ephemeris():
         self.arr_vx = np.array([]);
         self.arr_vy = np.array([]);
         self.arr_m = np.array([]);
+        self.arr_alpha_x = np.array([]);
+        self.arr_alpha_y = np.array([]);
+        self.arr_u = np.array([]);
         self.num_vectors = 0;
         
-    def add_data(self,et,x,y,vx,vy,m):
+    def add_data(self,et,x,y,vx,vy,m,alpha_x,alpha_y,u):
         
         self.arr_et = np.append( self.arr_et, et );
         self.arr_x = np.append( self.arr_x, x );
@@ -24,9 +27,12 @@ class Ephemeris():
         self.arr_vx = np.append( self.arr_vx, vx );
         self.arr_vy = np.append( self.arr_vy, vy );
         self.arr_m = np.append( self.arr_m, m );
+        self.arr_alpha_x = np.append( self.arr_alpha_x, alpha_x );
+        self.arr_alpha_y = np.append( self.arr_alpha_y, alpha_y );
+        self.arr_u = np.append( self.arr_u, u );
         self.num_vectors = self.num_vectors + 1;
         
-    def add_polar_data(self,et,r,theta,r_dot,v_theta,m):
+    def add_polar_data(self,et,r,theta,r_dot,v_theta,m,alpha_x,alpha_y,u):
         
         #convert polar coordinates to cartesian
         x = r * np.cos(theta);
@@ -40,6 +46,9 @@ class Ephemeris():
         self.arr_vx = np.append( self.arr_vx, vx );
         self.arr_vy = np.append( self.arr_vy, vy );
         self.arr_m = np.append( self.arr_m, m );
+        self.arr_alpha_x = np.append( self.arr_alpha_x, alpha_x );
+        self.arr_alpha_y = np.append( self.arr_alpha_y, alpha_y );
+        self.arr_u = np.append( self.arr_u, u );
         self.num_vectors = self.num_vectors + 1;
         
     def plot_xy(self, radius_central_body):
