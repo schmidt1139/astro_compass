@@ -201,7 +201,8 @@ for index, t in enumerate(arr_time):
         u = smoothing_function_tanh( rho, eps );
     
     #Add data to ephemeris object
-    eph.add_data( t, x_i, y_i, vx_i, vy_i, m_i );
+    eph.add_data( t, x_i, y_i, vx_i, vy_i, m_i, alpha_vec[0], alpha_vec[1],
+                 u );
     
     #append to arrays
     arr_E.append(E);
