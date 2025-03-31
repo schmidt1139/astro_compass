@@ -387,7 +387,8 @@ class Hamiltonian_Controller_TBT:
             lam_v_vec = np.array([lam_vx_i, lam_vy_i]);
             lam_v_mag = np.linalg.norm(lam_v_vec);
             
-            ephemeris.add_data( t, x_i, y_i, vx_i, vy_i, m_i );
+            ephemeris.add_data( t_i, x_i, y_i, vx_i, vy_i, m_i, alpha_vec[0], 
+                               alpha_vec[1], u );
             
             arr_u.append(u);
             arr_rho.append(rho);
