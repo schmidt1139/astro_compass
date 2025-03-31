@@ -1,6 +1,8 @@
 import numpy as np;
 import matplotlib.pyplot as plot;
-
+import os;
+import time;
+from datetime import datetime, timezone;
 
 class Ephemeris():
     
@@ -121,6 +123,67 @@ class Ephemeris():
         self.ax_xy = ax;
         
         return self.fig_xy;
+
+    def write_to_file(self, file_path, mod_vector_write_frequency=1 ):
+        
+        file_name_base = os.path.basename(file_path);
+        
+        # Get generation time as UTC string
+        time_generation = time.time();
+        string_time_generation_utc = datetime.fromtimestamp(time_generation, 
+                                                            tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f"); 
+        
+        #Modified number of vectors
+        mod_num_vec = self.num_vectors // mod_vector_write_frequency;
+        
+        with open( file_path, "w" ) as f:
+            
+            f.write("Astro Compass Ephemeris v 1.0\n");
+            f.write("File name: " + file_name_base + "\n");
+            f.write("Generation time: " + string_time_generation_utc + "\n" );
+            f.write("Number of vectors: " + str(mod_num_vec) + "\n");
+            f.write("\n");
+            f.write("Columns\n"); 
+            f.write("1: Elapsed time [units: seconds]\n");
+            f.write("2: X position [units: meters]\n");
+            f.write("3: Y position [units: meters]\n");
+            f.write("4: VX position [units: meters/second]\n");
+            f.write("5: VY position [units: meters/second]\n");
+            f.write("6: Mass [units: kg]\n");
+            f.write("7: Thrust Direction - X-hat [units: none]\n");
+            f.write("8: Thrust Direction - Y-hat [units: none]\n");
+            f.write("9: Thrust Throttle (ranges from 0-1) [units: none]\n");
+            f.write("\n");
+            f.write("<Ephemeris Start>\n");
+            
+            for i in range(0,self.num_vectors-1):
+                
+                modulo = i % mod_vector_write_frequency;
+                
+                if ( modulo == 0 ):
+                    
+                    str_ephem_out = format(self.arr_et[i], ".16e");
+                    str_ephem_out = str_ephem_out + "," + format(self.arr_x[i], ".16e");
+                    str_ephem_out = str_ephem_out + "," + format(self.arr_y[i], ".16e");
+                    str_ephem_out = str_ephem_out + "," + format(self.arr_vx[i], ".16e");
+                    str_ephem_out = str_ephem_out + "," + format(self.arr_vy[i], ".16e");
+                    str_ephem_out = str_ephem_out + "," + format(self.arr_m[i], ".16e");
+                    str_ephem_out = str_ephem_out + "," + format(self.arr_alpha_x[i], ".16e");
+                    str_ephem_out = str_ephem_out + "," + format(self.arr_alpha_y[i], ".16e");
+                    str_ephem_out = str_ephem_out + "," + format(self.arr_u[i], ".16e");
+                    
+                    f.write(str_ephem_out + "\n");
+            
+            f.write("<Ephemeris End>\n");
+            
+        f.close();
+        
+        return f.closed;
+            
+            
         
         
-        #end def __init__(self):
+        
+        
+        
+        
