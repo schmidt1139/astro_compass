@@ -138,23 +138,27 @@ class Ephemeris():
         
         with open( file_path, "w" ) as f:
             
-            f.write("Astro Compass Ephemeris v 1.0\n");
-            f.write("File name: " + file_name_base + "\n");
-            f.write("Generation time: " + string_time_generation_utc + "\n" );
-            f.write("Number of vectors: " + str(mod_num_vec) + "\n");
-            f.write("\n");
-            f.write("Columns\n"); 
-            f.write("1: Elapsed time [units: seconds]\n");
-            f.write("2: X position [units: meters]\n");
-            f.write("3: Y position [units: meters]\n");
-            f.write("4: VX position [units: meters/second]\n");
-            f.write("5: VY position [units: meters/second]\n");
-            f.write("6: Mass [units: kg]\n");
-            f.write("7: Thrust Direction - X-hat [units: none]\n");
-            f.write("8: Thrust Direction - Y-hat [units: none]\n");
-            f.write("9: Thrust Throttle (ranges from 0-1) [units: none]\n");
-            f.write("\n");
-            f.write("<Ephemeris Start>\n");
+            header = (
+                "Astro Compass Ephemeris v 1.0\n"
+                f"File name: {file_name_base}\n"
+                f"Generation time (UTC): {string_time_generation_utc}\n"
+                f"Number of vectors: {mod_num_vec}\n"
+                "\n"
+                "Columns\n"
+                "1: Elapsed time [units: seconds]\n"
+                "2: X position [units: meters]\n"
+                "3: Y position [units: meters]\n"
+                "4: VX position [units: meters/second]\n"
+                "5: VY position [units: meters/second]\n"
+                "6: Mass [units: kg]\n"
+                "7: Thrust Direction - X-hat [units: none]\n"
+                "8: Thrust Direction - Y-hat [units: none]\n"
+                "9: Thrust Throttle (ranges from 0-1) [units: none]\n"
+                "\n"
+                "<Ephemeris Start>\n"
+            );
+            
+            f.write(header);
             
             for i in range(0,self.num_vectors-1):
                 
