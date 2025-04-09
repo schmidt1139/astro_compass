@@ -3,6 +3,7 @@ from Propagation import Hamiltonian_EOM_TBT
 from scipy.optimize import root
 from scipy.optimize import fsolve
 from StateVectorUtilities import *
+from Ephemeris import *
 import numpy as np;
 
 class Hamiltonian_Controller_TBT:
@@ -41,20 +42,20 @@ class Hamiltonian_Controller_TBT:
         #root_tol: The root finder function zero tolerance (increased if solver struggles)
         #root_tol_max: The max root tolerance, if this value is reached and there 
         #              is still no convergence the targeting procedure fails.
-        self.eps_threshold = 10**(-4);
-        self.gamma  = 0.5;
-        self.eps_0  = 1.0;
+        self.eps_threshold = 10**(-3);
+        self.gamma  = 0.97;
+        self.eps_0  = 0.6;
         self.eps    = self.eps_0;
         self.max_k  = 640;
         self.root_tol = 1e-8;
         self.root_tol_max = 1e-3;
         
         #supply heuristic initial guess for the shooting method for the co-states
-        lam_x0 = 0.1;
-        lam_y0 = 0.1;
-        lam_vx0 = 0.1;
-        lam_vy0 = 0.1;
-        lam_m0 = 0.1;
+        lam_x0 = 0.286298956079894;
+        lam_y0 = -0.0214548070543362;
+        lam_vx0 = -0.0689585667746195;
+        lam_vy0 = 0.6266476511221035;
+        lam_m0 = 0.14579433945759;
         
         #convert initial state to cartesian
         x0, y0, vx0, vy0 = polar_to_cartesian(r_0, theta_0, r_dot_0, v_theta_0 );
@@ -84,6 +85,9 @@ class Hamiltonian_Controller_TBT:
         self.r_f_nd         = r_f / self.l_star;
         self.r_dot_f_nd     = r_dot_f / self.l_star * self.t_star;
         self.v_theta_f_nd   = v_theta_f / self.l_star * self.t_star;
+        
+        #solution found flag (default to false)
+        self.flag_solved = False;
         
         print("Boundary Conditions");
         print(f"arr_y nd: {arr_y0_nd}");
@@ -214,8 +218,14 @@ class Hamiltonian_Controller_TBT:
         k   = 1;
         eps = self.eps_0;
         
+        #The first step is to check the initial co-state guess, if it does not
+        #lie sufficiently close to the real solution and the root finder fails, 
+        #we re-try until a solution is achieved.
+        arr_lam_sol_0 = self.check_initial_costate_guess();
+        
         #provide initial co-state guess
         arr_lam_sol_0 = self.arr_lam_0;
+        arr_lam_sol_k = arr_lam_sol_0;
         
         while ( (k <= self.max_k) and (eps > self.eps_threshold) ):
             
@@ -226,10 +236,6 @@ class Hamiltonian_Controller_TBT:
             
             #determine initial boundary values for co-states
             arr_lam_sol_k = self.hamiltonian_root_finder(eps, arr_lam_sol_0 );
-            
-            #print solution
-            report_line = f"k: {k}   eps: {eps:.4e}   arr_lam_sol_k: {arr_lam_sol_k}";
-            print(report_line);
             
             #next initial guess is the previous solution
             arr_lam_sol_0 = arr_lam_sol_k;
@@ -257,11 +263,119 @@ class Hamiltonian_Controller_TBT:
         #integrate forward in time
         sol = solve_ivp(Hamiltonian_EOM_TBT_v2, t_span, arr_full_y0, method='RK45', args=(params,), t_eval=t_eval );
         
+        #assign solution to controller object and set solution flag to true
+        self.final_sol      = sol;
+        self.flag_solved    = True;
+        
         if ( sol.status == -1 ):
             print(sol.message);
             raise Exception("Integration failed");
                
-        return self.arr_lam_sol, self.eps, sol;
+        return self.flag_solved, self.arr_lam_sol, self.eps, sol;
                           
+    
+    def generate_output_ephemeris(self, ephemeris):
+        
+        #only write ephemeris if the controller has found a solution
+        if ( self.flag_solved == False ):
+            raise Exception("Controller has not solved, cannot write ephemeris");
+            
+        #extract time and state variables from solution
+        arr_time    = self.final_sol.t;
+        arr_u       = [];
+        arr_rho     = [];
+        alpha_vec_x = [];
+        alpha_vec_y = [];
+        
+        #step through states and add to ephem object
+        for index, t in enumerate(arr_time):
+            
+            #states
+            x_i = self.final_sol.y[0,index] * self.l_star;
+            y_i = self.final_sol.y[1,index] * self.l_star;
+            vx_i = self.final_sol.y[2,index] * self.l_star / self.t_star;
+            vy_i = self.final_sol.y[3,index] * self.l_star / self.t_star;
+            m_i_nd = self.final_sol.y[4,index];
+            m_i = m_i_nd * self.m_star;
+            
+            #co-states
+            lam_x_i = self.final_sol.y[5,index];
+            lam_y_i = self.final_sol.y[6,index];
+            lam_vx_i = self.final_sol.y[7,index];
+            lam_vy_i = self.final_sol.y[8,index];
+            lam_m_i = self.final_sol.y[9,index];
+            
+            r_i = np.linalg.norm([x_i, y_i]);
+            r_vec = np.array([x_i, y_i, 0]);
+            v_vec = np.array([vx_i, vy_i, 0]);
+            lam_v_vec = np.array([lam_vx_i, lam_vy_i]);
+            lam_v_mag = np.linalg.norm(lam_v_vec);
+            
+            #Find alpha vector
+            alpha_vec = - lam_v_vec / lam_v_mag;
+            
+            #Switching function
+            rho = lam_m_i + self.ISP_nd * self.g0_nd * lam_v_mag / m_i_nd - 1;
+            
+            if ( self.eps == 0.0 ):  
+                if ( rho >= 0 ):
+                    u = 1.0;
+                else:
+                    u = 0.0;       
+            else:
+                u = smoothing_function( rho, self.eps );
+            
+            ephemeris.add_data( t, x_i, y_i, vx_i, vy_i, m_i );
+            
+            arr_u.append(u);
+            arr_rho.append(rho);
+            alpha_vec_x.append(alpha_vec[0]);
+            alpha_vec_y.append(alpha_vec[1]);
+            
+        return ephemeris, arr_time, arr_u, arr_rho, alpha_vec_x, alpha_vec_y;
+    
+    def check_initial_costate_guess(self):
+        
+        print("Checking initial co-state guess");
+        
+        flag_good_first_guess   = False;
+        counter_first_guess     = 0;
+        max_iters               = 100;
+        mean_co_state_guess     = 0.0;
+        std_co_state_guess      = 0.01;
+        len_co_state_guess      = len(self.arr_lam_0);
+        bias_co_states          = np.array([ 0.0, 0.0, 0.0, 0.0, 0.0]);
+        lam_guess               = self.arr_lam_0;
+        
+        while( flag_good_first_guess == False ):
+            
+            counter_first_guess = counter_first_guess + 1;
+            
+            if ( counter_first_guess > max_iters ):
+                raise Exception("Cannot find good initial co-state guess");
+            
+            #randomize the first guess if the first guess is no good
+            if ( counter_first_guess > 1 ):
+                lam_guess = np.random.normal(loc=mean_co_state_guess, 
+                                             scale=std_co_state_guess,
+                                             size=len_co_state_guess);
+                
+                #add bias array
+                lam_guess = lam_guess + bias_co_states;
+            
+            lam_sol     = root(self.shooting_iteration, lam_guess, self.eps_0, tol=self.root_tol );
+            fjac        = lam_sol.fjac;
+            cn          = np.linalg.cond(fjac);
+            success     = lam_sol.success;
+            
+            if ( abs(max(lam_sol.x)) > 1 ):
+                success = False;
+            
+            if ( success ):
+                print("Attempt ", counter_first_guess, "   Lambda: ", lam_guess, " passed" );
+                return lam_guess;
+            else:
+                print("Lambda: ", counter_first_guess, "   lam_guess ", lam_guess, " failed" );
+        
         
         
