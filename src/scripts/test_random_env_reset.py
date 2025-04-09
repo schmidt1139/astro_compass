@@ -74,7 +74,7 @@ def test_random_env_rest( env ):
         
         
         #compute solution
-        flag_solved, h_sol, eps, sol = H_controller.hamiltonian_solution_finder();
+        flag_solved, h_sol, eps, sol,log = H_controller.hamiltonian_solution_finder();
         
         #write output ephemeris
         eph_out, arr_time, arr_u, arr_rho, arr_alpha_x, arr_alpha_y = H_controller.generate_output_ephemeris(eph);
