@@ -57,6 +57,8 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
             "e":self._keplerian_elements[1],
             "w":np.rad2deg( self._keplerian_elements[2] ),
             "theta":np.rad2deg( self._keplerian_elements[3] ),
+            "max_thrust":self._spacecraft.max_thrust,
+            "ISP": self._spacecraft.specific_impulse
             }
         
 
@@ -66,17 +68,22 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         # We need the following line to seed self.np_random
         super().reset(seed=seed)
         
+        #extract central body gravitational parameter
+        mu          = self.arr_mu[0];
+        
         #set the initial parameters
         r           = 2.32495e8         #Mars distance
         theta       = 0.0;              #Default initial theta
         r_dot       = 0.0;              #Initial radial velocity
-        v_theta     = 24.67175;         #Tangential velocity
+        v_theta     = (mu/r)**0.5;      #Tangential velocity
         mass        = 3366.0;           #Assumed spacecraft total mass
         sma_target  = 149598023;        #Earth SMA
-        C1          = 1.33/1000;        #Spacecraft max thrust
-        C2          = 3872.0;           #Spacecraft specific impulse
+        C1          = 1.33/1000;        #Spacecraft max thrust (in kN)
+        C2          = 3872.0;           #Spacecraft specific impulse (s)
         
-        mu          = self.arr_mu[0];
+        #randomly select theta
+        theta = self.np_random.uniform(low=0.0, high=1.0) * 2 *np.pi;
+
         
         #set the location of the central body
         x_cb = 0.0;
