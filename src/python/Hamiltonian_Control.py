@@ -331,7 +331,6 @@ class Hamiltonian_Controller_TBT:
             
         #extract time and state variables from solution
         arr_time    = self.final_sol.t;
-        variables   = self.final_sol.y;    
         arr_u       = [];
         arr_rho     = [];
         alpha_vec_x = [];
@@ -341,20 +340,19 @@ class Hamiltonian_Controller_TBT:
         for index, t in enumerate(arr_time):
             
             #states
-            t_i = t * self.t_star;
-            x_i = variables[0,index] * self.l_star;
-            y_i = variables[1,index] * self.l_star;
-            vx_i = variables[2,index] * self.l_star / self.t_star;
-            vy_i = variables[3,index] * self.l_star / self.t_star;
-            m_i_nd = variables[4,index];
+            x_i = self.final_sol.y[0,index] * self.l_star;
+            y_i = self.final_sol.y[1,index] * self.l_star;
+            vx_i = self.final_sol.y[2,index] * self.l_star / self.t_star;
+            vy_i = self.final_sol.y[3,index] * self.l_star / self.t_star;
+            m_i_nd = self.final_sol.y[4,index];
             m_i = m_i_nd * self.m_star;
             
             #co-states
-            lam_x_i = variables[5,index];
-            lam_y_i = variables[6,index];
-            lam_vx_i = variables[7,index];
-            lam_vy_i = variables[8,index];
-            lam_m_i = variables[9,index];
+            lam_x_i = self.final_sol.y[5,index];
+            lam_y_i = self.final_sol.y[6,index];
+            lam_vx_i = self.final_sol.y[7,index];
+            lam_vy_i = self.final_sol.y[8,index];
+            lam_m_i = self.final_sol.y[9,index];
             
             r_i = np.linalg.norm([x_i, y_i]);
             r_vec = np.array([x_i, y_i, 0]);
