@@ -325,12 +325,6 @@ class Hamiltonian_Controller_TBT:
             else:
                 u = smoothing_function( rho, self.eps );
             
-            r_i = np.linalg.norm([x_i, y_i]);
-            r_vec = np.array([x_i, y_i, 0]);
-            v_vec = np.array([vx_i, vy_i, 0]);
-            lam_v_vec = np.array([lam_vx_i, lam_vy_i]);
-            lam_v_mag = np.linalg.norm(lam_v_vec);
-            
             ephemeris.add_data( t, x_i, y_i, vx_i, vy_i, m_i );
             
             arr_u.append(u);
