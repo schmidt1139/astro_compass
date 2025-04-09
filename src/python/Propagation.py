@@ -394,18 +394,20 @@ def Hamiltonian_EOM_TBT_v2( t,state,params ):
     num_params = len(params);
     
     #check parameter length
-    if( num_params != 8 ):
+    if( num_params != 10 ):
         raise Exception('Invalid number of parameters');
     
     #unpack the parameters
-    mu      = params[0];     #gravitational parameter of the central body
-    T_max   = params[1];     #max thrust of the spacecraft
-    ISP     = params[2];     #spacecraft specific impulse
-    l_star  = params[3];     #characteristic length
-    m_star  = params[4];     #characteristic mass
-    t_star  = params[5];     #characteristic time
-    g0      = params[6];     #acceleration at Earth surface
-    eps     = params[7];
+    mu      = params[0];            #gravitational parameter of the central body
+    T_max   = params[1];            #max thrust of the spacecraft
+    ISP     = params[2];            #spacecraft specific impulse
+    l_star  = params[3];            #characteristic length
+    m_star  = params[4];            #characteristic mass
+    t_star  = params[5];            #characteristic time
+    g0      = params[6];            #acceleration at Earth surface
+    eps     = params[7];            #smoothing parameter
+    flag_constrain_u = params[8];   #Boolean indicating if 0<u<1 is enforced
+    switch_smoothing_method = params[9];   #Smoothing method
     
     
     #unpack the state vector
@@ -443,7 +445,12 @@ def Hamiltonian_EOM_TBT_v2( t,state,params ):
         else:
             u = 0.0;       
     else:
-        u = smoothing_function( rho, eps );
+        
+        #check the smoothing method
+        if( switch_smoothing_method == 0 ):
+            u = smoothing_function_tanh( rho, eps );
+        elif( switch_smoothing_method == 1 ):
+            u = smoothing_function_homotopic(rho, eps, flag_constrain_u);
     
     #state vector derivative calculations
     dr_vec = v_vec;
@@ -459,11 +466,30 @@ def Hamiltonian_EOM_TBT_v2( t,state,params ):
     derivs = np.array( [ dr_vec[0], dr_vec[1], dv_vec[0], dv_vec[1], dm, 
                        d_lam_r_vec[0], d_lam_r_vec[1], d_lam_v_vec[0], 
                        d_lam_v_vec[1], d_lam_m ] );
+
     
     return derivs;
 
-def smoothing_function( rho, eps ):
+def smoothing_function_tanh( rho, eps ):
     
     u_smooth = 1/2 * ( 1 + np.tanh( rho / eps ) );
     
     return u_smooth;
+
+def smoothing_function_homotopic( rho, eps, flag_constrain_u ):
+    
+    #If u is unconstrained
+    if ( flag_constrain_u == False ):
+        u_smooth = 1/2 + (rho / 2 * eps);
+        
+    #Throttle input is bounded between 0 and 1
+    else:
+        
+        if ( rho > eps ):
+            u_smooth = 1;
+        elif( rho < -eps ):
+            u_smooth = 0;
+        else:
+           u_smooth = 1/2 + (rho / 2 * eps);
+        
+    return u_smooth;    
