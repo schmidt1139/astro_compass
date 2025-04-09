@@ -340,6 +340,7 @@ class Hamiltonian_Controller_TBT:
         for index, t in enumerate(arr_time):
             
             #states
+            t_i = t * self.t_star;
             x_i = self.final_sol.y[0,index] * self.l_star;
             y_i = self.final_sol.y[1,index] * self.l_star;
             vx_i = self.final_sol.y[2,index] * self.l_star / self.t_star;
