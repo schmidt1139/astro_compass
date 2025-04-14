@@ -18,6 +18,26 @@ from Hamiltonian_Control import Hamiltonian_Controller_TBT
 from scipy.integrate import solve_ivp
 from Propagation import Hamiltonian_EOM_TBT_nd
 
+#USER INPUTS ------------------------------------------------------------------
+
+#Initialize dictionary with input parameters to function
+args = {
+    "TOF": 1.1 * 365.25 * 24 * 60 * 60, #s
+    "r0": 2.32495e+08, #Initial state/radius [km]
+    "theta0": 0.0, #Initial state/true anomaly [rad]
+    "vr0": 0.0, #Initial state/radial velocity [km/s]
+    "vtheta0": 23.6464, #Initial state/transpose velocity [km/s]
+    "m0": 3366.0, #Initial state/mass [kg]
+    "mu": 1.3e+11, #Central body gravitational parameter [km^3/s^2]
+    "sma_target": 1.49598e+08, #Target sma of final circular orbit [km]
+    "max_thrust": 1.33, #Max thrust of the spacecraft engine [N]
+    "ISP": 3872.0 #Specific impulse of the spacecraft engine [s]
+}
+
+#Ephemeris filename
+dir_ephemeris_out = "..\\..\\data\\training_ephems\\"
+filename_ephemeris_out = dir_ephemeris_out + "solution_ephemeris.txt";
+#END USER INPUTS --------------------------------------------------------------
 
 #register the environment if it isn't registered
 if ( ("TwoBody_Orb2Orb_Transfer_Env-v0" in envs.registry.keys()) == False ):
@@ -97,7 +117,4 @@ def solve_two_body_transfer_and_write_ephem(env, filename_eph, args ):
 #initialize the environment
 env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0");
 
-#Ephemeris filename
-dir_ephemeris_out = "..\\..\\data\\training_ephems\\"
-filename_ephemeris_out = dir_ephemeris_out + "test_ephemeris.txt";
 solve_two_body_transfer_and_write_ephem(env, filename_ephemeris_out, args );
