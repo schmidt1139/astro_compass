@@ -92,6 +92,7 @@ def solve_two_body_transfer_and_write_ephem(env, filename_eph, args ):
     #write output ephemeris
     eph_out, arr_time, arr_u, arr_rho, arr_alpha_x, arr_alpha_y = H_controller.generate_output_ephemeris(eph);
     
+    #plotting
     fig, ax = plot.subplots(figsize=(6, 6));
     ax.plot( arr_time, arr_rho );
     ax.set_title("Switching Function");
@@ -106,13 +107,14 @@ def solve_two_body_transfer_and_write_ephem(env, filename_eph, args ):
     ax.set_title("Alpha Vector (Maneuver Direction) over Time"); 
     ax.legend();  
     
+    fig, ax = plot.subplots(figsize=(6, 6));
+    ax.plot( arr_time, sol.y[4,:] );
+    ax.set_title("Spacecraft Mass Fraction over Time"); 
+    
     #Ephemeris plotting
     sun_rad = 6.957e8;
-    sma_Earth   = 149598023 * 1000;             #m
-    sma_Mars    = 2.32495e8 * 1000;             #m
     eph_out.plot_xy(sun_rad);
-    eph_out.plot_xy_ref_orbit(sma_Earth, "Earth Orbit" );
-    eph_out.plot_xy_ref_orbit(sma_Mars, "Mars Orbit" );
+    eph_out.plot_xy_ref_orbit( args["sma_target"]*1000, "Target Orbit" );
     
     np.set_printoptions(precision=16)
     print("Solution for initial co-states: ", h_sol);
