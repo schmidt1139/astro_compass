@@ -94,7 +94,17 @@ class Ephemeris():
         
         ax.set_aspect("equal");
         
-        ax.plot( self.arr_x, self.arr_y, label="Trajectory" );
+        #Get initial and final states
+        x0 = self.arr_x[0];
+        y0 = self.arr_y[0];
+        xf = self.arr_x[-1];
+        yf = self.arr_y[-1];
+        
+        ax.plot( x0, y0, label="Initial State", marker='o', color='white', 
+                linestyle=None, markerfacecolor='blue', markeredgecolor='blue' );
+        ax.plot( xf, yf, label="Final State", marker='x', linestyle=None, 
+                markerfacecolor='black', markeredgecolor='black', color='white' );
+        ax.plot( self.arr_x, self.arr_y, label="Trajectory", color='blue' );
         ax.plot( arr_x_cb, arr_y_cb, label="Central Body" );
         
         ax.set_title("Trajectory");
