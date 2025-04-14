@@ -70,6 +70,8 @@ def solve_two_body_transfer_and_write_ephem(env, filename_eph, args ):
     init_observation[4] = args["m0"];
     init_observation[5] = args["mu"];
     init_observation[6] = args["sma_target"];
+    init_info["max_thrust"] = args["max_thrust"]/1000;
+    init_info["ISP"] = args["ISP"];
     
     #ephemeris
     eph = Ephemeris();
