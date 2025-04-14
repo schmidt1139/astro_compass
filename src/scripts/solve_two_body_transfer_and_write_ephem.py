@@ -53,7 +53,7 @@ def solve_two_body_transfer_and_write_ephem(env, filename_eph, args ):
     num_traj = 1;
 
     #The prescribed time of flight for the transfer trajectory [s]
-    input_TOF = 1.1 * 365.25 * 24 * 60 * 60;
+    input_TOF = args["TOF"];
     steps_per_traj = np.ceil( input_TOF / env.unwrapped.step_size );
     
     np.set_printoptions(precision=3)  # Limit to 3 decimal places
@@ -62,6 +62,15 @@ def solve_two_body_transfer_and_write_ephem(env, filename_eph, args ):
     seed = 42;
     init_observation, init_info = env.reset(seed=seed);
     
+    #override init observation to input arguments
+    init_observation[0] = args["r0"];
+    init_observation[1] = args["theta0"];
+    init_observation[2] = args["vr0"];
+    init_observation[3] = args["vtheta0"];
+    init_observation[4] = args["m0"];
+    init_observation[5] = args["mu"];
+    init_observation[6] = args["sma_target"];
+    
     #ephemeris
     eph = Ephemeris();
     
@@ -69,8 +78,8 @@ def solve_two_body_transfer_and_write_ephem(env, filename_eph, args ):
     
     #extract some parameters of interest
     sun_rad     = env.unwrapped.planet_radii[0];
-    C1          = init_info["max_thrust"]*1000; #max thrust in N
-    C2          = init_info["ISP"]; #spacecraft specific impulse in seconds
+    C1          = args["max_thrust"];
+    C2          = args["ISP"];
 
     #compute Hamiltonian Solution
     H_controller = Hamiltonian_Controller_TBT(env, init_observation, 
