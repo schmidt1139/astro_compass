@@ -28,7 +28,7 @@ if ( ("TwoBody_Orb2Orb_Transfer_Env-v0" in envs.registry.keys()) == False ):
     )
     
 
-def test_write_ephemeris(env, filename_eph ):
+def solve_two_body_transfer_and_write_ephem(env, filename_eph, args ):
     
     num_traj = 1;
 
@@ -100,5 +100,4 @@ env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0");
 #Ephemeris filename
 dir_ephemeris_out = "..\\..\\data\\training_ephems\\"
 filename_ephemeris_out = dir_ephemeris_out + "test_ephemeris.txt";
-
-test_write_ephemeris(env, filename_ephemeris_out);
+solve_two_body_transfer_and_write_ephem(env, filename_ephemeris_out, args );
