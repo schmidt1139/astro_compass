@@ -192,15 +192,15 @@ class Ephemeris():
                 if ( modulo == 0 ):
                     
                     str_ephem_out = (
-                        f"{self.arr_et[i]:.16e},"
-                        f"{self.arr_x[i]:.16e},"
-                        f"{self.arr_y[i]:.16e},"
-                        f"{self.arr_vx[i]:.16e},"
-                        f"{self.arr_vy[i]:.16e},"
-                        f"{self.arr_m[i]:.16e},"
-                        f"{self.arr_alpha_x[i]:.16e},"
-                        f"{self.arr_alpha_y[i]:.16e},"
-                        f"{self.arr_u[i]:.16e}"
+                        f"{self.arr_et[i]: .16e},"
+                        f"{self.arr_x[i]: .16e},"
+                        f"{self.arr_y[i]: .16e},"
+                        f"{self.arr_vx[i]: .16e},"
+                        f"{self.arr_vy[i]: .16e},"
+                        f"{self.arr_m[i]: .16e},"
+                        f"{self.arr_alpha_x[i]: .16e},"
+                        f"{self.arr_alpha_y[i]: .16e},"
+                        f"{self.arr_u[i]: .16e}"
                     );
                     
                     f.write(str_ephem_out + "\n");
