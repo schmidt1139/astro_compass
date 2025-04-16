@@ -94,7 +94,17 @@ class Ephemeris():
         
         ax.set_aspect("equal");
         
-        ax.plot( self.arr_x, self.arr_y, label="Trajectory" );
+        #Get initial and final states
+        x0 = self.arr_x[0];
+        y0 = self.arr_y[0];
+        xf = self.arr_x[-1];
+        yf = self.arr_y[-1];
+        
+        ax.plot( x0, y0, label="Initial State", marker='o', color='white', 
+                linestyle=None, markerfacecolor='blue', markeredgecolor='blue' );
+        ax.plot( xf, yf, label="Final State", marker='x', linestyle=None, 
+                markerfacecolor='black', markeredgecolor='black', color='white' );
+        ax.plot( self.arr_x, self.arr_y, label="Trajectory", color='blue' );
         ax.plot( arr_x_cb, arr_y_cb, label="Central Body" );
         
         ax.set_title("Trajectory");
@@ -182,15 +192,15 @@ class Ephemeris():
                 if ( modulo == 0 ):
                     
                     str_ephem_out = (
-                        f"{self.arr_et[i]:.16e},"
-                        f"{self.arr_x[i]:.16e},"
-                        f"{self.arr_y[i]:.16e},"
-                        f"{self.arr_vx[i]:.16e},"
-                        f"{self.arr_vy[i]:.16e},"
-                        f"{self.arr_m[i]:.16e},"
-                        f"{self.arr_alpha_x[i]:.16e},"
-                        f"{self.arr_alpha_y[i]:.16e},"
-                        f"{self.arr_u[i]:.16e}"
+                        f"{self.arr_et[i]: .16e},"
+                        f"{self.arr_x[i]: .16e},"
+                        f"{self.arr_y[i]: .16e},"
+                        f"{self.arr_vx[i]: .16e},"
+                        f"{self.arr_vy[i]: .16e},"
+                        f"{self.arr_m[i]: .16e},"
+                        f"{self.arr_alpha_x[i]: .16e},"
+                        f"{self.arr_alpha_y[i]: .16e},"
+                        f"{self.arr_u[i]: .16e}"
                     );
                     
                     f.write(str_ephem_out + "\n");
