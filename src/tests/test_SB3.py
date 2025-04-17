@@ -1,5 +1,5 @@
-
 import gymnasium as gym
+import time
 
 from stable_baselines3 import A2C
 
@@ -11,7 +11,7 @@ model.learn(total_timesteps=10_000)
 vec_env = model.get_env()
 obs = vec_env.reset()
 
-for i in range(10000):
+for i in range(1000):
     action, _state = model.predict(obs, deterministic=True)
     obs, reward, done, info = vec_env.step(action)
     vec_env.render("human")
@@ -20,3 +20,6 @@ for i in range(10000):
     #   obs = vec_env.reset()
 
 
+vec_env.close()
+env.close()
+time.sleep(10.0)  # 100 ms pause
