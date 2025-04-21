@@ -50,7 +50,7 @@ class Ephemeris:
         self.arr_u = np.append(self.arr_u, u)
         self.num_vectors = self.num_vectors + 1
 
-    def plot_xy(self, radius_central_body):
+    def plot_xy(self, radius_central_body=6.957e8):
         arr_x_cb = np.array([])
         arr_y_cb = np.array([])
 
