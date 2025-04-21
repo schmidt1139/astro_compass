@@ -250,3 +250,19 @@ class Ephemeris:
             if line == "<Ephemeris Start>":
                 flag_ephem_start = True
 
+    def get_vector_at_index(self, index):
+        # extract the vector elements at index
+        et = self.arr_et[index]
+        x = self.arr_x[index]
+        y = self.arr_y[index]
+        vx = self.arr_vx[index]
+        vy = self.arr_vy[index]
+        m = self.arr_m[index]
+        alpha_x = self.arr_alpha_x[index]
+        alpha_y = self.arr_alpha_y[index]
+        u = self.arr_u[index]
+
+        # construct output vector
+        vector = np.array([et, x, y, vx, vy, m, alpha_x, alpha_y, u])
+
+        return vector
