@@ -450,6 +450,9 @@ class Hamiltonian_Controller_TBT:
         len_co_state_guess = len(self.arr_lam_0)
         bias_co_states = np.array([0.0, 0.0, 0.0, 0.0, 0.1])
         lam_guess = self.arr_lam_0
+        
+        #Set the seed for the random initial guess variation
+        rng = np.random.default_rng(seed=42)
 
         while not flag_good_first_guess:
             counter_first_guess = counter_first_guess + 1
