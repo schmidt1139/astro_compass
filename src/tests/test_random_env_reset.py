@@ -75,41 +75,96 @@ def test_random_env_rest(env):
             env, init_observation, init_info, input_TOF
         )
 
+
         # compute solution
-        flag_solved, h_sol, eps, sol, log = H_controller.hamiltonian_solution_finder()
+        flag_solved, h_sol, eps, sol, log = ( 
+            H_controller.hamiltonian_solution_finder()
+            )
+        
+        #initialize to zero
+        net_delta_m = 0.0;
 
-        # write output ephemeris
-        eph_out, arr_time, arr_u, arr_rho, arr_alpha_x, arr_alpha_y = (
-            H_controller.generate_output_ephemeris(eph)
-        )
+        if (flag_solved):
+            
+            count_solved = count_solved + 1
+            
+            # write output ephemeris
+            eph_out, arr_time, arr_u, arr_rho, arr_alpha_x, arr_alpha_y = (
+                H_controller.generate_output_ephemeris(eph)
+            )
 
-        fig, ax = plt.subplots(figsize=(6, 6))
-        ax.plot(arr_time, arr_rho)
-        ax.set_title("Switching Function")
-        plt.show()
-
-        fig, ax = plt.subplots(figsize=(6, 6))
-        ax.plot(arr_time, arr_u)
-        ax.set_title("Spacecraft Thrust Throttle over Time")
-        plt.show()
-
-        fig, ax = plt.subplots(figsize=(6, 6))
-        ax.plot(arr_time, arr_alpha_x, label="alpha_x")
-        ax.plot(arr_time, arr_alpha_y, label="alpha_y")
-        ax.set_title("Alpha Vector (Maneuver Direction) over Time")
-        ax.legend()
-        plt.show()
-
-        # Ephemeris plotting
-        sun_rad = 6.957e8
-        sma_Earth = 149598023 * 1000  # m
-        sma_Mars = 2.32495e8 * 1000  # m
-        eph_out.plot_xy(sun_rad)
-        eph_out.plot_xy_ref_orbit(sma_Earth, "Earth Orbit")
-        eph_out.plot_xy_ref_orbit(sma_Mars, "Mars Orbit")
-        plt.show()
-
-        np.set_printoptions(precision=16)
+            fig, ax = plt.subplots(figsize=(6, 6))
+            ax.plot(arr_time, arr_rho)
+            ax.set_title("Traj #" + str(count) + " Switching Function")
+            plt.show()
+    
+            fig, ax = plt.subplots(figsize=(6, 6))
+            ax.plot(arr_time, arr_u)
+            ax.set_title("Traj #" + str(count) + " Spacecraft Thrust Throttle over Time")
+            plt.show()
+    
+            fig, ax = plt.subplots(figsize=(6, 6))
+            ax.plot(arr_time, arr_alpha_x, label="alpha_x")
+            ax.plot(arr_time, arr_alpha_y, label="alpha_y")
+            ax.set_title("Traj #" + str(count) + " Alpha Vector (Maneuver Direction) over Time")
+            ax.legend()
+            plt.show()
+    
+            # Ephemeris plotting
+            sun_rad = 6.957e8
+            sma_Earth = 149598023 * 1000  # m
+            sma_Mars = 2.32495e8 * 1000  # m
+            eph_out.plot_xy(sun_rad, "Traj #" + str(count) ) 
+            eph_out.plot_xy_ref_orbit(sma_Earth, "Earth Orbit")
+            eph_out.plot_xy_ref_orbit(sma_Mars, "Mars Orbit")
+            plt.show()
+            
+            fig, ax = plt.subplots(figsize=(6, 6))
+            ax.plot(arr_time, eph_out.arr_m)
+            ax.set_title("Traj #" + str(count) + " Spacecraft Mass over Time")
+            plt.show()
+            
+            #determine mass expenditure
+            net_delta_m =  eph_out.arr_m[0] - eph_out.arr_m[-1]
+            
+            arr_dm = [];
+            arr_zero = []
+            flag_first_m = True
+            flag_positive_mass_rate = False
+            m_prev = 0.0;
+            t_prev = 0.0;
+            
+            for i, m in enumerate(eph_out.arr_m):
+                dm = m - m_prev;
+                et = arr_time[i]
+                dt = et - t_prev;
+                
+                if ( dm>0.001 and not flag_first_m ):
+                    flag_positive_mass_rate = True
+                    print("t: ", et, "Mass rate: ", dm/dt);
+                
+                if not flag_first_m:
+                    arr_dm.append(dm);
+                else:
+                    arr_dm.append(0.0);
+                    
+                arr_zero.append(0);
+                
+                m_prev = m
+                t_prev = et
+                flag_first_m = False 
+              
+            #plot mass rate
+            fig, ax = plt.subplots(figsize=(6, 6))
+            ax.plot(arr_time, arr_dm)
+            ax.plot(arr_time, arr_zero)
+            ax.set_title("Traj #" + str(count) + " Mass Rate over Time")
+            plt.show()
+            
+            if (flag_positive_mass_rate ):
+                print("Warning - Positive Mass Rate: ", flag_positive_mass_rate )
+                count_pos_mass_rate = count_pos_mass_rate + 1
+            
         
         end_time = time.time();
         delta_time = end_time - start_time_last_traj;
