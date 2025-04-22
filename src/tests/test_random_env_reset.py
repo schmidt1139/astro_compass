@@ -61,11 +61,6 @@ def test_random_env_rest(env):
 
         r, theta, v_r, v_theta = init_observation[0:4]
         x, y, vx, vy = polar_to_cartesian(r, theta, v_r, v_theta)
-        print("Traj count: ", count)
-        print("r0: ", r)
-        print("theta0: ", theta)
-        print("v_r0: ", v_r)
-        print("v_theta0: ", v_theta)
 
         # ephemeris
         eph = Ephemeris()
@@ -119,8 +114,21 @@ def test_random_env_rest(env):
         end_time = time.time();
         delta_time = end_time - start_time_last_traj;
         start_time_last_traj = end_time;
+        
+        string_traj_data = str(count) + "," + str(delta_time) + "," + str(net_delta_m)
+        string_traj_data = string_traj_data + "," + str(flag_solved) + "," + str(flag_positive_mass_rate)
+        string_traj_data = string_traj_data + "," + str(h_sol[0]) + "," + str(h_sol[1])
+        string_traj_data = string_traj_data + "," + str(h_sol[2]) + "," + str(h_sol[3])
+        string_traj_data = string_traj_data + "," + str(h_sol[4])
+        
+        sa_report.append(string_traj_data)
+        
+        print("Traj count: ", count)
+        print("Fuel used: ", net_delta_m )
         print("Solution for initial co-states: ", h_sol)
         print("Final smoothing parameter used in solution generation: ", eps)
+        count = count + 1
+        seed_env = seed_env + 1
         print("Elapsed time: ", delta_time )
         print("flag_solved: ", flag_solved )
         print("")
@@ -128,6 +136,27 @@ def test_random_env_rest(env):
     end_time = time.time()
     total_time = end_time - start_time
     time_per_traj = total_time / count
+    
+    print("------------------------------------------------------------------")
+    print("")
+    print("Summary")
+    print("")
+    print("Postive mass rate count: ", count_pos_mass_rate )
+    print("Traj count: ", count )
+    print("Targeter converged count: ", count_solved )
+    print("Total elapsed time: ", total_time)
+    print("Average time per traj: ", time_per_traj)
+    print("")
+    
+    #report test summary to a file
+    file_path = "..\\..\\data\\test_data\\test_random_TBT_transfer_report.csv"
+    
+    with open(file_path, "w") as f:
+        for line in sa_report:
+            f.write(line + "\n")
+        
+    f.close()
+        
     
     print("------------------------------------------------------------------")
     print("")
