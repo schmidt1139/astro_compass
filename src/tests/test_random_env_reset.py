@@ -31,11 +31,30 @@ env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
 
 
 def test_random_env_rest(env):
-    # reset the evironment using set seed value
-    seed_env = 1
-    count = 1
+    
+    #parameters
+    num_trajs = 1
+    
+    # reset the evironment using set seed value and set counters
+    seed_env = 42
+    count = 0
+    count_pos_mass_rate = 0
+    count_solved = 0
+    
+    #track elapsed time
+    start_time = time.time()
+    start_time_last_traj = start_time
+    
+    #summary string array - initialize with header
+    sa_report = [];
+    header = "Count,Delta Time (s),Fuel Used (kg),Bool Targeter Converged,Bool Positive Mass Rate"
+    header = header + ",Lam1,Lam2,Lam3,Lam4,Lam5"
+    sa_report.append(header)
 
-    while count < 10:
+    while count < num_trajs:
+        count = count + 1
+        seed_env = seed_env + 1
+        
         eph = Ephemeris()
         init_observation, init_info = env.reset(seed=seed_env)
 
@@ -97,10 +116,33 @@ def test_random_env_rest(env):
         np.set_printoptions(precision=16)
         print("Solution for initial co-states: ", h_sol)
         print("Final smoothing parameter used in solution generation: ", eps)
-        np.set_printoptions(precision=3)
+        print("Elapsed time: ", delta_time )
+        print("flag_solved: ", flag_solved )
+        print("")
 
-        count = count + 1
-        seed_env = seed_env + 1
-
+    end_time = time.time()
+    total_time = end_time - start_time
+    time_per_traj = total_time / count
+    
+    print("------------------------------------------------------------------")
+    print("")
+    print("Summary")
+    print("")
+    print("Postive mass rate count: ", count_pos_mass_rate )
+    print("Traj count: ", count )
+    print("Targeter converged count: ", count_solved )
+    print("Total elapsed time: ", total_time)
+    print("Average time per traj: ", time_per_traj)
+    print("")
+    
+    #report test summary to a file
+    file_path = "..\\..\\data\\test_data\\test_random_TBT_transfer_report.csv"
+    
+    with open(file_path, "w") as f:
+        for line in sa_report:
+            f.write(line + "\n")
+        
+    f.close()
+        
 
 test_random_env_rest(env)
