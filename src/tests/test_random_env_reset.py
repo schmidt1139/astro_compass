@@ -5,6 +5,7 @@ import sys
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 
 # Adding python src code directory
@@ -114,6 +115,10 @@ def test_random_env_rest(env):
         plt.show()
 
         np.set_printoptions(precision=16)
+        
+        end_time = time.time();
+        delta_time = end_time - start_time_last_traj;
+        start_time_last_traj = end_time;
         print("Solution for initial co-states: ", h_sol)
         print("Final smoothing parameter used in solution generation: ", eps)
         print("Elapsed time: ", delta_time )
