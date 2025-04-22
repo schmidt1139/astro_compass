@@ -132,8 +132,8 @@ class Hamiltonian_Controller_TBT:
         self.root_max_iters = 1000
         self.smoothing_method = 0  # Choose from 0 (tanh), 1 (homotopic)
         self.flag_stop_targeting = False
-        self.ivp_solve_rtol = 10 ** (-3)
-        self.ivp_solve_atol = 10 ** (-6)
+        self.ivp_solve_rtol = 10 ** (-9)
+        self.ivp_solve_atol = 10 ** (-12)
 
     def shooting_iteration(self, lam_guess_shooting, eps):
         # construct full state vector at t=0
@@ -171,6 +171,7 @@ class Hamiltonian_Controller_TBT:
             args=(params,),
             t_eval=t_eval,
             rtol=self.ivp_solve_rtol,
+            atol=self.ivp_solve_atol
         )
 
         if sol.status == -1:
@@ -356,6 +357,7 @@ class Hamiltonian_Controller_TBT:
             args=(params,),
             t_eval=t_eval,
             rtol=self.ivp_solve_rtol,
+            atol=self.ivp_solve_atol
         )
 
         # assign solution to controller object and set solution flag to true
