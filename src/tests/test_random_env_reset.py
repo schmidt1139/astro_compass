@@ -67,10 +67,10 @@ def test_random_env_rest(env):
 
         # extract some parameters of interest
         sun_rad = env.unwrapped.planet_radii[0]
-
+        
         # compute Hamiltonian Solution
         input_TOF = 1.1 * 365.25 * 24 * 60 * 60
-        input_TOF = input_TOF * 1.2
+        
         H_controller = Hamiltonian_Controller_TBT(
             env, init_observation, init_info, input_TOF
         )
