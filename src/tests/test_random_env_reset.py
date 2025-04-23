@@ -180,7 +180,6 @@ def test_random_env_rest(env):
         print("Fuel used: ", net_delta_m)
         print("Solution for initial co-states: ", h_sol)
         print("Final smoothing parameter used in solution generation: ", eps)
-        count = count + 1
         seed_env = seed_env + 1
         print("Elapsed time: ", delta_time )
         print("flag_solved: ", flag_solved )
