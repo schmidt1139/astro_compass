@@ -171,7 +171,7 @@ class Hamiltonian_Controller_TBT:
             args=(params,),
             t_eval=t_eval,
             rtol=self.ivp_solve_rtol,
-            atol=self.ivp_solve_atol
+            atol=self.ivp_solve_atol,
         )
 
         if sol.status == -1:
@@ -357,7 +357,7 @@ class Hamiltonian_Controller_TBT:
             args=(params,),
             t_eval=t_eval,
             rtol=self.ivp_solve_rtol,
-            atol=self.ivp_solve_atol
+            atol=self.ivp_solve_atol,
         )
 
         # assign solution to controller object and set solution flag to true
@@ -450,8 +450,8 @@ class Hamiltonian_Controller_TBT:
         len_co_state_guess = len(self.arr_lam_0)
         bias_co_states = np.array([0.0, 0.0, 0.0, 0.0, 0.1])
         lam_guess = self.arr_lam_0
-        
-        #Set the seed for the random initial guess variation
+
+        # Set the seed for the random initial guess variation
         rng = np.random.default_rng(seed=42)
 
         while not flag_good_first_guess:
@@ -462,7 +462,7 @@ class Hamiltonian_Controller_TBT:
 
             # randomize the first guess if the first guess is no good
             if counter_first_guess > 1:
-                lam_guess = np.random.normal(
+                lam_guess = rng.normal(
                     loc=mean_co_state_guess,
                     scale=std_co_state_guess,
                     size=len_co_state_guess,
