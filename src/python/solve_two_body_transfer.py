@@ -3,6 +3,7 @@ import matplotlib.pyplot as plot
 from Ephemeris import Ephemeris
 from Hamiltonian_Control import Hamiltonian_Controller_TBT
 
+
 def solve_two_body_transfer_and_write_ephem(env, args):
     # The prescribed time of flight for the transfer trajectory [s]
     input_TOF = args["TOF"]
