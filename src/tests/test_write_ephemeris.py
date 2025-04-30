@@ -6,6 +6,7 @@ import os
 
 from gymnasium import envs
 from gymnasium.envs.registration import register
+from Constants import Constants
 
 # Adding python src code directory
 sys.path.append(os.path.abspath("../python"))
@@ -36,9 +37,6 @@ def test_write_ephemeris(env, filename_eph):
     eph = Ephemeris()
 
     print(init_observation)
-
-    # extract some parameters of interest
-    sun_rad = env.unwrapped.planet_radii[0]
 
     # compute Hamiltonian Solution
     H_controller = Hamiltonian_Controller_TBT(
@@ -71,10 +69,9 @@ def test_write_ephemeris(env, filename_eph):
     ax.legend()
 
     # Ephemeris plotting
-    sun_rad = 6.957e8
     sma_Earth = 149598023 * 1000  # m
     sma_Mars = 2.32495e8 * 1000  # m
-    eph_out.plot_xy(sun_rad)
+    eph_out.plot_xy(Constants.RADIUS_SUN_M)
     eph_out.plot_xy_ref_orbit(sma_Earth, "Earth Orbit")
     eph_out.plot_xy_ref_orbit(sma_Mars, "Mars Orbit")
 
