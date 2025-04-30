@@ -6,9 +6,7 @@ from datetime import datetime, timezone
 
 
 class Ephemeris:
-    def __init__(self):
-        # initialize an empty ephemeris object
-
+    def reset(self):
         self.arr_et = np.array([])
         self.arr_x = np.array([])
         self.arr_y = np.array([])
@@ -19,6 +17,10 @@ class Ephemeris:
         self.arr_alpha_y = np.array([])
         self.arr_u = np.array([])
         self.num_vectors = 0
+        
+    def __init__(self):
+        # initialize an empty ephemeris object
+        self.reset()
 
     def add_data(self, et, x, y, vx, vy, m, alpha_x, alpha_y, u):
         self.arr_et = np.append(self.arr_et, et)
@@ -203,16 +205,7 @@ class Ephemeris:
 
     def read_from_file(self, file_path):
         # clear the ephemeris states
-        self.arr_et = np.array([])
-        self.arr_x = np.array([])
-        self.arr_y = np.array([])
-        self.arr_vx = np.array([])
-        self.arr_vy = np.array([])
-        self.arr_m = np.array([])
-        self.arr_alpha_x = np.array([])
-        self.arr_alpha_y = np.array([])
-        self.arr_u = np.array([])
-        self.num_vectors = 0
+        self.reset()
 
         # flag if data section has been reached
         flag_ephem_start = False
