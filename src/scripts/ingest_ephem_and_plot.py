@@ -22,6 +22,11 @@ def ingest_ephem_and_plot(path_to_ephemeris):
 
     # Plot the ephemeris
     eph.plot_xy()
+    sma_Earth = 149598023 * 1000  # m
+    sma_Mars = 2.32495e8 * 1000  # m
+    eph.plot_xy_ref_orbit(sma_Mars, "Mars")
+    eph.plot_xy_ref_orbit(sma_Earth, "Earth")
+    eph.plot_all_ephemeris_data()
 
     # report the final vector
     index = eph.num_vectors - 1
