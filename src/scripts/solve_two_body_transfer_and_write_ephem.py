@@ -27,11 +27,9 @@ args = {
     "sma_target": 1.49598e08,  # Target sma of final circular orbit [km]
     "max_thrust": 1.33,  # Max thrust of the spacecraft engine [N]
     "ISP": 3872.0,  # Specific impulse of the spacecraft engine [s]
+    "filename_ephemeris_out": "..\\..\\data\\training_ephems\\solution_ephemeris.txt" #output path
 }
 
-# Ephemeris filename
-dir_ephemeris_out = "..\\..\\data\\training_ephems\\"
-filename_ephemeris_out = dir_ephemeris_out + "solution_ephemeris.txt"
 # END USER INPUTS --------------------------------------------------------------
 
 # register the environment if it isn't registered
@@ -42,7 +40,7 @@ if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
     )
 
 
-def solve_two_body_transfer_and_write_ephem(env, filename_eph, args):
+def solve_two_body_transfer_and_write_ephem(env, args):
     # The prescribed time of flight for the transfer trajectory [s]
     input_TOF = args["TOF"]
 
@@ -113,11 +111,11 @@ def solve_two_body_transfer_and_write_ephem(env, filename_eph, args):
     print("Final smoothing parameter used in solution generation: ", eps)
 
     # write ephemeris file
-    eph_out.write_to_file(filename_ephemeris_out, mod_vector_write_frequency=10)
-    print("Ephemeris of trajectory written to: ", filename_ephemeris_out)
+    eph_out.write_to_file(args["filename_ephemeris_out"], mod_vector_write_frequency=10)
+    print("Ephemeris of trajectory written to: ", args["filename_ephemeris_out"])
 
 
 # initialize the environment
 env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
 
-solve_two_body_transfer_and_write_ephem(env, filename_ephemeris_out, args)
+solve_two_body_transfer_and_write_ephem(env, args)

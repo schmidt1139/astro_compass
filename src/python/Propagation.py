@@ -441,6 +441,9 @@ def Hamiltonian_EOM_TBT_v2(t, state, params):
     dv_vec = -mu / r**3 * r_vec + u * T_max / m * alpha_vec
     dm = -T_max * u / ISP / g0
 
+    if dm > 0.0:
+        raise Exception("Positive mass rate detected")
+
     # co-state vector derivatives
     d_lam_r_vec = mu / r**3 * lam_v_vec - 3 * mu * r_dot_lam_v / r**5 * r_vec
     d_lam_v_vec = -lam_r_vec
