@@ -145,6 +145,32 @@ class Ephemeris:
 
         return self.fig_xy
 
+    def plot_all_ephemeris_data(self):
+        fig, ax = plot.subplots(figsize=(6, 6))
+        ax.plot(self.arr_et, self.arr_m, label="Spacecraft Mass")
+        ax.set_title("Spacecraft Mass over Time")
+        ax.set_xlabel("Elapsed time [s]")
+        ax.set_ylabel("Mass [kg]")
+        ax.legend()
+        plot.show()
+
+        fig, ax = plot.subplots(figsize=(6, 6))
+        ax.plot(self.arr_et, self.arr_alpha_x, label="alpha X")
+        ax.plot(self.arr_et, self.arr_alpha_y, label="alpha Y")
+        ax.set_title("Spacecraft Thrust Direction Unit Vector")
+        ax.set_xlabel("Elapsed time [s]")
+        ax.set_ylabel("Unit Vector Component Magnitude")
+        ax.legend()
+        plot.show()
+
+        fig, ax = plot.subplots(figsize=(6, 6))
+        ax.plot(self.arr_et, self.arr_u, label="Spacecraft Throttle")
+        ax.set_title("Spacecraft Throttle")
+        ax.set_xlabel("Elapsed time [s]")
+        ax.set_ylabel("Throttle")
+        ax.legend()
+        plot.show()
+
     def write_to_file(self, file_path, mod_vector_write_frequency=1):
         file_name_base = os.path.basename(file_path)
 
