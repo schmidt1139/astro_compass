@@ -2,13 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plot
 import os
 import time
+from Constants import Constants
 from datetime import datetime, timezone
 
 
 class Ephemeris:
-    def __init__(self):
-        # initialize an empty ephemeris object
-
+    def reset(self):
         self.arr_et = np.array([])
         self.arr_x = np.array([])
         self.arr_y = np.array([])
@@ -19,6 +18,10 @@ class Ephemeris:
         self.arr_alpha_y = np.array([])
         self.arr_u = np.array([])
         self.num_vectors = 0
+        
+    def __init__(self):
+        # initialize an empty ephemeris object
+        self.reset()
 
     def add_data(self, et, x, y, vx, vy, m, alpha_x, alpha_y, u):
         self.arr_et = np.append(self.arr_et, et)
@@ -50,7 +53,7 @@ class Ephemeris:
         self.arr_u = np.append(self.arr_u, u)
         self.num_vectors = self.num_vectors + 1
 
-    def plot_xy(self, radius_central_body):
+    def plot_xy(self, radius_central_body=Constants.RADIUS_SUN_M, plot_label="Trajectory"):
         arr_x_cb = np.array([])
         arr_y_cb = np.array([])
 
@@ -200,3 +203,60 @@ class Ephemeris:
         f.close()
 
         return f.closed
+
+    def read_from_file(self, file_path):
+        # clear the ephemeris states
+        self.reset()
+
+        # flag if data section has been reached
+        flag_ephem_start = False
+
+        # read in the lines from the file
+        with open(file_path, "r") as f:
+            lines = f.readlines()
+
+        for i, line in enumerate(lines):
+            line = line.strip()
+
+            # if the ephemeris has started, split the file contents
+            # add the data to the ephemeris object
+            if flag_ephem_start and line != "<Ephemeris End>":
+                line_contents = line.split(",")
+                ephem_data = [float(x) for x in line_contents]
+
+                # unpack the data
+                et = ephem_data[0]  # elapsed seconds
+                x = ephem_data[1]  # x position [km]
+                y = ephem_data[2]  # y position [km]
+                vx = ephem_data[3]  # x velocity [km/s]
+                vy = ephem_data[4]  # y velocity [km/s]
+                m = ephem_data[5]  # mass kg
+                alpha_x = ephem_data[6]  # thrust unit vec - x
+                alpha_y = ephem_data[7]  # thrust unit vec - y
+                u = ephem_data[8]  # throttle
+
+                self.add_data(et, x, y, vx, vy, m, alpha_x, alpha_y, u)
+
+            elif line == "<Ephemeris End>":
+                break
+
+            # check if the ephemeris data section has been reached
+            if line == "<Ephemeris Start>":
+                flag_ephem_start = True
+
+    def get_vector_at_index(self, index):
+        # extract the vector elements at index
+        et = self.arr_et[index]
+        x = self.arr_x[index]
+        y = self.arr_y[index]
+        vx = self.arr_vx[index]
+        vy = self.arr_vy[index]
+        m = self.arr_m[index]
+        alpha_x = self.arr_alpha_x[index]
+        alpha_y = self.arr_alpha_y[index]
+        u = self.arr_u[index]
+
+        # construct output vector
+        vector = np.array([et, x, y, vx, vy, m, alpha_x, alpha_y, u])
+
+        return vector
