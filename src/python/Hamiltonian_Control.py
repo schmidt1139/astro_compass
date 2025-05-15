@@ -134,6 +134,7 @@ class Hamiltonian_Controller_TBT:
         self.flag_stop_targeting = False
         self.ivp_solve_rtol = 10 ** (-9)
         self.ivp_solve_atol = 10 ** (-12)
+        self.shooting_iters = 0;
 
     def shooting_iteration(self, lam_guess_shooting, eps):
         # construct full state vector at t=0
@@ -201,6 +202,8 @@ class Hamiltonian_Controller_TBT:
                 lam_m_f_nd_p - lam_m_f,  # Final mass co-state should be 0
             ]
         )
+        
+        self.shooting_iters = self.shooting_iters + 1
 
         return residuals
 
@@ -233,6 +236,9 @@ class Hamiltonian_Controller_TBT:
                     tol=self.root_tol,
                     method=self.root_method,
                 )
+            
+            #self._log_controller_info("i: " + str(self.shooting_iters ) )
+            #self._log_controller_info("Psi mag: " + str(np.linalg.norm(lam_sol.fun) ) + "\n" )
 
             # check if targeter is actually within tolerance if there is an early
             # exit
@@ -268,7 +274,6 @@ class Hamiltonian_Controller_TBT:
         # Check if the solution was successful
         if lam_sol.success:
             lam_solution = lam_sol.x
-
         else:
             lam_solution = lam_sol.x
             self._log_controller_info("Lambda solution: " + str(lam_sol))
@@ -301,6 +306,9 @@ class Hamiltonian_Controller_TBT:
         # provide initial co-state guess
         arr_lam_sol_0 = self.arr_lam_0
         arr_lam_sol_k = arr_lam_sol_0
+        
+        self._log_controller_info("k_max: " + str(self.max_k))
+        self._log_controller_info("eps0: " + str(eps))
 
         while (k <= self.max_k) and (eps > self.eps_threshold):
             # update/decrease epsilon by gamma factor if it is not the first
@@ -313,6 +321,13 @@ class Hamiltonian_Controller_TBT:
 
             # next initial guess is the previous solution
             arr_lam_sol_0 = arr_lam_sol_k
+            
+            #logging
+            # self._log_controller_info("k: " + str(k))
+            # self._log_controller_info("eps: " + str(eps))
+            # self._log_controller_info("gamma: " + str(self.gamma))
+            # self._log_controller_info("lambda: " + str(arr_lam_sol_k))
+            # self._log_controller_info("")
 
             # update k counter
             k = k + 1
@@ -368,9 +383,13 @@ class Hamiltonian_Controller_TBT:
             self.flag_solved = False
             self._log_controller_info("Targeter failed to converge")
             self._log_controller_info("Epsilon reached: " + str(self.eps))
+            self._log_controller_info("Shooting iters: " + str(self.shooting_iters))
+            self._log_controller_info("Root tol: " + str(self.root_tol))
         else:
             self.flag_solved = True
             self._log_controller_info("Targeter converged")
+            self._log_controller_info("Shooting iters: " + str(self.shooting_iters))
+            self._log_controller_info("Root tol: " + str(self.root_tol))
 
         return self.flag_solved, self.arr_lam_sol, self.eps, sol, self.log
 
