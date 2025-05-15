@@ -34,6 +34,7 @@ if __name__ == "__main__":
         "sma_target": 1.49598e08,  # Target sma of final circular orbit [km]
         "max_thrust": 1.33,  # Max thrust of the spacecraft engine [N]
         "ISP": 3872.0,  # Specific impulse of the spacecraft engine [s]
+        "eps_final": 0.0001 #Final smoothing parameter to achieve
     }
     
     # initialize the environment
