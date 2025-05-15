@@ -122,7 +122,7 @@ class Hamiltonian_Controller_TBT:
         # is still no convergence the targeting procedure fails.
         self.gamma = 1 - (1 / 2) ** (6)
         self.eps_threshold = 0.0025
-        self.eps_0 = 0.5
+        self.eps_0 = 1.0 / self.gamma
         self.eps = self.eps_0
         self.max_k = 640
         self.root_tol = 0.5e-8
