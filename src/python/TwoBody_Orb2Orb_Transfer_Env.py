@@ -2,7 +2,7 @@ import numpy as np
 import gymnasium as gym
 from typing import Optional
 from scipy.integrate import solve_ivp
-
+from Constants import Constants
 from Spacecraft import Spacecraft
 from Propagation import spacecraft_EOM_radial_2D_EB
 
@@ -25,8 +25,8 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         self._keplerian_elements = np.array([0, 0, 0, 0, 0, 0], dtype=np.float32)
 
         # list of environment parameters (Sun is the central body)
-        self.arr_mu = np.array([1.3e11])  # solar mu [km^3/s^2]
-        self.planet_radii = np.array([6.957e5])  # solar radius [km]
+        self.arr_mu = np.array([Constants.MU_SUN])  # solar mu [km^3/s^2]
+        self.planet_radii = np.array([Constants.RADIUS_SUN_M/1000])  # solar radius [km]
         self.elapsed_t = 0.0
         self.step_size = 3600.0
 
