@@ -124,8 +124,8 @@ class Hamiltonian_Controller_TBT:
         self.root_tol = 0.5e-8
         self.root_tol_max = 0.005
         self.flag_constrain_u = True
-        self.root_method = "hybr"  # Choose from "hybr", "lm", "broyden1"
         self.root_max_iters = 1000
+        self.root_method = "lm"  # Choose from "hybr", "lm", "broyden1"
         self.smoothing_method = 0  # Choose from 0 (tanh), 1 (homotopic)
         self.flag_stop_targeting = False
         self.ivp_solve_rtol = 10 ** (-9)
@@ -237,7 +237,15 @@ class Hamiltonian_Controller_TBT:
             # a relaxed tolerance value. This process is repeated until the
             # a maximum try count is reached or if the
 
-            if self.root_method != "hybr":
+            if self.root_method == "lm":
+                lam_sol = root(
+                self.shooting_iteration,
+                lam_guess,
+                args=(eps,),
+                method='lm',
+                options={'ftol': self.root_tol, 'maxfev': 1000}
+                )
+            elif self.root_method != "hybr":
                 lam_sol = root(
                     self.shooting_iteration,
                     lam_guess,
@@ -245,14 +253,19 @@ class Hamiltonian_Controller_TBT:
                     tol=self.root_tol,
                     method=self.root_method,
                     options={"maxiter": self.root_max_iters},
-                )
+                    jac=None)
+                
             else:
                 lam_sol = root(
                     self.shooting_iteration,
                     lam_guess,
-                    eps,
+                    args=(eps,),
                     tol=self.root_tol,
                     method=self.root_method,
+                    options={
+                    'xtol': 1e-6,        # loosen tolerance
+                    'maxfev': 5000       # increase function evaluations
+                    }
                 )
             
             #self._log_controller_info("i: " + str(self.shooting_iters ) )
@@ -509,7 +522,8 @@ class Hamiltonian_Controller_TBT:
                 lam_guess = lam_guess + bias_co_states
 
             lam_sol = root(
-                self.shooting_iteration, lam_guess, self.eps_0, tol=self.root_tol
+                self.shooting_iteration, lam_guess, self.eps_0, tol=self.root_tol,
+                jac=None
             )
             success = lam_sol.success
 
