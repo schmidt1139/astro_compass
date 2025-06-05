@@ -1,14 +1,15 @@
 import sys
 import os
 import gymnasium as gym
+from gymnasium import envs
+from gymnasium.envs.registration import register
+
 
 # Adding python src code directory
 current_dir = os.path.dirname(__file__)
 python_src_dir = os.path.abspath(os.path.join(current_dir, "..", "python"))
 sys.path.append(python_src_dir)
 
-from gymnasium import envs
-from gymnasium.envs.registration import register
 from Training_Data_Generation import generate_nn_training_data_parallel
 
 
