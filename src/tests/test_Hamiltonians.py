@@ -8,7 +8,9 @@ from gymnasium import envs
 from gymnasium.envs.registration import register
 
 # Adding python src code directory
-sys.path.append(os.path.abspath("../python"))
+current_dir = os.path.dirname(__file__)
+python_src_dir = os.path.abspath(os.path.join(current_dir, "..", "python"))
+sys.path.append(python_src_dir)
 
 from Ephemeris import Ephemeris
 from Hamiltonian_Control import Hamiltonian_Controller_TBT
