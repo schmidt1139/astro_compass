@@ -97,7 +97,7 @@ class Hamiltonian_Controller_TBT:
         )
 
     def __init__(
-        self, env: TwoBody_Orb2Orb_Transfer_Env, init_observation, init_info, input_TOF
+        self, env: TwoBody_Orb2Orb_Transfer_Env, init_observation, init_info, input_TOF, **kwargs
     ):
         # Targeter log string array
         self.log = []
@@ -106,10 +106,6 @@ class Hamiltonian_Controller_TBT:
         self.init_observation = init_observation  # The initial state of the env
         self.init_info = init_info  # Initial env info dict
         self.input_TOF = input_TOF  # User input time of flight [s]
-        self._log_controller_info("Hamiltonian Targeter Initialized")
-
-        # extract the state vector boundary conditions from the problem
-        self.extract_env_boundary_conditions()
 
         # Smoothing parameters
         # eps_threshold: The min value of smoothing parameter needed to reach a solution
@@ -134,7 +130,29 @@ class Hamiltonian_Controller_TBT:
         self.flag_stop_targeting = False
         self.ivp_solve_rtol = 10 ** (-9)
         self.ivp_solve_atol = 10 ** (-12)
-        self.shooting_iters = 0;
+        self.shooting_iters = 0
+        self.flag_report_live = False
+
+        # Check keyword args and override values
+        allowed_kwargs = {"flag_report_live"}
+
+        self._log_controller_info("Hamiltonian Targeter Initialized")
+
+        for key, val in kwargs.items():
+            if key in allowed_kwargs:
+                setattr(self, key, val)
+                self._log_controller_info("kwarg " + key + " set to " + str(val) )
+            else:
+                raise ValueError(f"Unknown keyword argument: {key}")
+            
+            
+        # extract the state vector boundary conditions from the problem
+        self.extract_env_boundary_conditions()
+            
+
+        
+
+
 
     def shooting_iteration(self, lam_guess_shooting, eps):
         # construct full state vector at t=0
