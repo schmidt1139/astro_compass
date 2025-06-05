@@ -8,7 +8,9 @@ import time
 
 
 # Adding python src code directory
-sys.path.append(os.path.abspath("../python"))
+current_dir = os.path.dirname(__file__)
+python_src_dir = os.path.abspath(os.path.join(current_dir, "..", "python"))
+sys.path.append(python_src_dir)
 
 
 from Ephemeris import Ephemeris
@@ -32,7 +34,7 @@ env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
 
 def test_random_env_rest(env):
     # parameters
-    num_trajs = 10
+    num_trajs = 100
 
     # reset the evironment using set seed value and set counters
     seed_env = 42
