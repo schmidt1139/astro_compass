@@ -116,16 +116,16 @@ class Hamiltonian_Controller_TBT:
         # root_tol: The root finder function zero tolerance (increased if solver struggles)
         # root_tol_max: The max root tolerance, if this value is reached and there
         # is still no convergence the targeting procedure fails.
-        self.gamma = 1 - (1 / 2) ** (6)
-        self.eps_threshold = 0.0025
-        self.eps_0 = 1.0 / self.gamma
+        self.gamma = 0.5
+        self.eps_threshold = 0.0001
+        self.eps_0 = 1.0
         self.eps = self.eps_0
         self.max_k = 640
-        self.root_tol = 0.5e-8
-        self.root_tol_max = 0.005
+        self.root_tol = 1.0e-3
+        self.root_tol_max = 0.001
         self.flag_constrain_u = True
-        self.root_max_iters = 1000
         self.root_method = "lm"  # Choose from "hybr", "lm", "broyden1"
+        self.root_max_iters = 16000
         self.smoothing_method = 0  # Choose from 0 (tanh), 1 (homotopic)
         self.flag_stop_targeting = False
         self.ivp_solve_rtol = 10 ** (-9)
