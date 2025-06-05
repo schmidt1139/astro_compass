@@ -340,6 +340,7 @@ class Hamiltonian_Controller_TBT:
         
         self._log_controller_info("k_max: " + str(self.max_k))
         self._log_controller_info("eps0: " + str(eps))
+        self._log_controller_info("")
 
         while (k <= self.max_k) and (eps > self.eps_threshold):
             # update/decrease epsilon by gamma factor if it is not the first
@@ -347,18 +348,18 @@ class Hamiltonian_Controller_TBT:
             if k != 1:
                 eps = eps * self.gamma
 
+            self._log_controller_info("k: " + str(k))
+            self._log_controller_info("gamma_k: " + str(self.gamma))
+            self._log_controller_info("eps_k: " + str(eps))
+
             # determine initial boundary values for co-states
             arr_lam_sol_k = self.hamiltonian_root_finder(eps, arr_lam_sol_0)
 
             # next initial guess is the previous solution
             arr_lam_sol_0 = arr_lam_sol_k
             
-            #logging
-            # self._log_controller_info("k: " + str(k))
-            # self._log_controller_info("eps: " + str(eps))
-            # self._log_controller_info("gamma: " + str(self.gamma))
-            # self._log_controller_info("lambda: " + str(arr_lam_sol_k))
-            # self._log_controller_info("")
+            self._log_controller_info("arr_lam_sol_k: " + str(arr_lam_sol_k))
+            self._log_controller_info("")
 
             # update k counter
             k = k + 1
@@ -547,3 +548,6 @@ class Hamiltonian_Controller_TBT:
 
     def _log_controller_info(self, info):
         self.log.append(info)
+
+        if (self.flag_report_live):
+            print(info)
