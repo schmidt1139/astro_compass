@@ -1,5 +1,6 @@
 import numpy as np
 import gymnasium as gym
+import matplotlib
 import matplotlib.pyplot as plot
 import sys
 import os
@@ -28,6 +29,24 @@ if ("TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys() ):
 
 # initialize the environment
 env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
+
+#plotting setup
+matplotlib.rcParams.update({
+    "text.usetex": False,                      # Use LaTeX for all text
+    "font.family": "serif",                   # Use serif font
+    "font.size": 10,                          # Match AIAA body font size
+    "axes.labelsize": 10,
+    "axes.titlesize": 10,
+    "legend.fontsize": 9,
+    "xtick.labelsize": 9,
+    "ytick.labelsize": 9,
+    "lines.linewidth": 1.2,
+    "lines.markersize": 4,
+    "figure.figsize": (3.5, 2.5),             # Single-column figure
+    "figure.dpi": 300,
+    "savefig.bbox": "tight",
+    "axes.grid": False,                       # No gridlines in AIAA style
+})
 
 
 num_traj = 1
@@ -239,22 +258,32 @@ for index, t in enumerate(arr_time):
 
 
 fig, ax = plot.subplots(figsize=(6, 6))
-ax.plot(arr_time_yrs, arr_x, label="x")
-ax.plot(arr_time_yrs, arr_y, label="y")
-ax.plot(arr_time_yrs, arr_vx, label="vx")
-ax.plot(arr_time_yrs, arr_vy, label="vy")
-ax.plot(arr_time_yrs, arr_m, label="m")
-ax.set_title("Non-Dim States over time")
+ax.plot(arr_time_yrs*365.25, arr_x, label="x")
+ax.plot(arr_time_yrs*365.25, arr_y, label="y")
+ax.plot(arr_time_yrs*365.25, arr_vx, label="vx")
+ax.plot(arr_time_yrs*365.25, arr_vy, label="vy")
+ax.plot(arr_time_yrs*365.25, arr_m, label="m")
+ax.set_title("Non-Dim States over Time")
+ax.set_xlabel(r"Elapsed Time (days)")
+ax.set_ylabel(r"Non-Dimensional States")
 ax.legend()
+fig.tight_layout()
+fig.savefig("..\\..\\data\\plots\\states_nd.pdf")  # Vector format
+plot.show()
 
 fig, ax = plot.subplots(figsize=(6, 6))
-ax.plot(arr_time_yrs, arr_lam_x, label="x")
-ax.plot(arr_time_yrs, arr_lam_y, label="y")
-ax.plot(arr_time_yrs, arr_lam_vx, label="vx")
-ax.plot(arr_time_yrs, arr_lam_vy, label="vy")
-ax.plot(arr_time_yrs, arr_lam_m, label="m")
-ax.set_title("Non-Dim Co-States over time")
+ax.plot(arr_time_yrs*365.25, arr_lam_x, label=r'$\lambda_x$')
+ax.plot(arr_time_yrs*365.25, arr_lam_y, label=r'$\lambda_y$')
+ax.plot(arr_time_yrs*365.25, arr_lam_vx, label=r'$\lambda_{vx}$')
+ax.plot(arr_time_yrs*365.25, arr_lam_vy, label=r'$\lambda_{vy}$')
+ax.plot(arr_time_yrs*365.25, arr_lam_m, label=r'$\lambda_{m}$')
+ax.set_title("Non-Dim Co-States over Time")
+ax.set_xlabel(r"Elapsed Time (days)")
+ax.set_ylabel(r'Non-Dimensional Co-States $\vec{\lambda}$')
 ax.legend()
+fig.tight_layout()
+fig.savefig("..\\..\\data\\plots\\costates_nd.pdf")  # Vector format
+plot.show()
 
 fig, ax = plot.subplots(figsize=(6, 6))
 ax.plot(arr_time_yrs, arr_E)
