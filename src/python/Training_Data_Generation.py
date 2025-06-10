@@ -12,7 +12,7 @@ sys.path.append(os.path.abspath("../python"))
 
 
 def generate_nn_training_data(
-    env, args, thread_id, output_dir="..\\..\\data\\training_ephems\\"
+    env, args, thread_id, output_dir
 ):
     # reset the environment
     init_observation, init_info = env.reset()
@@ -23,10 +23,13 @@ def generate_nn_training_data(
     # ephemeris
     eph = Ephemeris()
 
-    # compute Hamiltonian Solution
+    # create H controller object
     H_controller = Hamiltonian_Controller_TBT(
         env, init_observation, init_info, input_TOF
     )
+    
+    #modify parameters
+    H_controller.eps_threshold = args["eps_final"]
 
     # compute solution
     flag_solved, h_sol, eps, sol, log = H_controller.hamiltonian_solution_finder()
@@ -70,7 +73,7 @@ def generate_nn_training_data_parallel(env, args):
         futures = []
         for traj_idx in range(args["num_trajs"]):
             futures.append(
-                executor.submit(generate_nn_training_data, env, args, traj_idx)
+                executor.submit(generate_nn_training_data, env, args, traj_idx, args["output_dir"])
             )
 
         for future in as_completed(futures):
@@ -80,3 +83,19 @@ def generate_nn_training_data_parallel(env, args):
             print(
                 f"Thread {thread_id}    Success: {result}   Counter: {counter}   Ephem: {filename}"
             )
+            
+def read_ephems_from_dir(directory):
+    
+    filenames = os.listdir(directory)
+    list_ephems = []
+
+    for file in filenames:
+        
+        path = os.path.join(directory, file)
+        
+        eph = Ephemeris()
+        eph.read_from_file(path)
+        
+        list_ephems.append(eph)
+
+    return list_ephems
