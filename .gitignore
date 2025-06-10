@@ -1,4 +1,5 @@
 __pycache__/
 *.pyc
-data/training_ephems
-data/horizons_ephems
+data/training_ephems/
+data/horizons_ephems/
+data/plots/

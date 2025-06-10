@@ -18,7 +18,7 @@ class Ephemeris:
         self.arr_alpha_y = np.array([])
         self.arr_u = np.array([])
         self.num_vectors = 0
-        
+
     def __init__(self):
         # initialize an empty ephemeris object
         self.reset()
@@ -53,7 +53,9 @@ class Ephemeris:
         self.arr_u = np.append(self.arr_u, u)
         self.num_vectors = self.num_vectors + 1
 
-    def plot_xy(self, radius_central_body=Constants.RADIUS_SUN_M, plot_label="Trajectory"):
+    def plot_xy(
+        self, radius_central_body=Constants.RADIUS_SUN_M, plot_label="Trajectory"
+    ):
         arr_x_cb = np.array([])
         arr_y_cb = np.array([])
 
@@ -109,6 +111,7 @@ class Ephemeris:
         ax.set_title("Trajectory")
         ax.set_xlabel("X [km]")
         ax.set_ylabel("Y [km]")
+        fig.tight_layout()
         ax.set_xlim([-max_lim, max_lim])
         ax.set_ylim([-max_lim, max_lim])
         ax.legend()
@@ -144,6 +147,42 @@ class Ephemeris:
         self.ax_xy = ax
 
         return self.fig_xy
+
+    def plot_all_ephemeris_data(self):
+        figs = []
+        
+        fig, ax = plot.subplots(figsize=(6, 6))
+        ax.plot(self.arr_et, self.arr_m, label="Spacecraft Mass")
+        ax.set_title("Spacecraft Mass over Time")
+        ax.set_xlabel("Elapsed time [s]")
+        ax.set_ylabel("Mass [kg]")
+        fig.tight_layout()
+        ax.legend()
+        plot.show()
+        figs.append(fig)
+
+        fig, ax = plot.subplots(figsize=(6, 6))
+        ax.plot(self.arr_et, self.arr_alpha_x, label=r"$\alpha_x$")
+        ax.plot(self.arr_et, self.arr_alpha_y, label=r"$\alpha_y$")
+        ax.set_title("Spacecraft Thrust Direction Unit Vector")
+        ax.set_xlabel("Elapsed time [s]")
+        ax.set_ylabel("Unit Vector Component Magnitude")
+        fig.tight_layout()
+        ax.legend()
+        plot.show()
+        figs.append(fig)
+
+        fig, ax = plot.subplots(figsize=(6, 6))
+        ax.plot(self.arr_et, self.arr_u, label="Spacecraft Throttle")
+        ax.set_title("Spacecraft Throttle")
+        ax.set_xlabel("Elapsed time [s]")
+        ax.set_ylabel("Throttle")
+        fig.tight_layout()
+        ax.legend()
+        plot.show()
+        figs.append(fig)
+        
+        return figs;
 
     def write_to_file(self, file_path, mod_vector_write_frequency=1):
         file_name_base = os.path.basename(file_path)
