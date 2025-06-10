@@ -12,7 +12,7 @@ sys.path.append(os.path.abspath("../python"))
 
 
 def generate_nn_training_data(
-    env, args, thread_id, output_dir="..\\..\\data\\training_ephems\\"
+    env, args, thread_id, output_dir
 ):
     # reset the environment
     init_observation, init_info = env.reset()
@@ -73,7 +73,7 @@ def generate_nn_training_data_parallel(env, args):
         futures = []
         for traj_idx in range(args["num_trajs"]):
             futures.append(
-                executor.submit(generate_nn_training_data, env, args, traj_idx)
+                executor.submit(generate_nn_training_data, env, args, traj_idx, args["output_dir"])
             )
 
         for future in as_completed(futures):
@@ -93,8 +93,8 @@ def read_ephems_from_dir(directory):
         
         path = os.path.join(directory, file)
         
-        eph = Ephemeris();
-        eph.read_from_file(path);
+        eph = Ephemeris()
+        eph.read_from_file(path)
         
         list_ephems.append(eph)
 

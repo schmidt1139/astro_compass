@@ -111,6 +111,7 @@ class Ephemeris:
         ax.set_title("Trajectory")
         ax.set_xlabel("X [km]")
         ax.set_ylabel("Y [km]")
+        fig.tight_layout()
         ax.set_xlim([-max_lim, max_lim])
         ax.set_ylim([-max_lim, max_lim])
         ax.legend()
@@ -148,30 +149,40 @@ class Ephemeris:
         return self.fig_xy
 
     def plot_all_ephemeris_data(self):
+        figs = []
+        
         fig, ax = plot.subplots(figsize=(6, 6))
         ax.plot(self.arr_et, self.arr_m, label="Spacecraft Mass")
         ax.set_title("Spacecraft Mass over Time")
         ax.set_xlabel("Elapsed time [s]")
         ax.set_ylabel("Mass [kg]")
+        fig.tight_layout()
         ax.legend()
         plot.show()
+        figs.append(fig)
 
         fig, ax = plot.subplots(figsize=(6, 6))
-        ax.plot(self.arr_et, self.arr_alpha_x, label="alpha X")
-        ax.plot(self.arr_et, self.arr_alpha_y, label="alpha Y")
+        ax.plot(self.arr_et, self.arr_alpha_x, label=r"$\alpha_x$")
+        ax.plot(self.arr_et, self.arr_alpha_y, label=r"$\alpha_y$")
         ax.set_title("Spacecraft Thrust Direction Unit Vector")
         ax.set_xlabel("Elapsed time [s]")
         ax.set_ylabel("Unit Vector Component Magnitude")
+        fig.tight_layout()
         ax.legend()
         plot.show()
+        figs.append(fig)
 
         fig, ax = plot.subplots(figsize=(6, 6))
         ax.plot(self.arr_et, self.arr_u, label="Spacecraft Throttle")
         ax.set_title("Spacecraft Throttle")
         ax.set_xlabel("Elapsed time [s]")
         ax.set_ylabel("Throttle")
+        fig.tight_layout()
         ax.legend()
         plot.show()
+        figs.append(fig)
+        
+        return figs;
 
     def write_to_file(self, file_path, mod_vector_write_frequency=1):
         file_name_base = os.path.basename(file_path)
