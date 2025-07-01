@@ -157,7 +157,7 @@ class Ephemeris:
         ax.set_xlabel("Elapsed time [s]")
         ax.set_ylabel("Mass [kg]")
         fig.tight_layout()
-        ax.legend()
+        ax.legend(loc="lower right")
         plot.show()
         figs.append(fig)
 
@@ -168,7 +168,7 @@ class Ephemeris:
         ax.set_xlabel("Elapsed time [s]")
         ax.set_ylabel("Unit Vector Component Magnitude")
         fig.tight_layout()
-        ax.legend()
+        ax.legend(loc="lower right")
         plot.show()
         figs.append(fig)
 
@@ -178,7 +178,7 @@ class Ephemeris:
         ax.set_xlabel("Elapsed time [s]")
         ax.set_ylabel("Throttle")
         fig.tight_layout()
-        ax.legend()
+        ax.legend(loc="lower right")
         plot.show()
         figs.append(fig)
         
