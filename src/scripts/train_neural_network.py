@@ -55,16 +55,15 @@ def train_neural_network():
     annealing_tmax = 1000
 
     params = {
-        "mu":Constants.MU_SUN * 10 ** (9),
-        "max_T":1.33,
-        "ISP":3872.0,
-        "TOF":1.1 * 365.25 * 24 * 60 * 60,
-        "l_star":149598023000,
-        "m_star":3366.0,
-        "t_star":(149598023000**3 / (Constants.MU_SUN * 10 ** (9) ) ) ** 0.5
+        "mu":Constants.MU_SUN * 10 ** (9), #sun mu [m^3/s^2]
+        "max_T":1.33, #max spacecraft thrust [N]
+        "ISP":3872.0, #spacecraft specific impulse [s]
+        "TOF":1.1 * 365.25 * 24 * 60 * 60, #assumed time of flight [s]
+        "l_star":149598023000, #characteristic length = Earth SMA [m]
+        "m_star":3366.0, #characteristic mass = SC initial mass [kg]
+        "t_star":(149598023000**3 / (Constants.MU_SUN * 10 ** (9) ) ) ** 0.5, #characteristic time - derived
+        "g0":Constants.G0 #gravtational acceleration at Earth surface [m/s^2]
     }
-
-
 
     # paths
     dir_training_dir = "..\\..\\data\\training_ephems\\test_set3\\"  # path to training data
