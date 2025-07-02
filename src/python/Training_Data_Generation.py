@@ -56,7 +56,7 @@ def generate_nn_training_data(
     else:
         filename = ""
 
-    return thread_id, flag_solved, filename
+    return thread_id, flag_solved, ephem_name
 
 
 def generate_nn_training_data_parallel(env, args):
