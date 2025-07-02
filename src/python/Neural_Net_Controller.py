@@ -25,8 +25,5 @@ class NN_TBT_Controller(nn.Module):
         x = self.lrelu(self.fc5(x))
         x = self.fc6(x)
 
-        # Apply sigmoid to throttle output (u), tanh to direction
-        u = torch.sigmoid(x[:, 0:1])     # throttle in [0, 1]
-        thrust_dir = torch.tanh(x[:, 1:])  # direction in [-1, 1], can be normalized later
 
-        return torch.cat([u, thrust_dir], dim=1)
+        return x
