@@ -34,81 +34,8 @@ if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
 # initialize the environment
 env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
 
-def evaluate_neural_network(NN_TBT, val_loader, criterion, sample_ephem_compare, params ):
-
-    #evalualte the nn
-    NN_TBT.eval()
-    num_samples = 0
-
-    mu = params["mu"]
-    max_T = params["max_T"]
-    ISP = params["ISP"]
-    TOF = params["TOF"]
-    l_star = params["l_star"]
-    m_star = params["m_star"]
-    t_star = params["t_star"]
-
-    arr_u_nn = []
-    arr_a_x = []
-    arr_a_y = []
-
-    with torch.no_grad():
-        val_loss = 0
-        for val_inputs, val_targets in val_loader:
-            outputs = NN_TBT(val_inputs)
-            batch_size = val_inputs.size(0)
-            loss = criterion(outputs, val_targets)
-            val_loss += loss.item()*batch_size
-            num_samples += batch_size
-
-        avg_loss = val_loss / num_samples
-
-    
-    for index, t in enumerate(sample_ephem_compare.arr_et):
-        state_vec = sample_ephem_compare.get_vector_at_index(index)
-
-        outputs = non_dimensionalize(
-            state_vec, Constants.G0, mu, max_T, ISP, TOF, l_star, m_star, t_star
-        )
-
-        state_nd = np.array(outputs[0][0:4], dtype=np.float32)
-        state_tensor = torch.from_numpy(state_nd).unsqueeze(0)
-
-        with torch.no_grad():
-            control_nn = NN_TBT(state_tensor)
-
-        arr_u_nn.append(control_nn[0][0])
-        arr_a_x.append(control_nn[0][1])
-        arr_a_y.append(control_nn[0][2])
-
-    if ( params['flag_plot'] ):
-        fig, ax = plt.subplots(figsize=(6, 6))
-        ax.plot(sample_ephem_compare.arr_et, sample_ephem_compare.arr_u, label="Hamiltonian Control")
-        ax.plot(sample_ephem_compare.arr_et, arr_u_nn, label="Neural Network")
-        ax.set_xlabel(r"Elapsed Days")
-        ax.set_ylabel(r"Throttle Input (u)")
-        fig.tight_layout()
-        ax.legend(loc="upper right")
-        fig.tight_layout()
-
-        fig, ax = plt.subplots(figsize=(6, 6))
-        ax.plot(sample_ephem_compare.arr_et, sample_ephem_compare.arr_alpha_x, label=r"H $\alpha_x$")
-        ax.plot(sample_ephem_compare.arr_et, sample_ephem_compare.arr_alpha_y, label=r"H $\alpha_y$")
-        ax.plot(sample_ephem_compare.arr_et, arr_a_x, label=r"NN $\alpha_x$")
-        ax.plot(sample_ephem_compare.arr_et, arr_a_y, label=r"NN $\alpha_y$")
-        ax.set_xlabel(r"Elapsed Days")
-        ax.set_ylabel(r"Thrust Direction ($\alpha_x,\alpha_y$)")
-        fig.tight_layout()
-        ax.legend(loc="upper right")
-        fig.tight_layout()
-
-        plt.show()
-
-
-    return avg_loss
-
-
-
+#format plotting
+format_plots()
 
 def train_neural_network():
     # Setup
