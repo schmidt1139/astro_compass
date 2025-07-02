@@ -7,7 +7,10 @@ class NN_TBT_Controller(nn.Module):
         super(NN_TBT_Controller, self).__init__()
         print("Neural Network Controller Created")
 
-        self.fc1 = nn.Linear(4, 32)  # input layer
+        # LeakyReLU activation function
+        self.lrelu = nn.LeakyReLU( inplace=True )
+
+        self.fc1 = nn.Linear(5, 32)  # input layer
         self.fc2 = nn.Linear(32, 32)  # hidden layer 1
         self.fc3 = nn.Linear(32, 32)  # hidden layer 2
         self.fc4 = nn.Linear(32, 32)  # hidden layer 3
@@ -15,11 +18,11 @@ class NN_TBT_Controller(nn.Module):
         self.fc6 = nn.Linear(32, 3)  # output layer
 
     def forward(self, x):
-        x = torch.tanh(self.fc1(x))
-        x = torch.tanh(self.fc2(x))
-        x = torch.tanh(self.fc3(x))
-        x = torch.tanh(self.fc4(x))
-        x = torch.tanh(self.fc5(x))
+        x = self.lrelu(self.fc1(x))
+        x = self.lrelu(self.fc2(x))
+        x = self.lrelu(self.fc3(x))
+        x = self.lrelu(self.fc4(x))
+        x = self.lrelu(self.fc5(x))
         x = self.fc6(x)
 
         # Apply sigmoid to throttle output (u), tanh to direction
