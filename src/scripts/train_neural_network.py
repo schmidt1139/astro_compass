@@ -108,15 +108,12 @@ def train_neural_network():
 
     arr_epochs = []
     arr_loss = []
+    arr_loss_train = []
 
     epoch = 1
-    iters = 0
     i_at_min = 0
     min_mse = np.inf
     flag_exit = False
-
-    #load parameters from file
-
 
     #set to training mode
     NN_TBT.train()
@@ -133,10 +130,10 @@ def train_neural_network():
         # check min loss
         if avg_train_loss < min_mse:
             min_mse = avg_train_loss
-            i_at_min = iters
+            i_at_min = epoch
 
         # exit condition
-        if iters > patience + i_at_min:
+        if epoch > patience + i_at_min:
             print("Patience Criterion reached, exiting training")
             flag_exit = True
             break
@@ -150,29 +147,27 @@ def train_neural_network():
         else:
             params['flag_plot'] = False
 
-        avg_loss_val = evaluate_neural_network(NN_TBT, val_loader, criterion, set_ephems[1], params )
+        avg_loss_val = evaluate_neural_network(NN_TBT, val_loader, criterion, params, path_plots, set_ephems[0] )
         NN_TBT.train()
 
-        print(
-            f"Epoch [{epoch}/{training_epochs}], Training Loss: {avg_train_loss:.4e}, Eval loss: {avg_loss_val:.4e}   Min loss: {min_mse:.4e}   last min: {iters - i_at_min}   lr: {scheduler.get_last_lr()[0]:.4e}"
-        )
-
         arr_epochs.append(epoch)
+        arr_loss_train.append(avg_train_loss)
         arr_loss.append(avg_loss_val)
+
+        if epoch % report_update == 0:
+            print(
+            f"Epoch [{epoch}/{training_epochs}], Training Loss: {avg_train_loss:.4e}, Eval loss: {avg_loss_val:.4e}   Min loss: {min_mse:.4e}   last min: {epoch - i_at_min}   lr: {scheduler.get_last_lr()[0]:.4e}"
+            )
 
         if epoch % plot_update == 0:
             plot_training_loss(arr_epochs, arr_loss_train, arr_loss, path_plot_nn_training)
 
         epoch = epoch + 1
 
-        # lr scheduler step
-        if (epoch<annealing_tmax):
-            scheduler.step()
     #final training plot update
     plot_training_loss(arr_epochs, arr_loss_train, arr_loss, path_plot_nn_training)
 
     # save NN to file
-    torch.save(NN_TBT.state_dict(), dir_nn + "nn_controller_weights.pth")
+    torch.save(NN_TBT.state_dict(), path_nn + "nn_controller_weights.pth")
 
 train_neural_network()
-# %%
