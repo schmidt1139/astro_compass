@@ -126,20 +126,9 @@ def train_neural_network():
     val_loader = DataLoader(val_dataset, batch_size=training_data_pts, shuffle=False)
 
     while epoch <= training_epochs:
-        train_loss = 0
-        num_pts = 0
-        for batch_X, batch_y in train_loader:
-            outputs = NN_TBT(batch_X)
-            loss = criterion(outputs, batch_y)  # Calc loss
-            loss.backward()
-            optimizer.step()
-            optimizer.zero_grad()  # Clear gradients
-            num_pts = num_pts + len(batch_X)
-            train_loss += loss.item()*len(batch_X)
 
-            iters = iters + 1
-
-        avg_train_loss = train_loss / num_pts
+        #perform training epoch
+        NN_TBT, avg_train_loss = training_epoch( NN_TBT, train_loader, val_loader, criterion, optimizer )
 
         # check min loss
         if avg_train_loss < min_mse:
