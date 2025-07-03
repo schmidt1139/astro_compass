@@ -3,9 +3,7 @@ import os
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import gymnasium as gym
-import matplotlib.pyplot as plt
 
 # Adding python src code directory
 current_dir = os.path.dirname(__file__)
@@ -14,11 +12,10 @@ sys.path.append(python_src_dir)
 
 from gymnasium import envs
 from gymnasium.envs.registration import register
-from torch.utils.data import DataLoader, TensorDataset, random_split
+from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from Neural_Net_Controller import NN_TBT_Controller
 from Training_Data_Generation import read_ephems_from_dir
-from StateVectorUtilities import non_dimensionalize
 from Constants import Constants
 from Plotting_Utils import format_plots, plot_training_loss
 from NN_Utils import evaluate_neural_network, pre_process_training_data, training_epoch
@@ -34,39 +31,41 @@ if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
 # initialize the environment
 env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
 
-#format plotting
+# format plotting
 format_plots()
+
 
 def train_neural_network():
 
     # parameters
     training_data_pts = 1000  # training data batch size
-    training_epochs = 1000  # number of training epochs to run
+    training_epochs = 10  # number of training epochs to run
     min_mse = 999999  # min mse init value
     patience = 200000  # If the number of iterations since  min is greater than this number - training ends
-    learning_rate_i = 0.1 # Initial Parameter learning rate
+    learning_rate_i = 0.1  # Initial Parameter learning rate
     learning_rate_f = 0.1  # Final Parameter learning rate
     plot_update = training_epochs  # Number of epochs before plot is updated
-    report_update = 10 #Number of epochs between reporting training status
-    train_fraction = 0.8 #Fraction of data to use for training
-    eval_fraction = 0.2 #Fraction of data to use for eval
-    gamma_Steps = 1000 #Number of steps needed to reduce LR
-    lr_gamma = 0.5 #Reduction factor for learning rate
+    report_update = 1  # Number of epochs between reporting training status
+    train_fraction = 0.8  # Fraction of data to use for training
+    eval_fraction = 0.2  # Fraction of data to use for eval
     annealing_tmax = 1000
 
     params = {
-        "mu":Constants.MU_SUN * 10 ** (9), #sun mu [m^3/s^2]
-        "max_T":1.33, #max spacecraft thrust [N]
-        "ISP":3872.0, #spacecraft specific impulse [s]
-        "TOF":1.1 * 365.25 * 24 * 60 * 60, #assumed time of flight [s]
-        "l_star":149598023000, #characteristic length = Earth SMA [m]
-        "m_star":3366.0, #characteristic mass = SC initial mass [kg]
-        "t_star":(149598023000**3 / (Constants.MU_SUN * 10 ** (9) ) ) ** 0.5, #characteristic time - derived
-        "g0":Constants.G0 #gravtational acceleration at Earth surface [m/s^2]
+        "mu": Constants.MU_SUN * 10 ** (9),  # sun mu [m^3/s^2]
+        "max_T": 1.33,  # max spacecraft thrust [N]
+        "ISP": 3872.0,  # spacecraft specific impulse [s]
+        "TOF": 1.1 * 365.25 * 24 * 60 * 60,  # assumed time of flight [s]
+        "l_star": 149598023000,  # characteristic length = Earth SMA [m]
+        "m_star": 3366.0,  # characteristic mass = SC initial mass [kg]
+        "t_star": (149598023000**3 / (Constants.MU_SUN * 10 ** (9)))
+        ** 0.5,  # characteristic time - derived
+        "g0": Constants.G0,  # gravtational acceleration at Earth surface [m/s^2]
     }
 
     # paths
-    dir_training_dir = "\\data\\training_ephems\\test_set_smoothed_0.5\\"  # path to training data
+    dir_training_dir = (
+        "\\data\\training_ephems\\test_set_smoothed_0.5\\"  # path to training data
+    )
     dir_plots = "\\data\\plots\\"  # path for storing plot data
     dir_nn = "\\data\\neural_networks\\"  # path for saving trained nn
     path_training_dir = os.getcwd() + dir_training_dir
@@ -87,21 +86,25 @@ def train_neural_network():
 
     # establish optimizer
     # optimizer = torch.optim.Adam(NN_TBT.parameters(), lr=learning_rate_i)
-    optimizer = torch.optim.SGD( NN_TBT.parameters(), lr=learning_rate_i )
+    optimizer = torch.optim.SGD(NN_TBT.parameters(), lr=learning_rate_i)
 
     # define a LR scheduler
-    scheduler = CosineAnnealingLR(optimizer, T_max=annealing_tmax, eta_min=learning_rate_f)
+    scheduler = CosineAnnealingLR(
+        optimizer, T_max=annealing_tmax, eta_min=learning_rate_f
+    )
 
     # read ephemeris files
     set_ephems = read_ephems_from_dir(path_training_dir)
     num_ephems = len(set_ephems)
-    print("Current wd: " + os.getcwd() )
+    print("Current wd: " + os.getcwd())
     print("Reading ephems from " + path_training_dir)
     print(str(num_ephems) + " ephems loaded")
     print(str(num_ephems * set_ephems[0].num_vectors) + " training data points")
     print("Number of Neural Network Parameters: " + str(num_p))
 
-    train_dataset, val_dataset = pre_process_training_data( set_ephems, train_fraction, eval_fraction, params )
+    train_dataset, val_dataset = pre_process_training_data(
+        set_ephems, train_fraction, eval_fraction, params
+    )
 
     # Training
     # --------------------------------------------------------------------------------------------------------
@@ -115,7 +118,7 @@ def train_neural_network():
     min_mse = np.inf
     flag_exit = False
 
-    #set to training mode
+    # set to training mode
     NN_TBT.train()
 
     # using torch loader object to load training and eval data
@@ -124,8 +127,10 @@ def train_neural_network():
 
     while epoch <= training_epochs:
 
-        #perform training epoch
-        NN_TBT, avg_train_loss = training_epoch( NN_TBT, train_loader, val_loader, criterion, optimizer )
+        # perform training epoch
+        NN_TBT, avg_train_loss = training_epoch(
+            NN_TBT, train_loader, val_loader, criterion, optimizer
+        )
 
         # check min loss
         if avg_train_loss < min_mse:
@@ -141,13 +146,15 @@ def train_neural_network():
         if flag_exit:
             break
 
-        #eval NN
+        # eval NN
         if epoch % plot_update == 0:
-            params['flag_plot'] = True
+            params["flag_plot"] = True
         else:
-            params['flag_plot'] = False
+            params["flag_plot"] = False
 
-        avg_loss_val = evaluate_neural_network(NN_TBT, val_loader, criterion, params, path_plots, set_ephems[0] )
+        avg_loss_val = evaluate_neural_network(
+            NN_TBT, val_loader, criterion, params, path_plots, set_ephems[0]
+        )
         NN_TBT.train()
 
         arr_epochs.append(epoch)
@@ -156,18 +163,21 @@ def train_neural_network():
 
         if epoch % report_update == 0:
             print(
-            f"Epoch [{epoch}/{training_epochs}], Training Loss: {avg_train_loss:.4e}, Eval loss: {avg_loss_val:.4e}   Min loss: {min_mse:.4e}   last min: {epoch - i_at_min}   lr: {scheduler.get_last_lr()[0]:.4e}"
+                f"Epoch [{epoch}/{training_epochs}], Training Loss: {avg_train_loss:.4e}, Eval loss: {avg_loss_val:.4e}   Min loss: {min_mse:.4e}   last min: {epoch - i_at_min}   lr: {scheduler.get_last_lr()[0]:.4e}"
             )
 
         if epoch % plot_update == 0:
-            plot_training_loss(arr_epochs, arr_loss_train, arr_loss, path_plot_nn_training)
+            plot_training_loss(
+                arr_epochs, arr_loss_train, arr_loss, path_plot_nn_training
+            )
 
         epoch = epoch + 1
 
-    #final training plot update
+    # final training plot update
     plot_training_loss(arr_epochs, arr_loss_train, arr_loss, path_plot_nn_training)
 
     # save NN to file
     torch.save(NN_TBT.state_dict(), path_nn + "nn_controller_weights.pth")
+
 
 train_neural_network()
