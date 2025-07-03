@@ -86,7 +86,8 @@ def train_neural_network():
     criterion = nn.MSELoss()
 
     # establish optimizer
-    optimizer = torch.optim.Adam(NN_TBT.parameters(), lr=learning_rate_i)
+    # optimizer = torch.optim.Adam(NN_TBT.parameters(), lr=learning_rate_i)
+    optimizer = torch.optim.SGD( NN_TBT.parameters(), lr=learning_rate_i )
 
     # define a LR scheduler
     scheduler = CosineAnnealingLR(optimizer, T_max=annealing_tmax, eta_min=learning_rate_f)
