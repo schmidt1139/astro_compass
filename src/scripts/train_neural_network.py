@@ -161,26 +161,15 @@ def train_neural_network():
         arr_loss.append(avg_loss_val)
 
         if epoch % plot_update == 0:
-            fig, ax = plt.subplots(figsize=(6, 6))
-            ax.plot(arr_epochs, arr_loss)
-            ax.set_xlabel(r"Training Epochs")
-            ax.set_ylabel(r"Eval Loss (MSE)")
-            fig.tight_layout()
-            fig.savefig(dir_plots + "nn_training.pdf")  # Vector format
-            plt.show()
+            plot_training_loss(arr_epochs, arr_loss_train, arr_loss, path_plot_nn_training)
 
         epoch = epoch + 1
 
         # lr scheduler step
         if (epoch<annealing_tmax):
             scheduler.step()
-
-    fig, ax = plt.subplots(figsize=(6, 6))
-    ax.plot(arr_epochs, arr_loss)
-    ax.set_xlabel(r"Training Epochs")
-    ax.set_ylabel(r"Loss (MSE)")
-    fig.tight_layout()
-    fig.savefig(dir_plots + "nn_training.pdf")  # Vector format
+    #final training plot update
+    plot_training_loss(arr_epochs, arr_loss_train, arr_loss, path_plot_nn_training)
 
     # save NN to file
     torch.save(NN_TBT.state_dict(), dir_nn + "nn_controller_weights.pth")
