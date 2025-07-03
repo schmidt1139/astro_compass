@@ -66,9 +66,13 @@ def train_neural_network():
     }
 
     # paths
-    dir_training_dir = "..\\..\\data\\training_ephems\\test_set3\\"  # path to training data
-    dir_plots = "..\\..\\data\\plots\\"  # path for storing plot data
-    dir_nn = "..\\..\\data\\neural_networks\\"  # path for saving trained nn
+    dir_training_dir = "\\data\\training_ephems\\test_set_smoothed_0.5\\"  # path to training data
+    dir_plots = "\\data\\plots\\"  # path for storing plot data
+    dir_nn = "\\data\\neural_networks\\"  # path for saving trained nn
+    path_training_dir = os.getcwd() + dir_training_dir
+    path_plots = os.getcwd() + dir_plots
+    path_nn = os.getcwd() + dir_nn
+    path_plot_nn_training = path_plots + "nn_training.jpg"
 
     # plotting structure init
     arr_epochs = []
@@ -88,11 +92,12 @@ def train_neural_network():
     scheduler = CosineAnnealingLR(optimizer, T_max=annealing_tmax, eta_min=learning_rate_f)
 
     # read ephemeris files
-    print("Reading ephems from " + dir_training_dir)
-    set_ephems = read_ephems_from_dir(dir_training_dir)
+    set_ephems = read_ephems_from_dir(path_training_dir)
     num_ephems = len(set_ephems)
+    print("Current wd: " + os.getcwd() )
+    print("Reading ephems from " + path_training_dir)
     print(str(num_ephems) + " ephems loaded")
-    print(str(num_ephems * set_ephems[1].num_vectors) + " training data points")
+    print(str(num_ephems * set_ephems[0].num_vectors) + " training data points")
     print("Number of Neural Network Parameters: " + str(num_p))
 
     # collect all training data
