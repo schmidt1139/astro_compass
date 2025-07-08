@@ -118,7 +118,7 @@ def evaluate_neural_network(
     return avg_loss
 
 
-def compare_NN_with_ephem(NN_TBT, sample_ephem_compare, dir_plots, params_ND):
+def compare_NN_with_ephem(NN_TBT, sample_ephem_compare, dir_plots, params):
 
     arr_u_nn = []
     arr_ax_nn = []
@@ -128,7 +128,7 @@ def compare_NN_with_ephem(NN_TBT, sample_ephem_compare, dir_plots, params_ND):
 
         vector = sample_ephem_compare.get_vector_at_index(i)
 
-        arr_control = query_NN_at_ephem_state(NN_TBT, vector, params_ND)
+        arr_control = query_NN_at_ephem_state(NN_TBT, vector, params)
 
         if (params["control_data_set"] == "all"):
             arr_u_nn.append(arr_control[0])
@@ -188,7 +188,7 @@ def compare_NN_with_ephem(NN_TBT, sample_ephem_compare, dir_plots, params_ND):
     fig.savefig(dir_plots + "nn_ephem_compare_alpha.jpg")
 
 
-def query_NN_at_ephem_state(NN_TBT, vector, params_ND):
+def query_NN_at_ephem_state(NN_TBT, vector, params):
 
     # unpack components of interest
     x = vector[1]
@@ -203,14 +203,14 @@ def query_NN_at_ephem_state(NN_TBT, vector, params_ND):
     # non-dimensionalize the state vector
     state_nd = non_dimensionalize(
         state,
-        params_ND["g0"],
-        params_ND["mu"],
-        params_ND["max_T"],
-        params_ND["ISP"],
-        params_ND["TOF"],
-        params_ND["l_star"],
-        params_ND["m_star"],
-        params_ND["t_star"],
+        params["g0"],
+        params["mu"],
+        params["max_T"],
+        params["ISP"],
+        params["TOF"],
+        params["l_star"],
+        params["m_star"],
+        params["t_star"],
     )
 
     # pack state as a tensor
