@@ -237,12 +237,15 @@ def query_NN_at_ephem_state(NN_TBT, vector, params):
     return nn_control
 
 
-def pre_process_training_data(set_ephems, train_fraction, eval_fraction, params):
+def pre_process_training_data(set_ephems, params):
 
     # training data collections
     matrix_training = []
     ref_matrix_training = []
     count = 0
+
+    #switch that determines what control data is loaded into the training matrix
+    switch_control_data = params["control_data_set"]
 
     # step through all ephems and store data into one data structure for training
     for traj in set_ephems:
@@ -280,7 +283,14 @@ def pre_process_training_data(set_ephems, train_fraction, eval_fraction, params)
             state_nd = np.array(outputs[0][0:5])
 
             # control reference data (i.e. Y vector)
-            control_vec = np.array([u, alpha_x, alpha_y])
+            if (switch_control_data == "all"):
+                control_vec = np.array([u, alpha_x, alpha_y])
+            elif(switch_control_data == "u"):
+                control_vec = np.array([u])
+            elif(switch_control_data == "alpha"):
+                control_vec = np.array([alpha_x, alpha_y])
+            else:
+                raise Exception("Unrecognized control data set: " + params["control_data_set"] )
 
             # stack vectors
             matrix_training.append(state_nd)
@@ -310,8 +320,8 @@ def pre_process_training_data(set_ephems, train_fraction, eval_fraction, params)
     dataset = TensorDataset(matrix_training, ref_matrix_training)
 
     # split into training and eval
-    train_size = int(train_fraction * len(dataset))
-    val_size = int(eval_fraction * len(dataset))
+    train_size = int(params["train_fraction"] * len(dataset))
+    val_size = int(params["eval_fraction"] * len(dataset))
 
     # random splitting of eval data
     train_dataset, val_dataset = random_split(
