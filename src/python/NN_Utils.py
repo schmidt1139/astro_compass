@@ -130,10 +130,17 @@ def compare_NN_with_ephem(NN_TBT, sample_ephem_compare, dir_plots, params_ND):
 
         arr_control = query_NN_at_ephem_state(NN_TBT, vector, params_ND)
 
-        arr_u_nn.append(arr_control[0])
-        arr_ax_nn.append(arr_control[1])
-        arr_ay_nn.append(arr_control[2])
+        if (params["control_data_set"] == "all"):
+            arr_u_nn.append(arr_control[0])
+            arr_ax_nn.append(arr_control[1])
+            arr_ay_nn.append(arr_control[2])
+        elif (params["control_data_set"] == "u"):
+            arr_u_nn.append(arr_control[0])
+        elif (params["control_data_set"] == "alpha"):
+            arr_ax_nn.append(arr_control[0])
+            arr_ay_nn.append(arr_control[1])
 
+    
     fig, ax = plt.subplots(figsize=(6, 6))
     ax.plot(
         sample_ephem_compare.arr_et / 86400,
