@@ -142,15 +142,17 @@ def compare_NN_with_ephem(NN_TBT, sample_ephem_compare, dir_plots, params):
 
     
     fig, ax = plt.subplots(figsize=(6, 6))
+
+    #only plot nn data if it exists
+    if ( len(arr_u_nn) > 0 ):
+        ax.plot(sample_ephem_compare.arr_et / 86400, arr_u_nn, label="Neural Network",linewidth=4)
     ax.plot(
-        sample_ephem_compare.arr_et / 86400,
-        sample_ephem_compare.arr_u,
-        label="Ephemeris",
+    sample_ephem_compare.arr_et / 86400,
+    sample_ephem_compare.arr_u,
+    label="Ephemeris",
     )
-    ax.plot(sample_ephem_compare.arr_et / 86400, arr_u_nn, label="Neural Network")
     ax.set_xlabel("Elapsed time [days]")
     ax.set_ylabel("Ephemeris Throttle u")
-    ax.legend()
     ax.legend()
     fig.tight_layout()
     fig.savefig(dir_plots + "nn_ephem_compare_u.jpg")
@@ -162,27 +164,28 @@ def compare_NN_with_ephem(NN_TBT, sample_ephem_compare, dir_plots, params):
         label=r"Ephemeris $\alpha_x$",
         color="red",
     )
-    ax.plot(
-        sample_ephem_compare.arr_et / 86400,
-        arr_ax_nn,
-        label=r"Neural Network $\alpha_x$",
-        color="orange",
-    )
+    if ( len(arr_ax_nn) > 0 ):
+        ax.plot(
+            sample_ephem_compare.arr_et / 86400,
+            arr_ax_nn,
+            label=r"Neural Network $\alpha_x$",
+            color="orange",
+        )
     ax.plot(
         sample_ephem_compare.arr_et / 86400,
         sample_ephem_compare.arr_alpha_y,
         label=r"Ephemeris $\alpha_y$",
         color="blue",
     )
-    ax.plot(
-        sample_ephem_compare.arr_et / 86400,
-        arr_ay_nn,
-        label=r"Neural Network $\alpha_y$",
-        color="green",
-    )
+    if ( len(arr_ay_nn) > 0 ):
+        ax.plot(
+            sample_ephem_compare.arr_et / 86400,
+            arr_ay_nn,
+            label=r"Neural Network $\alpha_y$",
+            color="green",
+        )
     ax.set_xlabel("Elapsed time [days]")
     ax.set_ylabel("Ephemeris Thrust Direction")
-    ax.legend()
     ax.legend()
     fig.tight_layout()
     fig.savefig(dir_plots + "nn_ephem_compare_alpha.jpg")
