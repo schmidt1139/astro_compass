@@ -29,36 +29,87 @@ def evaluate_neural_network(
             avg_loss = 0
 
     if (params["flag_plot"]) and num_samples > 0:
-        fig, ax = plt.subplots(figsize=(6, 6))
-        ax.scatter(outputs[:, 0], val_targets[:, 0], label="Training Targets")
-        ax.scatter(outputs[:, 0], outputs[:, 0], label="NN Values")
-        ax.set_xlabel(r"Control ref u ")
-        ax.set_ylabel(r"Control deltas u")
-        ax.legend()
-        fig.tight_layout()
-        fig.savefig(dir_plots + "nn_val_compare_u.jpg")  # Vector format
 
-        fig, ax = plt.subplots(figsize=(6, 6))
-        ax.scatter(
-            outputs[:, 1], val_targets[:, 1], label=r"Training Targets $\alpha_y$"
-        )
-        ax.scatter(outputs[:, 1], outputs[:, 1], label=r"NN Values $\alpha_x$")
-        ax.set_xlabel(r"Control ref $\alpha_x$")
-        ax.set_ylabel(r"Control deltas $\alpha_y$")
-        ax.legend()
-        fig.tight_layout()
-        fig.savefig(dir_plots + "nn_val_compare_alpha_x.jpg")  # Vector format
+        #check which data sets should be plotted
+        flag_plot_u = False
+        flag_plot_alpha = False
 
-        fig, ax = plt.subplots(figsize=(6, 6))
-        ax.scatter(
-            outputs[:, 2], val_targets[:, 2], label=r"Training Targets $\alpha_y$"
-        )
-        ax.scatter(outputs[:, 2], outputs[:, 2], label=r"NN Values $\alpha_y$")
-        ax.set_xlabel(r"Control ref $\alpha_y$")
-        ax.set_ylabel(r"Control deltas $\alpha_y$")
-        ax.legend()
-        fig.tight_layout()
-        fig.savefig(dir_plots + "nn_val_compare_alpha_y.jpg")  # Vector format
+        if (params["control_data_set"] == "all"):
+
+            fig, ax = plt.subplots(figsize=(6, 6))
+            ax.scatter(outputs[:, 0], val_targets[:, 0], label="Training Targets")
+            ax.scatter(outputs[:, 0], outputs[:, 0], label="NN Values")
+            ax.set_xlabel(r"Control ref u ")
+            ax.set_ylabel(r"Control deltas u")
+            ax.legend()
+            fig.tight_layout()
+            fig.savefig(dir_plots + "nn_val_compare_u.jpg")  # Vector format
+
+            fig, ax = plt.subplots(figsize=(6, 6))
+            ax.scatter(
+                outputs[:, 1], val_targets[:, 1], label=r"Training Targets $\alpha_y$"
+            )
+            ax.scatter(outputs[:, 1], outputs[:, 1], label=r"NN Values $\alpha_x$")
+            ax.set_xlabel(r"Control ref $\alpha_x$")
+            ax.set_ylabel(r"Control deltas $\alpha_y$")
+            ax.legend()
+            fig.tight_layout()
+            fig.savefig(dir_plots + "nn_val_compare_alpha_x.jpg")  # Vector format
+
+            fig, ax = plt.subplots(figsize=(6, 6))
+            ax.scatter(
+                outputs[:, 2], val_targets[:, 2], label=r"Training Targets $\alpha_y$"
+            )
+            ax.scatter(outputs[:, 2], outputs[:, 2], label=r"NN Values $\alpha_y$")
+            ax.set_xlabel(r"Control ref $\alpha_y$")
+            ax.set_ylabel(r"Control deltas $\alpha_y$")
+            ax.legend()
+            fig.tight_layout()
+            fig.savefig(dir_plots + "nn_val_compare_alpha_y.jpg")  # Vector format
+
+        elif (params["control_data_set"] == "u"):
+
+            if (params["loss"] == "BCEWithLogitsLoss"):
+                probs = torch.sigmoid(outputs[:, 0])
+                throttle_sample = (probs > 0.5).float()
+            else:
+                throttle_sample = outputs[:, 0]
+
+            fig, ax = plt.subplots(figsize=(6, 6))
+            ax.scatter(throttle_sample, val_targets[:, 0], label="Training Targets")
+            ax.scatter(throttle_sample, throttle_sample, label="NN Values")
+            ax.set_xlabel(r"Control ref u ")
+            ax.set_ylabel(r"Control deltas u")
+            ax.legend()
+            fig.tight_layout()
+            fig.savefig(dir_plots + "nn_val_compare_u.jpg")  # Vector format
+
+        elif (params["control_data_set"] == "alpha"):
+
+            fig, ax = plt.subplots(figsize=(6, 6))
+            ax.scatter(
+                outputs[:, 0], val_targets[:, 0], label=r"Training Targets $\alpha_x$"
+            )
+            ax.scatter(outputs[:, 0], outputs[:, 0], label=r"NN Values $\alpha_x$")
+            ax.set_xlabel(r"Control ref $\alpha_x$")
+            ax.set_ylabel(r"Control deltas $\alpha_x$")
+            ax.legend()
+            fig.tight_layout()
+            fig.savefig(dir_plots + "nn_val_compare_alpha_x.jpg")  # Vector format
+
+            fig, ax = plt.subplots(figsize=(6, 6))
+            ax.scatter(
+                outputs[:, 1], val_targets[:, 1], label=r"Training Targets $\alpha_y$"
+            )
+            ax.scatter(outputs[:, 1], outputs[:, 1], label=r"NN Values $\alpha_y$")
+            ax.set_xlabel(r"Control ref $\alpha_y$")
+            ax.set_ylabel(r"Control deltas $\alpha_y$")
+            ax.legend()
+            fig.tight_layout()
+            fig.savefig(dir_plots + "nn_val_compare_alpha_y.jpg")  # Vector format
+
+        else:
+            raise Exception("Unrecognized control data set: " + params["control_data_set"] )
 
     # compare NN outputs with ephemeris control
     if params["flag_plot"]:
