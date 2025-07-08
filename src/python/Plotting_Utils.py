@@ -24,13 +24,15 @@ def format_plots():
     )
 
 
-def plot_training_loss(arr_epochs, arr_loss_train, arr_loss, path_plot):
+def plot_training_loss(arr_epochs, arr_loss_train, arr_loss, path_plot, params):
 
     fig, ax = plt.subplots(figsize=(6, 6))
     ax.semilogy(arr_epochs, arr_loss, label="Eval Loss", color="orange")
-    ax.semilogy(arr_epochs, arr_loss_train, label="Training Loss", color="blue")
+    ax.semilogy(
+        arr_epochs, arr_loss_train, label="Training Loss", color="blue", linewidth=2
+    )
     ax.set_xlabel(r"Training Epochs")
-    ax.set_ylabel(r"Loss (MSE)")
+    ax.set_ylabel(r"Loss (" + params["loss"] + ")")
     ax.legend()
     fig.tight_layout()
     fig.savefig(path_plot)

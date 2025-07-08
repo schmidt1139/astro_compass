@@ -39,13 +39,13 @@ def train_neural_network():
 
     # parameters
     training_data_pts = 1000  # training data batch size
-    training_epochs = 10  # number of training epochs to run
+    training_epochs = 100000  # number of training epochs to run
     min_mse = 999999  # min mse init value
     patience = 200000  # If the number of iterations since  min is greater than this number - training ends
     learning_rate_i = 0.1  # Initial Parameter learning rate
     learning_rate_f = 0.1  # Final Parameter learning rate
     plot_update = training_epochs  # Number of epochs before plot is updated
-    report_update = 1  # Number of epochs between reporting training status
+    report_update = 1000  # Number of epochs between reporting training status
     train_fraction = 0.8  # Fraction of data to use for training
     eval_fraction = 0.2  # Fraction of data to use for eval
     annealing_tmax = 1000
@@ -64,7 +64,7 @@ def train_neural_network():
 
     # paths
     dir_training_dir = (
-        "\\data\\training_ephems\\test_set_smoothed_0.5\\"  # path to training data
+        "\\data\\training_ephems\\test_set_bang_bang_subset\\"  # path to training data
     )
     dir_plots = "\\data\\plots\\"  # path for storing plot data
     dir_nn = "\\data\\neural_networks\\"  # path for saving trained nn
