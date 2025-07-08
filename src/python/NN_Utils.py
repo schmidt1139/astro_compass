@@ -30,11 +30,8 @@ def evaluate_neural_network(
 
     if (params["flag_plot"]) and num_samples > 0:
 
-        #check which data sets should be plotted
-        flag_plot_u = False
-        flag_plot_alpha = False
-
-        if (params["control_data_set"] == "all"):
+        # check which data sets should be plotted
+        if params["control_data_set"] == "all":
 
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.scatter(outputs[:, 0], val_targets[:, 0], label="Training Targets")
@@ -67,9 +64,9 @@ def evaluate_neural_network(
             fig.tight_layout()
             fig.savefig(dir_plots + "nn_val_compare_alpha_y.jpg")  # Vector format
 
-        elif (params["control_data_set"] == "u"):
+        elif params["control_data_set"] == "u":
 
-            if (params["loss"] == "BCEWithLogitsLoss"):
+            if params["loss"] == "BCEWithLogitsLoss":
                 probs = torch.sigmoid(outputs[:, 0])
                 throttle_sample = (probs > 0.5).float()
             else:
@@ -84,7 +81,7 @@ def evaluate_neural_network(
             fig.tight_layout()
             fig.savefig(dir_plots + "nn_val_compare_u.jpg")  # Vector format
 
-        elif (params["control_data_set"] == "alpha"):
+        elif params["control_data_set"] == "alpha":
 
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.scatter(
@@ -109,7 +106,9 @@ def evaluate_neural_network(
             fig.savefig(dir_plots + "nn_val_compare_alpha_y.jpg")  # Vector format
 
         else:
-            raise Exception("Unrecognized control data set: " + params["control_data_set"] )
+            raise Exception(
+                "Unrecognized control data set: " + params["control_data_set"]
+            )
 
     # compare NN outputs with ephemeris control
     if params["flag_plot"]:
@@ -130,26 +129,30 @@ def compare_NN_with_ephem(NN_TBT, sample_ephem_compare, dir_plots, params):
 
         arr_control = query_NN_at_ephem_state(NN_TBT, vector, params)
 
-        if (params["control_data_set"] == "all"):
+        if params["control_data_set"] == "all":
             arr_u_nn.append(arr_control[0])
             arr_ax_nn.append(arr_control[1])
             arr_ay_nn.append(arr_control[2])
-        elif (params["control_data_set"] == "u"):
+        elif params["control_data_set"] == "u":
             arr_u_nn.append(arr_control[0])
-        elif (params["control_data_set"] == "alpha"):
+        elif params["control_data_set"] == "alpha":
             arr_ax_nn.append(arr_control[0])
             arr_ay_nn.append(arr_control[1])
 
-    
     fig, ax = plt.subplots(figsize=(6, 6))
 
-    #only plot nn data if it exists
-    if ( len(arr_u_nn) > 0 ):
-        ax.plot(sample_ephem_compare.arr_et / 86400, arr_u_nn, label="Neural Network",linewidth=4)
+    # only plot nn data if it exists
+    if len(arr_u_nn) > 0:
+        ax.plot(
+            sample_ephem_compare.arr_et / 86400,
+            arr_u_nn,
+            label="Neural Network",
+            linewidth=4,
+        )
     ax.plot(
-    sample_ephem_compare.arr_et / 86400,
-    sample_ephem_compare.arr_u,
-    label="Ephemeris",
+        sample_ephem_compare.arr_et / 86400,
+        sample_ephem_compare.arr_u,
+        label="Ephemeris",
     )
     ax.set_xlabel("Elapsed time [days]")
     ax.set_ylabel("Ephemeris Throttle u")
@@ -164,7 +167,7 @@ def compare_NN_with_ephem(NN_TBT, sample_ephem_compare, dir_plots, params):
         label=r"Ephemeris $\alpha_x$",
         color="red",
     )
-    if ( len(arr_ax_nn) > 0 ):
+    if len(arr_ax_nn) > 0:
         ax.plot(
             sample_ephem_compare.arr_et / 86400,
             arr_ax_nn,
@@ -177,7 +180,7 @@ def compare_NN_with_ephem(NN_TBT, sample_ephem_compare, dir_plots, params):
         label=r"Ephemeris $\alpha_y$",
         color="blue",
     )
-    if ( len(arr_ay_nn) > 0 ):
+    if len(arr_ay_nn) > 0:
         ax.plot(
             sample_ephem_compare.arr_et / 86400,
             arr_ay_nn,
@@ -225,7 +228,7 @@ def query_NN_at_ephem_state(NN_TBT, vector, params):
 
     # if we are using BCE with logits, convert to a thrust action
     # otherwise the NN directly outputs the control action
-    if ( params["loss"] == "BCEWithLogitsLoss"):
+    if params["loss"] == "BCEWithLogitsLoss":
         probs = torch.sigmoid(nn_output)
         nn_control = (probs > 0.5).float()
     else:
@@ -244,7 +247,7 @@ def pre_process_training_data(set_ephems, params):
     ref_matrix_training = []
     count = 0
 
-    #switch that determines what control data is loaded into the training matrix
+    # switch that determines what control data is loaded into the training matrix
     switch_control_data = params["control_data_set"]
 
     # step through all ephems and store data into one data structure for training
@@ -283,14 +286,16 @@ def pre_process_training_data(set_ephems, params):
             state_nd = np.array(outputs[0][0:5])
 
             # control reference data (i.e. Y vector)
-            if (switch_control_data == "all"):
+            if switch_control_data == "all":
                 control_vec = np.array([u, alpha_x, alpha_y])
-            elif(switch_control_data == "u"):
+            elif switch_control_data == "u":
                 control_vec = np.array([u])
-            elif(switch_control_data == "alpha"):
+            elif switch_control_data == "alpha":
                 control_vec = np.array([alpha_x, alpha_y])
             else:
-                raise Exception("Unrecognized control data set: " + params["control_data_set"] )
+                raise Exception(
+                    "Unrecognized control data set: " + params["control_data_set"]
+                )
 
             # stack vectors
             matrix_training.append(state_nd)

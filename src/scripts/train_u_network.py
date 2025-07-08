@@ -39,18 +39,18 @@ def train_u_network():
 
     # parameters
     params = {
-        "training_data_pts": 1000, # training data batch size
-        "training_epochs": 1000, # number of training epochs to run
-        "patience": 200000, # Epochs without training loss improvement to stop training
-        "learning_rate_i": 0.0125/2, # Initial Parameter learning rate
-        "learning_rate_f": 0.0125/2, # Final Parameter learning rate
-        "plot_update": 1000, # Number of epochs before plot is updated
-        "report_update": 10, # Number of epochs between reporting training status
-        "train_fraction": 0.8, # Fraction of data to use for training
-        "eval_fraction": 0.2, # Fraction of data to use for eval
-        "annealing_tmax": 1000, # Cosine annealing max iters
-        "loss": "BCEWithLogitsLoss", #MSE, BCEWithLogitsLoss
-        "control_data_set": "u", # Control data sets to train (all, u, alpha)
+        "training_data_pts": 1000,  # training data batch size
+        "training_epochs": 1000,  # number of training epochs to run
+        "patience": 200000,  # Epochs without training loss improvement to stop training
+        "learning_rate_i": 0.0125 / 2,  # Initial Parameter learning rate
+        "learning_rate_f": 0.0125 / 2,  # Final Parameter learning rate
+        "plot_update": 1000,  # Number of epochs before plot is updated
+        "report_update": 10,  # Number of epochs between reporting training status
+        "train_fraction": 0.8,  # Fraction of data to use for training
+        "eval_fraction": 0.2,  # Fraction of data to use for eval
+        "annealing_tmax": 1000,  # Cosine annealing max iters
+        "loss": "BCEWithLogitsLoss",  # MSE, BCEWithLogitsLoss
+        "control_data_set": "u",  # Control data sets to train (all, u, alpha)
         "mu": Constants.MU_SUN * 10 ** (9),  # sun mu [m^3/s^2]
         "max_T": 1.33,  # max spacecraft thrust [N]
         "ISP": 3872.0,  # spacecraft specific impulse [s]
@@ -82,11 +82,11 @@ def train_u_network():
     num_p = sum(p.numel() for p in NN_TBT.parameters() if p.requires_grad)
 
     # mse loss function
-    if ( params["loss"] == "BCEWithLogitsLoss" ):
+    if params["loss"] == "BCEWithLogitsLoss":
         criterion = nn.BCEWithLogitsLoss()
-    elif( params["loss"] == "MSE" ):
+    elif params["loss"] == "MSE":
         criterion = nn.MSELoss()
-    
+
     min_loss = np.inf  # min mse init value
 
     # establish optimizer
@@ -107,9 +107,7 @@ def train_u_network():
     print(str(num_ephems * set_ephems[0].num_vectors) + " training data points")
     print("Number of Neural Network Parameters: " + str(num_p))
 
-    train_dataset, val_dataset = pre_process_training_data(
-        set_ephems, params
-    )
+    train_dataset, val_dataset = pre_process_training_data(set_ephems, params)
 
     # Training
     # --------------------------------------------------------------------------------------------------------
@@ -127,8 +125,12 @@ def train_u_network():
     NN_TBT.train()
 
     # using torch loader object to load training and eval data
-    train_loader = DataLoader(train_dataset, batch_size=params["training_data_pts"], shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=params["training_data_pts"], shuffle=False)
+    train_loader = DataLoader(
+        train_dataset, batch_size=params["training_data_pts"], shuffle=True
+    )
+    val_loader = DataLoader(
+        val_dataset, batch_size=params["training_data_pts"], shuffle=False
+    )
 
     while epoch <= params["training_epochs"]:
 
@@ -179,7 +181,9 @@ def train_u_network():
         epoch = epoch + 1
 
     # final training plot update
-    plot_training_loss(arr_epochs, arr_loss_train, arr_loss, path_plot_nn_training, params)
+    plot_training_loss(
+        arr_epochs, arr_loss_train, arr_loss, path_plot_nn_training, params
+    )
 
     # save NN to file
     torch.save(NN_TBT.state_dict(), path_nn + "nn_controller_weights.pth")

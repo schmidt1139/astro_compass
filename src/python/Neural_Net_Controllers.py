@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 
 
@@ -8,7 +7,7 @@ class NN_TBT_Controller(nn.Module):
         print("Neural Network Controller Created")
 
         # LeakyReLU activation function
-        self.lrelu = nn.LeakyReLU( inplace=True )
+        self.lrelu = nn.LeakyReLU(inplace=True)
 
         self.fc1 = nn.Linear(5, 32)  # input layer
         self.fc2 = nn.Linear(32, 32)  # hidden layer 1
@@ -26,7 +25,7 @@ class NN_TBT_Controller(nn.Module):
         x = self.fc6(x)
 
         return x
-    
+
 
 class NN_TBT_Controller_u(nn.Module):
     def __init__(self):
@@ -34,7 +33,7 @@ class NN_TBT_Controller_u(nn.Module):
         print("Neural Network Controller Created")
 
         # LeakyReLU activation function
-        self.lrelu = nn.LeakyReLU( inplace=True )
+        self.lrelu = nn.LeakyReLU(inplace=True)
 
         self.fc1 = nn.Linear(5, 32)  # input layer
         self.fc2 = nn.Linear(32, 32)  # hidden layer 1
@@ -52,14 +51,15 @@ class NN_TBT_Controller_u(nn.Module):
         x = self.fc6(x)
 
         return x
-    
+
+
 class NN_TBT_Controller_alpha(nn.Module):
     def __init__(self):
         super(NN_TBT_Controller_alpha, self).__init__()
         print("Neural Network Controller Created")
 
         # LeakyReLU activation function
-        self.lrelu = nn.LeakyReLU( inplace=True )
+        self.lrelu = nn.LeakyReLU(inplace=True)
 
         self.fc1 = nn.Linear(5, 32)  # input layer
         self.fc2 = nn.Linear(32, 32)  # hidden layer 1
