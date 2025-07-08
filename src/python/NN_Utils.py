@@ -221,7 +221,15 @@ def query_NN_at_ephem_state(NN_TBT, vector, params):
 
     # eval NN
     with torch.no_grad():
-        nn_control = NN_TBT(nn_input)
+        nn_output = NN_TBT(nn_input)
+
+    # if we are using BCE with logits, convert to a thrust action
+    # otherwise the NN directly outputs the control action
+    if ( params["loss"] == "BCEWithLogitsLoss"):
+        probs = torch.sigmoid(nn_output)
+        nn_control = (probs > 0.5).float()
+    else:
+        nn_control = nn_output
 
     # convert to an array
     nn_control = np.array(nn_control)
