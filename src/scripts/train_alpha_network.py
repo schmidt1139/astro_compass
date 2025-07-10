@@ -40,11 +40,11 @@ def train_u_network():
     # parameters
     params = {
         "training_data_pts": 1000,  # training data batch size
-        "training_epochs": 1000,  # number of training epochs to run
+        "training_epochs": 100,  # number of training epochs to run
         "patience": 200000,  # Epochs without training loss improvement to stop training
         "learning_rate_i": 0.1,  # Initial Parameter learning rate
         "learning_rate_f": 0.1,  # Final Parameter learning rate
-        "plot_update": 1000,  # Number of epochs before plot is updated
+        "plot_update": 100,  # Number of epochs before plot is updated
         "report_update": 1,  # Number of epochs between reporting training status
         "train_fraction": 0.8,  # Fraction of data to use for training
         "eval_fraction": 0.2,  # Fraction of data to use for eval
