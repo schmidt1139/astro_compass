@@ -65,14 +65,15 @@ def train_u_network():
     # paths
     print("Current wd: " + os.getcwd())
     dir_training_dir = (
-        "..\\data\\training_ephems\\test_set_bang_bang\\"  # path to training data
+        "..\\data\\training_ephems\\test_set_bang_bang_subset\\"  # path to training data
     )
     dir_plots = "..\\data\\plots\\"  # path for storing plot data
     dir_nn = "..\\data\\neural_networks\\"  # path for saving trained nn
     path_training_dir = os.path.normpath(os.path.join(os.getcwd(), dir_training_dir))
     path_plots = os.path.normpath(os.path.join(os.getcwd(), dir_plots))
     path_nn = os.path.normpath(os.path.join(os.getcwd(), dir_nn))
-    path_plot_nn_training = path_plots + "nn_training.jpg"
+    path_nn = os.path.normpath(os.path.join(path_nn, "nn_controller_weights.pth"))
+    path_plot_nn_training = os.path.join(path_plots,"nn_training.jpg")
 
     # plotting structure init
     arr_epochs = []
@@ -186,7 +187,7 @@ def train_u_network():
     )
 
     # save NN to file
-    torch.save(NN_TBT.state_dict(), path_nn + "nn_controller_weights.pth")
+    torch.save(NN_TBT.state_dict(), path_nn )
 
 
 train_u_network()
