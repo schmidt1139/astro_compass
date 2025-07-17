@@ -4,7 +4,8 @@ from typing import Optional
 from scipy.integrate import solve_ivp
 from Constants import Constants
 from Spacecraft import Spacecraft
-from Propagation import spacecraft_EOM_radial_2D_EB
+from Propagation import env_EOM_TBT_v2
+from StateVectorUtilities import polar_to_cartesian, cartesian_to_polar
 
 
 class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
