@@ -188,9 +188,9 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         params = np.array(
             [
                 self.arr_mu[0],
-                self.planet_radii[0],
                 sc.max_thrust,
                 sc.specific_impulse,
+                Constants.G0_KM,
                 u,
                 alpha_x,
                 alpha_y
@@ -200,7 +200,7 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
 
         # solve ODE
         solution = solve_ivp(
-            spacecraft_EOM_radial_2D_EB, t_span, y0, method="RK45", args=(params,)
+            env_EOM_TBT_v2, t_span, y0, method="RK45", args=(params,)
         )
 
         # extract the final state vector from ODE solution (last column in y)
@@ -212,10 +212,9 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         # update the state and elapsed time
         self.elapsed_t = self.elapsed_t + self.step_size
         self._state = np.append(y_final, [mu, sma_target])
-        # self._state[4]  and self._state[5] are constant
 
         # update the spacecraft object
-        sc.update_state(*y_final)
+        sc.update_state_cartesian(*y_final)
 
         # update the environment spacecraft object
         self._spacecraft = sc
