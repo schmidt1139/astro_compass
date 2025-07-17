@@ -492,7 +492,6 @@ def smoothing_function_homotopic(rho, eps, flag_constrain_u):
 
 
 def env_EOM_TBT_v2(t, state, params):
-
     """
     Two-Body Orbit Transfer Gym Environment ode propagation function
     -----------------------------------------------------------------------------------
@@ -517,7 +516,7 @@ def env_EOM_TBT_v2(t, state, params):
     # check parameter length
     if num_params != 7:
         raise Exception("Invalid number of parameters")
-    
+
     # unpack the state vector
     x, y, vx, vy, m = state[:5]
 
@@ -526,18 +525,18 @@ def env_EOM_TBT_v2(t, state, params):
     T_max = params[1]  # max thrust of the spacecraft
     ISP = params[2]  # spacecraft specific impulse
     g0 = params[3]  # acceleration at Earth surface
-    u = params[4] # spacecraft throttle control
-    alpha_x = params[5] # thrust x direction
-    alpha_y = params[6] # thrust y direction
+    u = params[4]  # spacecraft throttle control
+    alpha_x = params[5]  # thrust x direction
+    alpha_y = params[6]  # thrust y direction
 
     # create vectors
     r_vec = np.array([x, y])
     v_vec = np.array([vx, vy])
-    alpha_vec = np.array([alpha_x,alpha_y])
+    alpha_vec = np.array([alpha_x, alpha_y])
 
-    #enfore unit vector
-    if ((alpha_x**2+alpha_y**2) != 0.0 ):
-        alpha_vec = alpha_vec / (alpha_x**2+alpha_y**2) 
+    # enfore unit vector
+    if (alpha_x**2 + alpha_y**2) != 0.0:
+        alpha_vec = alpha_vec / (alpha_x**2 + alpha_y**2)
 
     # Derivative calculation preliminaries
     r = np.linalg.norm(r_vec)
@@ -554,6 +553,7 @@ def env_EOM_TBT_v2(t, state, params):
             dv_vec[0],
             dv_vec[1],
             dm,
-        ])
-    
+        ]
+    )
+
     return derivs

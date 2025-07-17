@@ -41,7 +41,7 @@ def evaluate_neural_network(
             ax.set_ylabel(r"Control deltas u")
             ax.legend()
             fig.tight_layout()
-            fig.savefig(os.path.join(dir_plots,"nn_val_compare_u.jpg"))
+            fig.savefig(os.path.join(dir_plots, "nn_val_compare_u.jpg"))
 
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.scatter(
@@ -52,7 +52,7 @@ def evaluate_neural_network(
             ax.set_ylabel(r"Control deltas $\alpha_y$")
             ax.legend()
             fig.tight_layout()
-            fig.savefig(os.path.join(dir_plots,"nn_val_compare_alpha_x.jpg"))
+            fig.savefig(os.path.join(dir_plots, "nn_val_compare_alpha_x.jpg"))
 
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.scatter(
@@ -63,7 +63,7 @@ def evaluate_neural_network(
             ax.set_ylabel(r"Control deltas $\alpha_y$")
             ax.legend()
             fig.tight_layout()
-            fig.savefig(os.path.join(dir_plots,"nn_val_compare_alpha_y.jpg"))
+            fig.savefig(os.path.join(dir_plots, "nn_val_compare_alpha_y.jpg"))
 
         elif params["control_data_set"] == "u":
 
@@ -80,7 +80,7 @@ def evaluate_neural_network(
             ax.set_ylabel(r"Control deltas u")
             ax.legend()
             fig.tight_layout()
-            fig.savefig(os.path.join(dir_plots,"nn_val_compare_u.jpg"))
+            fig.savefig(os.path.join(dir_plots, "nn_val_compare_u.jpg"))
 
         elif params["control_data_set"] == "alpha":
 
@@ -93,7 +93,9 @@ def evaluate_neural_network(
             ax.set_ylabel(r"Control deltas $\alpha_x$")
             ax.legend()
             fig.tight_layout()
-            fig.savefig(os.path.join(dir_plots,"nn_val_compare_alpha_x.jpg"))  # Vector format
+            fig.savefig(
+                os.path.join(dir_plots, "nn_val_compare_alpha_x.jpg")
+            )  # Vector format
 
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.scatter(
@@ -104,7 +106,7 @@ def evaluate_neural_network(
             ax.set_ylabel(r"Control deltas $\alpha_y$")
             ax.legend()
             fig.tight_layout()
-            fig.savefig(os.path.join(dir_plots,"nn_val_compare_alpha_y.jpg"))
+            fig.savefig(os.path.join(dir_plots, "nn_val_compare_alpha_y.jpg"))
 
         else:
             raise Exception(
@@ -159,7 +161,7 @@ def compare_NN_with_ephem(NN_TBT, sample_ephem_compare, dir_plots, params):
     ax.set_ylabel("Ephemeris Throttle u")
     ax.legend()
     fig.tight_layout()
-    fig.savefig(os.path.join(dir_plots,"nn_ephem_compare_u.jpg"))
+    fig.savefig(os.path.join(dir_plots, "nn_ephem_compare_u.jpg"))
 
     fig, ax = plt.subplots(figsize=(6, 6))
     ax.plot(
@@ -192,7 +194,7 @@ def compare_NN_with_ephem(NN_TBT, sample_ephem_compare, dir_plots, params):
     ax.set_ylabel("Ephemeris Thrust Direction")
     ax.legend()
     fig.tight_layout()
-    fig.savefig(os.path.join(dir_plots,"nn_ephem_compare_alpha.jpg"))
+    fig.savefig(os.path.join(dir_plots, "nn_ephem_compare_alpha.jpg"))
 
 
 def query_NN_at_state(NN_TBT, vector, params):

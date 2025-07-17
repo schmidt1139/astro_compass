@@ -1,4 +1,3 @@
-import numpy as np
 import gymnasium as gym
 import sys
 import os
@@ -30,6 +29,7 @@ if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
 env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
 seed_in = 42
 
+
 def log(info, log, flag_report_to_console=False):
 
     log.append(info)
@@ -40,27 +40,41 @@ def log(info, log, flag_report_to_console=False):
     return log
 
 
-def test_env_step_no_action(env,seed_in):
+def test_env_step_no_action(env, seed_in):
 
     test_log = []
-    test_log = log("Test Environment Step with Neural Network Thrust Action", test_log, True)
+    test_log = log(
+        "Test Environment Step with Neural Network Thrust Action", test_log, True
+    )
 
-    #paths
-    path_test_dir = os.path.normpath(os.path.join(os.getcwd(), "data\\test_data\\test_env_step_with_nn_action\\"))
-    path_test_report = os.path.normpath(os.path.join(path_test_dir, "output_test_env_step_with_nn_action_log.txt"))
-    path_test_truth = os.path.normpath(os.path.join(path_test_dir, "truth_test_env_step_with_nn_action_log.txt"))
-    path_input_nn = os.path.normpath(os.path.join(path_test_dir, "nn_controller_weights_smoothed_full_10e3_epochs.pth"))
-
+    # paths
+    path_test_dir = os.path.normpath(
+        os.path.join(os.getcwd(), "data\\test_data\\test_env_step_with_nn_action\\")
+    )
+    path_test_report = os.path.normpath(
+        os.path.join(path_test_dir, "output_test_env_step_with_nn_action_log.txt")
+    )
+    path_test_truth = os.path.normpath(
+        os.path.join(path_test_dir, "truth_test_env_step_with_nn_action_log.txt")
+    )
+    path_input_nn = os.path.normpath(
+        os.path.join(
+            path_test_dir, "nn_controller_weights_smoothed_full_10e3_epochs.pth"
+        )
+    )
 
     observation, info = env.reset(seed=seed_in)
     test_log = log("Environment has been reset", test_log, True)
     test_log = log("Seed: " + str(seed_in), test_log, True)
 
-    #load neural network from file
-    nn_controller = NN_TBT_Controller() #instantiate NN object
-    nn_control_param_dict = torch.load(path_input_nn) #load parameter dictionary from file
-    nn_controller.load_state_dict(nn_control_param_dict) #load the state parameter dictionary
-
+    # load neural network from file
+    nn_controller = NN_TBT_Controller()  # instantiate NN object
+    nn_control_param_dict = torch.load(
+        path_input_nn
+    )  # load parameter dictionary from file
+    nn_controller.load_state_dict(
+        nn_control_param_dict
+    )  # load the state parameter dictionary
 
     test_log = log("Neural Net loaded from: " + str(path_input_nn), test_log, True)
 
@@ -80,15 +94,15 @@ def test_env_step_no_action(env,seed_in):
 
     test_log = log("\n", test_log, True)
 
-    #pack NN state
+    # pack NN state
     x = observation[0]
     y = observation[1]
     vx = observation[2]
     vy = observation[3]
     m = observation[4]
-    state = [ x, y, vx, vy, m ]
+    state = [x, y, vx, vy, m]
 
-    #define normalization parameters
+    # define normalization parameters
     params = {
         "mu": Constants.MU_SUN * 10 ** (9),  # sun mu [m^3/s^2]
         "max_T": 1.33,  # max spacecraft thrust [N]
@@ -101,8 +115,8 @@ def test_env_step_no_action(env,seed_in):
         "g0": Constants.G0,  # gravtational acceleration at Earth surface [m/s^2]
     }
 
-    #get action from NN
-    action = query_NN_at_state( nn_controller, state, params )
+    # get action from NN
+    action = query_NN_at_state(nn_controller, state, params)
 
     test_log = log("Action", test_log, True)
     test_log = log("u: " + str(action[0]), test_log, True)
@@ -110,10 +124,10 @@ def test_env_step_no_action(env,seed_in):
     test_log = log("alpha_y: " + str(action[2]), test_log, True)
     test_log = log("\n", test_log, True)
 
-    #step the environment
+    # step the environment
     observation, reward, terminated, truncated, info_2 = env.step(action)
 
-    #update observation
+    # update observation
     test_log = log("Observation: ", test_log, True)
     test_log = log("X: " + str(observation[0]), test_log, True)
     test_log = log("Y: " + str(observation[1]), test_log, True)
@@ -124,7 +138,7 @@ def test_env_step_no_action(env,seed_in):
     test_log = log("sma_target: " + str(observation[6]), test_log, True)
     test_log = log("\n", test_log, True)
 
-    #Report the reward
+    # Report the reward
     test_log = log("reward: " + str(reward), test_log, True)
     test_log = log("terminated: " + str(terminated), test_log, True)
     test_log = log("truncated: " + str(truncated), test_log, True)
@@ -136,12 +150,12 @@ def test_env_step_no_action(env,seed_in):
 
     test_log = log("\n", test_log, True)
 
-    #write the log to a text file
+    # write the log to a text file
     with open(path_test_report, "w", encoding="utf-8") as f:
         for line in test_log:
             f.write(line + "\n")
 
-    #compare the two files
+    # compare the two files
     print("output log: ", path_test_report)
     print("truth log: ", path_test_truth)
     are_same = filecmp.cmp(path_test_report, path_test_truth, shallow=False)
@@ -149,5 +163,3 @@ def test_env_step_no_action(env,seed_in):
 
 
 test_env_step_no_action(env, seed_in)
-
-

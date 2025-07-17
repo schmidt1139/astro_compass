@@ -1,6 +1,7 @@
 import numpy as np
 from StateVectorUtilities import polar_to_cartesian, cartesian_to_polar
 
+
 class Spacecraft:
     def __init__(self, r, theta, r_dot, v_theta, mass, C1, C2):
         # Initialize the state of the spacecraft
@@ -21,7 +22,7 @@ class Spacecraft:
         self.mass = mass
 
         # convert polar coordinates to cartesian
-        x, y, vx, vy = polar_to_cartesian( r, theta, r_dot, v_theta )
+        x, y, vx, vy = polar_to_cartesian(r, theta, r_dot, v_theta)
 
         # Set state vector cartesian coordinates
         self.x = x
@@ -29,7 +30,7 @@ class Spacecraft:
         self.vx = vx
         self.vy = vy
 
-    def update_state_cartesian(self, x, y, vx, vy, m ):
+    def update_state_cartesian(self, x, y, vx, vy, m):
 
         self.x = x
         self.y = y
@@ -37,14 +38,13 @@ class Spacecraft:
         self.vy = vy
         self.mass = m
 
-        r, theta, rdot, v_theta = cartesian_to_polar(x, y, vx, vy )
+        r, theta, rdot, v_theta = cartesian_to_polar(x, y, vx, vy)
 
         # update polar coordinates
         self.r = r
-        self.theta = theta 
+        self.theta = theta
         self.r_dot = rdot
         self.v_theta = v_theta
-
 
     def calc_Planar_OE(self, x_cb, y_cb, vx_cb, vy_cb, mu_cb):
         # determine coordinates relative to central body
@@ -115,8 +115,7 @@ class Spacecraft:
             theta = 2 * np.pi - np.acos(dotp)
 
         return a, e, w, theta
-    
+
     def get_cartesian_state(self):
 
         return self.x, self.y, self.vx, self.vy
-        

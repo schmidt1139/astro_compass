@@ -1,6 +1,5 @@
 import numpy as np
 import gymnasium as gym
-import matplotlib.pyplot as plot
 import sys
 import os
 import filecmp
@@ -26,6 +25,7 @@ if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
 env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
 seed_in = 42
 
+
 def log(info, log, flag_report_to_console=False):
 
     log.append(info)
@@ -36,12 +36,10 @@ def log(info, log, flag_report_to_console=False):
     return log
 
 
-def test_env_step_no_action(env,seed_in):
+def test_env_step_no_action(env, seed_in):
 
     test_log = []
     test_log = log("Test Environment Step with No Action", test_log, True)
-
-    total_steps_in_env = 0
 
     observation_2, info = env.reset(seed=seed_in)
     test_log = log("Environment has been reset", test_log, True)
@@ -63,7 +61,7 @@ def test_env_step_no_action(env,seed_in):
 
     test_log = log("\n", test_log, True)
 
-    #zero action
+    # zero action
     action = np.array([0.0, 0.0, 0.0])
 
     test_log = log("Action", test_log, True)
@@ -72,10 +70,10 @@ def test_env_step_no_action(env,seed_in):
     test_log = log("alpha_y: " + str(action[2]), test_log, True)
     test_log = log("\n", test_log, True)
 
-    #step the environment
+    # step the environment
     observation_2, reward, terminated, truncated, info_2 = env.step(action)
 
-    #update observation_2
+    # update observation_2
     test_log = log("Observation: ", test_log, True)
     test_log = log("X: " + str(observation_2[0]), test_log, True)
     test_log = log("Y: " + str(observation_2[1]), test_log, True)
@@ -86,7 +84,7 @@ def test_env_step_no_action(env,seed_in):
     test_log = log("sma_target: " + str(observation_2[6]), test_log, True)
     test_log = log("\n", test_log, True)
 
-    #Report the reward
+    # Report the reward
     test_log = log("reward: " + str(reward), test_log, True)
     test_log = log("terminated: " + str(terminated), test_log, True)
     test_log = log("truncated: " + str(truncated), test_log, True)
@@ -98,22 +96,25 @@ def test_env_step_no_action(env,seed_in):
 
     test_log = log("\n", test_log, True)
 
-    #write the log to a text file
-    dir_test = os.path.normpath(os.path.join(os.getcwd(), "data\\test_data\\test_env_step_no_action\\"))
-    path_test_report = os.path.normpath(os.path.join(dir_test, "output_test_env_step_no_action_log.txt"))
-    path_test_truth = os.path.normpath(os.path.join(dir_test, "truth_test_env_step_no_action_log.txt"))
+    # write the log to a text file
+    dir_test = os.path.normpath(
+        os.path.join(os.getcwd(), "data\\test_data\\test_env_step_no_action\\")
+    )
+    path_test_report = os.path.normpath(
+        os.path.join(dir_test, "output_test_env_step_no_action_log.txt")
+    )
+    path_test_truth = os.path.normpath(
+        os.path.join(dir_test, "truth_test_env_step_no_action_log.txt")
+    )
     with open(path_test_report, "w", encoding="utf-8") as f:
         for line in test_log:
             f.write(line + "\n")
 
-    #compare the two files
+    # compare the two files
     print("output log: ", path_test_report)
     print("truth log: ", path_test_truth)
     are_same = filecmp.cmp(path_test_report, path_test_truth, shallow=False)
     print("Test passed? ", are_same)
 
 
-
 test_env_step_no_action(env, seed_in)
-
-

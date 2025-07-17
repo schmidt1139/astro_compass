@@ -1,6 +1,5 @@
 import numpy as np
 import gymnasium as gym
-import matplotlib.pyplot as plot
 import sys
 import os
 
@@ -48,9 +47,9 @@ def test_runnable_env(env, num_trajectories, num_steps_per_traj):
         while steps < steps_per_traj:
             # Arbitrary test action
             action = env.action_space.sample()
-            action[0] = 1.0 
-            action[1] = -1.0 + np.tanh(steps/steps_per_traj)
-            action[2] = -1.0 + np.tanh(2*steps/steps_per_traj)
+            action[0] = 1.0
+            action[1] = -1.0 + np.tanh(steps / steps_per_traj)
+            action[2] = -1.0 + np.tanh(2 * steps / steps_per_traj)
 
             observation, reward, terminated, truncated, info = env.step(action)
 
@@ -73,7 +72,7 @@ def test_runnable_env(env, num_trajectories, num_steps_per_traj):
                 observation[4],
                 action[1],
                 action[2],
-                action[0]
+                action[0],
             )
 
             # print( elapsed_time, a, e, reward )
@@ -97,9 +96,8 @@ def test_runnable_env(env, num_trajectories, num_steps_per_traj):
         if count_traj == num_traj - 1:
             print("Plotting last trajectory...")
             eph.plot_xy(info["planet_radii"])
-            eph.plot_xy_ref_orbit(observation[6],"Earth Orbit")
+            eph.plot_xy_ref_orbit(observation[6], "Earth Orbit")
             eph.plot_all_ephemeris_data()
-
 
     print("Test successful")
 

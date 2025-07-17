@@ -5,7 +5,7 @@ from scipy.integrate import solve_ivp
 from Constants import Constants
 from Spacecraft import Spacecraft
 from Propagation import env_EOM_TBT_v2
-from StateVectorUtilities import polar_to_cartesian, cartesian_to_polar
+from StateVectorUtilities import polar_to_cartesian
 
 
 class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
@@ -27,7 +27,9 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
 
         # list of environment parameters (Sun is the central body)
         self.arr_mu = np.array([Constants.MU_SUN])  # solar mu [km^3/s^2]
-        self.planet_radii = np.array([Constants.RADIUS_SUN_M/1000])  # solar radius [km]
+        self.planet_radii = np.array(
+            [Constants.RADIUS_SUN_M / 1000]
+        )  # solar radius [km]
         self.elapsed_t = 0.0
         self.step_size = 3600.0
 
@@ -82,13 +84,11 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         vx_cb = 0.0
         vy_cb = 0.0
 
-        #convert to cartesian coordinates with random theta as input
-        x, y, vx, vy = polar_to_cartesian( r, theta, r_dot, v_theta )
+        # convert to cartesian coordinates with random theta as input
+        x, y, vx, vy = polar_to_cartesian(r, theta, r_dot, v_theta)
 
         # set the initial state of the environment
-        self._state = np.array(
-            [x, y, vx, vy, mass, mu, sma_target], dtype=np.float32
-        )
+        self._state = np.array([x, y, vx, vy, mass, mu, sma_target], dtype=np.float32)
 
         # set the location of the central body
         self._arr_cb = np.array([x_cb, y_cb, vx_cb, vy_cb], dtype=np.float32)
@@ -193,15 +193,13 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
                 Constants.G0_KM,
                 u,
                 alpha_x,
-                alpha_y
+                alpha_y,
             ],
             dtype=np.float32,
         )
 
         # solve ODE
-        solution = solve_ivp(
-            env_EOM_TBT_v2, t_span, y0, method="RK45", args=(params,)
-        )
+        solution = solve_ivp(env_EOM_TBT_v2, t_span, y0, method="RK45", args=(params,))
 
         # extract the final state vector from ODE solution (last column in y)
         y_final = (solution.y[:, -1]).astype(np.float32)
