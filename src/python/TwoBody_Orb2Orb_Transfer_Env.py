@@ -32,11 +32,12 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         self.step_size = 3600.0
 
         # define the action space
-        # The action space consists of two variables:
+        # The action space consists of three variables:
         #    1) a control throlle input (scaled from 0 to 1)
-        #    2) a thrust vector (0 to 2pi)
-        low_array_action = np.array([0.0, 0.0], dtype=np.float32)
-        high_array_action = np.array([1.0, 2 * np.pi], dtype=np.float32)
+        #    2) a thrust direction x vector component (ranges -1 to 1)
+        #    3) a thrust direction y vector component (ranges -1 to 1)
+        low_array_action = np.array([0.0, -1.0, -1.0], dtype=np.float32)
+        high_array_action = np.array([1.0, 1.0, 1.0], dtype=np.float32)
         self.action_space = gym.spaces.Box(low=low_array_action, high=high_array_action)
 
     def _get_info(self, ode_solution, delta_r):
@@ -81,9 +82,12 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         vx_cb = 0.0
         vy_cb = 0.0
 
+        #convert to cartesian coordinates with random theta as input
+        x, y, vx, vy = polar_to_cartesian( r, theta, r_dot, v_theta )
+
         # set the initial state of the environment
         self._state = np.array(
-            [r, theta, r_dot, v_theta, mass, mu, sma_target], dtype=np.float32
+            [x, y, vx, vy, mass, mu, sma_target], dtype=np.float32
         )
 
         # set the location of the central body
@@ -156,10 +160,10 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
 
     def step(self, action):
         # unpack the state vector
-        r = self._state[0]
-        theta = self._state[1]
-        r_dot = self._state[2]
-        v_theta = self._state[3]
+        x = self._state[0]
+        y = self._state[1]
+        vx = self._state[2]
+        vy = self._state[3]
         mass = self._state[4]
         mu = self._state[5]
         sma_target = self._state[6]
@@ -179,7 +183,7 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
 
         # step the spacecraft forward
         t_span = (0.0, self.step_size)
-        y0 = np.array([r, theta, r_dot, v_theta, mass])
+        y0 = np.array([x, y, vx, vy, mass])
         params = np.array(
             [
                 self.arr_mu[0],
