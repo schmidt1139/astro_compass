@@ -8,7 +8,9 @@ from gymnasium import envs
 from gymnasium.envs.registration import register
 
 # Adding python src code directory
-sys.path.append(os.path.abspath("../python"))
+current_dir = os.path.dirname(__file__)
+python_src_dir = os.path.abspath(os.path.join(current_dir, "..", "python"))
+sys.path.append(python_src_dir)
 
 from Ephemeris import Ephemeris
 
@@ -25,7 +27,7 @@ if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
 env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
 
 
-steps_per_traj = 365 * 24 * 3
+steps_per_traj = 86400 * 365 * 1.1 / 3600
 num_traj = 1
 
 
@@ -35,21 +37,20 @@ def test_runnable_env(env, num_trajectories, num_steps_per_traj):
     arr_reward_totals = np.array([])
     total_steps_in_env = 0
 
-    for count_traj in range(0, num_traj):
+    for count_traj in range(0, num_trajectories):
         # reset the environment
         steps = 0
         r_tot = 0.0
 
         eph = Ephemeris()
-        observation, info = env.reset()
+        observation, info = env.reset(seed=42)
 
         while steps < steps_per_traj:
-            # Sample randomly from the action space. Since the action is a delta-V
-            # magnitude in km/s, and the action space is unbounded (-inf to inf) the
-            # test maneuver that is returned will be sampled from a Gaussian normal
-            # distribution with a mean of 0 and a standard deviation of 1. We
-            # devide by 1000 in this test case to give relatively small maneuvers.
+            # Arbitrary test action
             action = env.action_space.sample()
+            action[0] = 1.0 
+            action[1] = -1.0 + np.tanh(steps/steps_per_traj)
+            action[2] = -1.0 + np.tanh(2*steps/steps_per_traj)
 
             observation, reward, terminated, truncated, info = env.step(action)
 
@@ -60,13 +61,19 @@ def test_runnable_env(env, num_trajectories, num_steps_per_traj):
             if terminated:
                 break
 
-            eph.add_polar_data(
+            if truncated:
+                break
+
+            eph.add_data(
                 elapsed_time,
                 observation[0],
                 observation[1],
                 observation[2],
                 observation[3],
                 observation[4],
+                action[1],
+                action[2],
+                action[0]
             )
 
             # print( elapsed_time, a, e, reward )
@@ -89,20 +96,10 @@ def test_runnable_env(env, num_trajectories, num_steps_per_traj):
 
         if count_traj == num_traj - 1:
             print("Plotting last trajectory...")
-            fig = eph.plot_xy(info["planet_radii"])
-            plot.show(fig)
+            eph.plot_xy(info["planet_radii"])
+            eph.plot_xy_ref_orbit(observation[6],"Earth Orbit")
+            eph.plot_all_ephemeris_data()
 
-    fig_reward, ax = plot.subplots(figsize=(6, 6))
-
-    ax.plot(arr_episodes, arr_reward_totals, label="Total Reward")
-
-    # Customize the figure
-    ax.set_title("Total Reward Per Episode")
-    ax.set_xlabel("Episode Count")
-    ax.set_ylabel("Total R")
-    ax.legend()
-    ax.grid(False)
-    plot.show(fig_reward)
 
     print("Test successful")
 
