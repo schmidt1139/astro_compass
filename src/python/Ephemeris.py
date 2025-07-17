@@ -23,7 +23,7 @@ class Ephemeris:
         # initialize an empty ephemeris object
         self.reset()
 
-    def add_data(self, et, x, y, vx, vy, m, alpha_x, alpha_y, u):
+    def add_data(self, et, x, y, vx, vy, m, alpha_x=0.0, alpha_y=0.0, u=0.0):
         self.arr_et = np.append(self.arr_et, et)
         self.arr_x = np.append(self.arr_x, x)
         self.arr_y = np.append(self.arr_y, y)
@@ -35,7 +35,7 @@ class Ephemeris:
         self.arr_u = np.append(self.arr_u, u)
         self.num_vectors = self.num_vectors + 1
 
-    def add_polar_data(self, et, r, theta, r_dot, v_theta, m, alpha_x, alpha_y, u):
+    def add_polar_data(self, et, r, theta, r_dot, v_theta, m, alpha_x=0.0, alpha_y=0.0, u=0.0):
         # convert polar coordinates to cartesian
         x = r * np.cos(theta)
         y = r * np.sin(theta)
