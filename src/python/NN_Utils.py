@@ -204,7 +204,7 @@ def query_NN_at_state(NN_TBT, vector, params):
     vy = vector[3]
     m = vector[4]
 
-    # pack into an array
+    # pack into a new array
     state = [x, y, vx, vy, m]
 
     # non-dimensionalize the state vector
@@ -229,7 +229,7 @@ def query_NN_at_state(NN_TBT, vector, params):
 
     # if we are using BCE with logits, convert to a thrust action
     # otherwise the NN directly outputs the control action
-    if params["loss"] == "BCEWithLogitsLoss":
+    if "loss" in params and (params["loss"] == "BCEWithLogitsLoss"):
         probs = torch.sigmoid(nn_output)
         nn_control = (probs > 0.5).float()
     else:
