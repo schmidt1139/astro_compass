@@ -128,7 +128,7 @@ def compare_NN_with_ephem(NN_TBT, sample_ephem_compare, dir_plots, params):
 
         vector = sample_ephem_compare.get_vector_at_index(i)
 
-        arr_control = query_NN_at_ephem_state(NN_TBT, vector, params)
+        arr_control = query_NN_at_state(NN_TBT, vector, params)
 
         if params["control_data_set"] == "all":
             arr_u_nn.append(arr_control[0])
@@ -195,7 +195,7 @@ def compare_NN_with_ephem(NN_TBT, sample_ephem_compare, dir_plots, params):
     fig.savefig(os.path.join(dir_plots,"nn_ephem_compare_alpha.jpg"))
 
 
-def query_NN_at_ephem_state(NN_TBT, vector, params):
+def query_NN_at_state(NN_TBT, vector, params):
 
     # unpack components of interest
     x = vector[1]
