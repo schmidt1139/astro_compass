@@ -179,7 +179,8 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
 
         # unpack the action vector
         u = action[0]  # throttle control
-        beta = action[1]  # spacecraft attitude
+        alpha_x = action[1]  # spacecraft thrust x-direction
+        alpha_y = action[2]  # spacecraft thrust y-direction
 
         # step the spacecraft forward
         t_span = (0.0, self.step_size)
@@ -191,7 +192,8 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
                 sc.max_thrust,
                 sc.specific_impulse,
                 u,
-                beta,
+                alpha_x,
+                alpha_y
             ],
             dtype=np.float32,
         )
