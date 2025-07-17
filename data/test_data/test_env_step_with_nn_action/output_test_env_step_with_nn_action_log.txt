@@ -1,0 +1,77 @@
+Test Environment Step with Neural Network Thrust Action
+Environment has been reset
+Seed: 42
+Neural Net loaded from: C:\Users\micha\MSI_Data\Masters_Thesis\astro_compass\data\test_data\test_env_step_with_nn_action\nn_controller_weights_smoothed_full_10e3_epochs.pth
+Observation: 
+X: 3.486322e+07
+Y: -2.2986622e+08
+VX: 23.379026
+VY: 3.545837
+m: 3366.0
+mu: 1.3e+11
+sma_target: 1.4959802e+08
+
+
+Info: 
+Elapsed time: 0.0
+ODE Solution: None
+delta_state: None
+planet_radii: [695700.]
+a: 2.32495e+08
+e: 1.2412671e-16
+w: 26.56505
+theta: 342.0591
+max_thrust: 0.00133
+ISP: 3872.0
+
+
+Action
+u: 0.28366512
+alpha_x: -0.22682723
+alpha_y: -0.17161115
+
+
+Observation: 
+X: 3.494738e+07
+Y: -2.2985344e+08
+VX: 23.376595
+VY: 3.553541
+m: 3365.964
+mu: 1.3e+11
+sma_target: 1.4959802e+08
+
+
+reward: 0.0
+terminated: False
+truncated: False
+
+
+Info post-step: 
+Elapsed time: 3600.0
+ODE Solution:   message: The solver successfully reached the end of the integration interval.
+  success: True
+   status: 0
+        t: [ 0.000e+00  1.900e+00  2.090e+01  2.109e+02  2.111e+03
+             3.600e+03]
+        y: [[ 3.486e+07  3.486e+07 ...  3.491e+07  3.495e+07]
+            [-2.299e+08 -2.299e+08 ... -2.299e+08 -2.299e+08]
+            ...
+            [ 3.546e+00  3.546e+00 ...  3.550e+00  3.554e+00]
+            [ 3.366e+03  3.366e+03 ...  3.366e+03  3.366e+03]]
+      sol: None
+ t_events: None
+ y_events: None
+     nfev: 32
+     njev: 0
+      nlu: 0
+delta_state: [ 8.4160000e+04  1.2784000e+04 -2.4318695e-03  7.7040195e-03
+ -3.5888672e-02]
+planet_radii: [695700.]
+a: 2.3247046e+08
+e: 0.00010934778
+w: 156.20451
+theta: 164.84969
+max_thrust: 0.00133
+ISP: 3872.0
+
+

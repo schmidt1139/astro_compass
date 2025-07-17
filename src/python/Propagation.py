@@ -489,3 +489,71 @@ def smoothing_function_homotopic(rho, eps, flag_constrain_u):
             u_smooth = 1 / 2 + (rho / 2 * eps)
 
     return u_smooth
+
+
+def env_EOM_TBT_v2(t, state, params):
+    """
+    Two-Body Orbit Transfer Gym Environment ode propagation function
+    -----------------------------------------------------------------------------------
+    This is a set of equations of motion that govern a spacecraft in the
+    2-dimensional two-body problem, formatted specifically to the Two-Body
+    Transfer gym environment
+
+    Inputs
+    -----------------------------------------------------------------------------------
+    t:      Elapsed time
+    state:  Input state vector (x,y,vx,vy,m)
+    params: The list of parameters ()
+
+    Outputs
+    -----------------------------------------------------------------------------------
+    Derivatives for state vector dy
+    """
+
+    # get the number of parameters
+    num_params = len(params)
+
+    # check parameter length
+    if num_params != 7:
+        raise Exception("Invalid number of parameters")
+
+    # unpack the state vector
+    x, y, vx, vy, m = state[:5]
+
+    # unpack the parameters
+    mu = params[0]  # gravitational parameter of the central body
+    T_max = params[1]  # max thrust of the spacecraft
+    ISP = params[2]  # spacecraft specific impulse
+    g0 = params[3]  # acceleration at Earth surface
+    u = params[4]  # spacecraft throttle control
+    alpha_x = params[5]  # thrust x direction
+    alpha_y = params[6]  # thrust y direction
+
+    # create vectors
+    r_vec = np.array([x, y])
+    v_vec = np.array([vx, vy])
+    alpha_vec = np.array([alpha_x, alpha_y])
+
+    # enfore unit vector
+    if (alpha_x**2 + alpha_y**2) != 0.0:
+        alpha_vec = alpha_vec / (alpha_x**2 + alpha_y**2)
+
+    # Derivative calculation preliminaries
+    r = np.linalg.norm(r_vec)
+
+    # state vector derivative calculations
+    dr_vec = v_vec
+    dv_vec = -mu / r**3 * r_vec + u * T_max / m * alpha_vec
+    dm = -T_max * u / ISP / g0
+
+    derivs = np.array(
+        [
+            dr_vec[0],
+            dr_vec[1],
+            dv_vec[0],
+            dv_vec[1],
+            dm,
+        ]
+    )
+
+    return derivs

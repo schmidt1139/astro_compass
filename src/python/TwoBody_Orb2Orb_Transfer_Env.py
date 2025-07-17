@@ -4,7 +4,8 @@ from typing import Optional
 from scipy.integrate import solve_ivp
 from Constants import Constants
 from Spacecraft import Spacecraft
-from Propagation import spacecraft_EOM_radial_2D_EB
+from Propagation import env_EOM_TBT_v2
+from StateVectorUtilities import polar_to_cartesian
 
 
 class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
@@ -26,16 +27,19 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
 
         # list of environment parameters (Sun is the central body)
         self.arr_mu = np.array([Constants.MU_SUN])  # solar mu [km^3/s^2]
-        self.planet_radii = np.array([Constants.RADIUS_SUN_M/1000])  # solar radius [km]
+        self.planet_radii = np.array(
+            [Constants.RADIUS_SUN_M / 1000]
+        )  # solar radius [km]
         self.elapsed_t = 0.0
         self.step_size = 3600.0
 
         # define the action space
-        # The action space consists of two variables:
+        # The action space consists of three variables:
         #    1) a control throlle input (scaled from 0 to 1)
-        #    2) a thrust vector (0 to 2pi)
-        low_array_action = np.array([0.0, 0.0], dtype=np.float32)
-        high_array_action = np.array([1.0, 2 * np.pi], dtype=np.float32)
+        #    2) a thrust direction x vector component (ranges -1 to 1)
+        #    3) a thrust direction y vector component (ranges -1 to 1)
+        low_array_action = np.array([0.0, -1.0, -1.0], dtype=np.float32)
+        high_array_action = np.array([1.0, 1.0, 1.0], dtype=np.float32)
         self.action_space = gym.spaces.Box(low=low_array_action, high=high_array_action)
 
     def _get_info(self, ode_solution, delta_r):
@@ -80,10 +84,11 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         vx_cb = 0.0
         vy_cb = 0.0
 
+        # convert to cartesian coordinates with random theta as input
+        x, y, vx, vy = polar_to_cartesian(r, theta, r_dot, v_theta)
+
         # set the initial state of the environment
-        self._state = np.array(
-            [r, theta, r_dot, v_theta, mass, mu, sma_target], dtype=np.float32
-        )
+        self._state = np.array([x, y, vx, vy, mass, mu, sma_target], dtype=np.float32)
 
         # set the location of the central body
         self._arr_cb = np.array([x_cb, y_cb, vx_cb, vy_cb], dtype=np.float32)
@@ -155,10 +160,10 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
 
     def step(self, action):
         # unpack the state vector
-        r = self._state[0]
-        theta = self._state[1]
-        r_dot = self._state[2]
-        v_theta = self._state[3]
+        x = self._state[0]
+        y = self._state[1]
+        vx = self._state[2]
+        vy = self._state[3]
         mass = self._state[4]
         mu = self._state[5]
         sma_target = self._state[6]
@@ -174,27 +179,27 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
 
         # unpack the action vector
         u = action[0]  # throttle control
-        beta = action[1]  # spacecraft attitude
+        alpha_x = action[1]  # spacecraft thrust x-direction
+        alpha_y = action[2]  # spacecraft thrust y-direction
 
         # step the spacecraft forward
         t_span = (0.0, self.step_size)
-        y0 = np.array([r, theta, r_dot, v_theta, mass])
+        y0 = np.array([x, y, vx, vy, mass])
         params = np.array(
             [
                 self.arr_mu[0],
-                self.planet_radii[0],
                 sc.max_thrust,
                 sc.specific_impulse,
+                Constants.G0_KM,
                 u,
-                beta,
+                alpha_x,
+                alpha_y,
             ],
             dtype=np.float32,
         )
 
         # solve ODE
-        solution = solve_ivp(
-            spacecraft_EOM_radial_2D_EB, t_span, y0, method="RK45", args=(params,)
-        )
+        solution = solve_ivp(env_EOM_TBT_v2, t_span, y0, method="RK45", args=(params,))
 
         # extract the final state vector from ODE solution (last column in y)
         y_final = (solution.y[:, -1]).astype(np.float32)
@@ -205,10 +210,9 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         # update the state and elapsed time
         self.elapsed_t = self.elapsed_t + self.step_size
         self._state = np.append(y_final, [mu, sma_target])
-        # self._state[4]  and self._state[5] are constant
 
         # update the spacecraft object
-        sc.update_state(*y_final)
+        sc.update_state_cartesian(*y_final)
 
         # update the environment spacecraft object
         self._spacecraft = sc

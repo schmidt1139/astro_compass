@@ -1,6 +1,7 @@
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 from StateVectorUtilities import non_dimensionalize
 from torch.utils.data import TensorDataset, random_split
@@ -40,7 +41,7 @@ def evaluate_neural_network(
             ax.set_ylabel(r"Control deltas u")
             ax.legend()
             fig.tight_layout()
-            fig.savefig(dir_plots + "nn_val_compare_u.jpg")  # Vector format
+            fig.savefig(os.path.join(dir_plots, "nn_val_compare_u.jpg"))
 
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.scatter(
@@ -51,7 +52,7 @@ def evaluate_neural_network(
             ax.set_ylabel(r"Control deltas $\alpha_y$")
             ax.legend()
             fig.tight_layout()
-            fig.savefig(dir_plots + "nn_val_compare_alpha_x.jpg")  # Vector format
+            fig.savefig(os.path.join(dir_plots, "nn_val_compare_alpha_x.jpg"))
 
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.scatter(
@@ -62,7 +63,7 @@ def evaluate_neural_network(
             ax.set_ylabel(r"Control deltas $\alpha_y$")
             ax.legend()
             fig.tight_layout()
-            fig.savefig(dir_plots + "nn_val_compare_alpha_y.jpg")  # Vector format
+            fig.savefig(os.path.join(dir_plots, "nn_val_compare_alpha_y.jpg"))
 
         elif params["control_data_set"] == "u":
 
@@ -79,7 +80,7 @@ def evaluate_neural_network(
             ax.set_ylabel(r"Control deltas u")
             ax.legend()
             fig.tight_layout()
-            fig.savefig(dir_plots + "nn_val_compare_u.jpg")  # Vector format
+            fig.savefig(os.path.join(dir_plots, "nn_val_compare_u.jpg"))
 
         elif params["control_data_set"] == "alpha":
 
@@ -92,7 +93,9 @@ def evaluate_neural_network(
             ax.set_ylabel(r"Control deltas $\alpha_x$")
             ax.legend()
             fig.tight_layout()
-            fig.savefig(dir_plots + "nn_val_compare_alpha_x.jpg")  # Vector format
+            fig.savefig(
+                os.path.join(dir_plots, "nn_val_compare_alpha_x.jpg")
+            )  # Vector format
 
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.scatter(
@@ -103,7 +106,7 @@ def evaluate_neural_network(
             ax.set_ylabel(r"Control deltas $\alpha_y$")
             ax.legend()
             fig.tight_layout()
-            fig.savefig(dir_plots + "nn_val_compare_alpha_y.jpg")  # Vector format
+            fig.savefig(os.path.join(dir_plots, "nn_val_compare_alpha_y.jpg"))
 
         else:
             raise Exception(
@@ -127,7 +130,7 @@ def compare_NN_with_ephem(NN_TBT, sample_ephem_compare, dir_plots, params):
 
         vector = sample_ephem_compare.get_vector_at_index(i)
 
-        arr_control = query_NN_at_ephem_state(NN_TBT, vector, params)
+        arr_control = query_NN_at_state(NN_TBT, vector, params)
 
         if params["control_data_set"] == "all":
             arr_u_nn.append(arr_control[0])
@@ -158,7 +161,7 @@ def compare_NN_with_ephem(NN_TBT, sample_ephem_compare, dir_plots, params):
     ax.set_ylabel("Ephemeris Throttle u")
     ax.legend()
     fig.tight_layout()
-    fig.savefig(dir_plots + "nn_ephem_compare_u.jpg")
+    fig.savefig(os.path.join(dir_plots, "nn_ephem_compare_u.jpg"))
 
     fig, ax = plt.subplots(figsize=(6, 6))
     ax.plot(
@@ -191,19 +194,19 @@ def compare_NN_with_ephem(NN_TBT, sample_ephem_compare, dir_plots, params):
     ax.set_ylabel("Ephemeris Thrust Direction")
     ax.legend()
     fig.tight_layout()
-    fig.savefig(dir_plots + "nn_ephem_compare_alpha.jpg")
+    fig.savefig(os.path.join(dir_plots, "nn_ephem_compare_alpha.jpg"))
 
 
-def query_NN_at_ephem_state(NN_TBT, vector, params):
+def query_NN_at_state(NN_TBT, vector, params):
 
     # unpack components of interest
-    x = vector[1]
-    y = vector[2]
-    vx = vector[3]
-    vy = vector[4]
-    m = vector[5]
+    x = vector[0]
+    y = vector[1]
+    vx = vector[2]
+    vy = vector[3]
+    m = vector[4]
 
-    # pack into an array
+    # pack into a new array
     state = [x, y, vx, vy, m]
 
     # non-dimensionalize the state vector
@@ -228,7 +231,7 @@ def query_NN_at_ephem_state(NN_TBT, vector, params):
 
     # if we are using BCE with logits, convert to a thrust action
     # otherwise the NN directly outputs the control action
-    if params["loss"] == "BCEWithLogitsLoss":
+    if "loss" in params and (params["loss"] == "BCEWithLogitsLoss"):
         probs = torch.sigmoid(nn_output)
         nn_control = (probs > 0.5).float()
     else:
