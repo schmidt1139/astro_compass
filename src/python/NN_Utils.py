@@ -198,11 +198,11 @@ def compare_NN_with_ephem(NN_TBT, sample_ephem_compare, dir_plots, params):
 def query_NN_at_state(NN_TBT, vector, params):
 
     # unpack components of interest
-    x = vector[1]
-    y = vector[2]
-    vx = vector[3]
-    vy = vector[4]
-    m = vector[5]
+    x = vector[0]
+    y = vector[1]
+    vx = vector[2]
+    vy = vector[3]
+    m = vector[4]
 
     # pack into an array
     state = [x, y, vx, vy, m]
