@@ -5,6 +5,8 @@ import time
 from Constants import Constants
 from datetime import datetime, timezone
 
+plot.style.use("data/support_files/dark_scientific.mplstyle")
+
 
 class Ephemeris:
     def reset(self):
@@ -92,10 +94,11 @@ class Ephemeris:
             y0,
             label="Initial State",
             marker="o",
-            color="white",
+            color="black",
             linestyle=None,
-            markerfacecolor="blue",
-            markeredgecolor="blue",
+            markerfacecolor="white",
+            markeredgecolor="white",
+            markersize=8,
         )
         ax.plot(
             xf,
@@ -103,11 +106,12 @@ class Ephemeris:
             label="Final State",
             marker="x",
             linestyle=None,
-            markerfacecolor="black",
-            markeredgecolor="black",
-            color="white",
+            markerfacecolor="white",
+            markeredgecolor="white",
+            color="black",
+            markersize=8,
         )
-        ax.plot(self.arr_x, self.arr_y, label="Trajectory", color="blue")
+        ax.plot(self.arr_x, self.arr_y, label="Trajectory", color="white")
         ax.plot(arr_x_cb, arr_y_cb, label="Central Body")
 
         ax.set_title("Trajectory")
@@ -124,7 +128,7 @@ class Ephemeris:
 
         return fig
 
-    def plot_xy_ref_orbit(self, orbit_sma, label):
+    def plot_xy_ref_orbit(self, orbit_sma, label, color_in="lime"):
         fig = self.fig_xy
         ax = self.ax_xy
 
@@ -142,28 +146,40 @@ class Ephemeris:
             arr_x_ref = np.append(arr_x_ref, x_ref)
             arr_y_ref = np.append(arr_y_ref, y_ref)
 
-        ax.plot(arr_x_ref, arr_y_ref, label=label, linestyle="dashed")
+        max_x_ref = max(arr_x_ref)
+        max_y_ref = max(arr_y_ref)
+        max_ref_val = max([max_x_ref, max_y_ref])
+        plot_lim_ref = 1.1 * max_ref_val
+
+        ax.plot(arr_x_ref, arr_y_ref, label=label, linestyle="dashed", color=color_in)
         ax.legend(loc="upper left")
 
         self.fig_xy = fig
         self.ax_xy = ax
 
+        # adjust limits if necessary
+        if max(ax.get_xlim()) < plot_lim_ref:
+
+            ax.set_xlim([-plot_lim_ref, plot_lim_ref])
+            ax.set_ylim([-plot_lim_ref, plot_lim_ref])
+
         return self.fig_xy
 
-    def plot_all_ephemeris_data(self):
+    def plot_all_ephemeris_data(self, flag_show=True):
         figs = []
 
-        fig, ax = plot.subplots(figsize=(6, 6))
+        fig, ax = plot.subplots()
         ax.plot(self.arr_et, self.arr_m, label="Spacecraft Mass")
         ax.set_title("Spacecraft Mass over Time")
         ax.set_xlabel("Elapsed time [s]")
         ax.set_ylabel("Mass [kg]")
         fig.tight_layout()
         ax.legend(loc="lower right")
-        plot.show()
+        if flag_show:
+            plot.show()
         figs.append(fig)
 
-        fig, ax = plot.subplots(figsize=(6, 6))
+        fig, ax = plot.subplots()
         ax.plot(self.arr_et, self.arr_alpha_x, label=r"$\alpha_x$")
         ax.plot(self.arr_et, self.arr_alpha_y, label=r"$\alpha_y$")
         ax.set_title("Spacecraft Thrust Direction Unit Vector")
@@ -171,17 +187,19 @@ class Ephemeris:
         ax.set_ylabel("Unit Vector Component Magnitude")
         fig.tight_layout()
         ax.legend(loc="lower right")
-        plot.show()
+        if flag_show:
+            plot.show()
         figs.append(fig)
 
-        fig, ax = plot.subplots(figsize=(6, 6))
+        fig, ax = plot.subplots()
         ax.plot(self.arr_et, self.arr_u, label="Spacecraft Throttle")
         ax.set_title("Spacecraft Throttle")
         ax.set_xlabel("Elapsed time [s]")
         ax.set_ylabel("Throttle")
         fig.tight_layout()
         ax.legend(loc="lower right")
-        plot.show()
+        if flag_show:
+            plot.show()
         figs.append(fig)
 
         return figs
