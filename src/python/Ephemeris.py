@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 
 plot.style.use("data/support_files/dark_scientific.mplstyle")
 
+
 class Ephemeris:
     def reset(self):
         self.arr_et = np.array([])
@@ -97,7 +98,7 @@ class Ephemeris:
             linestyle=None,
             markerfacecolor="white",
             markeredgecolor="white",
-            markersize=8
+            markersize=8,
         )
         ax.plot(
             xf,
@@ -108,7 +109,7 @@ class Ephemeris:
             markerfacecolor="white",
             markeredgecolor="white",
             color="black",
-            markersize=8
+            markersize=8,
         )
         ax.plot(self.arr_x, self.arr_y, label="Trajectory", color="white")
         ax.plot(arr_x_cb, arr_y_cb, label="Central Body")
@@ -147,17 +148,17 @@ class Ephemeris:
 
         max_x_ref = max(arr_x_ref)
         max_y_ref = max(arr_y_ref)
-        max_ref_val = max( [max_x_ref, max_y_ref] )
+        max_ref_val = max([max_x_ref, max_y_ref])
         plot_lim_ref = 1.1 * max_ref_val
 
-        ax.plot(arr_x_ref, arr_y_ref, label=label, linestyle="dashed",color=color_in)
+        ax.plot(arr_x_ref, arr_y_ref, label=label, linestyle="dashed", color=color_in)
         ax.legend(loc="upper left")
 
         self.fig_xy = fig
         self.ax_xy = ax
 
-        #adjust limits if necessary
-        if ( max(ax.get_xlim()) < plot_lim_ref ):
+        # adjust limits if necessary
+        if max(ax.get_xlim()) < plot_lim_ref:
 
             ax.set_xlim([-plot_lim_ref, plot_lim_ref])
             ax.set_ylim([-plot_lim_ref, plot_lim_ref])
@@ -174,7 +175,7 @@ class Ephemeris:
         ax.set_ylabel("Mass [kg]")
         fig.tight_layout()
         ax.legend(loc="lower right")
-        if (flag_show):
+        if flag_show:
             plot.show()
         figs.append(fig)
 
@@ -186,7 +187,7 @@ class Ephemeris:
         ax.set_ylabel("Unit Vector Component Magnitude")
         fig.tight_layout()
         ax.legend(loc="lower right")
-        if (flag_show):
+        if flag_show:
             plot.show()
         figs.append(fig)
 
@@ -197,7 +198,7 @@ class Ephemeris:
         ax.set_ylabel("Throttle")
         fig.tight_layout()
         ax.legend(loc="lower right")
-        if (flag_show):
+        if flag_show:
             plot.show()
         figs.append(fig)
 

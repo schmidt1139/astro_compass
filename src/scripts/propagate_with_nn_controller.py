@@ -2,7 +2,6 @@ import gymnasium as gym
 import sys
 import os
 import torch
-import filecmp
 import matplotlib.pyplot as plt
 
 from gymnasium import envs
@@ -35,6 +34,7 @@ seed_in = 42
 
 plt.style.use("data/support_files/dark_scientific.mplstyle")
 
+
 def prop_with_nn_controller(env, seed_in):
 
     test_log = []
@@ -43,25 +43,19 @@ def prop_with_nn_controller(env, seed_in):
     )
 
     # paths
-    path_test_dir = os.path.normpath(
-        os.path.join(os.getcwd(), "data\\test_data\\")
-    )
-    path_nns = os.path.normpath( os.path.join(os.getcwd(), "data\\neural_networks\\"))
-    path_plots = os.path.normpath(
-        os.path.join(os.getcwd(), "data\\plots\\")
-    )
+    path_test_dir = os.path.normpath(os.path.join(os.getcwd(), "data\\test_data\\"))
+    path_nns = os.path.normpath(os.path.join(os.getcwd(), "data\\neural_networks\\"))
+    path_plots = os.path.normpath(os.path.join(os.getcwd(), "data\\plots\\"))
     path_input_nn = os.path.normpath(
-        os.path.join(
-            path_nns, "nn_controller_weights_smoothed_full_10e3_epochs.pth"
-        )
+        os.path.join(path_nns, "nn_controller_weights_smoothed_full_10e3_epochs.pth")
     )
 
-    #reset the environment
+    # reset the environment
     observation, info = env.reset(seed=seed_in)
     test_log = log("Environment has been reset", test_log, True)
     test_log = log("Seed: " + str(seed_in), test_log, True)
 
-    #Generate an ephemeris object
+    # Generate an ephemeris object
     eph = Ephemeris()
 
     # define normalization parameters (for NN)
@@ -96,14 +90,14 @@ def prop_with_nn_controller(env, seed_in):
 
     # pack NN state
     t_i = 0.0
-    x_i = observation[0]*1000
-    y_i = observation[1]*1000
-    vx_i = observation[2]*1000
-    vy_i = observation[3]*1000
+    x_i = observation[0] * 1000
+    y_i = observation[1] * 1000
+    vx_i = observation[2] * 1000
+    vy_i = observation[3] * 1000
     m_i = observation[4]
     state_i = [x_i, y_i, vx_i, vy_i, m_i]
 
-    while ( t_i <= params['TOF'] ):
+    while t_i <= params["TOF"]:
 
         # get action from NN
         action = query_NN_at_state(nn_controller, state_i, params)
@@ -111,20 +105,18 @@ def prop_with_nn_controller(env, seed_in):
         alpha_x_i = action[1]
         alpha_y_i = action[2]
 
-        #add initial state
-        eph.add_data(
-                    t_i, x_i, y_i, vx_i, vy_i, m_i, alpha_x_i, alpha_y_i, u_i
-                )
+        # add initial state
+        eph.add_data(t_i, x_i, y_i, vx_i, vy_i, m_i, alpha_x_i, alpha_y_i, u_i)
 
         # step the environment
         observation, reward, terminated, truncated, info_2 = env.step(action)
 
         # transition state vector (t = i + 1)
-        t_i = info_2['Elapsed time']
-        x_i = observation[0]*1000
-        y_i = observation[1]*1000
-        vx_i = observation[2]*1000
-        vy_i = observation[3]*1000
+        t_i = info_2["Elapsed time"]
+        x_i = observation[0] * 1000
+        y_i = observation[1] * 1000
+        vx_i = observation[2] * 1000
+        vy_i = observation[3] * 1000
         m_i = observation[4]
         state_i = [x_i, y_i, vx_i, vy_i, m_i]
 
@@ -133,13 +125,12 @@ def prop_with_nn_controller(env, seed_in):
         test_log = log(str(key) + ": " + str(info_2[key]), test_log, True)
 
     test_log = log("\n", test_log, True)
-    sma_achieved = info_2["a"]*1000
+    sma_achieved = info_2["a"] * 1000
     sma_target = Constants.SMA_EARTH
-    pct_diff = (sma_achieved - sma_target)/sma_target*100
+    pct_diff = (sma_achieved - sma_target) / sma_target * 100
     test_log = log("Achieved SMA (m): " + str(sma_achieved), test_log, True)
     test_log = log("Target SMA (m): " + str(sma_target), test_log, True)
     test_log = log("Percent error (%): " + str(pct_diff), test_log, True)
-
 
     # generate and save figures
     fig_orb = eph.plot_xy()
@@ -147,11 +138,11 @@ def prop_with_nn_controller(env, seed_in):
     eph.plot_xy_ref_orbit(Constants.SMA_EARTH, "Earth")
     figs = eph.plot_all_ephemeris_data(False)
 
-    path_traj_plot = os.path.join(path_plots,"traj_nn_propagation.jpg")
-    path_fuel_use_plot = os.path.join(path_plots,"fuel_use_nn_propagation.jpg")
-    path_thrust_dir_plot = os.path.join(path_plots,"thrust_dir_nn_propagation.jpg")
-    path_throttle_plot = os.path.join(path_plots,"throttle_nn_propagation.jpg")
-    path_ephem = os.path.join(path_test_dir,"ephemeris_nn_propagation.txt")
+    path_traj_plot = os.path.join(path_plots, "traj_nn_propagation.jpg")
+    path_fuel_use_plot = os.path.join(path_plots, "fuel_use_nn_propagation.jpg")
+    path_thrust_dir_plot = os.path.join(path_plots, "thrust_dir_nn_propagation.jpg")
+    path_throttle_plot = os.path.join(path_plots, "throttle_nn_propagation.jpg")
+    path_ephem = os.path.join(path_test_dir, "ephemeris_nn_propagation.txt")
 
     fig_orb.savefig(path_traj_plot, bbox_inches="tight")
     figs[0].savefig(path_fuel_use_plot, bbox_inches="tight")
