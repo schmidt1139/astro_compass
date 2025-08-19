@@ -164,20 +164,21 @@ class Ephemeris:
 
         return self.fig_xy
 
-    def plot_all_ephemeris_data(self):
+    def plot_all_ephemeris_data(self, flag_show=True):
         figs = []
 
-        fig, ax = plot.subplots(figsize=(6, 6))
+        fig, ax = plot.subplots()
         ax.plot(self.arr_et, self.arr_m, label="Spacecraft Mass")
         ax.set_title("Spacecraft Mass over Time")
         ax.set_xlabel("Elapsed time [s]")
         ax.set_ylabel("Mass [kg]")
         fig.tight_layout()
         ax.legend(loc="lower right")
-        plot.show()
+        if (flag_show):
+            plot.show()
         figs.append(fig)
 
-        fig, ax = plot.subplots(figsize=(6, 6))
+        fig, ax = plot.subplots()
         ax.plot(self.arr_et, self.arr_alpha_x, label=r"$\alpha_x$")
         ax.plot(self.arr_et, self.arr_alpha_y, label=r"$\alpha_y$")
         ax.set_title("Spacecraft Thrust Direction Unit Vector")
@@ -185,17 +186,19 @@ class Ephemeris:
         ax.set_ylabel("Unit Vector Component Magnitude")
         fig.tight_layout()
         ax.legend(loc="lower right")
-        plot.show()
+        if (flag_show):
+            plot.show()
         figs.append(fig)
 
-        fig, ax = plot.subplots(figsize=(6, 6))
+        fig, ax = plot.subplots()
         ax.plot(self.arr_et, self.arr_u, label="Spacecraft Throttle")
         ax.set_title("Spacecraft Throttle")
         ax.set_xlabel("Elapsed time [s]")
         ax.set_ylabel("Throttle")
         fig.tight_layout()
         ax.legend(loc="lower right")
-        plot.show()
+        if (flag_show):
+            plot.show()
         figs.append(fig)
 
         return figs
