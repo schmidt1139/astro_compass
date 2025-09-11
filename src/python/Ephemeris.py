@@ -5,8 +5,6 @@ import time
 from Constants import Constants
 from datetime import datetime, timezone
 
-plot.style.use("data/support_files/dark_scientific.mplstyle")
-
 
 class Ephemeris:
     def reset(self):
@@ -60,6 +58,9 @@ class Ephemeris:
     def plot_xy(
         self, radius_central_body=Constants.RADIUS_SUN_M, plot_label="Trajectory"
     ):
+        
+        plot.style.use("data/support_files/dark_scientific.mplstyle");
+
         arr_x_cb = np.array([])
         arr_y_cb = np.array([])
 
@@ -166,6 +167,9 @@ class Ephemeris:
         return self.fig_xy
 
     def plot_all_ephemeris_data(self, flag_show=True):
+
+        plot.style.use("data/support_files/dark_scientific.mplstyle")
+
         figs = []
 
         fig, ax = plot.subplots()
