@@ -10,7 +10,6 @@ sys.path.append(os.path.relpath("src/scripts/"))
 
 from Ephemeris import Ephemeris
 
-
 def ingest_ephem_and_plot(path_to_ephemeris):
     print("Ingest Ephemeris and Plot Script")
     print("Ephemeris path: ", path_to_ephemeris)
@@ -28,8 +27,9 @@ def ingest_ephem_and_plot(path_to_ephemeris):
     eph.plot_xy()
     sma_Earth = 149598023 * 1000  # m
     sma_Mars = 2.32495e8 * 1000  # m
-    eph.plot_xy_ref_orbit(sma_Mars, "Mars")
+    eph.plot_xy_ref_orbit(sma_Mars, "Mars","#b7410e")
     eph.plot_xy_ref_orbit(sma_Earth, "Earth")
+    fig_orb = eph.plot_xy()
     eph.plot_all_ephemeris_data()
 
     # report the final vector
