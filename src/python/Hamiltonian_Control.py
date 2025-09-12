@@ -13,15 +13,16 @@ from StateVectorUtilities import (
     non_dimensionalize,
     cartesian_to_polar,
 )
+from Constants import Constants
 
 
 class Hamiltonian_Controller_TBT:
     def extract_env_boundary_conditions(self):
         # extract initial conditions
-        r_0 = self.init_observation[0] * 1000  # radius in m
-        theta_0 = self.init_observation[1]  # theta in rad
-        r_dot_0 = self.init_observation[2] * 1000  # radial vel in m/s
-        v_theta_0 = self.init_observation[3] * 1000  # tangential vel in m/s
+        x0 = self.init_observation[0] * 1000 # x in m
+        y0 = self.init_observation[1] * 1000 # y in m
+        vx0 = self.init_observation[2] * 1000 # vx in m/s
+        vy0 = self.init_observation[3] * 1000 # vy in m/s
         m_0 = self.init_observation[4]  # mass in kg
         mu = self.init_observation[5] * 1000**3  # gravitational param
         r_f = self.init_observation[6] * 1000  # final r in m
@@ -29,7 +30,7 @@ class Hamiltonian_Controller_TBT:
         v_theta_f = (mu / r_f) ** 0.5  # final tangential vel in m/s
 
         # constants
-        self.l_star = 149598023 * 1000  # Earth SMA in m
+        self.l_star = Constants.SMA_EARTH  # Earth SMA in m
         self.mu = mu  # gravitational parameter in m^3/s^2
         self.t_star = (self.l_star**3 / self.mu) ** 0.5  # non-dimensional time in s
         self.m_star = m_0  # kg
@@ -38,9 +39,6 @@ class Hamiltonian_Controller_TBT:
         # Parameters
         T_max = self.init_info["max_thrust"] * 1000  # max thrust in N
         ISP = self.init_info["ISP"]  # specific impulse of thruster in seconds
-
-        # convert initial state to cartesian
-        x0, y0, vx0, vy0 = polar_to_cartesian(r_0, theta_0, r_dot_0, v_theta_0)
 
         # Create initial state array
         arr_y0 = np.array([x0, y0, vx0, vy0, m_0])
@@ -243,7 +241,7 @@ class Hamiltonian_Controller_TBT:
                 lam_guess,
                 args=(eps,),
                 method='lm',
-                options={'ftol': self.root_tol, 'maxfev': 1000}
+                options={'ftol': self.root_tol, 'maxiter': self.root_max_iters}
                 )
             elif self.root_method != "hybr":
                 lam_sol = root(
