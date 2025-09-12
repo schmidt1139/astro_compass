@@ -15,6 +15,7 @@ sys.path.append(python_src_dir)
 from NN_Utils import query_NN_at_state
 from Constants import Constants
 from Neural_Net_Controllers import NN_TBT_Controller
+from Log_Utils import log
 
 
 # register the environment if it isn't registered
@@ -25,27 +26,14 @@ if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
     )
 
 
-# initialize the environment
-env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
-seed_in = 42
+def test_env_step_with_nn_action(flag_report_live=False):
 
-
-def log(info, log, flag_report_to_console=False):
-
-    log.append(info)
-
-    if flag_report_to_console:
-        print(info)
-
-    return log
-
-
-def test_env_step_no_action(env, seed_in):
+    # initialize the environment
+    env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
+    seed_in = 42
 
     test_log = []
-    test_log = log(
-        "Test Environment Step with Neural Network Thrust Action", test_log, True
-    )
+    test_log = log("Test Environment Step with Neural Network Thrust Action", test_log, flag_report_live)
 
     # paths
     path_test_dir = os.path.normpath(
@@ -64,8 +52,8 @@ def test_env_step_no_action(env, seed_in):
     )
 
     observation, info = env.reset(seed=seed_in)
-    test_log = log("Environment has been reset", test_log, True)
-    test_log = log("Seed: " + str(seed_in), test_log, True)
+    test_log = log("Environment has been reset", test_log, flag_report_live)
+    test_log = log("Seed: " + str(seed_in), test_log, flag_report_live)
 
     # load neural network from file
     nn_controller = NN_TBT_Controller()  # instantiate NN object
@@ -76,23 +64,23 @@ def test_env_step_no_action(env, seed_in):
         nn_control_param_dict
     )  # load the state parameter dictionary
 
-    test_log = log("Neural Net loaded from: " + str(path_input_nn), test_log, True)
+    test_log = log("Neural Net loaded from: " + str(path_input_nn), test_log, flag_report_live)
 
-    test_log = log("Observation: ", test_log, True)
-    test_log = log("X: " + str(observation[0]), test_log, True)
-    test_log = log("Y: " + str(observation[1]), test_log, True)
-    test_log = log("VX: " + str(observation[2]), test_log, True)
-    test_log = log("VY: " + str(observation[3]), test_log, True)
-    test_log = log("m: " + str(observation[4]), test_log, True)
-    test_log = log("mu: " + str(observation[5]), test_log, True)
-    test_log = log("sma_target: " + str(observation[6]), test_log, True)
-    test_log = log("\n", test_log, True)
+    test_log = log("Observation: ", test_log, flag_report_live)
+    test_log = log("X: " + str(observation[0]), test_log, flag_report_live)
+    test_log = log("Y: " + str(observation[1]), test_log, flag_report_live)
+    test_log = log("VX: " + str(observation[2]), test_log, flag_report_live)
+    test_log = log("VY: " + str(observation[3]), test_log, flag_report_live)
+    test_log = log("m: " + str(observation[4]), test_log, flag_report_live)
+    test_log = log("mu: " + str(observation[5]), test_log, flag_report_live)
+    test_log = log("sma_target: " + str(observation[6]), test_log, flag_report_live)
+    test_log = log("\n", test_log, flag_report_live)
 
-    test_log = log("Info: ", test_log, True)
+    test_log = log("Info: ", test_log, flag_report_live)
     for key in info.keys():
-        test_log = log(str(key) + ": " + str(info[key]), test_log, True)
+        test_log = log(str(key) + ": " + str(info[key]), test_log, flag_report_live)
 
-    test_log = log("\n", test_log, True)
+    test_log = log("\n", test_log, flag_report_live)
 
     # pack NN state
     x = observation[0]
@@ -118,37 +106,37 @@ def test_env_step_no_action(env, seed_in):
     # get action from NN
     action = query_NN_at_state(nn_controller, state, params)
 
-    test_log = log("Action", test_log, True)
-    test_log = log("u: " + str(action[0]), test_log, True)
-    test_log = log("alpha_x: " + str(action[1]), test_log, True)
-    test_log = log("alpha_y: " + str(action[2]), test_log, True)
-    test_log = log("\n", test_log, True)
+    test_log = log("Action", test_log, flag_report_live)
+    test_log = log("u: " + str(action[0]), test_log, flag_report_live)
+    test_log = log("alpha_x: " + str(action[1]), test_log, flag_report_live)
+    test_log = log("alpha_y: " + str(action[2]), test_log, flag_report_live)
+    test_log = log("\n", test_log, flag_report_live)
 
     # step the environment
     observation, reward, terminated, truncated, info_2 = env.step(action)
 
     # update observation
-    test_log = log("Observation: ", test_log, True)
-    test_log = log("X: " + str(observation[0]), test_log, True)
-    test_log = log("Y: " + str(observation[1]), test_log, True)
-    test_log = log("VX: " + str(observation[2]), test_log, True)
-    test_log = log("VY: " + str(observation[3]), test_log, True)
-    test_log = log("m: " + str(observation[4]), test_log, True)
-    test_log = log("mu: " + str(observation[5]), test_log, True)
-    test_log = log("sma_target: " + str(observation[6]), test_log, True)
-    test_log = log("\n", test_log, True)
+    test_log = log("Observation: ", test_log, flag_report_live)
+    test_log = log("X: " + str(observation[0]), test_log, flag_report_live)
+    test_log = log("Y: " + str(observation[1]), test_log, flag_report_live)
+    test_log = log("VX: " + str(observation[2]), test_log, flag_report_live)
+    test_log = log("VY: " + str(observation[3]), test_log, flag_report_live)
+    test_log = log("m: " + str(observation[4]), test_log, flag_report_live)
+    test_log = log("mu: " + str(observation[5]), test_log, flag_report_live)
+    test_log = log("sma_target: " + str(observation[6]), test_log, flag_report_live)
+    test_log = log("\n", test_log, flag_report_live)
 
     # Report the reward
-    test_log = log("reward: " + str(reward), test_log, True)
-    test_log = log("terminated: " + str(terminated), test_log, True)
-    test_log = log("truncated: " + str(truncated), test_log, True)
-    test_log = log("\n", test_log, True)
+    test_log = log("reward: " + str(reward), test_log, flag_report_live)
+    test_log = log("terminated: " + str(terminated), test_log, flag_report_live)
+    test_log = log("truncated: " + str(truncated), test_log, flag_report_live)
+    test_log = log("\n", test_log, flag_report_live)
 
-    test_log = log("Info post-step: ", test_log, True)
+    test_log = log("Info post-step: ", test_log, flag_report_live)
     for key in info_2.keys():
-        test_log = log(str(key) + ": " + str(info_2[key]), test_log, True)
+        test_log = log(str(key) + ": " + str(info_2[key]), test_log, flag_report_live)
 
-    test_log = log("\n", test_log, True)
+    test_log = log("\n", test_log, flag_report_live)
 
     # write the log to a text file
     with open(path_test_report, "w", encoding="utf-8") as f:
@@ -156,10 +144,6 @@ def test_env_step_no_action(env, seed_in):
             f.write(line + "\n")
 
     # compare the two files
-    print("output log: ", path_test_report)
-    print("truth log: ", path_test_truth)
     are_same = filecmp.cmp(path_test_report, path_test_truth, shallow=False)
-    print("Test passed? ", are_same)
-
-
-test_env_step_no_action(env, seed_in)
+    
+    return are_same
