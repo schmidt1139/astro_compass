@@ -6,16 +6,15 @@ import filecmp
 
 from gymnasium import envs
 from gymnasium.envs.registration import register
+from NN_Utils import query_NN_at_state
+from Constants import Constants
+from Neural_Net_Controllers import NN_TBT_Controller
+from Log_Utils import log
 
 # Adding python src code directory
 current_dir = os.path.dirname(__file__)
 python_src_dir = os.path.abspath(os.path.join(current_dir, "..", "python"))
 sys.path.append(python_src_dir)
-
-from NN_Utils import query_NN_at_state
-from Constants import Constants
-from Neural_Net_Controllers import NN_TBT_Controller
-from Log_Utils import log
 
 
 # register the environment if it isn't registered
@@ -33,7 +32,11 @@ def test_env_step_with_nn_action(flag_report_live=False):
     seed_in = 42
 
     test_log = []
-    test_log = log("Test Environment Step with Neural Network Thrust Action", test_log, flag_report_live)
+    test_log = log(
+        "Test Environment Step with Neural Network Thrust Action",
+        test_log,
+        flag_report_live,
+    )
 
     # paths
     path_test_dir = os.path.normpath(
@@ -64,7 +67,9 @@ def test_env_step_with_nn_action(flag_report_live=False):
         nn_control_param_dict
     )  # load the state parameter dictionary
 
-    test_log = log("Neural Net loaded from: " + str(path_input_nn), test_log, flag_report_live)
+    test_log = log(
+        "Neural Net loaded from: " + str(path_input_nn), test_log, flag_report_live
+    )
 
     test_log = log("Observation: ", test_log, flag_report_live)
     test_log = log("X: " + str(observation[0]), test_log, flag_report_live)
@@ -145,5 +150,5 @@ def test_env_step_with_nn_action(flag_report_live=False):
 
     # compare the two files
     are_same = filecmp.cmp(path_test_report, path_test_truth, shallow=False)
-    
+
     return are_same

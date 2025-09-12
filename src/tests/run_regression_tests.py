@@ -1,4 +1,3 @@
-
 from test_Hamiltonians import test_Hamiltonians
 from test_env_step_with_action import test_env_step_with_action
 from test_env_step_no_action import test_env_step_no_action
@@ -44,14 +43,14 @@ def run_regression_tests(flag_report_live=False):
     arr_test_pass_bools.append(flag_test_pass)
 
     print("\n\nSummary of Regression Tests:")
-    num_tests = len(arr_test_names) 
+    num_tests = len(arr_test_names)
     flag_all_passed = True
     for i in range(num_tests):
         print(f"{arr_test_names[i]} passed: {arr_test_pass_bools[i]}")
 
         if not arr_test_pass_bools[i]:
             flag_all_passed = False
-    
+
     print("\nAll tests passed: ", flag_all_passed)
     print("\n\nRegression tests complete")
 

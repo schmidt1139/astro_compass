@@ -9,7 +9,6 @@ from Propagation import (
     smoothing_function_homotopic,
 )
 from StateVectorUtilities import (
-    polar_to_cartesian,
     non_dimensionalize,
     cartesian_to_polar,
 )
@@ -19,10 +18,10 @@ from Constants import Constants
 class Hamiltonian_Controller_TBT:
     def extract_env_boundary_conditions(self):
         # extract initial conditions
-        x0 = self.init_observation[0] * 1000 # x in m
-        y0 = self.init_observation[1] * 1000 # y in m
-        vx0 = self.init_observation[2] * 1000 # vx in m/s
-        vy0 = self.init_observation[3] * 1000 # vy in m/s
+        x0 = self.init_observation[0] * 1000  # x in m
+        y0 = self.init_observation[1] * 1000  # y in m
+        vx0 = self.init_observation[2] * 1000  # vx in m/s
+        vy0 = self.init_observation[3] * 1000  # vy in m/s
         m_0 = self.init_observation[4]  # mass in kg
         mu = self.init_observation[5] * 1000**3  # gravitational param
         r_f = self.init_observation[6] * 1000  # final r in m
@@ -95,7 +94,12 @@ class Hamiltonian_Controller_TBT:
         )
 
     def __init__(
-        self, env: TwoBody_Orb2Orb_Transfer_Env, init_observation, init_info, input_TOF, **kwargs
+        self,
+        env: TwoBody_Orb2Orb_Transfer_Env,
+        init_observation,
+        init_info,
+        input_TOF,
+        **kwargs,
     ):
         # Targeter log string array
         self.log = []
@@ -139,18 +143,12 @@ class Hamiltonian_Controller_TBT:
         for key, val in kwargs.items():
             if key in allowed_kwargs:
                 setattr(self, key, val)
-                self._log_controller_info("kwarg " + key + " set to " + str(val) )
+                self._log_controller_info("kwarg " + key + " set to " + str(val))
             else:
                 raise ValueError(f"Unknown keyword argument: {key}")
-            
-            
+
         # extract the state vector boundary conditions from the problem
         self.extract_env_boundary_conditions()
-            
-
-        
-
-
 
     def shooting_iteration(self, lam_guess_shooting, eps):
         # construct full state vector at t=0
@@ -218,7 +216,7 @@ class Hamiltonian_Controller_TBT:
                 lam_m_f_nd_p - lam_m_f,  # Final mass co-state should be 0
             ]
         )
-        
+
         self.shooting_iters = self.shooting_iters + 1
 
         return residuals
@@ -237,11 +235,11 @@ class Hamiltonian_Controller_TBT:
 
             if self.root_method == "lm":
                 lam_sol = root(
-                self.shooting_iteration,
-                lam_guess,
-                args=(eps,),
-                method='lm',
-                options={'ftol': self.root_tol, 'maxiter': self.root_max_iters}
+                    self.shooting_iteration,
+                    lam_guess,
+                    args=(eps,),
+                    method="lm",
+                    options={"ftol": self.root_tol, "maxiter": self.root_max_iters},
                 )
             elif self.root_method != "hybr":
                 lam_sol = root(
@@ -251,8 +249,9 @@ class Hamiltonian_Controller_TBT:
                     tol=self.root_tol,
                     method=self.root_method,
                     options={"maxiter": self.root_max_iters},
-                    jac=None)
-                
+                    jac=None,
+                )
+
             else:
                 lam_sol = root(
                     self.shooting_iteration,
@@ -261,13 +260,13 @@ class Hamiltonian_Controller_TBT:
                     tol=self.root_tol,
                     method=self.root_method,
                     options={
-                    'xtol': 1e-6,        # loosen tolerance
-                    'maxfev': 5000       # increase function evaluations
-                    }
+                        "xtol": 1e-6,  # loosen tolerance
+                        "maxfev": 5000,  # increase function evaluations
+                    },
                 )
-            
-            #self._log_controller_info("i: " + str(self.shooting_iters ) )
-            #self._log_controller_info("Psi mag: " + str(np.linalg.norm(lam_sol.fun) ) + "\n" )
+
+            # self._log_controller_info("i: " + str(self.shooting_iters ) )
+            # self._log_controller_info("Psi mag: " + str(np.linalg.norm(lam_sol.fun) ) + "\n" )
 
             # check if targeter is actually within tolerance if there is an early
             # exit
@@ -335,7 +334,7 @@ class Hamiltonian_Controller_TBT:
         # provide initial co-state guess
         arr_lam_sol_0 = self.arr_lam_0
         arr_lam_sol_k = arr_lam_sol_0
-        
+
         self._log_controller_info("k_max: " + str(self.max_k))
         self._log_controller_info("eps0: " + str(eps))
         self._log_controller_info("")
@@ -355,7 +354,7 @@ class Hamiltonian_Controller_TBT:
 
             # next initial guess is the previous solution
             arr_lam_sol_0 = arr_lam_sol_k
-            
+
             self._log_controller_info("arr_lam_sol_k: " + str(arr_lam_sol_k))
             self._log_controller_info("")
 
@@ -521,8 +520,11 @@ class Hamiltonian_Controller_TBT:
                 lam_guess = lam_guess + bias_co_states
 
             lam_sol = root(
-                self.shooting_iteration, lam_guess, self.eps_0, tol=self.root_tol,
-                jac=None
+                self.shooting_iteration,
+                lam_guess,
+                self.eps_0,
+                tol=self.root_tol,
+                jac=None,
             )
             success = lam_sol.success
 
@@ -547,5 +549,5 @@ class Hamiltonian_Controller_TBT:
     def _log_controller_info(self, info):
         self.log.append(info)
 
-        if (self.flag_report_live):
+        if self.flag_report_live:
             print(info)

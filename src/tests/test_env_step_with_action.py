@@ -28,7 +28,9 @@ def test_env_step_with_action(flag_report_live=False):
     seed_in = 42
 
     test_log = []
-    test_log = log("Test Environment Step with Thrust Action", test_log, flag_report_live)
+    test_log = log(
+        "Test Environment Step with Thrust Action", test_log, flag_report_live
+    )
 
     observation_2, info = env.reset(seed=seed_in)
     test_log = log("Environment has been reset", test_log, flag_report_live)
@@ -102,6 +104,4 @@ def test_env_step_with_action(flag_report_live=False):
     # compare the two files
     are_same = filecmp.cmp(path_test_report, path_test_truth, shallow=False)
 
-
     return are_same
-

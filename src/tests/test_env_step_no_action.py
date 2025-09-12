@@ -103,4 +103,3 @@ def test_env_step_no_action(flag_report_live=False):
     # compare the two files
     are_same = filecmp.cmp(path_test_report, path_test_truth, shallow=False)
     return are_same
-
