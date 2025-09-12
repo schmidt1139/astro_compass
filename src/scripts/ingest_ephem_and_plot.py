@@ -38,8 +38,8 @@ def ingest_ephem_and_plot(path_to_ephemeris):
     print("Final vector: ", state_vector)
 
 
-directory = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\astro_compass\\data\\training_ephems\\test_set_bang_bang\\"
-ephem_file_name = "ephemeris_t0_2025_05_19_14_07_52_231235.txt"
+directory = "data\\test_data\\"
+ephem_file_name = "test_H_ephem.txt"
 path_to_ephemeris = directory + ephem_file_name
 
 ingest_ephem_and_plot(path_to_ephemeris)
