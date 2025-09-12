@@ -36,7 +36,7 @@ if __name__ == "__main__":
         "max_thrust": 1.33,  # Max thrust of the spacecraft engine [N]
         "ISP": 3872.0,  # Specific impulse of the spacecraft engine [s]
         "eps_final": 0.0001, #Final smoothing parameter to achieve
-        "output_dir":"D:\\Masters_Thesis\\ms_research_proj\\astro_compass\\data\\training_ephems\\test_set3"
+        "output_dir":"\\data\\training_ephems\\test_set3"
     }
     
     # initialize the environment

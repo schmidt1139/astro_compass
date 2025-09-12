@@ -1,6 +1,5 @@
 import numpy as np
 import gymnasium as gym
-import matplotlib
 import matplotlib.pyplot as plot
 import sys
 import os
@@ -15,127 +14,134 @@ sys.path.append(python_src_dir)
 
 from Ephemeris import Ephemeris
 from Hamiltonian_Control import Hamiltonian_Controller_TBT
+from Log_Utils import log
 
 
-# register the environment if it isn't registered
-if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
-    register(
-        id="TwoBody_Orb2Orb_Transfer_Env-v0",
-        entry_point="TwoBody_Orb2Orb_Transfer_Env:TwoBody_Orb2Orb_Transfer_Env",
+def test_Hamiltonians(flag_report_live=False):
+
+    # register the environment if it isn't registered
+    if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
+        register(
+            id="TwoBody_Orb2Orb_Transfer_Env-v0",
+            entry_point="TwoBody_Orb2Orb_Transfer_Env:TwoBody_Orb2Orb_Transfer_Env",
+        )
+
+    # initialize the environment
+    env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
+
+    test_log = []
+    test_log = log(
+        "Test Environment Step with Thrust Action", test_log, flag_report_live
     )
 
+    # The prescribed time of flight for the transfer trajectory [s]
+    input_TOF = 1.1 * 365.25 * 24 * 60 * 60
 
-# initialize the environment
-env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
+    np.set_printoptions(precision=3)  # Limit to 3 decimal places
 
-#plotting setup
-matplotlib.rcParams.update({
-    "text.usetex": False,                      # Use LaTeX for all text
-    "font.family": "serif",                   # Use serif font
-    "font.size": 10,                          # Match AIAA body font size
-    "axes.labelsize": 10,
-    "axes.titlesize": 10,
-    "legend.fontsize": 9,
-    "xtick.labelsize": 9,
-    "ytick.labelsize": 9,
-    "lines.linewidth": 1.2,
-    "lines.markersize": 4,
-    "figure.figsize": (3.5, 2.5),             # Single-column figure
-    "figure.dpi": 300,
-    "savefig.bbox": "tight",
-    "axes.grid": False,                       # No gridlines in AIAA style
-})
+    # reset the TBT env
+    seed = 111
+    init_observation, init_info = env.reset(seed=seed)
 
+    # ephemeris
+    eph = Ephemeris()
 
-num_traj = 10
+    test_log = log("Test Hamiltonian Controller\n", test_log, flag_report_live)
+    test_log = log(
+        "Initial observation vector: " + str(init_observation),
+        test_log,
+        flag_report_live,
+    )
 
-# The prescribed time of flight for the transfer trajectory [s]
-input_TOF = 1.1 * 365.25 * 24 * 60 * 60
-steps_per_traj = np.ceil(input_TOF / env.unwrapped.step_size)
+    # extract some parameters of interest
+    sun_rad = env.unwrapped.planet_radii[0]
 
-np.set_printoptions(precision=3)  # Limit to 3 decimal places
+    kwargs = {
+        "flag_report_live": False,
+    }
 
-# reset the TBT env
-seed = 111
-init_observation, init_info = env.reset(seed=seed)
+    # compute Hamiltonian Solution
+    H_controller = Hamiltonian_Controller_TBT(
+        env, init_observation, init_info, input_TOF, **kwargs
+    )
 
-# ephemeris
-eph = Ephemeris()
+    # compute solution
+    flag_solved, h_sol, eps, sol, log_hsl = H_controller.hamiltonian_solution_finder()
 
-print("Test Hamiltonian Controller\n")
-print("Initial observation vector: ", init_observation)
+    test_log = log(
+        "Hamiltonian solution found: " + str(flag_solved), test_log, flag_report_live
+    )
 
-# extract some parameters of interest
-sun_rad = env.unwrapped.planet_radii[0]
-C1 = init_info["max_thrust"] * 1000  # max thrust in N
-C2 = init_info["ISP"]  # spacecraft specific impulse in seconds
+    for item in log_hsl:
+        test_log = log(item, test_log, flag_report_live)
 
-# compute Hamiltonian Solution
-H_controller = Hamiltonian_Controller_TBT(env, init_observation, init_info, input_TOF, flag_report_live=True)
+    # write output ephemeris
+    eph_out, arr_time, arr_u, arr_rho, arr_alpha_x, arr_alpha_y = (
+        H_controller.generate_output_ephemeris(eph)
+    )
 
+    fig, ax = plot.subplots(figsize=(6, 6))
+    ax.plot(arr_time, arr_rho)
+    # ax.plot(arr_time2, arr_rho2)
+    fig.tight_layout()
+    ax.set_title("Switching Function")
 
-# compute solution
-flag_solved, h_sol, eps, sol, log = H_controller.hamiltonian_solution_finder()
+    fig, ax = plot.subplots(figsize=(6, 6))
+    ax.plot(arr_time, arr_u)
+    # ax.plot(arr_time2, arr_u2)
+    fig.tight_layout()
+    ax.set_title("Spacecraft Thrust Throttle over Time")
 
-for item in log:
-    print(item)
+    fig, ax = plot.subplots(figsize=(6, 6))
+    ax.plot(arr_time, arr_alpha_x, label="alpha_x")
+    ax.plot(arr_time, arr_alpha_y, label="alpha_y")
+    ax.set_title("Alpha Vector (Maneuver Direction) over Time")
+    fig.tight_layout()
+    ax.legend()
 
-# write output ephemeris
-eph_out, arr_time, arr_u, arr_rho, arr_alpha_x, arr_alpha_y = (
-    H_controller.generate_output_ephemeris(eph)
-)
+    # Ephemeris plotting
+    sun_rad = 6.957e8
+    sma_Earth = 149598023 * 1000  # m
+    sma_Mars = 2.32495e8 * 1000  # m
+    eph_out.plot_xy(sun_rad)
+    eph_out.plot_xy_ref_orbit(sma_Earth, "Earth Orbit")
+    eph_out.plot_xy_ref_orbit(sma_Mars, "Mars Orbit")
 
-# compute Hamiltonian Solution
-H_controller2 = Hamiltonian_Controller_TBT(env, init_observation, init_info, input_TOF)
+    np.set_printoptions(precision=16)
+    test_log = log(
+        "Solution for initial co-states: " + str(h_sol), test_log, flag_report_live
+    )
+    test_log = log(
+        "Final smoothing parameter used in solution generation: " + str(eps),
+        test_log,
+        flag_report_live,
+    )
+    # print(sol)
 
-# compute solution
-flag_solved, h_sol, eps, sol, log = H_controller2.hamiltonian_solution_finder()
+    eph_out.write_to_file("data\\test_data\\test_hamiltonians\\test_H_ephem.txt")
+    test_log = log("Wrote test ephem", test_log, flag_report_live)
 
-for item in log:
-    print(item)
+    # compare to truth file
+    eph2 = Ephemeris()
+    eph2.read_from_file("data\\test_data\\test_hamiltonians\\test_H_ephem_truth.txt")
+    test_log = log("Read truth ephem", test_log, flag_report_live)
 
-# write output ephemeris
-eph_out2, arr_time2, arr_u2, arr_rho2, arr_alpha_x2, arr_alpha_y2 = (
-    H_controller2.generate_output_ephemeris(eph)
-)
+    # step through and compare each vector
+    bool_are_same = True
+    num_vectors_test = eph_out.num_vectors
+    num_vectors_truth = eph2.num_vectors
+    if num_vectors_test == num_vectors_truth:
+        test_log = log("Test FAILED", test_log, flag_report_live)
+        return False
 
-fig, ax = plot.subplots(figsize=(6, 6))
-ax.plot(arr_time, arr_rho)
-ax.plot(arr_time2, arr_rho2)
-fig.tight_layout()
-ax.set_title("Switching Function")
+    for i in range(num_vectors_test - 1):
+        vec1 = eph_out.get_vector_at_index(i)
+        vec2 = eph2.get_vector_at_index(i)
+        if not np.array_equal(vec1, vec2):
+            test_log = log("Test FAILED", test_log, flag_report_live)
+            return False
 
-fig, ax = plot.subplots(figsize=(6, 6))
-ax.plot(arr_time, arr_u)
-ax.plot(arr_time2, arr_u2)
-fig.tight_layout()
-ax.set_title("Spacecraft Thrust Throttle over Time")
-
-fig, ax = plot.subplots(figsize=(6, 6))
-ax.plot(arr_time, arr_alpha_x, label="alpha_x")
-ax.plot(arr_time, arr_alpha_y, label="alpha_y")
-ax.set_title("Alpha Vector (Maneuver Direction) over Time")
-fig.tight_layout()
-ax.legend()
-
-# Ephemeris plotting
-sun_rad = 6.957e8
-sma_Earth = 149598023 * 1000  # m
-sma_Mars = 2.32495e8 * 1000  # m
-eph_out.plot_xy(sun_rad)
-eph_out.plot_xy_ref_orbit(sma_Earth, "Earth Orbit")
-eph_out.plot_xy_ref_orbit(sma_Mars, "Mars Orbit")
-
-
-np.set_printoptions(precision=16)
-print("Solution for initial co-states: ", h_sol)
-print("Final smoothing parameter used in solution generation: ", eps)
-print("Printing targeter log...\n")
-
-for item in log:
-    print(item)
-
-print(sol)
-
-
-eph_out2.write_to_file("data\\test_data\\test_H_ephem.txt")
+    # if we made it here, the two ephemerides are the same
+    if bool_are_same:
+        test_log = log("Test passed", test_log, flag_report_live)
+        return True

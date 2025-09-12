@@ -1,0 +1,52 @@
+
+# --- Colors / background ---
+figure.facecolor: black
+axes.facecolor: black
+axes.edgecolor: white
+axes.labelcolor: white
+text.color: white
+xtick.color: white
+ytick.color: white
+grid.color: white
+grid.alpha: 0.2
+axes.grid: true
+
+# Valid color cycle (ColorBrewer-like)
+axes.prop_cycle: cycler(color=[(0.369,0.873,0.787),(1.000,1.000,0.200),(0.420,0.360,0.840),(1.000,0.361,0.288),(0.306,0.651,0.891),(1.000,0.642,0.239),(0.685,0.983,0.171),(1.000,0.200,0.609),(0.680,0.680,0.680),(0.815,0.295,0.824),(0.415,0.892,0.308),(1.000,0.911,0.292)])
+
+
+# Lines/markers
+lines.color: white
+lines.linewidth: 1.0
+lines.markersize: 2
+patch.edgecolor: white
+
+# Axes/ticks/legend
+axes.titlesize: 10
+axes.labelsize: 9
+axes.linewidth: 0.75
+xtick.labelsize: 8
+ytick.labelsize: 8
+xtick.direction: out
+ytick.direction: out
+legend.frameon: True
+legend.facecolor: black
+legend.edgecolor: white
+legend.fontsize: 8
+
+# Figure size / dpi (for raster outputs; PDFs ignore dpi except for rasterized elems)
+figure.figsize: 6.3, 3.0
+figure.dpi: 300
+
+# Savefig: keep dark background and embed properly
+savefig.format: jpg
+savefig.dpi: 300
+savefig.bbox: tight
+savefig.pad_inches: 0.05
+savefig.transparent: False
+savefig.facecolor: auto
+savefig.edgecolor: auto
+
+# Fonts in vector outputs
+pdf.fonttype: 42
+ps.fonttype: 42
