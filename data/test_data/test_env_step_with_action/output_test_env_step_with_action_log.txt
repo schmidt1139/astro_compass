@@ -2,13 +2,13 @@ Test Environment Step with Thrust Action
 Environment has been reset
 Seed: 42
 Observation: 
-X: 3.486322e+07
-Y: -2.2986622e+08
+X: 34863220.0
+Y: -229866220.0
 VX: 23.379026
 VY: 3.545837
 m: 3366.0
-mu: 1.3e+11
-sma_target: 1.4959802e+08
+mu: 130000000000.0
+sma_target: 149598020.0
 
 
 Info: 
@@ -16,7 +16,7 @@ Elapsed time: 0.0
 ODE Solution: None
 delta_state: None
 planet_radii: [695700.]
-a: 2.32495e+08
+a: 232495000.0
 e: 1.2412671e-16
 w: 26.56505
 theta: 342.0591
@@ -31,16 +31,16 @@ alpha_y: 1.0
 
 
 Observation: 
-X: 3.4947384e+07
-Y: -2.2985344e+08
+X: 34947384.0
+Y: -229853440.0
 VX: 23.378437
 VY: 3.555108
 m: 3365.874
-mu: 1.3e+11
-sma_target: 1.4959802e+08
+mu: 130000000000.0
+sma_target: 149598020.0
 
 
-reward: 0.0
+reward: 0.7355184
 terminated: False
 truncated: False
 
@@ -66,7 +66,7 @@ ODE Solution:   message: The solver successfully reached the end of the integrat
 delta_state: [ 8.4164000e+04  1.2784000e+04 -5.8937073e-04  9.2711449e-03
  -1.2597656e-01]
 planet_radii: [695700.]
-a: 2.3251091e+08
+a: 232510910.0
 e: 7.2937924e-05
 w: 28.867548
 theta: 339.77762

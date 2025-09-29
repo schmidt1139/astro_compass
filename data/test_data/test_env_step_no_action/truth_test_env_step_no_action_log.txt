@@ -2,13 +2,13 @@ Test Environment Step with No Action
 Environment has been reset
 Seed: 42
 Observation: 
-X: 3.486322e+07
-Y: -2.2986622e+08
+X: 34863220.0
+Y: -229866220.0
 VX: 23.379026
 VY: 3.545837
 m: 3366.0
-mu: 1.3e+11
-sma_target: 1.4959802e+08
+mu: 130000000000.0
+sma_target: 149598020.0
 
 
 Info: 
@@ -16,7 +16,7 @@ Elapsed time: 0.0
 ODE Solution: None
 delta_state: None
 planet_radii: [695700.]
-a: 2.32495e+08
+a: 232495000.0
 e: 1.2412671e-16
 w: 26.56505
 theta: 342.0591
@@ -31,16 +31,16 @@ alpha_y: 0.0
 
 
 Observation: 
-X: 3.4947384e+07
-Y: -2.2985344e+08
+X: 34947384.0
+Y: -229853440.0
 VX: 23.377726
 VY: 3.5543969
 m: 3366.0
-mu: 1.3e+11
-sma_target: 1.4959802e+08
+mu: 130000000000.0
+sma_target: 149598020.0
 
 
-reward: 0.0
+reward: 0.7356053
 terminated: False
 truncated: False
 
@@ -66,7 +66,7 @@ ODE Solution:   message: The solver successfully reached the end of the integrat
 delta_state: [ 8.4164000e+04  1.2784000e+04 -1.3008118e-03  8.5599422e-03
   0.0000000e+00]
 planet_radii: [695700.]
-a: 2.3249498e+08
+a: 232494980.0
 e: 9.084384e-08
 w: 170.61444
 theta: 179.25969
