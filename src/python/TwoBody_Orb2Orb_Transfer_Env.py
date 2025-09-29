@@ -18,7 +18,7 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
             7, np.inf, dtype=np.float32
         )  # upper-bounds for state space
 
-        # define the state space (in this case the observation is the state) 5x5
+        # define the state space (in this case the observation is the state) 7x7
         self.observation_space = gym.spaces.Box(low=low_array, high=high_array)
 
         self._state = np.full(7, 0.0, dtype=np.float32)  # initialize state vector
@@ -121,7 +121,7 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
         # unpack state vector
         x = self._state[0]
         y = self._state[1]
-        sma_target = self._state[5]
+        sma_target = self._state[6]
 
         a = self._keplerian_elements[0]
 
@@ -142,7 +142,8 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
             # exponential decaying reward based on the difference between target
             # SMA and current SMA
             sma_diff = a - sma_target
-            reward = np.exp(-(sma_diff**2) / (17000) ** 2)
+            sma_diff_nd = sma_diff / (Constants.SMA_EARTH/1000)
+            reward = np.exp( -(sma_diff_nd**2) )
 
         return reward, terminated
 
