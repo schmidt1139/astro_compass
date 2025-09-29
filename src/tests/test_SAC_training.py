@@ -1,16 +1,16 @@
 import gymnasium as gym
 import sys
 import os
-import torch
 import matplotlib.pyplot as plt
 import random
 import filecmp
 
-from datetime import datetime
 from gymnasium import envs
 from gymnasium.envs.registration import register
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.callbacks import EvalCallback, CallbackList
+from stable_baselines3 import SAC
+from stable_baselines3.common.monitor import Monitor
 
 # Adding python src code directory
 # Adding python src code directory
@@ -20,16 +20,11 @@ print("Now working in:", os.getcwd())
 sys.path.append(os.path.relpath("src/python/"))
 sys.path.append(os.path.relpath("src/scripts/"))
 
-from NN_Utils import query_NN_at_state
 from Constants import Constants
-from Neural_Net_Controllers import NN_TBT_Controller
 from Log_Utils import log
 from Ephemeris import Ephemeris
 from Spacecraft import Spacecraft
-from StateVectorUtilities import cartesian_to_polar, polar_to_cartesian
-from stable_baselines3 import SAC
-from stable_baselines3.common.monitor import Monitor
-from Plotting_Utils import plot_SAC_training
+from StateVectorUtilities import cartesian_to_polar
 from RL_Utils import log_training_perf
 
 
@@ -38,8 +33,9 @@ if "TwoBody_Orb2Orb_Transfer_Env_nd-v0" not in envs.registry.keys():
     register(
         id="TwoBody_Orb2Orb_Transfer_Env_nd-v0",
         entry_point="TwoBody_Orb2Orb_Transfer_Env_nd:TwoBody_Orb2Orb_Transfer_Env_nd",
-        max_episode_steps=500  # <-- set your desired max steps per episode
+        max_episode_steps=500,  # <-- set your desired max steps per episode
     )
+
 
 class RewardLoggerCallback(BaseCallback):
     def __init__(self, print_freq=1000, verbose=0):
@@ -65,6 +61,7 @@ class RewardLoggerCallback(BaseCallback):
             self.episode_lengths.append(ep_info["l"])
         self._last_ep_buffer_len = len(ep_infos)
 
+
 def test_SAC_training(flag_report_live=False, seed_in=42):
 
     # set random seed
@@ -81,26 +78,35 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
         "t_star": (149598023000**3 / (Constants.MU_SUN * 10 ** (9)))
         ** 0.5,  # characteristic time - derived
         "g0": Constants.G0,  # gravtational acceleration at Earth surface [m/s^2]
-        "env_step_size": 3600*24,  # environment step size [s]
+        "env_step_size": 3600 * 24,  # environment step size [s]
     }
 
     # initialize the environment
-    env = gym.make("TwoBody_Orb2Orb_Transfer_Env_nd-v0",
-                    mu=params["mu"],                    #solar gravitational parameter in m^3/s^2
-                    max_T=params["max_T"],              #max thrust in N
-                    ISP=params["ISP"],                  #ISP in seconds
-                    TOF=params["TOF"],                  #time of flight in seconds
-                    l_star=params["l_star"],            #characteristic length in m
-                    m_star=params["m_star"],            #characteristic mass in kg
-                    t_star=params["t_star"],            #characteristic time in s
-                    g0=params["g0"],                    #gravitational acceleration at Earth surface in m/s^2
-                    step_size=params["env_step_size"]   #environment step size in seconds
+    env = gym.make(
+        "TwoBody_Orb2Orb_Transfer_Env_nd-v0",
+        mu=params["mu"],  # solar gravitational parameter in m^3/s^2
+        max_T=params["max_T"],  # max thrust in N
+        ISP=params["ISP"],  # ISP in seconds
+        TOF=params["TOF"],  # time of flight in seconds
+        l_star=params["l_star"],  # characteristic length in m
+        m_star=params["m_star"],  # characteristic mass in kg
+        t_star=params["t_star"],  # characteristic time in s
+        g0=params["g0"],  # gravitational acceleration at Earth surface in m/s^2
+        step_size=params["env_step_size"],  # environment step size in seconds
     )
 
-    eval_env = gym.make("TwoBody_Orb2Orb_Transfer_Env_nd-v0",
-                    mu=params["mu"], max_T=params["max_T"], ISP=params["ISP"],
-                    TOF=params["TOF"], l_star=params["l_star"], m_star=params["m_star"],
-                    t_star=params["t_star"], g0=params["g0"], step_size=params["env_step_size"])
+    eval_env = gym.make(
+        "TwoBody_Orb2Orb_Transfer_Env_nd-v0",
+        mu=params["mu"],
+        max_T=params["max_T"],
+        ISP=params["ISP"],
+        TOF=params["TOF"],
+        l_star=params["l_star"],
+        m_star=params["m_star"],
+        t_star=params["t_star"],
+        g0=params["g0"],
+        step_size=params["env_step_size"],
+    )
 
     max_episode_steps_in = 500
     env = gym.wrappers.TimeLimit(env, max_episode_steps=max_episode_steps_in)
@@ -116,23 +122,26 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
 
     test_log = []
     test_log = log("SAC Training Script", test_log, flag_report_live)
-    #print("GPU available: ", torch.cuda.is_available())  # Should print True if GPU is available)
+    # print("GPU available: ", torch.cuda.is_available())  # Should print True if GPU is available)
 
     # paths
-    time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
     path_nns = os.path.normpath(os.path.join(os.getcwd(), "data\\neural_networks\\"))
-    path_plots = os.path.normpath(os.path.join(os.getcwd(), "data\\plots\\SAC_plots\\"))
-    path_output = os.path.normpath(os.path.join(os.getcwd(), "data\\test_data\\test_SAC_training\\"))
+    path_output = os.path.normpath(
+        os.path.join(os.getcwd(), "data\\test_data\\test_SAC_training\\")
+    )
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
     path_output_log = os.path.join(path_output, "SAC_Training_Log.txt")
     path_output_log_truth = os.path.join(path_output, "SAC_Training_Log_truth.txt")
 
-
     # reset the environment
-    observation, info = env.reset( seed=seed_in )
+    observation, info = env.reset(seed=seed_in)
     test_log = log("Environment has been reset", test_log, flag_report_live)
     test_log = log("Seed: " + str(seed_in), test_log, flag_report_live)
-    test_log = log("Max steps per episode: " + str(env.spec.max_episode_steps), test_log, flag_report_live)
+    test_log = log(
+        "Max steps per episode: " + str(env.spec.max_episode_steps),
+        test_log,
+        flag_report_live,
+    )
 
     # Create the SAC model
     model = SAC("MlpPolicy", env, verbose=1, device="cpu", seed=seed_in)
@@ -144,22 +153,21 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
         eval_env,
         best_model_save_path=path_output,
         log_path=path_output,
-        eval_freq=1000,             # adjust frequency
-        n_eval_episodes=5,          # episodes per evaluation
+        eval_freq=1000,  # adjust frequency
+        n_eval_episodes=5,  # episodes per evaluation
         deterministic=True,
-        render=False
+        render=False,
     )
     callback_list = CallbackList([eval_callback, callback])
 
-    model.learn(total_timesteps=training_steps, progress_bar=True , callback=callback_list)
+    model.learn(
+        total_timesteps=training_steps, progress_bar=True, callback=callback_list
+    )
 
-    # After training:
-    arr_epsisode_numbers = list(range(1, len(callback.episode_rewards) + 1))
-    arr_epsisode_rs = callback.episode_rewards
-    #print("Episodes:", len(callback.episode_rewards))
-    #print("Timesteps:", model.num_timesteps)
     test_log = log("Training complete", test_log, flag_report_live)
-    test_log = log_training_perf(test_log, callback, eval_callback, model, training_steps, flag_report_live)
+    test_log = log_training_perf(
+        test_log, callback, eval_callback, model, training_steps, flag_report_live
+    )
 
     # Save the model
     model.save(path_SAC_model)
@@ -192,7 +200,7 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
 
     while flag_continue:
 
-        #step the env
+        # step the env
         action, _states = model.predict(obs, deterministic=True)
         throttle = action[0]
         alpha_x = action[1]
@@ -212,13 +220,15 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
 
         # create polar state, create a temp SC object and calc OE
         r_i, theta_i, rdot_i, vtheta_i = cartesian_to_polar(x_i, y_i, vx_i, vy_i)
-        SC = Spacecraft(r_i, theta_i, rdot_i, vtheta_i, m_i, params["max_T"], params["ISP"] )
-        arr_OE = SC.calc_Planar_OE( 0.0, 0.0, 0.0, 0.0, params["mu"] )
+        SC = Spacecraft(
+            r_i, theta_i, rdot_i, vtheta_i, m_i, params["max_T"], params["ISP"]
+        )
+        arr_OE = SC.calc_Planar_OE(0.0, 0.0, 0.0, 0.0, params["mu"])
 
         obs, reward, terminated, truncated, info = env.step(action)
 
         count_step = count_step + 1
-        
+
         # log data
         sum_reward = sum_reward + float(reward)
         arr_time.append(info["Elapsed time"] / (3600 * 24))  # time in days
@@ -254,12 +264,15 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
     test_log = log("truncated: " + str(truncated) + " ", test_log, flag_report_live)
 
     # plot the results
-    #plot_SAC_training(arr_time, arr_reward_tot, arr_reward, arr_throttle, arr_alpha_x, arr_alpha_y, arr_x, arr_y, arr_vx, arr_vy, arr_sma, arr_sma_target, arr_ecc, arr_ecc_target, arr_ecc_max, arr_epsisode_numbers, arr_epsisode_rs, path_output, eph)
+    # plot_SAC_training(arr_time, arr_reward_tot, arr_reward, arr_throttle, arr_alpha_x, arr_alpha_y, arr_x, arr_y, arr_vx, arr_vy, arr_sma, arr_sma_target, arr_ecc, arr_ecc_target, arr_ecc_max, arr_epsisode_numbers, arr_epsisode_rs, path_output, eph)
 
     env.close()
 
     # save ephemeris to file
-    eph.write_to_file(os.path.join(path_output, "SAC_Test_Traj_Ephem.txt"), mod_vector_write_frequency=1)
+    eph.write_to_file(
+        os.path.join(path_output, "SAC_Test_Traj_Ephem.txt"),
+        mod_vector_write_frequency=1,
+    )
 
     test_log = log("Complete!", test_log, flag_report_live)
     test_log = log("Plots saved to: " + path_output, test_log, flag_report_live)
@@ -276,6 +289,3 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
         print("Log files match truth:", are_same)
 
     return are_same
-
-
-test_SAC_training(flag_report_live=False, seed_in=42)
