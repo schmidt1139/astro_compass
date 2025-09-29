@@ -6,15 +6,17 @@ import filecmp
 
 from gymnasium import envs
 from gymnasium.envs.registration import register
-from NN_Utils import query_NN_at_state
-from Constants import Constants
-from Neural_Net_Controllers import NN_TBT_Controller
-from Log_Utils import log
+
 
 # Adding python src code directory
 current_dir = os.path.dirname(__file__)
 python_src_dir = os.path.abspath(os.path.join(current_dir, "..", "python"))
 sys.path.append(python_src_dir)
+
+from NN_Utils import query_NN_at_state
+from Constants import Constants
+from Neural_Net_Controllers import NN_TBT_Controller
+from Log_Utils import log
 
 
 # register the environment if it isn't registered
