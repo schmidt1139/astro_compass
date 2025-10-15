@@ -26,8 +26,8 @@ from Log_Utils import log
 from Ephemeris import Ephemeris
 from Spacecraft import Spacecraft
 from StateVectorUtilities import cartesian_to_polar, polar_to_cartesian
-from Plotting_Utils import plot_SAC_training
-from RL_Utils import log_training_perf
+from Plotting_Utils import plot_SAC_training, SACRolloutData
+from RL_Utils import log_training_perf, RewardLoggerCallback
 
 
 # register the environment if it isn't registered
@@ -90,7 +90,7 @@ def SAC_training(seed_in=42):
     eval_env = gym.wrappers.TimeLimit(eval_env, max_episode_steps=max_episode_steps_in)
     env = Monitor(env)
     eval_env = Monitor(eval_env)
-    training_steps = max_episode_steps_in * 10
+    training_steps = max_episode_steps_in * 1
 
     plt.style.use("data/support_files/dark_scientific.mplstyle")
 
@@ -157,21 +157,7 @@ def SAC_training(seed_in=42):
     obs, info = env.reset(seed=42)
     eph = Ephemeris()  # create new ephemeris object
 
-    arr_time = []
-    arr_reward = []
-    arr_reward_tot = []
-    arr_throttle = []
-    arr_alpha_x = []
-    arr_alpha_y = []
-    arr_x = []
-    arr_y = []
-    arr_vx = []
-    arr_vy = []
-    arr_sma = []
-    arr_sma_target = []
-    arr_ecc = []
-    arr_ecc_target = []
-    arr_ecc_max = []
+    rollout_data1 = SACRolloutData()
     sum_reward = 0.0
 
     test_log = log("Plotting test trajectory...", test_log, True)
@@ -190,6 +176,7 @@ def SAC_training(seed_in=42):
 
         # dim state
         t_i = info["Elapsed time"]
+        t_i_days = t_i / (3600 * 24)
         x_i = obs[0] * params["l_star"]
         y_i = obs[1] * params["l_star"]
         vx_i = obs[2] * params["l_star"] / params["t_star"]
@@ -212,22 +199,22 @@ def SAC_training(seed_in=42):
         count_step = count_step + 1
 
         # log data
-        sum_reward = sum_reward + float(reward)
-        arr_time.append(info["Elapsed time"] / (3600 * 24))  # time in days
-        arr_reward.append(reward)
-        arr_throttle.append(throttle)
-        arr_alpha_x.append(alpha_x)
-        arr_alpha_y.append(alpha_y)
-        arr_reward_tot.append(sum_reward)
-        arr_x.append(obs[0])
-        arr_y.append(obs[1])
-        arr_vx.append(obs[2])
-        arr_vy.append(obs[3])
-        arr_sma.append(arr_OE[0])
-        arr_sma_target.append(sma_t_i)
-        arr_ecc.append(arr_OE[1])
-        arr_ecc_target.append(0.0)
-        arr_ecc_max.append(1.0)
+        rollout_data1.add_step(
+            t_i_days,
+            reward,
+            throttle,
+            alpha_x,
+            alpha_y,
+            obs[0],
+            obs[1],
+            obs[2],
+            obs[3],
+            arr_OE[0],
+            sma_t_i,
+            arr_OE[1],
+            0.0,
+            1.0,
+        )
 
         if terminated or truncated:
             break
@@ -247,21 +234,7 @@ def SAC_training(seed_in=42):
 
     # plot the results
     plot_SAC_training(
-        arr_time,
-        arr_reward_tot,
-        arr_reward,
-        arr_throttle,
-        arr_alpha_x,
-        arr_alpha_y,
-        arr_x,
-        arr_y,
-        arr_vx,
-        arr_vy,
-        arr_sma,
-        arr_sma_target,
-        arr_ecc,
-        arr_ecc_target,
-        arr_ecc_max,
+        rollout_data1,
         arr_epsisode_numbers,
         arr_epsisode_rs,
         path_output,
