@@ -2,6 +2,8 @@ from test_Hamiltonians import test_Hamiltonians
 from test_env_step_with_action import test_env_step_with_action
 from test_env_step_no_action import test_env_step_no_action
 from test_env_step_with_nn_action import test_env_step_with_nn_action
+from test_SAC_training import test_SAC_training
+from test_seeded_SAC_training import test_seeded_SAC_training
 
 
 def run_regression_tests(flag_report_live=False):
@@ -11,42 +13,65 @@ def run_regression_tests(flag_report_live=False):
     arr_test_pass_bools = []
     arr_test_names = []
 
-    arr_test_names.append("Hamiltonians Test")
+    arr_test_names.append("test_Hamiltonians")
     test_num = len(arr_test_names)
-    print(f"Running Test {test_num}: {arr_test_names[test_num-1]}")
+    print(f"\n\nRunning Test {test_num}: {arr_test_names[test_num-1]}")
     flag_test_pass = test_Hamiltonians(flag_report_live)
-    print("Test Hamiltonians passed: ", flag_test_pass)
+    print(f"\n\n{arr_test_names[test_num-1]} passed: ", flag_test_pass)
     arr_test_pass_bools.append(flag_test_pass)
 
     test_name = "test_env_step_with_action"
     arr_test_names.append(test_name)
     test_num = len(arr_test_names)
-    print(f"Running Test {test_num}: {test_name}")
+    print(f"\n\nRunning Test {test_num}: {test_name}")
     flag_test_pass = test_env_step_with_action(flag_report_live)
-    print(f"{test_name} passed:  ", flag_test_pass)
+    print(f"\n\n{test_name} passed:  ", flag_test_pass)
     arr_test_pass_bools.append(flag_test_pass)
 
     test_name = "test_env_step_no_action"
     arr_test_names.append(test_name)
     test_num = len(arr_test_names)
-    print(f"Running Test {test_num}: {test_name}")
+    print(f"\n\nRunning Test {test_num}: {test_name}")
     flag_test_pass = test_env_step_no_action(flag_report_live)
-    print(f"{test_name} passed:  ", flag_test_pass)
+    print(f"\n\n{test_name} passed:  ", flag_test_pass)
     arr_test_pass_bools.append(flag_test_pass)
 
     test_name = "test_env_step_with_nn_action"
     arr_test_names.append(test_name)
     test_num = len(arr_test_names)
-    print(f"Running Test {test_num}: {test_name}")
+    print(f"\n\nRunning Test {test_num}: {test_name}")
     flag_test_pass = test_env_step_with_nn_action(flag_report_live)
-    print(f"{test_name} passed:  ", flag_test_pass)
+    print(f"\n\n{test_name} passed:  ", flag_test_pass)
+    arr_test_pass_bools.append(flag_test_pass)
+
+    test_name = "test_SAC_training"
+    arr_test_names.append(test_name)
+    test_num = len(arr_test_names)
+    print(f"\n\nRunning Test {test_num}: {test_name}")
+    flag_test_pass = test_SAC_training(flag_report_live)
+    print(f"\n\n{test_name} passed:  ", flag_test_pass)
+    arr_test_pass_bools.append(flag_test_pass)
+
+    test_name = "test_seeded_SAC_training"
+    arr_test_names.append(test_name)
+    test_num = len(arr_test_names)
+    print(f"\n\nRunning Test {test_num}: {test_name}")
+    flag_test_pass = test_seeded_SAC_training(flag_report_live)
+    print(f"\n\n{test_name} passed:  ", flag_test_pass)
     arr_test_pass_bools.append(flag_test_pass)
 
     print("\n\nSummary of Regression Tests:")
     num_tests = len(arr_test_names)
     flag_all_passed = True
     for i in range(num_tests):
-        print(f"{arr_test_names[i]} passed: {arr_test_pass_bools[i]}")
+
+        line = f"{arr_test_names[i]}"
+        len_line = len(line)
+        while len_line < 40:
+            line += " "
+            len_line += 1
+
+        print(f"{line} passed: {arr_test_pass_bools[i]}")
 
         if not arr_test_pass_bools[i]:
             flag_all_passed = False
@@ -55,4 +80,4 @@ def run_regression_tests(flag_report_live=False):
     print("\n\nRegression tests complete")
 
 
-run_regression_tests()
+run_regression_tests(False)

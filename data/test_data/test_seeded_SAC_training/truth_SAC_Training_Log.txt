@@ -1,0 +1,64 @@
+SAC Training Script
+
+
+Parameter Start:
+  mu: 1.3e+20
+  max_T: 1.33
+  ISP: 3872.0
+  TOF: 34713360.0
+  l_star: 149598023000
+  m_star: 3366.0
+  t_star: 5074778.662111725
+  g0: 9.80665
+  env_step_size: 86400
+  flag_seed_replay_buffer: True
+  num_ephems_to_use: 1000
+  include_callbacks_in_learn: True
+  training_steps: 5000
+  max_episode_steps_in: 500
+  print_freq: 2500
+  n_eval_episodes: 16
+Parameter End.
+
+
+GPU available: True
+Environment has been reset
+Seed: 42
+Max steps per episode: 500
+Experience buffer size: 0
+Experience buffer capacity: 1000000
+Importing training data into replay buffer
+Using only first 1000 ephemerides
+Reading ephemerides from: C:\Users\micha\MSI_Data\Masters_Thesis\astro_compass\data\training_ephems\test_set_bang_bang
+Number of ephemerides loaded into replay buffer: 1000
+Number of total state vectors: 100000
+Seeded experience buffer size: 100000
+Seeded experience buffer capacity: 1000000
+Experience buffer size: 105000
+Experience buffer capacity: 1000000
+Episodes: 10
+Timesteps: 5000
+Training complete
+FINAL TRAINING METRICS
+Total episodes: 10
+Total timesteps (model.num_timesteps): 5000
+Average episode reward: 396.7000913
+Best episode reward: 429.996214
+Last episode reward: 347.090526
+Average episode length: 500.0
+Best eval mean reward: 441.017337
+Plotting test trajectory...
+Test trajectory complete
+Steps taken: 500
+Total reward: 430.27057
+Final x: 0.97141355 
+Final y: -0.3087952 
+Final vx: 0.23352326 
+Final vy: 0.79011506 
+Final m: 0.8266905 
+Final sma: 116789618807.28043 
+Final ecc: 0.3062155677652259 
+terminated: False 
+truncated: True 
+Complete!
+Plots saved to: C:\Users\micha\MSI_Data\Masters_Thesis\astro_compass\data\test_data\test_seeded_SAC_training
