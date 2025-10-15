@@ -2,7 +2,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 import os
 from Constants import Constants
-from dataclasses import dataclass
 
 
 def format_plots():
@@ -96,8 +95,9 @@ class SACRolloutData:
         self.arr_reward_tot.append(self.sum_reward)
 
 
-
-def plot_SAC_training(SACRolloutData, arr_episode_numbers, arr_episode_rs, path_output, eph):
+def plot_SAC_training(
+    SACRolloutData, arr_episode_numbers, arr_episode_rs, path_output, eph
+):
 
     # plot reward over time
     plt.figure()
@@ -167,7 +167,13 @@ def plot_SAC_training(SACRolloutData, arr_episode_numbers, arr_episode_rs, path_
     plt.figure()
     plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_ecc, label="ecc")
     plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_ecc_target, label="ecc_target")
-    plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_ecc_max, label="ecc_max", linestyle='--', color='red')
+    plt.plot(
+        SACRolloutData.arr_time,
+        SACRolloutData.arr_ecc_max,
+        label="ecc_max",
+        linestyle="--",
+        color="red",
+    )
     plt.xlabel("Time [days]")
     plt.ylabel("ECC Achieved")
     plt.title("SAC Achieved ECC over Time")
@@ -182,7 +188,9 @@ def plot_SAC_training(SACRolloutData, arr_episode_numbers, arr_episode_rs, path_
     plt.title("SAC Reward Per Episode During Training")
     plt.legend()
     plt.grid(True, alpha=0.3)  # Force grid on with some transparency
-    plt.savefig(os.path.join(path_output, "SAC_Training_reward_per_episode.png"), dpi=300)
+    plt.savefig(
+        os.path.join(path_output, "SAC_Training_reward_per_episode.png"), dpi=300
+    )
 
     # generate and save figures
     fig_orb = eph.plot_xy()

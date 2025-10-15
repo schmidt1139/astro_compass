@@ -11,9 +11,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 sys.path.append(os.path.abspath("../python"))
 
 
-def generate_nn_training_data(
-    env, args, thread_id, output_dir
-):
+def generate_nn_training_data(env, args, thread_id, output_dir):
     # reset the environment
     init_observation, init_info = env.reset()
 
@@ -27,8 +25,8 @@ def generate_nn_training_data(
     H_controller = Hamiltonian_Controller_TBT(
         env, init_observation, init_info, input_TOF
     )
-    
-    #modify parameters
+
+    # modify parameters
     H_controller.eps_threshold = args["eps_final"]
 
     # compute solution
@@ -73,7 +71,9 @@ def generate_nn_training_data_parallel(env, args):
         futures = []
         for traj_idx in range(args["num_trajs"]):
             futures.append(
-                executor.submit(generate_nn_training_data, env, args, traj_idx, args["output_dir"])
+                executor.submit(
+                    generate_nn_training_data, env, args, traj_idx, args["output_dir"]
+                )
             )
 
         for future in as_completed(futures):
@@ -83,20 +83,21 @@ def generate_nn_training_data_parallel(env, args):
             print(
                 f"Thread {thread_id}    Success: {result}   Counter: {counter}   Ephem: {filename}"
             )
-            
+
+
 def read_ephems_from_dir(directory, num_ephems_to_use=None):
-    
+
     filenames = os.listdir(directory)
     list_ephems = []
     counter = 0
 
     for file in filenames:
-        
+
         path = os.path.join(directory, file)
-        
+
         eph = Ephemeris()
         eph.read_from_file(path)
-        
+
         list_ephems.append(eph)
 
         counter += 1

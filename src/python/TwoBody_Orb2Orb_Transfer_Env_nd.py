@@ -5,7 +5,7 @@ from scipy.integrate import solve_ivp
 from Constants import Constants
 from Spacecraft import Spacecraft
 from Propagation import env_EOM_TBT_v2
-from StateVectorUtilities import polar_to_cartesian, non_dimensionalize
+from StateVectorUtilities import polar_to_cartesian
 
 
 class TwoBody_Orb2Orb_Transfer_Env_nd(gym.Env):
@@ -27,17 +27,21 @@ class TwoBody_Orb2Orb_Transfer_Env_nd(gym.Env):
 
         # list of environment parameters (Sun is the central body)
         self.param_mu = kwargs.get("mu", Constants.MU_SUN * 10**9)  # in m^3/s^2
-        self.C1 = kwargs.get("max_T", 1.33 )/1000  # Spacecraft max thrust (converted to kN)
+        self.C1 = (
+            kwargs.get("max_T", 1.33) / 1000
+        )  # Spacecraft max thrust (converted to kN)
         self.C2 = kwargs.get("ISP", 3872.0)  # Spacecraft specific impulse (s)
-        self.l_star = kwargs.get("l_star", Constants.SMA_EARTH)  # characteristic length (m)
-        self.t_star = kwargs.get("t_star", (149598023000**3 / (Constants.MU_SUN * 10 ** (9))) ) # characteristic time (s)
+        self.l_star = kwargs.get(
+            "l_star", Constants.SMA_EARTH
+        )  # characteristic length (m)
+        self.t_star = kwargs.get(
+            "t_star", (149598023000**3 / (Constants.MU_SUN * 10 ** (9)))
+        )  # characteristic time (s)
         self.m_star = kwargs.get("m_star", 3366.0)  # characteristic mass (kg)
         self.step_size = kwargs.get("step_size", 86400)  # environment step size (s)
         print(f"Env using max thrust: {self.C1*1000} N and ISP: {self.C2} s")
         self.arr_mu = np.array([self.param_mu / 10**9])  # solar mu [km^3/s^2]
-        self.planet_radii = np.array(
-            [Constants.RADIUS_SUN_M]
-        )  # solar radius [m]
+        self.planet_radii = np.array([Constants.RADIUS_SUN_M])  # solar radius [m]
         self.elapsed_t = 0.0
         self.episode_reward = 0.0
 
@@ -99,7 +103,7 @@ class TwoBody_Orb2Orb_Transfer_Env_nd(gym.Env):
         # convert to cartesian coordinates with random theta as input
         x, y, vx, vy = polar_to_cartesian(r, theta, r_dot, v_theta)
 
-        #print(f"Env Reset: theta = {theta} rad" )
+        # print(f"Env Reset: theta = {theta} rad" )
 
         # set the initial state of the environment
         self._state = np.array([x, y, vx, vy, mass, mu, sma_target], dtype=np.float32)
@@ -121,16 +125,18 @@ class TwoBody_Orb2Orb_Transfer_Env_nd(gym.Env):
         self._keplerian_elements[2] = w
         self._keplerian_elements[3] = theta
 
-        #non dim state in observation
+        # non dim state in observation
         x_nd = x / self.l_star * 1000
         y_nd = y / self.l_star * 1000
         vx_nd = vx / (self.l_star / self.t_star) * 1000
         vy_nd = vy / (self.l_star / self.t_star) * 1000
         mass_nd = mass / self.m_star
         mu_nd = mu / self.param_mu * 10**9
-        sma_target_nd = sma_target*1000 / self.l_star
+        sma_target_nd = sma_target * 1000 / self.l_star
 
-        observation = np.array([ x_nd, y_nd, vx_nd, vy_nd, mass_nd, mu_nd, sma_target_nd], dtype=np.float32)
+        observation = np.array(
+            [x_nd, y_nd, vx_nd, vy_nd, mass_nd, mu_nd, sma_target_nd], dtype=np.float32
+        )
         self.elapsed_t = 0.0
 
         info = self._get_info(
@@ -146,17 +152,13 @@ class TwoBody_Orb2Orb_Transfer_Env_nd(gym.Env):
         # unpack state vector
         x = self._state[0]
         y = self._state[1]
-        sma_target = self._state[6]*1000
+        sma_target = self._state[6] * 1000
 
-        a = self._keplerian_elements[0] * 1000
         e = self._keplerian_elements[1]
-        r = 1000 * (x**2 + y**2)**0.5 #rad in meters
+        r = 1000 * (x**2 + y**2) ** 0.5  # rad in meters
 
         # central body parameters
         cb_rad = self.planet_radii[0]
-        r_cb_ratio = r / cb_rad
-        sma_cb_ratio = sma_target / a
-
 
         terminated = False
 
@@ -171,13 +173,11 @@ class TwoBody_Orb2Orb_Transfer_Env_nd(gym.Env):
         else:
             # exponential decaying reward based on the difference between target
             # SMA and current SMA
-            sma_diff = a - sma_target
             r_diff = r - sma_target
-            sma_diff_nd = sma_diff / (Constants.SMA_EARTH)
             r_diff_nd = r_diff / (Constants.SMA_EARTH)
-            reward = np.exp( -(r_diff_nd**2) )
-            #reward = np.exp( -(sma_diff_nd**2) )
-            #reward = np.exp( -(sma_diff_nd**2) ) * np.exp( -(e_diff**2) )
+            reward = np.exp(-(r_diff_nd**2))
+            # reward = np.exp( -(sma_diff_nd**2) )
+            # reward = np.exp( -(sma_diff_nd**2) ) * np.exp( -(e_diff**2) )
 
         return reward, terminated
 
@@ -267,15 +267,17 @@ class TwoBody_Orb2Orb_Transfer_Env_nd(gym.Env):
         self.episode_reward += reward
 
         # the observation is just the state vector
-        #non dim state in observation
+        # non dim state in observation
         x_nd = x / self.l_star * 1000
         y_nd = y / self.l_star * 1000
         vx_nd = vx / (self.l_star / self.t_star) * 1000
         vy_nd = vy / (self.l_star / self.t_star) * 1000
         mass_nd = mass / self.m_star
         mu_nd = mu / self.param_mu * 10**9
-        sma_target_nd = sma_target*1000 / self.l_star
-        observation = np.array([ x_nd, y_nd, vx_nd, vy_nd, mass_nd, mu_nd, sma_target_nd], dtype=np.float32)
+        sma_target_nd = sma_target * 1000 / self.l_star
+        observation = np.array(
+            [x_nd, y_nd, vx_nd, vy_nd, mass_nd, mu_nd, sma_target_nd], dtype=np.float32
+        )
 
         # extract other environment information
         info = self._get_info(solution, delta_r)

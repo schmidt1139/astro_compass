@@ -142,8 +142,8 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
             # exponential decaying reward based on the difference between target
             # SMA and current SMA
             sma_diff = a - sma_target
-            sma_diff_nd = sma_diff / (Constants.SMA_EARTH/1000)
-            reward = np.exp( -(sma_diff_nd**2) )
+            sma_diff_nd = sma_diff / (Constants.SMA_EARTH / 1000)
+            reward = np.exp(-(sma_diff_nd**2))
 
         return reward, terminated
 

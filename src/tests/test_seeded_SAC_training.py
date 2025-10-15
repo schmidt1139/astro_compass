@@ -7,10 +7,8 @@ import matplotlib.pyplot as plt
 import random
 import filecmp
 
-from datetime import datetime
 from gymnasium import envs
 from gymnasium.envs.registration import register
-from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.callbacks import EvalCallback, CallbackList
 from stable_baselines3 import SAC
 from stable_baselines3.common.monitor import Monitor
@@ -26,11 +24,13 @@ from Constants import Constants
 from Log_Utils import log, log_parameters
 from Ephemeris import Ephemeris
 from Spacecraft import Spacecraft
-from StateVectorUtilities import cartesian_to_polar, polar_to_cartesian
+from StateVectorUtilities import cartesian_to_polar
 from Plotting_Utils import plot_SAC_training, SACRolloutData
-from RL_Utils import log_training_perf, import_training_into_replay_buffer, RewardLoggerCallback
-from Neural_Net_Controllers import NN_TBT_Controller
-from TwoBody_Orb2Orb_Transfer_Env_nd_obs5 import TwoBody_Orb2Orb_Transfer_Env_nd_obs5
+from RL_Utils import (
+    log_training_perf,
+    import_training_into_replay_buffer,
+    RewardLoggerCallback,
+)
 
 # register the environment if it isn't registered
 if "TwoBody_Orb2Orb_Transfer_Env_nd_obs5-v0" not in envs.registry.keys():
@@ -41,7 +41,7 @@ if "TwoBody_Orb2Orb_Transfer_Env_nd_obs5-v0" not in envs.registry.keys():
     )
 
 
-def test_seeded_SAC_training(flag_report_live=False,seed_in=42):
+def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
 
     test_log = []
     test_log = log("SAC Training Script", test_log, flag_report_live)
@@ -102,22 +102,26 @@ def test_seeded_SAC_training(flag_report_live=False,seed_in=42):
 
     # wrap envs
     env = gym.wrappers.TimeLimit(env, max_episode_steps=params["max_episode_steps_in"])
-    eval_env = gym.wrappers.TimeLimit(eval_env, max_episode_steps=params["max_episode_steps_in"])
+    eval_env = gym.wrappers.TimeLimit(
+        eval_env, max_episode_steps=params["max_episode_steps_in"]
+    )
     env = Monitor(env)
     eval_env = Monitor(eval_env)
 
     plt.style.use("data/support_files/dark_scientific.mplstyle")
-    
-    test_log = log("GPU available: " + str(torch.cuda.is_available()), test_log, flag_report_live)
+
+    test_log = log(
+        "GPU available: " + str(torch.cuda.is_available()), test_log, flag_report_live
+    )
 
     # paths
-    #time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
+    # time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
     path_nns = os.path.normpath(os.path.join(os.getcwd(), "data\\neural_networks\\"))
-    path_training_data = os.path.normpath(os.path.join(os.getcwd(), "data\\training_ephems\\test_set_bang_bang\\"))
+    path_training_data = os.path.normpath(
+        os.path.join(os.getcwd(), "data\\training_ephems\\test_set_bang_bang\\")
+    )
     path_output = os.path.normpath(
-        os.path.join(
-            os.getcwd(), "data\\test_data\\test_seeded_SAC_training\\"
-        )
+        os.path.join(os.getcwd(), "data\\test_data\\test_seeded_SAC_training\\")
     )
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
     path_output_log = os.path.join(path_output, "SAC_Training_Log.txt")
@@ -132,7 +136,7 @@ def test_seeded_SAC_training(flag_report_live=False,seed_in=42):
         "Max steps per episode: " + str(params["max_episode_steps_in"]), test_log, True
     )
 
-    #define the policy architecture
+    # define the policy architecture
     policy_kwargs = dict(
         net_arch=[32, 32, 32, 32, 32],  # four hidden layers with 32 units each
         activation_fn=nn.LeakyReLU,  # LeakyReLU activation function
@@ -140,40 +144,61 @@ def test_seeded_SAC_training(flag_report_live=False,seed_in=42):
 
     # Create the blank slate SAC model
     model = SAC(
-        "MlpPolicy", 
-        env, 
+        "MlpPolicy",
+        env,
         verbose=False,  # Changed from 1 to 0 to suppress status updates
-        device="cpu", 
-        seed=seed_in, 
-        policy_kwargs=policy_kwargs
-        )
-    
+        device="cpu",
+        seed=seed_in,
+        policy_kwargs=policy_kwargs,
+    )
+
     obs, info = env.reset(seed=42)
     obs, info = eval_env.reset(seed=42)
 
     # Seed replay buffer if enabled
-    if (params["flag_seed_replay_buffer"]):
+    if params["flag_seed_replay_buffer"]:
         if model.replay_buffer is not None:
-            test_log = log("Experience buffer size: " + str(model.replay_buffer.size()), test_log, flag_report_live)
-            test_log = log("Experience buffer capacity: " + str(model.replay_buffer.buffer_size), test_log, flag_report_live)
+            test_log = log(
+                "Experience buffer size: " + str(model.replay_buffer.size()),
+                test_log,
+                flag_report_live,
+            )
+            test_log = log(
+                "Experience buffer capacity: " + str(model.replay_buffer.buffer_size),
+                test_log,
+                flag_report_live,
+            )
 
         else:
-            test_log = log("Replay buffer is not initialized yet.", test_log, flag_report_live)
+            test_log = log(
+                "Replay buffer is not initialized yet.", test_log, flag_report_live
+            )
 
         import_training_into_replay_buffer(
-            path_training_data, # path to directory containing training ephemerides
-            test_log, # log
-            model, # SAC model
+            path_training_data,  # path to directory containing training ephemerides
+            test_log,  # log
+            model,  # SAC model
             env,
-            params
+            params,
         )
 
         if model.replay_buffer is not None:
-            test_log = log("Seeded experience buffer size: " + str(model.replay_buffer.size()), test_log, flag_report_live)
-            test_log = log("Seeded experience buffer capacity: " + str(model.replay_buffer.buffer_size), test_log, flag_report_live)
+            test_log = log(
+                "Seeded experience buffer size: " + str(model.replay_buffer.size()),
+                test_log,
+                flag_report_live,
+            )
+            test_log = log(
+                "Seeded experience buffer capacity: "
+                + str(model.replay_buffer.buffer_size),
+                test_log,
+                flag_report_live,
+            )
 
         else:
-            test_log = log("Replay buffer is not initialized yet.", test_log, flag_report_live)
+            test_log = log(
+                "Replay buffer is not initialized yet.", test_log, flag_report_live
+            )
 
     # Setup callbacks
     callback = RewardLoggerCallback(print_freq=params["print_freq"])
@@ -194,26 +219,37 @@ def test_seeded_SAC_training(flag_report_live=False,seed_in=42):
         callback_list = None
 
     model.learn(
-        total_timesteps = params["training_steps"], progress_bar=True, callback=callback_list
+        total_timesteps=params["training_steps"],
+        progress_bar=True,
+        callback=callback_list,
     )
 
-
     if model.replay_buffer is not None:
-        test_log = log("Experience buffer size: " + str(model.replay_buffer.size()), test_log, flag_report_live)
-        test_log = log("Experience buffer capacity: " + str(model.replay_buffer.buffer_size), test_log, flag_report_live)
+        test_log = log(
+            "Experience buffer size: " + str(model.replay_buffer.size()),
+            test_log,
+            flag_report_live,
+        )
+        test_log = log(
+            "Experience buffer capacity: " + str(model.replay_buffer.buffer_size),
+            test_log,
+            flag_report_live,
+        )
     else:
-        test_log = log("Replay buffer is not initialized yet.", test_log, flag_report_live)
-
-    rb = model.replay_buffer
+        test_log = log(
+            "Replay buffer is not initialized yet.", test_log, flag_report_live
+        )
 
     # After training:
     arr_epsisode_numbers = list(range(1, len(callback.episode_rewards) + 1))
     arr_epsisode_rs = callback.episode_rewards
-    test_log = log("Episodes: " + str(len(callback.episode_rewards)), test_log, flag_report_live)
+    test_log = log(
+        "Episodes: " + str(len(callback.episode_rewards)), test_log, flag_report_live
+    )
     test_log = log("Timesteps: " + str(model.num_timesteps), test_log, flag_report_live)
     test_log = log("Training complete", test_log, flag_report_live)
     test_log = log_training_perf(
-        test_log, callback, eval_callback, model,  params["training_steps"], True
+        test_log, callback, eval_callback, model, params["training_steps"], True
     )
 
     # Save the model
@@ -242,7 +278,7 @@ def test_seeded_SAC_training(flag_report_live=False,seed_in=42):
 
         # dim state
         t_i = info["Elapsed time"]
-        t_i_days = t_i / (3600 * 24) # time in days
+        t_i_days = t_i / (3600 * 24)  # time in days
         x_i = obs[0] * params["l_star"]
         y_i = obs[1] * params["l_star"]
         vx_i = obs[2] * params["l_star"] / params["t_star"]
@@ -288,7 +324,9 @@ def test_seeded_SAC_training(flag_report_live=False,seed_in=42):
 
     test_log = log("Test trajectory complete", test_log, flag_report_live)
     test_log = log("Steps taken: " + str(count_step), test_log, flag_report_live)
-    test_log = log("Total reward: " + str(rollout_data1.sum_reward), test_log, flag_report_live)
+    test_log = log(
+        "Total reward: " + str(rollout_data1.sum_reward), test_log, flag_report_live
+    )
     test_log = log("Final x: " + str(obs[0]) + " ", test_log, flag_report_live)
     test_log = log("Final y: " + str(obs[1]) + " ", test_log, flag_report_live)
     test_log = log("Final vx: " + str(obs[2]) + " ", test_log, flag_report_live)
@@ -324,7 +362,6 @@ def test_seeded_SAC_training(flag_report_live=False,seed_in=42):
         for line in test_log:
             f.write(line + "\n")
 
-    
     # compare the two files
     are_same = filecmp.cmp(path_output_log, path_output_log_truth, shallow=False)
 

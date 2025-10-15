@@ -9,7 +9,6 @@ import random
 from datetime import datetime
 from gymnasium import envs
 from gymnasium.envs.registration import register
-from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.callbacks import EvalCallback, CallbackList
 from stable_baselines3 import SAC
 from stable_baselines3.common.monitor import Monitor
@@ -25,11 +24,13 @@ from Constants import Constants
 from Log_Utils import log, log_parameters
 from Ephemeris import Ephemeris
 from Spacecraft import Spacecraft
-from StateVectorUtilities import cartesian_to_polar, polar_to_cartesian
+from StateVectorUtilities import cartesian_to_polar
 from Plotting_Utils import plot_SAC_training, SACRolloutData
-from RL_Utils import log_training_perf, import_training_into_replay_buffer, RewardLoggerCallback
-from Neural_Net_Controllers import NN_TBT_Controller
-from TwoBody_Orb2Orb_Transfer_Env_nd_obs5 import TwoBody_Orb2Orb_Transfer_Env_nd_obs5
+from RL_Utils import (
+    log_training_perf,
+    import_training_into_replay_buffer,
+    RewardLoggerCallback,
+)
 
 # register the environment if it isn't registered
 if "TwoBody_Orb2Orb_Transfer_Env_nd_obs5-v0" not in envs.registry.keys():
@@ -101,12 +102,14 @@ def SAC_seeded_training(seed_in=42):
 
     # wrap envs
     env = gym.wrappers.TimeLimit(env, max_episode_steps=params["max_episode_steps_in"])
-    eval_env = gym.wrappers.TimeLimit(eval_env, max_episode_steps=params["max_episode_steps_in"])
+    eval_env = gym.wrappers.TimeLimit(
+        eval_env, max_episode_steps=params["max_episode_steps_in"]
+    )
     env = Monitor(env)
     eval_env = Monitor(eval_env)
 
     plt.style.use("data/support_files/dark_scientific.mplstyle")
-    
+
     print(
         "GPU available: ", torch.cuda.is_available()
     )  # Should print True if GPU is available)
@@ -114,7 +117,9 @@ def SAC_seeded_training(seed_in=42):
     # paths
     time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
     path_nns = os.path.normpath(os.path.join(os.getcwd(), "data\\neural_networks\\"))
-    path_training_data = os.path.normpath(os.path.join(os.getcwd(), "data\\training_ephems\\test_set_bang_bang\\"))
+    path_training_data = os.path.normpath(
+        os.path.join(os.getcwd(), "data\\training_ephems\\test_set_bang_bang\\")
+    )
     path_output = os.path.normpath(
         os.path.join(
             os.getcwd(), "data\\script_output\\SAC_seeded_training_" + time_tag + "\\"
@@ -131,7 +136,7 @@ def SAC_seeded_training(seed_in=42):
         "Max steps per episode: " + str(params["max_episode_steps_in"]), test_log, True
     )
 
-    #define the policy architecture
+    # define the policy architecture
     policy_kwargs = dict(
         net_arch=[32, 32, 32, 32, 32],  # four hidden layers with 32 units each
         activation_fn=nn.LeakyReLU,  # LeakyReLU activation function
@@ -139,34 +144,44 @@ def SAC_seeded_training(seed_in=42):
 
     # Create the blank slate SAC model
     model = SAC(
-        "MlpPolicy", 
-        env, 
-        verbose=params["include_callbacks_in_learn"],  # Changed from 1 to 0 to suppress status updates
-        device="cpu", 
-        seed=seed_in, 
-        policy_kwargs=policy_kwargs
-        )
+        "MlpPolicy",
+        env,
+        verbose=params[
+            "include_callbacks_in_learn"
+        ],  # Changed from 1 to 0 to suppress status updates
+        device="cpu",
+        seed=seed_in,
+        policy_kwargs=policy_kwargs,
+    )
 
     # Seed replay buffer if enabled
-    if (params["flag_seed_replay_buffer"]):
-        print(type(model.replay_buffer))        # ReplayBuffer or DictReplayBuffer (goal envs)
+    if params["flag_seed_replay_buffer"]:
+        print(type(model.replay_buffer))  # ReplayBuffer or DictReplayBuffer (goal envs)
         if model.replay_buffer is not None:
-            print("Experience buffer size: ", model.replay_buffer.size())       # current number of transitions
-            print("Experience buffer capacity: ", model.replay_buffer.buffer_size)  # capacity
+            print(
+                "Experience buffer size: ", model.replay_buffer.size()
+            )  # current number of transitions
+            print(
+                "Experience buffer capacity: ", model.replay_buffer.buffer_size
+            )  # capacity
         else:
             print("Replay buffer is not initialized yet.")
 
         import_training_into_replay_buffer(
-            path_training_data, # path to directory containing training ephemerides
-            test_log, # log
-            model, # SAC model
+            path_training_data,  # path to directory containing training ephemerides
+            test_log,  # log
+            model,  # SAC model
             env,
-            params
+            params,
         )
 
         if model.replay_buffer is not None:
-            print("Seeded experience buffer size: ", model.replay_buffer.size())       # current number of transitions
-            print("Seeded experience buffer capacity: ", model.replay_buffer.buffer_size)  # capacity
+            print(
+                "Seeded experience buffer size: ", model.replay_buffer.size()
+            )  # current number of transitions
+            print(
+                "Seeded experience buffer capacity: ", model.replay_buffer.buffer_size
+            )  # capacity
         else:
             print("Replay buffer is not initialized yet.")
 
@@ -189,17 +204,21 @@ def SAC_seeded_training(seed_in=42):
         callback_list = None
 
     model.learn(
-        total_timesteps = params["training_steps"], progress_bar=True, callback=callback_list
+        total_timesteps=params["training_steps"],
+        progress_bar=True,
+        callback=callback_list,
     )
 
-    print(type(model.replay_buffer))        # ReplayBuffer or DictReplayBuffer (goal envs)
+    print(type(model.replay_buffer))  # ReplayBuffer or DictReplayBuffer (goal envs)
     if model.replay_buffer is not None:
-        print("Experience buffer size: ", model.replay_buffer.size())       # current number of transitions
-        print("Experience buffer capacity: ", model.replay_buffer.buffer_size)  # capacity
+        print(
+            "Experience buffer size: ", model.replay_buffer.size()
+        )  # current number of transitions
+        print(
+            "Experience buffer capacity: ", model.replay_buffer.buffer_size
+        )  # capacity
     else:
         print("Replay buffer is not initialized yet.")
-
-    rb = model.replay_buffer
 
     # After training:
     arr_epsisode_numbers = list(range(1, len(callback.episode_rewards) + 1))
@@ -208,7 +227,7 @@ def SAC_seeded_training(seed_in=42):
     print("Timesteps:", model.num_timesteps)
     test_log = log("Training complete", test_log, True)
     test_log = log_training_perf(
-        test_log, callback, eval_callback, model,  params["training_steps"], True
+        test_log, callback, eval_callback, model, params["training_steps"], True
     )
 
     # Save the model
@@ -236,7 +255,7 @@ def SAC_seeded_training(seed_in=42):
 
         # dim state
         t_i = info["Elapsed time"]
-        t_i_days = t_i / (3600 * 24) # time in days
+        t_i_days = t_i / (3600 * 24)  # time in days
         x_i = obs[0] * params["l_star"]
         y_i = obs[1] * params["l_star"]
         vx_i = obs[2] * params["l_star"] / params["t_star"]

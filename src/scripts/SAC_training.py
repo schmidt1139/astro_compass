@@ -8,7 +8,6 @@ import random
 from datetime import datetime
 from gymnasium import envs
 from gymnasium.envs.registration import register
-from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.callbacks import EvalCallback, CallbackList
 from stable_baselines3 import SAC
 from stable_baselines3.common.monitor import Monitor
@@ -25,7 +24,7 @@ from Constants import Constants
 from Log_Utils import log
 from Ephemeris import Ephemeris
 from Spacecraft import Spacecraft
-from StateVectorUtilities import cartesian_to_polar, polar_to_cartesian
+from StateVectorUtilities import cartesian_to_polar
 from Plotting_Utils import plot_SAC_training, SACRolloutData
 from RL_Utils import log_training_perf, RewardLoggerCallback
 

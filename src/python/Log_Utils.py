@@ -7,6 +7,7 @@ def log(info, log, flag_report_to_console=False):
 
     return log
 
+
 def log_parameters(params, test_log, flag_report_to_console=False):
 
     test_log = log("\n\nParameter Start:", test_log, flag_report_to_console)
