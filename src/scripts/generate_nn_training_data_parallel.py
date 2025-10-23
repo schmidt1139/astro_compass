@@ -4,21 +4,13 @@ import gymnasium as gym
 from gymnasium import envs
 from gymnasium.envs.registration import register
 
+# Add project root to Python path
+project_root = os.path.dirname(os.path.abspath(__file__))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-# Adding python src code directory
-current_dir = os.path.dirname(__file__)
-python_src_dir = os.path.abspath(os.path.join(current_dir, "..", "python"))
-sys.path.append(python_src_dir)
-
-from Training_Data_Generation import generate_nn_training_data_parallel
-
-
-# register the environment if it isn't registered
-if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
-    register(
-        id="TwoBody_Orb2Orb_Transfer_Env-v0",
-        entry_point="TwoBody_Orb2Orb_Transfer_Env:TwoBody_Orb2Orb_Transfer_Env",
-    )    
+from core.training_data_generation import generate_nn_training_data_parallel
+from envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env   
 
 if __name__ == "__main__":
     
@@ -40,7 +32,7 @@ if __name__ == "__main__":
     }
     
     # initialize the environment
-    env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
+    env = TwoBody_Orb2Orb_Transfer_Env()
 
     generate_nn_training_data_parallel(env,args)
     

@@ -1,0 +1,94 @@
+import sys
+import os
+import gymnasium as gym
+
+# Add the tests directory to the path so we can import test modules
+tests_dir = os.path.dirname(__file__)
+if tests_dir not in sys.path:
+    sys.path.insert(0, tests_dir)
+
+# Import test functions WITHOUT the 'tests.' prefix
+from test_Hamiltonians import test_Hamiltonians
+from test_env_step_with_action import test_env_step_with_action
+from test_env_step_no_action import test_env_step_no_action
+from test_env_step_with_nn_action import test_env_step_with_nn_action
+from test_SAC_training import test_SAC_training
+from test_seeded_SAC_training import test_seeded_SAC_training
+
+
+def run_regression_tests(flag_report_live=False):
+
+    print("Running Regression Tests...\n")
+
+    arr_test_pass_bools = []
+    arr_test_names = []
+                            
+    arr_test_names.append("test_Hamiltonians")
+    test_num = len(arr_test_names)
+    print(f"\n\nRunning Test {test_num}: {arr_test_names[test_num-1]}")
+    flag_test_pass = test_Hamiltonians(flag_report_live)
+    print(f"\n\n{arr_test_names[test_num-1]} passed: ", flag_test_pass)
+    arr_test_pass_bools.append(flag_test_pass)
+
+    test_name = "test_env_step_with_action"
+    arr_test_names.append(test_name)
+    test_num = len(arr_test_names)
+    print(f"\n\nRunning Test {test_num}: {test_name}")
+    flag_test_pass = test_env_step_with_action(flag_report_live)
+    print(f"\n\n{test_name} passed:  ", flag_test_pass)
+    arr_test_pass_bools.append(flag_test_pass)
+
+    test_name = "test_env_step_no_action"
+    arr_test_names.append(test_name)
+    test_num = len(arr_test_names)
+    print(f"\n\nRunning Test {test_num}: {test_name}")
+    flag_test_pass = test_env_step_no_action(flag_report_live)
+    print(f"\n\n{test_name} passed:  ", flag_test_pass)
+    arr_test_pass_bools.append(flag_test_pass)
+
+    test_name = "test_env_step_with_nn_action"
+    arr_test_names.append(test_name)
+    test_num = len(arr_test_names)
+    print(f"\n\nRunning Test {test_num}: {test_name}")
+    flag_test_pass = test_env_step_with_nn_action(flag_report_live)
+    print(f"\n\n{test_name} passed:  ", flag_test_pass)
+    arr_test_pass_bools.append(flag_test_pass)
+
+    test_name = "test_SAC_training"
+    arr_test_names.append(test_name)
+    test_num = len(arr_test_names)
+    print(f"\n\nRunning Test {test_num}: {test_name}")
+    flag_test_pass = test_SAC_training(flag_report_live)
+    print(f"\n\n{test_name} passed:  ", flag_test_pass)
+    arr_test_pass_bools.append(flag_test_pass)
+
+    test_name = "test_seeded_SAC_training"
+    arr_test_names.append(test_name)
+    test_num = len(arr_test_names)
+    print(f"\n\nRunning Test {test_num}: {test_name}")
+    flag_test_pass = test_seeded_SAC_training(flag_report_live)
+    print(f"\n\n{test_name} passed:  ", flag_test_pass)
+    arr_test_pass_bools.append(flag_test_pass)
+
+    print("\n\nSummary of Regression Tests:")
+    num_tests = len(arr_test_names)
+    flag_all_passed = True
+    for i in range(num_tests):
+
+        line = f"{arr_test_names[i]}"
+        len_line = len(line)
+        while len_line < 40:
+            line += " "
+            len_line += 1
+
+        print(f"{line} passed: {arr_test_pass_bools[i]}")
+
+        if not arr_test_pass_bools[i]:
+            flag_all_passed = False
+
+    print("\nAll tests passed: ", flag_all_passed)
+    print("\n\nRegression tests complete")
+
+
+if __name__ == "__main__":
+    run_regression_tests(False)

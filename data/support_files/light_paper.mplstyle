@@ -1,0 +1,67 @@
+# --- Light-mode / print-friendly base ---
+figure.facecolor: white
+axes.facecolor: white
+axes.edgecolor: black
+axes.labelcolor: black
+text.color: black
+xtick.color: black
+ytick.color: black
+
+# Subtle grid for print
+axes.grid: true
+grid.color: 0.8
+grid.alpha: 0.5
+grid.linestyle: -
+
+# Valid color cycle (mostly preserved; 3 colors darkened for contrast on white)
+# Original light colors adjusted:
+# (1.000,1.000,0.200) -> (0.900,0.700,0.000)
+# (0.685,0.983,0.171) -> (0.486,0.820,0.120)
+# (1.000,0.911,0.292) -> (0.950,0.750,0.150)
+axes.prop_cycle: cycler(color=[(0.369,0.873,0.787),(0.900,0.700,0.000),(0.420,0.360,0.840),(1.000,0.361,0.288),(0.306,0.651,0.891),(1.000,0.642,0.239),(0.486,0.820,0.120),(1.000,0.200,0.609),(0.680,0.680,0.680),(0.815,0.295,0.824),(0.415,0.892,0.308),(0.950,0.750,0.150)])
+
+# Lines/markers (slightly thicker for print)
+lines.linewidth: 1.2
+lines.markersize: 3
+patch.edgecolor: black
+
+# Axes/ticks/legend (sizes preserved)
+axes.titlesize: 10
+axes.labelsize: 9
+axes.linewidth: 0.8
+xtick.labelsize: 8
+ytick.labelsize: 8
+xtick.direction: out
+ytick.direction: out
+
+legend.frameon: True
+legend.facecolor: white
+legend.edgecolor: black
+legend.fontsize: 8
+
+# Figure size / dpi (kept)
+figure.figsize: 6.3, 3.0
+figure.dpi: 300
+
+# Savefig: vector-first for papers (you can still override per-save)
+savefig.format: pdf
+savefig.dpi: 300
+savefig.bbox: tight
+savefig.pad_inches: 0.05
+savefig.transparent: False
+savefig.facecolor: auto
+savefig.edgecolor: auto
+
+# Fonts in vector outputs (paper-friendly)
+# If you want Times New Roman, ensure it's installed and uncomment the next two lines:
+font.family: serif
+font.serif: Times New Roman, Times, DejaVu Serif, Computer Modern Roman
+pdf.fonttype: 42
+ps.fonttype: 42
+
+# Layout niceties for multi-subplot figures
+figure.constrained_layout.use: True
+
+# Helpful axis number formatting for scientific figures
+axes.formatter.use_mathtext: True
+axes.formatter.limits: -3, 3

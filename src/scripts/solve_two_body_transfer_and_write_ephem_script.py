@@ -5,11 +5,9 @@ import os
 
 from gymnasium import envs
 from gymnasium.envs.registration import register
-
-# Adding python src code directory
-sys.path.append(os.path.abspath("../python"))
-
-from solve_two_body_transfer import solve_two_body_transfer_and_write_ephem
+from core.solve_two_body_transfer import solve_two_body_transfer_and_write_ephem
+from envs.TwoBody_Orb2Orb_Transfer_Env_nd import TwoBody_Orb2Orb_Transfer_Env_nd
+from constants.constants import Constants
 
 # USER INPUTS ------------------------------------------------------------------
 
@@ -25,20 +23,22 @@ args = {
     "sma_target": 1.49598e08,  # Target sma of final circular orbit [km]
     "max_thrust": 1.33,  # Max thrust of the spacecraft engine [N]
     "ISP": 3872.0,  # Specific impulse of the spacecraft engine [s]
-    "filename_ephemeris_out": "..\\..\\data\\training_ephems\\solution_ephemeris.txt" #output path
+    "filename_ephemeris_out": "data\\training_ephems\\solution_ephemeris.txt" #output path
 }
 
 # END USER INPUTS --------------------------------------------------------------
 
-# register the environment if it isn't registered
-if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
-    register(
-        id="TwoBody_Orb2Orb_Transfer_Env-v0",
-        entry_point="TwoBody_Orb2Orb_Transfer_Env:TwoBody_Orb2Orb_Transfer_Env",
-    )
-
-
 # initialize the environment
-env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
+env = TwoBody_Orb2Orb_Transfer_Env_nd(
+    mu=args["mu"],
+    max_T=args["max_thrust"],
+    ISP=args["ISP"],
+    TOF=args["TOF"],
+    l_star=args["sma_target"],
+    m_star=args["m0"],
+    t_star=args["TOF"],
+    g0=Constants.G0,
+    step_size=3600,
+)
 
 solve_two_body_transfer_and_write_ephem(env, args)
