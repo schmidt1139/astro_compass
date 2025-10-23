@@ -1,14 +1,6 @@
 import sys
 import os
-
-# Adding python src code directory
-os.chdir("C:/Users/micha/MSI_Data/Masters_Thesis/astro_compass")
-print("Now working in:", os.getcwd())
-
-sys.path.append(os.path.relpath("src/python/"))
-sys.path.append(os.path.relpath("src/scripts/"))
-
-from Ephemeris import Ephemeris
+from core.ephemeris import Ephemeris
 
 def ingest_ephem_and_plot(path_to_ephemeris):
     print("Ingest Ephemeris and Plot Script")
@@ -39,7 +31,7 @@ def ingest_ephem_and_plot(path_to_ephemeris):
 
 
 directory = "data\\test_data\\"
-ephem_file_name = "test_H_ephem.txt"
+ephem_file_name = "ephemeris_nn_propagation.txt"
 path_to_ephemeris = directory + ephem_file_name
 
 ingest_ephem_and_plot(path_to_ephemeris)

@@ -7,29 +7,17 @@ import matplotlib.pyplot as plt
 from gymnasium import envs
 from gymnasium.envs.registration import register
 
-# Adding python src code directory
-# Adding python src code directory
-os.chdir("C:/Users/micha/MSI_Data/Masters_Thesis/astro_compass")
 print("Now working in:", os.getcwd())
 
-sys.path.append(os.path.relpath("src/python/"))
-sys.path.append(os.path.relpath("src/scripts/"))
-
-from NN_Utils import query_NN_at_state
-from Constants import Constants
-from Neural_Net_Controllers import NN_TBT_Controller
-from Log_Utils import log
-from Ephemeris import Ephemeris
-
-# register the environment if it isn't registered
-if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
-    register(
-        id="TwoBody_Orb2Orb_Transfer_Env-v0",
-        entry_point="TwoBody_Orb2Orb_Transfer_Env:TwoBody_Orb2Orb_Transfer_Env",
-    )
+from utils.nn_utils import query_NN_at_state
+from constants.constants import Constants
+from core.neural_network_controllers import NN_TBT_Controller
+from utils.log_utils import log
+from core.ephemeris import Ephemeris
+from envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 
 # initialize the environment
-env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
+env = TwoBody_Orb2Orb_Transfer_Env()
 seed_in = 42
 
 plt.style.use("data/support_files/dark_scientific.mplstyle")

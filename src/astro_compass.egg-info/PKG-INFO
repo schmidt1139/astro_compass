@@ -1,0 +1,17 @@
+Metadata-Version: 2.4
+Name: astro_compass
+Version: 0.1.0
+Summary: Autonomous spacecraft trajectory optimization using reinforcement learning
+Author: Michael Schmidt
+Author-email: mschmid4@umd.edu
+Requires-Python: >=3.8
+Requires-Dist: gymnasium
+Requires-Dist: stable-baselines3
+Requires-Dist: torch
+Requires-Dist: matplotlib
+Requires-Dist: numpy
+Dynamic: author
+Dynamic: author-email
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
