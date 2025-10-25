@@ -14,6 +14,7 @@ from test_env_step_no_action import test_env_step_no_action
 from test_env_step_with_nn_action import test_env_step_with_nn_action
 from test_SAC_training import test_SAC_training
 from test_seeded_SAC_training import test_seeded_SAC_training
+from test_TBR_env import test_TBR_env
 
 
 def run_regression_tests(flag_report_live=False):
@@ -67,6 +68,14 @@ def run_regression_tests(flag_report_live=False):
     test_num = len(arr_test_names)
     print(f"\n\nRunning Test {test_num}: {test_name}")
     flag_test_pass = test_seeded_SAC_training(flag_report_live)
+    print(f"\n\n{test_name} passed:  ", flag_test_pass)
+    arr_test_pass_bools.append(flag_test_pass)
+
+    test_name = "test_TBR_env"
+    arr_test_names.append(test_name)
+    test_num = len(arr_test_names)
+    print(f"\n\nRunning Test {test_num}: {test_name}")
+    flag_test_pass = test_TBR_env(flag_report_live)
     print(f"\n\n{test_name} passed:  ", flag_test_pass)
     arr_test_pass_bools.append(flag_test_pass)
 
