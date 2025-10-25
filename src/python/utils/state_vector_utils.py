@@ -19,6 +19,27 @@ def cartesian_to_polar(x, y, vx, vy):
 
     return r, theta, v_r, v_theta
 
+def calc_cart_from_OE( a, e, w, theta, mu_cb):
+    
+    # calculate radius based off of orbital elements
+    r = a * (1 - e**2) / (1 + e * np.cos(theta))
+
+    # calculate velocity components
+    h = (mu_cb * a * (1 - e**2)) ** 0.5
+    r_dot = (mu_cb / h) * e * np.sin(theta)
+    v_theta = (mu_cb / h) * (1 + e * np.cos(theta))
+
+    # convert to cartesian coordinates
+    x, y, vx, vy = polar_to_cartesian(r, theta, r_dot, v_theta)
+
+    # rotate by coordinats by argument of periapsis
+    x_rot = x * np.cos(w) + y * np.sin(w)
+    y_rot = -x * np.sin(w) + y * np.cos(w)
+    vx_rot = vx * np.cos(w) + vy * np.sin(w)
+    vy_rot = -vx * np.sin(w) + vy * np.cos(w)
+
+    return x_rot, y_rot, vx_rot, vy_rot
+
 
 def non_dimensionalize(arr_y, g0, mu, T_max, ISP, TOF, l_star, m_star, t_star):
     # unpack the state vector

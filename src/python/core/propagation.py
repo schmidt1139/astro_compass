@@ -1,5 +1,5 @@
 import numpy as np
-
+from constants.constants import Constants
 
 def spacecraft_EOM_radial_2D_EB(t, y, params):
     """
@@ -520,6 +520,14 @@ def env_EOM_TBT_v2(t, state, params):
     # unpack the state vector
     x, y, vx, vy, m = state[:5]
 
+    #check non dim components
+    t_star = (149598023000**3 / (Constants.MU_SUN * 10 ** (9)))** 0.5
+    x_nd = x / Constants.SMA_EARTH
+    y_nd = y / Constants.SMA_EARTH
+    vx_nd = vx / Constants.SMA_EARTH * t_star
+    vy_nd = vy / Constants.SMA_EARTH * t_star
+    m_nd = m / 3366.0
+
     # unpack the parameters
     mu = params[0]  # gravitational parameter of the central body
     T_max = params[1]  # max thrust of the spacecraft
@@ -534,9 +542,14 @@ def env_EOM_TBT_v2(t, state, params):
     v_vec = np.array([vx, vy])
     alpha_vec = np.array([alpha_x, alpha_y])
 
-    # enfore unit vector
-    if (alpha_x**2 + alpha_y**2) != 0.0:
-        alpha_vec = alpha_vec / (alpha_x**2 + alpha_y**2)
+    a_vec_mag = (alpha_x**2 + alpha_y**2) ** 0.5
+
+    # enforce unit vector
+    if a_vec_mag >= 0.000001:
+        alpha_vec = alpha_vec / a_vec_mag
+    else:
+        if (u > 0):
+            raise Exception("Error: Zero (or-near zero) thrust direction vector detected")
 
     # Derivative calculation preliminaries
     r = np.linalg.norm(r_vec)

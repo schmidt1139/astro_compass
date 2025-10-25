@@ -5,5 +5,14 @@ class Constants:
     MU_SUN_M = 1.3e20  # m^3/s^2
     G0 = 9.80665  # m/s^2
     G0_KM = G0 / 1000
+    SMA_MERCURY = 5.7910e7 * 1000  # m
+    SMA_VENUS = 1.082e8 * 1000  # m
     SMA_EARTH = 149598023 * 1000  # m
     SMA_MARS = 2.32495e8 * 1000  # m
+    SMA_JUPITER = 7.78479e8 * 1000  # m
+    SMA_SATURN = 1.43353e9 * 1000  # m
+    SMA_URANUS = 2.870972e9 * 1000  # m
+    SMA_NEPTUNE = 4.5e9 * 1000  # m
+    M_TO_KM = 1e-3  # m to km conversion factor
+    KM_TO_M = 1e3  # km to m conversion factor
+    M3_TO_KM3 = 1e-9  # m^3 to km^3 conversion factor
