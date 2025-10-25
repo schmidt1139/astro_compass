@@ -33,14 +33,14 @@ alpha_y: 1.0
 Observation: 
 X: 34947384.0
 Y: -229853440.0
-VX: 23.378437
-VY: 3.555108
+VX: 23.378733
+VY: 3.5554028
 m: 3365.874
 mu: 130000000000.0
 sma_target: 149598020.0
 
 
-reward: 0.7355184
+reward: 0.7354824
 terminated: False
 truncated: False
 
@@ -50,7 +50,7 @@ Elapsed time: 3600.0
 ODE Solution:   message: The solver successfully reached the end of the integration interval.
   success: True
    status: 0
-        t: [ 0.000e+00  1.866e+00  2.053e+01  2.071e+02  2.073e+03
+        t: [ 0.000e+00  1.860e+00  2.046e+01  2.064e+02  2.066e+03
              3.600e+03]
         y: [[ 3.486e+07  3.486e+07 ...  3.491e+07  3.495e+07]
             [-2.299e+08 -2.299e+08 ... -2.299e+08 -2.299e+08]
@@ -63,13 +63,13 @@ ODE Solution:   message: The solver successfully reached the end of the integrat
      nfev: 32
      njev: 0
       nlu: 0
-delta_state: [ 8.4164000e+04  1.2784000e+04 -5.8937073e-04  9.2711449e-03
+delta_state: [ 8.4164000e+04  1.2784000e+04 -2.9373169e-04  9.5658302e-03
  -1.2597656e-01]
 planet_radii: [695700.]
-a: 232510910.0
-e: 7.2937924e-05
-w: 28.867548
-theta: 339.77762
+a: 232517540.0
+e: 0.000103261125
+w: 28.844173
+theta: 339.80096
 max_thrust: 0.00133
 ISP: 3872.0
 

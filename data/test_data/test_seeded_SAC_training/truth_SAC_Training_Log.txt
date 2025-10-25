@@ -42,22 +42,22 @@ Training complete
 FINAL TRAINING METRICS
 Total episodes: 10
 Total timesteps (model.num_timesteps): 5000
-Average episode reward: 396.7000913
-Best episode reward: 429.996214
-Last episode reward: 347.090526
+Average episode reward: 391.44685100000004
+Best episode reward: 416.816491
+Last episode reward: 376.753903
 Average episode length: 500.0
-Best eval mean reward: 441.017337
+Best eval mean reward: 444.988276375
 Plotting test trajectory...
 Test trajectory complete
 Steps taken: 500
-Total reward: 430.27057
-Final x: 0.97141355 
-Final y: -0.3087952 
-Final vx: 0.23352326 
-Final vy: 0.79011506 
-Final m: 0.8266905 
-Final sma: 116789618807.28043 
-Final ecc: 0.3062155677652259 
+Total reward: 406.94727
+Final x: -0.7812819 
+Final y: -0.46871054 
+Final vx: 0.6998444 
+Final vy: -0.86793435 
+Final m: 0.8158742 
+Final sma: 157355072260.04572 
+Final ecc: 0.1910787742730425 
 terminated: False 
 truncated: True 
 Complete!
