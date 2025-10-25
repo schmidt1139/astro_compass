@@ -173,9 +173,6 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
     # Save the model
     model.save(path_SAC_model)
 
-    # Optionally, test the trained agent
-    eph = Ephemeris()  # create new ephemeris object
-
     arr_time = []
     arr_reward = []
     arr_reward_tot = []
@@ -198,6 +195,11 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
     flag_continue = True
     terminated = False
     truncated = False
+
+    obs, info = env.reset(seed=42)
+    obs, info = eval_env.reset(seed=42)
+    eph = Ephemeris()  # create new ephemeris object
+
 
     while flag_continue:
 
@@ -274,6 +276,9 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
         os.path.join(path_output, "SAC_Test_Traj_Ephem.txt"),
         mod_vector_write_frequency=1,
     )
+
+    fig_xy = eph.plot_xy()
+    fig_xy.savefig(os.path.join(path_output, "SAC_Test_Traj.png"))
 
     test_log = log("Complete!", test_log, flag_report_live)
     test_log = log("Plots saved to: " + path_output, test_log, flag_report_live)
