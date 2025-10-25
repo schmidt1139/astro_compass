@@ -6,16 +6,9 @@ import os
 import matplotlib.pyplot as plt
 import time
 
-
-# Adding python src code directory
-current_dir = os.path.dirname(__file__)
-python_src_dir = os.path.abspath(os.path.join(current_dir, "..", "python"))
-sys.path.append(python_src_dir)
-
-
-from Ephemeris import Ephemeris
-from StateVectorUtilities import polar_to_cartesian
-from Hamiltonian_Control import Hamiltonian_Controller_TBT
+from core.epehemeris import Ephemeris
+from utils.state_vector_utils import polar_to_cartesian
+from core.hamiltonian_control import Hamiltonian_Controller_TBT
 
 
 # register the environment if it isn't registered

@@ -6,23 +6,23 @@ Training complete
 FINAL TRAINING METRICS
 Total episodes: 10
 Total timesteps (model.num_timesteps): 5000
-Average episode reward: 373.0055292
-Best episode reward: 404.035103
-Last episode reward: 386.196777
+Average episode reward: 373.34278869999997
+Best episode reward: 387.832705
+Last episode reward: 373.513858
 Average episode length: 500.0
-Best eval mean reward: 46.2833696
+Best eval mean reward: 411.4875384
 Plotting test trajectory...
 Test trajectory complete
-Steps taken: 73
-Total reward: 56.42009973526001
-Final x: -1.540855 
-Final y: 0.71119195 
-Final vx: -1.0194947 
-Final vy: 0.35027778 
-Final m: 0.9674732 
+Steps taken: 500
+Total reward: 200.69930282235146
+Final x: -0.09337213 
+Final y: 2.64544 
+Final vx: -0.3780639 
+Final vy: -0.0015128196 
+Final m: 0.77501315 
 Final sma: 0.9999999 
-Final ecc: 0.9985971390584969 
-terminated: True 
-truncated: False 
+Final ecc: 0.6206438086058085 
+terminated: False 
+truncated: True 
 Complete!
 Plots saved to: C:\Users\micha\MSI_Data\Masters_Thesis\astro_compass\data\test_data\test_SAC_training

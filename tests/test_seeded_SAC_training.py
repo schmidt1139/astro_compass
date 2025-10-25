@@ -57,7 +57,8 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
     test_log = log_parameters(params, test_log, flag_report_live)
 
     # initialize the training environment
-    env = TwoBody_Orb2Orb_Transfer_Env_nd_obs5(mu=params["mu"],  # solar gravitational parameter in m^3/s^2
+    env = TwoBody_Orb2Orb_Transfer_Env_nd_obs5(
+        mu=params["mu"],  # solar gravitational parameter in m^3/s^2
         max_T=params["max_T"],  # max thrust in N
         ISP=params["ISP"],  # ISP in seconds
         TOF=params["TOF"],  # time of flight in seconds
