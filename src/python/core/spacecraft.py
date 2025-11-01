@@ -53,8 +53,13 @@ class Spacecraft:
         vx_rel = self.vx - vx_cb
         vy_rel = self.vy - vy_cb
 
+        x_rel_km = x_rel / 1000
+        y_rel_km = y_rel / 1000
+
         # position and velocity magnitudes
-        r = (x_rel**2 + y_rel**2) ** 0.5
+        r_km = (x_rel_km**2 + y_rel_km**2) ** 0.5
+        r = r_km * 1000  # convert back to m
+
 
         # spacecraft position, vel, and z vectors
         sc_pos = np.array([x_rel, y_rel, 0.0])
