@@ -131,7 +131,6 @@ class Ephemeris:
         ax.set_title("Trajectory")
         ax.set_xlabel("X [km]")
         ax.set_ylabel("Y [km]")
-        fig.tight_layout()
         ax.set_xlim([-max_lim, max_lim])
         ax.set_ylim([-max_lim, max_lim])
         ax.legend()
@@ -336,3 +335,76 @@ class Ephemeris:
         vector = np.array([et, x, y, vx, vy, m, alpha_x, alpha_y, u])
 
         return vector
+    
+    def overlay_ref_orbit(self, ephem, label, color_in="lime"):
+        # Overlay a reference Keplerian orbit on the existing XY plot
+        fig = self.fig_xy
+        ax = self.ax_xy
+
+        arr_x = np.array([])
+        arr_y = np.array([])
+
+        for i in range(0, ephem.num_vectors):
+            x = ephem.arr_x[i]
+            y = ephem.arr_y[i]
+
+            arr_x = np.append(arr_x, x)
+            arr_y = np.append(arr_y, y)
+
+        ax.plot(arr_x, arr_y, label=label, color=color_in)
+        ax.legend()  # Update legend to include the new plot
+
+        self.fig_xy = fig
+        self.ax_xy = ax
+
+        return self.fig_xy
+    
+    def adjust_plot_limits(self):
+        # Adjust the plot limits of the existing XY plot based on current data
+        fig = self.fig_xy
+        ax = self.ax_xy
+
+
+        max_x = max(abs(self.arr_x))
+        max_y = max(abs(self.arr_y))
+
+        for line in ax.get_lines():
+            x_data = line.get_xdata()
+            y_data = line.get_ydata()
+            max_x_line = max(abs(x_data))
+            max_y_line = max(abs(y_data))
+            if max_x_line > max_x:
+                max_x = max_x_line
+            if max_y_line > max_y:
+                max_y = max_y_line
+
+        max_lim = 1.1 * max([max_x, max_y])
+
+        ax.set_xlim([-max_lim, max_lim])
+        ax.set_ylim([-max_lim, max_lim])
+
+        self.fig_xy = fig
+        self.ax_xy = ax
+
+        return self.fig_xy
+    
+    def add_target_icon(self, x_target, y_target, marker_in="+", color_in="red", size_in=12):
+        # Add a target icon to the existing XY plot
+        fig = self.fig_xy
+        ax = self.ax_xy
+
+        ax.plot(
+            x_target,
+            y_target,
+            label="Target",
+            marker=marker_in,
+            linestyle=None,
+            color=color_in,
+            markersize=size_in,
+        )
+        ax.legend()  # Update legend to include the new plot
+
+        self.fig_xy = fig
+        self.ax_xy = ax
+
+        return self.fig_xy
