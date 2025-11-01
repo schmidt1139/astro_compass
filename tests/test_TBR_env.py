@@ -5,10 +5,10 @@ from core.ephemeris import Ephemeris
 
 def test_TBR_env(flag_report_live: bool = False):
 
-        # define normalization parameters (for NN)
+    # define normalization parameters (for NN)
     params = {
         "mu": Constants.MU_SUN_M,  # sun mu [m^3/s^2]
-        "max_T": 1.33,  # max spacecraft thrust [N]
+        "max_T": 1.33 / 1000,  # max spacecraft thrust [kN]
         "ISP": 3872.0,  # spacecraft specific impulse [s]
         "TOF": 1.1 * 365.25 * 24 * 60 * 60,  # assumed time of flight [s]
         "l_star": 149598023000,  # characteristic length = Earth SMA [m]
@@ -166,3 +166,5 @@ def test_TBR_env(flag_report_live: bool = False):
         test_log = log("Test FAILED: Discrepancies found between trajectories and truth data.", test_log, flag_report_live)
 
     return flag_test_pass
+
+test_TBR_env(True)
