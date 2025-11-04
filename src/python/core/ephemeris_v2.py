@@ -4,9 +4,10 @@ import os
 import time
 from constants.constants import Constants
 from datetime import datetime, timezone
+from utils.plotting_utils import plot_overlay_ballistic_orbit
 
 
-class Ephemeris:
+class Ephemeris_v2:
     def reset(self):
         self.arr_et = np.array([])
         self.arr_x = np.array([])
@@ -14,6 +15,11 @@ class Ephemeris:
         self.arr_vx = np.array([])
         self.arr_vy = np.array([])
         self.arr_m = np.array([])
+        self.arr_x_target = np.array([])
+        self.arr_y_target = np.array([])
+        self.arr_vx_target = np.array([])
+        self.arr_vy_target = np.array([])
+        self.arr_TTG = np.array([])
         self.arr_alpha_x = np.array([])
         self.arr_alpha_y = np.array([])
         self.arr_u = np.array([])
@@ -23,33 +29,19 @@ class Ephemeris:
         # initialize an empty ephemeris object
         self.reset()
 
-    def add_data(self, et, x, y, vx, vy, m, alpha_x=0.0, alpha_y=0.0, u=0.0):
+    def add_data(self, et, x, y, vx, vy, m, target_x, target_y, target_vx, target_vy, TTG, 
+                 alpha_x=0.0, alpha_y=0.0, u=0.0):
         self.arr_et = np.append(self.arr_et, et)
         self.arr_x = np.append(self.arr_x, x)
         self.arr_y = np.append(self.arr_y, y)
         self.arr_vx = np.append(self.arr_vx, vx)
         self.arr_vy = np.append(self.arr_vy, vy)
         self.arr_m = np.append(self.arr_m, m)
-        self.arr_alpha_x = np.append(self.arr_alpha_x, alpha_x)
-        self.arr_alpha_y = np.append(self.arr_alpha_y, alpha_y)
-        self.arr_u = np.append(self.arr_u, u)
-        self.num_vectors = self.num_vectors + 1
-
-    def add_polar_data(
-        self, et, r, theta, r_dot, v_theta, m, alpha_x=0.0, alpha_y=0.0, u=0.0
-    ):
-        # convert polar coordinates to cartesian
-        x = r * np.cos(theta)
-        y = r * np.sin(theta)
-        vx = r_dot * np.cos(theta) - v_theta * r * np.sin(theta)
-        vy = r_dot * np.sin(theta) + v_theta * r * np.cos(theta)
-
-        self.arr_et = np.append(self.arr_et, et)
-        self.arr_x = np.append(self.arr_x, x)
-        self.arr_y = np.append(self.arr_y, y)
-        self.arr_vx = np.append(self.arr_vx, vx)
-        self.arr_vy = np.append(self.arr_vy, vy)
-        self.arr_m = np.append(self.arr_m, m)
+        self.arr_x_target =  np.append(self.arr_x_target, target_x)
+        self.arr_y_target =  np.append(self.arr_y_target, target_y)
+        self.arr_vx_target =  np.append(self.arr_vx_target, target_vx)
+        self.arr_vy_target =  np.append(self.arr_vy_target, target_vy)
+        self.arr_TTG =  np.append(self.arr_TTG, TTG)
         self.arr_alpha_x = np.append(self.arr_alpha_x, alpha_x)
         self.arr_alpha_y = np.append(self.arr_alpha_y, alpha_y)
         self.arr_u = np.append(self.arr_u, u)
@@ -218,6 +210,8 @@ class Ephemeris:
             plot.show()
         figs.append(fig)
 
+
+
         return figs
 
     def write_to_file(self, file_path, mod_vector_write_frequency=1):
@@ -235,6 +229,7 @@ class Ephemeris:
         with open(file_path, "w") as f:
             header = (
                 "Astro Compass Ephemeris v 1.0\n"
+                f"Version: 2.0\n"
                 f"File name: {file_name_base}\n"
                 f"Generation time (UTC): {string_time_generation_utc}\n"
                 f"Number of vectors: {mod_num_vec}\n"
@@ -266,6 +261,11 @@ class Ephemeris:
                         f"{self.arr_vx[i]: .16e},"
                         f"{self.arr_vy[i]: .16e},"
                         f"{self.arr_m[i]: .16e},"
+                        f"{self.arr_x_target[i]: .16e},"
+                        f"{self.arr_y_target[i]: .16e},"
+                        f"{self.arr_vx_target[i]: .16e},"
+                        f"{self.arr_vy_target[i]: .16e},"
+                        f"{self.arr_TTG[i]: .16e},"
                         f"{self.arr_alpha_x[i]: .16e},"
                         f"{self.arr_alpha_y[i]: .16e},"
                         f"{self.arr_u[i]: .16e}"
@@ -306,11 +306,17 @@ class Ephemeris:
                 vx = ephem_data[3]  # x velocity [km/s]
                 vy = ephem_data[4]  # y velocity [km/s]
                 m = ephem_data[5]  # mass kg
-                alpha_x = ephem_data[6]  # thrust unit vec - x
-                alpha_y = ephem_data[7]  # thrust unit vec - y
-                u = ephem_data[8]  # throttle
+                x_target = ephem_data[6]  # x target [km]
+                y_target = ephem_data[7]  # y target [km]   
+                vx_target = ephem_data[8]  # vx target [km/s]
+                vy_target = ephem_data[9]  # vy target [km/s]
+                TTG = ephem_data[10]  # time to go [s]
+                alpha_x = ephem_data[11]  # thrust unit vec - x
+                alpha_y = ephem_data[12]  # thrust unit vec - y
+                u = ephem_data[13]  # throttle
 
-                self.add_data(et, x, y, vx, vy, m, alpha_x, alpha_y, u)
+                self.add_data(et, x, y, vx, vy, m, x_target, y_target, vx_target, 
+                              vy_target, TTG, alpha_x, alpha_y, u)
 
             elif line == "<Ephemeris End>":
                 break
@@ -327,26 +333,45 @@ class Ephemeris:
         vx = self.arr_vx[index]
         vy = self.arr_vy[index]
         m = self.arr_m[index]
+        x_target = self.arr_x_target[index]
+        y_target = self.arr_y_target[index]
+        vx_target = self.arr_vx_target[index]
+        vy_target = self.arr_vy_target[index]
+        TTG = self.arr_TTG[index]
         alpha_x = self.arr_alpha_x[index]
         alpha_y = self.arr_alpha_y[index]
         u = self.arr_u[index]
 
         # construct output vector
-        vector = np.array([et, x, y, vx, vy, m, alpha_x, alpha_y, u])
+        vector = np.array([et, x, y, vx, vy, m, x_target, y_target, vx_target, 
+                           vy_target, TTG, alpha_x, alpha_y, u])
 
         return vector
-    
-    def overlay_ref_orbit(self, ephem, label, color_in="lime"):
+
+    def overlay_ref_orbit(self, ephem, label, color_in="lime", arr_x=None, arr_y=None):
         # Overlay a reference Keplerian orbit on the existing XY plot
         fig = self.fig_xy
         ax = self.ax_xy
+        flag_xy_exists = False
 
-        arr_x = np.array([])
-        arr_y = np.array([])
+        if arr_x is None or arr_y is None:
+            arr_x = np.array([])
+            arr_y = np.array([])
+            num_vecs = ephem.num_vectors
+        else:
+            arr_x = arr_x
+            arr_y = arr_y
+            num_vecs = len(arr_x)
+            flag_xy_exists = True
 
-        for i in range(0, ephem.num_vectors):
-            x = ephem.arr_x[i]
-            y = ephem.arr_y[i]
+        for i in range(0, num_vecs):
+
+            if not flag_xy_exists:
+                x = ephem.arr_x[i]
+                y = ephem.arr_y[i]
+            else:
+                x = arr_x[i]
+                y = arr_y[i]
 
             arr_x = np.append(arr_x, x)
             arr_y = np.append(arr_y, y)
@@ -363,7 +388,6 @@ class Ephemeris:
         # Adjust the plot limits of the existing XY plot based on current data
         fig = self.fig_xy
         ax = self.ax_xy
-
 
         max_x = max(abs(self.arr_x))
         max_y = max(abs(self.arr_y))
@@ -409,12 +433,13 @@ class Ephemeris:
 
         return self.fig_xy
     
-    def compare_trajectories(self, other_ephem, position_tol=1e-12, velocity_tol=1e-6):
+    def compare_trajectories(self, other_ephem, position_tol=1e-12, velocity_tol=1e-6, verbose=False):
         # Compare this ephemeris trajectory to another ephemeris trajectory
         # Returns True if all corresponding states are within the specified tolerances
         
         if self.num_vectors != other_ephem.num_vectors:
-            print(f"Different number of vectors: {self.num_vectors} vs {other_ephem.num_vectors}")
+            if (verbose==True):
+                print(f"Different number of vectors: {self.num_vectors} vs {other_ephem.num_vectors}")
             return False  # Different number of vectors
 
         for i in range(self.num_vectors):
@@ -424,8 +449,41 @@ class Ephemeris:
             dvy = abs(self.arr_vy[i] - other_ephem.arr_vy[i])
 
             if dx > position_tol or dy > position_tol or dvx > velocity_tol or dvy > velocity_tol:
-                print(f"Difference at index {i}: x={self.arr_x[i]}, y={self.arr_y[i]}, vx={self.arr_vx[i]}, vy={self.arr_vy[i]}")
-                print(f"                 vs x={other_ephem.arr_x[i]}, y={other_ephem.arr_y[i]}, vx={other_ephem.arr_vx[i]}, vy={other_ephem.arr_vy[i]}")
+                if (verbose==True):
+                    print(f"Difference at index {i}: x={self.arr_x[i]}, y={self.arr_y[i]}, vx={self.arr_vx[i]}, vy={self.arr_vy[i]}")
+                    print(f"                 vs x={other_ephem.arr_x[i]}, y={other_ephem.arr_y[i]}, vx={other_ephem.arr_vx[i]}, vy={other_ephem.arr_vy[i]}")
                 return False  # States differ beyond tolerances
 
         return True  # All states are within tolerances
+    
+    def save_plots(self, directory_path, file_tag, params, env):
+        
+        # Save the current XY plot to a file in the specified directory
+        figs = self.plot_all_ephemeris_data(flag_show=False)
+
+        if not os.path.exists(directory_path):
+            os.makedirs(directory_path)
+
+        for i, fig in enumerate(figs):
+            plot_title = fig.axes[0].get_title().replace(" ", "_").lower()
+            file_path = os.path.join(directory_path, f"{file_tag}_{plot_title}.png")
+            fig.savefig(file_path, dpi=300)
+
+
+        
+        fig_xy = self.plot_xy()
+        x, y, vx, vy = self.arr_x[0], self.arr_y[0], self.arr_vx[0], self.arr_vy[0]
+        fig_xy = plot_overlay_ballistic_orbit(x, y, vx, vy, env, fig_xy, params, 
+                                              self,"Initial Orbit", color_in="lime")
+        x, y, vx, vy = self.arr_x[-1], self.arr_y[-1], self.arr_vx[-1], self.arr_vy[-1]
+        fig_xy = plot_overlay_ballistic_orbit(x, y, vx, vy, env, fig_xy, params, 
+                                              self, "Final Orbit", color_in="red")
+        x, y = self.arr_x_target[-1], self.arr_y_target[-1]
+        fig_xy = self.add_target_icon(x, y)
+        fig_xy = self.adjust_plot_limits()
+
+        plot_title = fig_xy.axes[0].get_title().replace(" ", "_").lower()
+        file_path = os.path.join(directory_path, f"{file_tag}_{plot_title}.png")
+        fig_xy.savefig(file_path, dpi=300)
+
+
