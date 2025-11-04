@@ -119,6 +119,7 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
     obs, info = env.reset(seed=seed_in)
     obs, info = eval_env.reset(seed=seed_in)
 
+    plt.close('all')
     plt.style.use("data/support_files/dark_scientific.mplstyle")
 
     test_log = []
