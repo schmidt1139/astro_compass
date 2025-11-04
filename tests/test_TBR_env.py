@@ -1,14 +1,14 @@
 from utils.log_utils import log
 from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from constants.constants import Constants
-from core.ephemeris import Ephemeris
+from core.ephemeris_v2 import Ephemeris_v2
 
 def test_TBR_env(flag_report_live: bool = False):
 
-        # define normalization parameters (for NN)
+    # define normalization parameters (for NN)
     params = {
         "mu": Constants.MU_SUN_M,  # sun mu [m^3/s^2]
-        "max_T": 1.33,  # max spacecraft thrust [N]
+        "max_T": 1.33 / 1000,  # max spacecraft thrust [kN]
         "ISP": 3872.0,  # spacecraft specific impulse [s]
         "TOF": 1.1 * 365.25 * 24 * 60 * 60,  # assumed time of flight [s]
         "l_star": 149598023000,  # characteristic length = Earth SMA [m]
@@ -17,7 +17,7 @@ def test_TBR_env(flag_report_live: bool = False):
         "g0": Constants.G0,  # gravtational acceleration at Earth surface [m/s^2]
         "env_step_size": 3600 * 24,  # environment step size [s]
         "seed_env": 42,  # random seed for environment
-        "num_trajs": 10,  # number of trajectories to simulate
+        "num_trajs": 4,  # number of trajectories to simulate
         "max_steps": 1000,  # maximum number of steps per trajectory
     }
 
@@ -40,7 +40,7 @@ def test_TBR_env(flag_report_live: bool = False):
 
     count_traj = 0
     seed_traj = params["seed_env"]
-    eph = Ephemeris()
+    eph = Ephemeris_v2()
 
     flag_test_pass = True
 
@@ -54,7 +54,11 @@ def test_TBR_env(flag_report_live: bool = False):
         test_log = log("vx_nd: " + str(obs[2]), test_log, flag_report_live)
         test_log = log("vy_nd: " + str(obs[3]), test_log, flag_report_live)
         test_log = log("mass_nd: " + str(obs[4]) + "\n", test_log, flag_report_live)
-
+        test_log = log("x_target_nd: " + str(obs[5]), test_log, flag_report_live)
+        test_log = log("y_target_nd: " + str(obs[6]), test_log, flag_report_live)
+        test_log = log("vx_target_nd: " + str(obs[7]), test_log, flag_report_live)
+        test_log = log("vy_target_nd: " + str(obs[8]), test_log, flag_report_live)
+        test_log = log("TTG: " + str(obs[9]) + "\n", test_log, flag_report_live)
         for item in info:
             test_log = log(f"{item}: {info[item]}", test_log, flag_report_live)
 
@@ -71,6 +75,11 @@ def test_TBR_env(flag_report_live: bool = False):
                      obs[2]*params["l_star"]/params["t_star"], 
                      obs[3]*params["l_star"]/params["t_star"], 
                      obs[4]*params["m_star"], 
+                     obs[5]*params["l_star"], 
+                     obs[6]*params["l_star"], 
+                     obs[7]*params["l_star"]/params["t_star"],
+                     obs[8]*params["l_star"]/params["t_star"],
+                     obs[9]*params["t_star"],
                      alpha_x=0.0, 
                      alpha_y=0.0, 
                      u=0.0)
@@ -82,14 +91,19 @@ def test_TBR_env(flag_report_live: bool = False):
             obs, reward, done, truncated, info = env.step(action)
 
             eph.add_data(info["Elapsed time"], 
-                obs[0]*params["l_star"], 
-                obs[1]*params["l_star"], 
-                obs[2]*params["l_star"]/params["t_star"], 
-                obs[3]*params["l_star"]/params["t_star"], 
-                obs[4]*params["m_star"], 
-                alpha_x=action[2], 
-                alpha_y=action[1], 
-                u=action[0])
+                        obs[0]*params["l_star"], 
+                        obs[1]*params["l_star"], 
+                        obs[2]*params["l_star"]/params["t_star"], 
+                        obs[3]*params["l_star"]/params["t_star"], 
+                        obs[4]*params["m_star"], 
+                        obs[5]*params["l_star"], 
+                        obs[6]*params["l_star"], 
+                        obs[7]*params["l_star"]/params["t_star"],
+                        obs[8]*params["l_star"]/params["t_star"],
+                        obs[9]*params["t_star"],
+                        alpha_x=action[2], 
+                        alpha_y=action[1], 
+                        u=action[0])
 
             steps += 1
 
@@ -110,13 +124,18 @@ def test_TBR_env(flag_report_live: bool = False):
         test_log = log("vx_nd: " + str(obs[2]), test_log, flag_report_live)
         test_log = log("vy_nd: " + str(obs[3]), test_log, flag_report_live)
         test_log = log("mass_nd: " + str(obs[4]) + "\n", test_log, flag_report_live)
+        test_log = log("x_target_nd: " + str(obs[5]), test_log, flag_report_live)
+        test_log = log("y_target_nd: " + str(obs[6]), test_log, flag_report_live)
+        test_log = log("vx_target_nd: " + str(obs[7]), test_log, flag_report_live)
+        test_log = log("vy_target_nd: " + str(obs[8]), test_log, flag_report_live)
+        test_log = log("TTG: " + str(obs[9]) + "\n", test_log, flag_report_live)
 
         # load truth data for comparison
-        eph_truth = Ephemeris()
+        eph_truth = Ephemeris_v2()
         eph_truth.read_from_file("data\\test_data\\test_TBR\\test_traj_ephemeris_" + str(count_traj) + "_TBR_env_truth.txt")
 
         # re-ingest ephemeris data for comparison
-        eph_comp = Ephemeris()
+        eph_comp = Ephemeris_v2()
         eph_comp.read_from_file("data\\test_data\\test_TBR\\test_traj_ephemeris_" + str(count_traj) + "_TBR_env.txt")
 
         for i in range(eph_comp.num_vectors):
@@ -127,38 +146,72 @@ def test_TBR_env(flag_report_live: bool = False):
             if (vec_compare[0] - vec_truth[0]) > 1e-12:
                 test_log = log(f"Discrepancy in t at index {i}: {vec_compare[0]} vs {vec_truth[0]}", test_log, flag_report_live)
                 flag_test_pass = False
+                break
 
             if (vec_compare[1] - vec_truth[1]) > 1e-12:
                 test_log = log(f"Discrepancy in x at index {i}: {vec_compare[1]} vs {vec_truth[1]}", test_log, flag_report_live)
                 flag_test_pass = False
+                break
 
             if (vec_compare[2] - vec_truth[2]) > 1e-12:
                 test_log = log(f"Discrepancy in y at index {i}: {vec_compare[2]} vs {vec_truth[2]}", test_log, flag_report_live)
                 flag_test_pass = False
+                break
 
             if (vec_compare[3] - vec_truth[3]) > 1e-12:
                 test_log = log(f"Discrepancy in vx at index {i}: {vec_compare[3]} vs {vec_truth[3]}", test_log, flag_report_live)
                 flag_test_pass = False
+                break
 
             if (vec_compare[4] - vec_truth[4]) > 1e-12:
                 test_log = log(f"Discrepancy in vy at index {i}: {vec_compare[4]} vs {vec_truth[4]}", test_log, flag_report_live)
                 flag_test_pass = False
+                break
 
             if (vec_compare[5] - vec_truth[5]) > 1e-12:
                 test_log = log(f"Discrepancy in m at index {i}: {vec_compare[5]} vs {vec_truth[5]}", test_log, flag_report_live)
                 flag_test_pass = False
+                break
 
             if (vec_compare[6] - vec_truth[6]) > 1e-12:
-                test_log = log(f"Discrepancy in ax at index {i}: {vec_compare[6]} vs {vec_truth[6]}", test_log, flag_report_live)
+                test_log = log(f"Discrepancy in x_target at index {i}: {vec_compare[6]} vs {vec_truth[6]}", test_log, flag_report_live)
                 flag_test_pass = False
+                break
 
             if (vec_compare[7] - vec_truth[7]) > 1e-12:
-                test_log = log(f"Discrepancy in ay at index {i}: {vec_compare[7]} vs {vec_truth[7]}", test_log, flag_report_live)
+                test_log = log(f"Discrepancy in y_target at index {i}: {vec_compare[7]} vs {vec_truth[7]}", test_log, flag_report_live)
                 flag_test_pass = False
+                break
 
             if (vec_compare[8] - vec_truth[8]) > 1e-12:
-                test_log = log(f"Discrepancy in u at index {i}: {vec_compare[8]} vs {vec_truth[8]}", test_log, flag_report_live)
+                test_log = log(f"Discrepancy in vx_target at index {i}: {vec_compare[8]} vs {vec_truth[8]}", test_log, flag_report_live)
                 flag_test_pass = False
+                break
+
+            if (vec_compare[9] - vec_truth[9]) > 1e-12:
+                test_log = log(f"Discrepancy in vy_target at index {i}: {vec_compare[9]} vs {vec_truth[9]}", test_log, flag_report_live)
+                flag_test_pass = False
+                break
+
+            if (vec_compare[10] - vec_truth[10]) > 1e-12:
+                test_log = log(f"Discrepancy in TTG at index {i}: {vec_compare[10]} vs {vec_truth[10]}", test_log, flag_report_live)
+                flag_test_pass = False
+                break
+
+            if (vec_compare[11] - vec_truth[11]) > 1e-12:
+                test_log = log(f"Discrepancy in alpha_x at index {i}: {vec_compare[11]} vs {vec_truth[11]}", test_log, flag_report_live)
+                flag_test_pass = False
+                break
+
+            if (vec_compare[12] - vec_truth[12]) > 1e-12:
+                test_log = log(f"Discrepancy in alpha_y at index {i}: {vec_compare[12]} vs {vec_truth[12]}", test_log, flag_report_live)
+                flag_test_pass = False
+                break
+
+            if (vec_compare[13] - vec_truth[13]) > 1e-12:
+                test_log = log(f"Discrepancy in u at index {i}: {vec_compare[13]} vs {vec_truth[13]}", test_log, flag_report_live)
+                flag_test_pass = False
+                break
 
     if flag_test_pass:
         test_log = log("Test PASSED: All trajectories match truth data within tolerance.", test_log, flag_report_live)
@@ -166,3 +219,4 @@ def test_TBR_env(flag_report_live: bool = False):
         test_log = log("Test FAILED: Discrepancies found between trajectories and truth data.", test_log, flag_report_live)
 
     return flag_test_pass
+

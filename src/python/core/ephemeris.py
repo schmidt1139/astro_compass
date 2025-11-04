@@ -131,7 +131,6 @@ class Ephemeris:
         ax.set_title("Trajectory")
         ax.set_xlabel("X [km]")
         ax.set_ylabel("Y [km]")
-        fig.tight_layout()
         ax.set_xlim([-max_lim, max_lim])
         ax.set_ylim([-max_lim, max_lim])
         ax.legend()
@@ -336,3 +335,97 @@ class Ephemeris:
         vector = np.array([et, x, y, vx, vy, m, alpha_x, alpha_y, u])
 
         return vector
+    
+    def overlay_ref_orbit(self, ephem, label, color_in="lime"):
+        # Overlay a reference Keplerian orbit on the existing XY plot
+        fig = self.fig_xy
+        ax = self.ax_xy
+
+        arr_x = np.array([])
+        arr_y = np.array([])
+
+        for i in range(0, ephem.num_vectors):
+            x = ephem.arr_x[i]
+            y = ephem.arr_y[i]
+
+            arr_x = np.append(arr_x, x)
+            arr_y = np.append(arr_y, y)
+
+        ax.plot(arr_x, arr_y, label=label, color=color_in)
+        ax.legend()  # Update legend to include the new plot
+
+        self.fig_xy = fig
+        self.ax_xy = ax
+
+        return self.fig_xy
+    
+    def adjust_plot_limits(self):
+        # Adjust the plot limits of the existing XY plot based on current data
+        fig = self.fig_xy
+        ax = self.ax_xy
+
+
+        max_x = max(abs(self.arr_x))
+        max_y = max(abs(self.arr_y))
+
+        for line in ax.get_lines():
+            x_data = line.get_xdata()
+            y_data = line.get_ydata()
+            max_x_line = max(abs(x_data))
+            max_y_line = max(abs(y_data))
+            if max_x_line > max_x:
+                max_x = max_x_line
+            if max_y_line > max_y:
+                max_y = max_y_line
+
+        max_lim = 1.1 * max([max_x, max_y])
+
+        ax.set_xlim([-max_lim, max_lim])
+        ax.set_ylim([-max_lim, max_lim])
+
+        self.fig_xy = fig
+        self.ax_xy = ax
+
+        return self.fig_xy
+    
+    def add_target_icon(self, x_target, y_target, marker_in="+", color_in="red", size_in=12):
+        # Add a target icon to the existing XY plot
+        fig = self.fig_xy
+        ax = self.ax_xy
+
+        ax.plot(
+            x_target,
+            y_target,
+            label="Target",
+            marker=marker_in,
+            linestyle=None,
+            color=color_in,
+            markersize=size_in,
+        )
+        ax.legend()  # Update legend to include the new plot
+
+        self.fig_xy = fig
+        self.ax_xy = ax
+
+        return self.fig_xy
+    
+    def compare_trajectories(self, other_ephem, position_tol=1e-12, velocity_tol=1e-6):
+        # Compare this ephemeris trajectory to another ephemeris trajectory
+        # Returns True if all corresponding states are within the specified tolerances
+        
+        if self.num_vectors != other_ephem.num_vectors:
+            print(f"Different number of vectors: {self.num_vectors} vs {other_ephem.num_vectors}")
+            return False  # Different number of vectors
+
+        for i in range(self.num_vectors):
+            dx = abs(self.arr_x[i] - other_ephem.arr_x[i])
+            dy = abs(self.arr_y[i] - other_ephem.arr_y[i])
+            dvx = abs(self.arr_vx[i] - other_ephem.arr_vx[i])
+            dvy = abs(self.arr_vy[i] - other_ephem.arr_vy[i])
+
+            if dx > position_tol or dy > position_tol or dvx > velocity_tol or dvy > velocity_tol:
+                print(f"Difference at index {i}: x={self.arr_x[i]}, y={self.arr_y[i]}, vx={self.arr_vx[i]}, vy={self.arr_vy[i]}")
+                print(f"                 vs x={other_ephem.arr_x[i]}, y={other_ephem.arr_y[i]}, vx={other_ephem.arr_vx[i]}, vy={other_ephem.arr_vy[i]}")
+                return False  # States differ beyond tolerances
+
+        return True  # All states are within tolerances

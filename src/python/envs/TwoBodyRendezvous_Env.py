@@ -7,18 +7,17 @@ from core.spacecraft import Spacecraft
 from core.propagation import env_EOM_TBT_v2
 from utils.state_vector_utils import polar_to_cartesian, calc_cart_from_OE, cartesian_to_polar
 
-
 class TwoBodyRendezvous_Env(gym.Env):
     def __init__(self, **kwargs):
         # define limits of the state parameters
         low_array = np.full(
-            9, -np.inf, dtype=np.float32
+            10, -np.inf, dtype=np.float32
         )  # lower bounds for state space
         high_array = np.full(
-            9, np.inf, dtype=np.float32
+            10, np.inf, dtype=np.float32
         )  # upper-bounds for state space
 
-        # define the state space (in this case the observation is the state) 5x5
+        # define the state space (in this case the observation is the state) 10 elements
         self.observation_space = gym.spaces.Box(low=low_array, high=high_array)
 
         self._state = np.full(10, 0.0, dtype=np.float32)  # initialize state vector
@@ -56,28 +55,40 @@ class TwoBodyRendezvous_Env(gym.Env):
     def _get_info(self, ode_solution, delta_r):
         # to-do: add orbital elements as optional and append to output dictionary
 
-        #check periods
-        a = self._keplerian_elements[0]
         mu = self.param_mu
-        T = 2 * np.pi * ( a**3 / mu ) ** 0.5
+
+        #check periods
+        a_nd = self._keplerian_elements[0]/Constants.SMA_EARTH
+        
+        T_nd = 2 * np.pi * ( a_nd**3 / 1.0 ) ** 0.5
 
         #calc deltas
         deltas = self.calc_deltas()
         dx, dy, dr, dvx, dvy, dv, r_target, v_target, dr_norm, dv_norm = deltas
 
-        # target orbital elements
-        x_target = self._state[6]
-        y_target = self._state[7]
-        vx_target = self._state[8]
-        vy_target = self._state[9]
+        x_target = self._state[5]
+        y_target = self._state[6]
+        vx_target = self._state[7]
+        vy_target = self._state[8]
+
         r_target, theta_target, r_dot_target, v_theta_target = cartesian_to_polar(x_target, y_target, vx_target, vy_target)
 
         # Initialize a spacecraft object with the state of the environment
         sc_target = Spacecraft(r_target, theta_target, r_dot_target, v_theta_target, 1000.0, self.C1, self.C2)
+        sc_target.update_state_cartesian(x_target, y_target, vx_target, vy_target, 1000.0)
 
         # calculate orbital elements
         a_target, e_target, w_target, theta_target = sc_target.calc_Planar_OE(0.0, 0.0, 0.0, 0.0, mu)
-        T_target = 2 * np.pi * (a_target**3 / mu) ** 0.5
+        a_target_nd = a_target / Constants.SMA_EARTH
+        T_target_nd = 2 * np.pi * (a_target_nd**3 / 1.0) ** 0.5
+
+        if np.isnan(T_target_nd):
+            print("T_target is NaN")
+            print("a_target_nd:", a_target_nd)
+            print(f"a_target: {a_target}, mu: {mu}")
+            print(f"x_target: {x_target}, y_target: {y_target}, vx_target: {vx_target}, vy_target: {vy_target}")
+            print(f"r_target: {r_target}, theta_target: {theta_target}, r_dot_target: {r_dot_target}, v_theta_target: {v_theta_target}")
+            raise ValueError("T_target is NaN")
 
         return {
             "Elapsed time": self.elapsed_t,
@@ -100,12 +111,17 @@ class TwoBodyRendezvous_Env(gym.Env):
             "v_target": v_target,
             "dr_norm": dr_norm,
             "dv_norm": dv_norm,
-            "orbital_period_yrs": T/(365.25*24*60*60),
+            "orbital_period_nd": T_nd,
+            "orbital_period_years": T_nd * self.t_star / Constants.YEARS_TO_SEC,
             "a_target": a_target/Constants.SMA_EARTH,
             "e_target": e_target,
             "w_target": np.rad2deg(w_target),
             "theta_target": np.rad2deg(theta_target),
-            "orbital_period_target_yrs": T_target/(365.25*24*60*60)
+            "orbital_period_target_nd": T_target_nd,
+            "mu": self.param_mu,
+            "step_count": self.step_count,
+            "TOF": self.TOF,
+            "TOF_nd": self.TOF_nd
         }
 
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None):
@@ -114,13 +130,14 @@ class TwoBodyRendezvous_Env(gym.Env):
 
         # reset cumulative reward
         self.episode_reward = 0.0
+        self.step_count = 0
 
         # extract central body gravitational parameter
         mu = self.param_mu
 
         # set ranges for initial state parameters
         a_range = [Constants.SMA_VENUS, Constants.SMA_MARS]  # initial radius range (m)
-        e_range = [0.0, 0.75]  # initial eccentricity range
+        e_range = [0.0, 0.5]  # initial eccentricity range
         w_range = [0.0, 2 * np.pi]  # initial argument of periapsis range (rad)
         theta_range = [0.0, 2 * np.pi]  # initial true anomaly range (rad)
 
@@ -147,6 +164,11 @@ class TwoBodyRendezvous_Env(gym.Env):
         w_f = self.np_random.uniform(low=w_range[0], high=w_range[1])
         theta_f = self.np_random.uniform(low=theta_range[0], high=theta_range[1])
 
+
+        # convert the final state to polar coordinates and cartesian
+        x_f, y_f, vx_f, vy_f = calc_cart_from_OE(a_f, e_f, w_f, theta_f, mu)
+        r_f, theta_f, r_dot_f, v_theta_f = cartesian_to_polar(x_f, y_f, vx_f, vy_f)
+
         # convert final state to cartesian coordinates
         x_f, y_f, vx_f, vy_f = calc_cart_from_OE(a_f, e_f, w_f, theta_f, mu)
 
@@ -156,22 +178,37 @@ class TwoBodyRendezvous_Env(gym.Env):
         vx_cb = 0.0
         vy_cb = 0.0
 
-        # print(f"Env Reset: theta = {theta} rad" )
-
-        # set the initial state of the environment
-        self._state = np.array([x_0, y_0, vx_0, vy_0, mass, mu, x_f, y_f, vx_f, vy_f], dtype=np.float32)
-
         # set the location of the central body
         self._arr_cb = np.array([x_cb, y_cb, vx_cb, vy_cb], dtype=np.float32)
 
         # Initialize a spacecraft object with the state of the environment
         sc = Spacecraft(r_0, theta_0, r_dot_0, v_theta_0, mass, C1, C2)
+        sc_final = Spacecraft(r_f, theta_f, r_dot_f, v_theta_f, mass, C1, C2)
 
         # Update the spacecraft in the environment
         self._spacecraft = sc
 
         # calculate orbital elements
         a, e, w, theta = sc.calc_Planar_OE(x_cb, y_cb, vx_cb, vy_cb, mu)
+        a_f, e_f, w_f, theta_f = sc_final.calc_Planar_OE(x_cb, y_cb, vx_cb, vy_cb, mu)
+        a_nd = a / Constants.SMA_EARTH
+        a_f_nd = a_f / Constants.SMA_EARTH
+        T_i = 2 * np.pi * ( a_nd**3 / 1.0 ) ** 0.5
+        T_target = 2 * np.pi * ( a_f_nd**3 / 1.0 ) ** 0.5
+
+        #determine time of flight
+        TTG_dim = 0.0
+        TTG_nd = 0.0
+
+        if (T_target > T_i):
+            TTG_nd = T_target
+            TTG_dim = T_target * self.t_star
+        else:
+            TTG_nd = T_i 
+            TTG_dim = T_i * self.t_star
+
+        self.TOF = TTG_dim
+        self.TOF_nd = TTG_nd
 
         self._keplerian_elements[0] = a
         self._keplerian_elements[1] = e
@@ -189,7 +226,9 @@ class TwoBodyRendezvous_Env(gym.Env):
         vx_target_nd = vx_f / (self.l_star / self.t_star)
         vy_target_nd = vy_f / (self.l_star / self.t_star)
 
-        observation = np.array([x_nd, y_nd, vx_nd, vy_nd, mass_nd, x_target_nd, y_target_nd, vx_target_nd, vy_target_nd], dtype=np.float32)
+        # set the initial state of the environment
+        self._state = np.array([x_0, y_0, vx_0, vy_0, mass, x_f, y_f, vx_f, vy_f, TTG_dim], dtype=np.float32)
+        observation = np.array([x_nd, y_nd, vx_nd, vy_nd, mass_nd, x_target_nd, y_target_nd, vx_target_nd, vy_target_nd, TTG_nd], dtype=np.float32)
         self.elapsed_t = 0.0
 
         info = self._get_info(
@@ -207,32 +246,45 @@ class TwoBodyRendezvous_Env(gym.Env):
         vx = self._state[2]
         vy = self._state[3]
         mass = self._state[4]
-        mu = self._state[5]
-        x_target = self._state[6]
-        y_target = self._state[7]
-        vx_target = self._state[8]
-        vy_target = self._state[9]
+        x_target = self._state[5]
+        y_target = self._state[6]
+        vx_target = self._state[7]
+        vy_target = self._state[8]
+
+        # normalize target velocities
+        x_target_norm = x_target / self.l_star
+        y_target_norm = y_target / self.l_star
+        vx_target_norm = vx_target / (self.l_star / self.t_star)
+        vy_target_norm = vy_target / (self.l_star / self.t_star)
 
         # position difference from target
-        dx = x - x_target    # delta x in m
-        dy = y - y_target    # delta y in m
-        dr = (dx**2 + dy**2) ** 0.5 # distance to target in m
-        r_target = (x_target**2 + y_target**2) ** 0.5 # target radius in m
+        dx = (x - x_target) / self.l_star   # delta x nd
+        dy = (y - y_target) / self.l_star    # delta y nd
+        dr = (dx**2 + dy**2) ** 0.5 # distance to target in nd units
+        r_target = (x_target_norm**2 + y_target_norm**2) ** 0.5 # target radius in nd units
         dr_norm = dr / r_target if r_target != 0 else 0.0
 
         # velocity difference from target
-        dvx = vx - vx_target    # delta vx in m/s
-        dvy = vy - vy_target    # delta vy in m/s
-        dv = (dvx**2 + dvy**2) ** 0.5    # velocity difference to target in m/s
-        v_target = (vx_target**2 + vy_target**2) ** 0.5   # target velocity in m/s
+        dvx = (vx - vx_target) / (self.l_star / self.t_star)  # delta vx in nd units
+        dvy = (vy - vy_target) / (self.l_star / self.t_star)  # delta vy in nd units
+        dv = (dvx**2 + dvy**2) ** 0.5    # velocity difference to target in nd units
+        v_target = (vx_target_norm**2 + vy_target_norm**2) ** 0.5   # target velocity in nd units
         dv_norm = dv / v_target if v_target != 0 else 0.0
 
         return dx, dy, dr, dvx, dvy, dv, r_target, v_target, dr_norm, dv_norm
 
     def calc_reward(self):
 
-        x = self._state[0]
-        y = self._state[1]
+        x = self._state[0] / self.l_star
+        y = self._state[1] / self.l_star
+        vx = self._state[2] / (self.l_star / self.t_star)
+        vy = self._state[3] / (self.l_star / self.t_star)
+        x_target = self._state[5] / self.l_star
+        y_target = self._state[6] / self.l_star
+        vx_target = self._state[7] / (self.l_star / self.t_star)
+        vy_target = self._state[8] / (self.l_star / self.t_star)
+        TTG = self._state[9]
+        TTG_nd = TTG / self.t_star
         r = (x**2 + y**2) ** 0.5
 
         # extract orbital elements
@@ -242,8 +294,10 @@ class TwoBodyRendezvous_Env(gym.Env):
         deltas = self.calc_deltas()
         dx, dy, dr, dvx, dvy, dv, r_target, v_target, dr_norm, dv_norm = deltas
 
+        residual = dx**2 + dy**2 + dvx**2 + dvy**2
+
         # central body parameters
-        cb_rad = self.planet_radii[0]
+        cb_rad = self.planet_radii[0] / self.l_star  # central body radius in nd units
 
         terminated = False
 
@@ -255,11 +309,11 @@ class TwoBodyRendezvous_Env(gym.Env):
         elif e >= 1.0:
             reward = 0.0
             terminated = True
+        elif TTG <= 0.0:
+            reward = 1/residual * 1/TTG_nd # terminate based on time running out
+            terminated = True
         else:
-            # exponential decaying reward based on the difference between target
-            # and desired position
-            # reward shaping based on distance and velocity differences
-            reward = - (dr_norm + dv_norm)
+            reward = 1/residual * 1/TTG_nd # reward based on distance from target and time remaining
 
         return reward, terminated
 
@@ -282,7 +336,9 @@ class TwoBodyRendezvous_Env(gym.Env):
         vx = self._state[2]
         vy = self._state[3]
         mass = self._state[4]
-        mu = self._state[5]
+        TTG = self._state[9]
+        mu = self.param_mu  # solar mu [m^3/s^2]
+        self.step_count += 1
 
         # central body location
         x_cb = self._arr_cb[0]
@@ -323,9 +379,12 @@ class TwoBodyRendezvous_Env(gym.Env):
         # change in state vector
         delta_r = y_final - y0
 
+        # update time to go
+        TTG = TTG - self.step_size
+
         # update the state and elapsed time
         self.elapsed_t = self.elapsed_t + self.step_size
-        self._state = np.append(y_final, [mu, self._state[6], self._state[7], self._state[8], self._state[9]]).astype(np.float32)
+        self._state = np.append(y_final, [self._state[5], self._state[6], self._state[7], self._state[8], TTG]).astype(np.float32)
 
         x_plus = y_final[0]
         y_plus = y_final[1]
@@ -360,7 +419,12 @@ class TwoBodyRendezvous_Env(gym.Env):
         vx_nd = vx_plus / (self.l_star / self.t_star)
         vy_nd = vy_plus / (self.l_star / self.t_star)
         mass_nd = mass_plus / self.m_star
-        observation = np.array([x_nd, y_nd, vx_nd, vy_nd, mass_nd], dtype=np.float32)
+        x_target_nd = self._state[5] / self.l_star
+        y_target_nd = self._state[6] / self.l_star
+        vx_target_nd = self._state[7] / (self.l_star / self.t_star)
+        vy_target_nd = self._state[8] / (self.l_star / self.t_star)
+        TTG_nd = self._state[9] / self.t_star
+        observation = np.array([x_nd, y_nd, vx_nd, vy_nd, mass_nd, x_target_nd, y_target_nd, vx_target_nd, vy_target_nd, TTG_nd], dtype=np.float32)
 
         # extract other environment information
         info = self._get_info(solution, delta_r)
@@ -371,6 +435,25 @@ class TwoBodyRendezvous_Env(gym.Env):
             info["episode"] = {"r": float(self.episode_reward)}
 
         return observation, reward, terminated, truncated, info
+    
+    def _convert_state_to_obs(self):
+
+        x_nd = self._state[0] / self.l_star
+        y_nd = self._state[1] / self.l_star
+        vx_nd = self._state[2] / (self.l_star / self.t_star)
+        vy_nd = self._state[3] / (self.l_star / self.t_star)
+        mass_nd = self._state[4] / self.m_star
+        x_target_nd = self._state[5] / self.l_star
+        y_target_nd = self._state[6] / self.l_star
+        vx_target_nd = self._state[7] / (self.l_star / self.t_star)
+        vy_target_nd = self._state[8] / (self.l_star / self.t_star)
+        TTG_nd = self._state[9] / self.t_star
+
+        observation = np.array([x_nd, y_nd, vx_nd, vy_nd, mass_nd, x_target_nd, 
+                                y_target_nd, vx_target_nd, vy_target_nd, TTG_nd], 
+                                dtype=np.float32)
+        
+        return observation
 
     def set_state(self, state):
 
@@ -381,9 +464,15 @@ class TwoBodyRendezvous_Env(gym.Env):
         vy_in = state[3]
         m_in = state[4]
 
+        x_target_in = state[5]
+        y_target_in = state[6]
+        vx_target_in = state[7]
+        vy_target_in = state[8]
+        TTG_in = state[9]
+
         # set the environment state to the input state vector
         self._state = np.array(
-            [x_in, y_in, vx_in, vy_in, m_in, self._state[5], self._state[6]],
+            [x_in, y_in, vx_in, vy_in, m_in, x_target_in, y_target_in, vx_target_in, vy_target_in, TTG_in],
             dtype=np.float32,
         )
 
@@ -398,10 +487,18 @@ class TwoBodyRendezvous_Env(gym.Env):
 
         # calculate the new orbital elements
         a, e, w, theta = self._spacecraft.calc_Planar_OE(
-            x_cb, y_cb, vx_cb, vy_cb, self._state[5]
+            x_cb, y_cb, vx_cb, vy_cb, self.param_mu
         )
 
         self._keplerian_elements[0] = a
         self._keplerian_elements[1] = e
         self._keplerian_elements[2] = w
         self._keplerian_elements[3] = theta
+
+        info = self._get_info(
+            None, #placeholder for ODE data - only provided in step()
+            None, #placeholder for delta_r data - only provided in step()
+        )
+        observation = self._convert_state_to_obs()
+
+        return observation, info
