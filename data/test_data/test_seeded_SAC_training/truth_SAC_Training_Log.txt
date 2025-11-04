@@ -56,8 +56,8 @@ Final y: -0.46871054
 Final vx: 0.6998444 
 Final vy: -0.86793435 
 Final m: 0.8158742 
-Final sma: 157355072260.04572 
-Final ecc: 0.1910787742730425 
+Final sma: 157355074396.43784 
+Final ecc: 0.19107880850284972 
 terminated: False 
 truncated: True 
 Complete!
