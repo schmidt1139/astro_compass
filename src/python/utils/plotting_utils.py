@@ -2,6 +2,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import os
 from constants.constants import Constants
+from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 
 
 def format_plots():
@@ -197,3 +198,40 @@ def plot_SAC_training(
     eph.plot_xy_ref_orbit(Constants.SMA_MARS, "Mars", "#b7410e")
     eph.plot_xy_ref_orbit(Constants.SMA_EARTH, "Earth")
     fig_orb.savefig(os.path.join(path_output, "SAC_Test_Traj.png"), dpi=300)
+
+def plot_overlay_ballistic_orbit(x, y, vx, vy, env, fig, params, eph, label_in,
+                                 color_in="lime"):
+
+    obs, info = env.reset()
+
+    state_in = [x, y, vx, vy, 1000.0, x, y, vx, vy, Constants.YEARS_TO_SEC * 10.0]
+
+    obs, info = env.set_state(state_in)
+
+    T = info["orbital_period_years"] * Constants.YEARS_TO_SEC
+
+    time = 0.0
+    flag_done = False
+    arr_x = []
+    arr_y = []
+    while not flag_done:
+
+        obs, reward, done, truncated, info = env.step([0.0, 0.0, 0.0])
+
+        # dim state
+        t_i = info["Elapsed time"]
+        x_i = obs[0] * params["l_star"]
+        y_i = obs[1] * params["l_star"]
+        vx_i = obs[2] * params["l_star"] / params["t_star"]
+        vy_i = obs[3] * params["l_star"] / params["t_star"]
+        m_i = obs[4] * params["m_star"]
+
+        if info["Elapsed time"] >= T:
+            flag_done = True
+
+        arr_x.append(x_i)
+        arr_y.append(y_i)
+
+    fig = eph.overlay_ref_orbit(ephem=None, label=label_in, color_in=color_in, arr_x=arr_x, arr_y=arr_y)
+
+    return fig
