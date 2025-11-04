@@ -1,5 +1,7 @@
 import sys
 import os
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend to avoid Tkinter threading issues
 import gymnasium as gym
 
 # Add the tests directory to the path so we can import test modules
@@ -15,6 +17,8 @@ from test_env_step_with_nn_action import test_env_step_with_nn_action
 from test_SAC_training import test_SAC_training
 from test_seeded_SAC_training import test_seeded_SAC_training
 from test_TBR_env import test_TBR_env
+from test_Hamiltonian_TBR_controller import test_Hamiltonian_TBR_Controller
+
 
 
 def run_regression_tests(flag_report_live=False):
@@ -23,6 +27,22 @@ def run_regression_tests(flag_report_live=False):
 
     arr_test_pass_bools = []
     arr_test_names = []
+
+    test_name = "test_TBR_env"
+    arr_test_names.append(test_name)
+    test_num = len(arr_test_names)
+    print(f"\n\nRunning Test {test_num}: {test_name}")
+    flag_test_pass = test_TBR_env(flag_report_live)
+    print(f"\n\n{test_name} passed:  ", flag_test_pass)
+    arr_test_pass_bools.append(flag_test_pass)
+
+    test_name = "test_Hamiltonian_TBR_controller"
+    arr_test_names.append(test_name)
+    test_num = len(arr_test_names)
+    print(f"\n\nRunning Test {test_num}: {test_name}")
+    flag_test_pass = test_Hamiltonian_TBR_Controller(flag_report_live)
+    print(f"\n\n{test_name} passed:  ", flag_test_pass)
+    arr_test_pass_bools.append(flag_test_pass)
                             
     arr_test_names.append("test_Hamiltonians")
     test_num = len(arr_test_names)
@@ -71,13 +91,6 @@ def run_regression_tests(flag_report_live=False):
     print(f"\n\n{test_name} passed:  ", flag_test_pass)
     arr_test_pass_bools.append(flag_test_pass)
 
-    test_name = "test_TBR_env"
-    arr_test_names.append(test_name)
-    test_num = len(arr_test_names)
-    print(f"\n\nRunning Test {test_num}: {test_name}")
-    flag_test_pass = test_TBR_env(flag_report_live)
-    print(f"\n\n{test_name} passed:  ", flag_test_pass)
-    arr_test_pass_bools.append(flag_test_pass)
 
     print("\n\nSummary of Regression Tests:")
     num_tests = len(arr_test_names)
