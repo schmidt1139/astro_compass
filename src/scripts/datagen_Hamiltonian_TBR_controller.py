@@ -8,13 +8,9 @@ from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from constants.constants import Constants
 from utils.test_utils import compare_trajectories
 from core.gen_Hamiltonian_trajectory import gen_Hamiltonian_trajectory
-from utils.log_utils import write_log_to_file
+from utils.log_utils import write_log_to_file, write_config_file, read_config_file
 
-def write_config_file(params, path_config):
-    """Write configuration parameters to a text file for record-keeping."""
-    with open(path_config, 'w') as f:
-        for key, value in params.items():
-            f.write(f"{key}: {value}\n")
+
 
 def datagen_Hamiltonian_TBR_controller(flag_report_live):
 
@@ -30,15 +26,23 @@ def datagen_Hamiltonian_TBR_controller(flag_report_live):
         "t_star": (Constants.SMA_EARTH**3 / (Constants.MU_SUN_M)) ** 0.5,  # characteristic time - derived
         "g0": Constants.G0,  # gravitational acceleration at Earth surface [m/s^2]
         "env_step_size": 3600 * 24,  # environment step size [s]
-        "seed_env_init": 43000,  # random seed for environment
-        "num_trajs": 100,  # number of trajectories to simulate
+        "seed_env_init": 44235,  # random seed for environment
+        "num_trajs": 10,  # number of trajectories to simulate
         "max_steps": 1000,  # maximum number of steps per trajectory
-        "tof_scale": [1.25, 1.0, 2.0],  # scale factor for time of flight
-        "data_path": "data\\training_ephems\\training_TBR_venus_mars\\",  # path to save data files
+        "tof_scale": [1.0, 1.0, 2.0],  # scale factor for time of flight
+        "data_path": "data\\z_script_output\\training_TBR_circular\\",  # path to save data files
         "eps_threshold": 0.0001,
         "flag_plot_traj": True,  # flag to plot trajectories
         "init_costate_guesses": 4,  # number of initial costate guesses to try
+        "root_max_iters": 800,  # maximum number of root finding iterations
         "flag_compare_to_truth": True,  # flag to compare output to truth data
+        "a_min_env_nd": Constants.SMA_MERCURY,  # min semi-major axis for env [m]
+        "a_max_env_nd": Constants.SMA_JUPITER,  # max semi-major axis for env [m]
+        "e_min_env": 0.0001,  # min eccentricity for env
+        "e_max_env": 0.0001,  # max eccentricity for env
+        "w_min_env_deg": 0.0,  # min argument of periapsis for env [rad]
+        "w_max_env_deg": 0.0,  # max argument of periapsis for env [rad]
+        "flag_report_live": flag_report_live,
     }
 
     # Write configuration parameters to file
@@ -61,6 +65,12 @@ def datagen_Hamiltonian_TBR_controller(flag_report_live):
         t_star=params["t_star"],  # characteristic time in s
         g0=params["g0"],  # gravitational acceleration at Earth surface in m/s^2
         step_size=params["env_step_size"],  # environment step size in seconds
+        a_min_env_nd=params["a_min_env_nd"], # min semi-major axis for env [AU]
+        a_max_env_nd=params["a_max_env_nd"], # max semi-major axis for env [AU]
+        e_min_env=params["e_min_env"], # min eccentricity for env
+        e_max_env=params["e_max_env"], # max eccentricity for env
+        w_min_env_deg=params["w_min_env_deg"], # min argument of periapsis for env [deg]
+        w_max_env_deg=params["w_max_env_deg"], # max argument of periapsis for env [deg]
     )
 
     seed_traj = params["seed_env_init"]
@@ -101,7 +111,7 @@ def datagen_Hamiltonian_TBR_controller(flag_report_live):
         test_log = log("Average time per successful trajectory: " + str(elapsed_time/total_pass) + " seconds", test_log, flag_report_live) 
 
     #write test log to file
-    path_log = params["data_path"] + "test_TBR_hamiltonian_log.txt"
+    path_log = params["data_path"] + "datagen_Hamiltonian_TBR_controller_log.txt"
     write_log_to_file(path_log, test_log)
 
 
