@@ -224,6 +224,11 @@ class Ephemeris:
             plot.show()
         figs.append(fig)
 
+        fig = self.plot_xy()
+        if flag_show:
+            plot.show()
+        figs.append(fig)
+
         return figs
 
     def write_to_file(self, file_path, mod_vector_write_frequency=1):
@@ -393,30 +398,6 @@ class Ephemeris:
 
         ax.set_xlim([-max_lim, max_lim])
         ax.set_ylim([-max_lim, max_lim])
-
-        self.fig_xy = fig
-        self.ax_xy = ax
-
-        return self.fig_xy
-    
-    def add_target_icon(self, x_target, y_target, marker_in="+", color_in="red", size_in=12):
-        # Add a target icon to the existing XY plot
-        fig = self.fig_xy
-        ax = self.ax_xy
-
-        # Convert to AU
-        scale = Constants.SMA_EARTH
-
-        ax.plot(
-            x_target / scale,
-            y_target / scale,
-            label="Target",
-            marker=marker_in,
-            linestyle=None,
-            color=color_in,
-            markersize=size_in,
-        )
-        ax.legend()  # Update legend to include the new plot
 
         self.fig_xy = fig
         self.ax_xy = ax
