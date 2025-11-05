@@ -14,4 +14,5 @@ data_path: data\test_data\test_TBR_hamiltonian\
 eps_threshold: 0.0001
 flag_plot_traj: True
 init_costate_guesses: 4
+root_max_iters: 400
 flag_compare_to_truth: True
