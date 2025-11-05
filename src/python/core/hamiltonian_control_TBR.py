@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 from scipy.optimize import root
 from scipy.integrate import solve_ivp
 
@@ -155,7 +156,7 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
         self.init_costate_guesses = 16
 
         # Check keyword args and override values
-        allowed_kwargs = {"flag_report_live", "eps_threshold","init_costate_guesses"}
+        allowed_kwargs = {"flag_report_live", "eps_threshold","init_costate_guesses","root_max_iters"}
 
         for key, val in kwargs.items():
             if key in allowed_kwargs:
@@ -342,17 +343,23 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
             ]
         )
 
-        # integrate forward in time
-        sol = solve_ivp(
-            Hamiltonian_EOM_TBT_v2,
-            t_span,
-            arr_full_y0,
-            method="RK45",
-            args=(params,),
-            t_eval=t_eval,
-            rtol=self.ivp_solve_rtol,
-            atol=self.ivp_solve_atol,
-        )
+        # integrate forward in time - catch step size warning as exception
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error', message='Required step size is less than spacing between numbers')
+            
+            try:
+                sol = solve_ivp(
+                    Hamiltonian_EOM_TBT_v2,
+                    t_span,
+                    arr_full_y0,
+                    method="RK45",
+                    args=(params,),
+                    t_eval=t_eval,
+                    rtol=self.ivp_solve_rtol,
+                    atol=self.ivp_solve_atol,
+                )
+            except UserWarning as w:
+                raise Exception(f"Integration failed in final ephemeris generation: {str(w)}") from w
 
         # assign solution to controller object and set solution flag to true
         self.final_sol = sol

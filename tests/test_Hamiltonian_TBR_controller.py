@@ -36,6 +36,7 @@ def test_Hamiltonian_TBR_Controller(flag_report_live):
         "eps_threshold": 0.0001,
         "flag_plot_traj": True,  # flag to plot trajectories
         "init_costate_guesses": 4,  # number of initial costate guesses to try
+        "root_max_iters": 400,  # maximum number of root finding iterations
         "flag_compare_to_truth": True,  # flag to compare output to truth data
     }
 
