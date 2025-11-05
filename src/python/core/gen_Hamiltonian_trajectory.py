@@ -2,6 +2,7 @@ from utils.log_utils import log
 from constants.constants import Constants
 from core.hamiltonian_control_TBR import Hamiltonian_Controller_TBR, FirstGuessException
 from core.ephemeris_v2 import Ephemeris_v2
+from core.exceptions import SpacecraftCollisionException, LowMassException
 
 def gen_Hamiltonian_trajectory(env, seed_traj, params, ephem_filename,
                                 test_log=[],flag_report_live=False):
@@ -48,6 +49,7 @@ def gen_Hamiltonian_trajectory(env, seed_traj, params, ephem_filename,
         "flag_report_live": flag_report_live,
         "eps_threshold": params["eps_threshold"],
         "init_costate_guesses": params["init_costate_guesses"],
+        "root_max_iters": params["root_max_iters"],
     }
 
     init_obs = obs
@@ -103,6 +105,20 @@ def gen_Hamiltonian_trajectory(env, seed_traj, params, ephem_filename,
     except FirstGuessException as e:
         test_log = log(
             "Hamiltonian not found: " + str(e), test_log, flag_report_live
+        )
+
+        return flag_solved, test_log, None
+
+    except SpacecraftCollisionException as e:
+        test_log = log(
+            "Spacecraft collision during trajectory generation: " + str(e), test_log, flag_report_live
+        )
+
+        return flag_solved, test_log, None
+    
+    except LowMassException as e:
+        test_log = log(
+            "Low spacecraft mass during trajectory generation: " + str(e), test_log, flag_report_live
         )
 
         return flag_solved, test_log, None

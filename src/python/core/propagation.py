@@ -1,5 +1,6 @@
 import numpy as np
 from constants.constants import Constants
+from core.exceptions import SpacecraftCollisionException, LowMassException
 
 def spacecraft_EOM_radial_2D_EB(t, y, params):
     """
@@ -382,6 +383,8 @@ def Hamiltonian_EOM_TBT_v2(t, state, params):
     # get the number of parameters
     num_params = len(params)
 
+    max_deriv = 10000.0
+
     # check parameter length
     if num_params != 10:
         raise Exception("Invalid number of parameters")
@@ -409,6 +412,12 @@ def Hamiltonian_EOM_TBT_v2(t, state, params):
 
     # Derivative calculation preliminaries
     r = np.linalg.norm(r_vec)
+    
+    # Check if spacecraft is too close to central body (prevents numerical issues)
+    r_min = 0.01  # Minimum allowed radius (non-dimensional)
+    if r < r_min:
+        raise SpacecraftCollisionException(f"Spacecraft too close to central body: r = {r:.6e}")
+    
     r_dot_lam_v = np.dot(r_vec, lam_v_vec)
     lam_v_mag = np.linalg.norm(lam_v_vec)
 
@@ -435,6 +444,11 @@ def Hamiltonian_EOM_TBT_v2(t, state, params):
             u = smoothing_function_tanh(rho, eps)
         elif switch_smoothing_method == 1:
             u = smoothing_function_homotopic(rho, eps, flag_constrain_u)
+    
+    # Check if spacecraft mass is too low (can cause numerical issues)
+    m_min = 0.01  # Minimum allowed mass (non-dimensional) - 1% of initial mass
+    if m < m_min:
+        u = 0.0  # No thrust if out of fuel
 
     # state vector derivative calculations
     dr_vec = v_vec
@@ -443,6 +457,12 @@ def Hamiltonian_EOM_TBT_v2(t, state, params):
 
     if dm > 0.0:
         raise Exception("Positive mass rate detected")
+    
+    # In Hamiltonian_EOM_TBT_v2
+    r = np.linalg.norm(r_vec)
+    r_min = 0.001  # Minimum allowed radius (non-dimensional)
+    if r < r_min:
+        raise Exception(f"Spacecraft too close to central body: r = {r}")
 
     # co-state vector derivatives
     d_lam_r_vec = mu / r**3 * lam_v_vec - 3 * mu * r_dot_lam_v / r**5 * r_vec

@@ -61,11 +61,17 @@ class Ephemeris:
         
         #plot.style.use("data/support_files/dark_scientific.mplstyle");
 
+        # Convert all data to AU at the start
+        scale = Constants.SMA_EARTH
+        x_au = self.arr_x / scale
+        y_au = self.arr_y / scale
+        radius_cb_au = radius_central_body / scale
+
         arr_x_cb = np.array([])
         arr_y_cb = np.array([])
 
-        max_x = max(abs(self.arr_x))
-        max_y = max(abs(self.arr_y))
+        max_x = max(abs(x_au))
+        max_y = max(abs(y_au))
 
         max_lim = 1.1 * max([max_x, max_y])
 
@@ -74,8 +80,8 @@ class Ephemeris:
         # plot central body
         for i in range(0, pts):
             theta = 2 * np.pi * i / pts
-            x_cb = radius_central_body * np.cos(theta)
-            y_cb = radius_central_body * np.sin(theta)
+            x_cb = radius_cb_au * np.cos(theta)
+            y_cb = radius_cb_au * np.sin(theta)
 
             arr_x_cb = np.append(arr_x_cb, x_cb)
             arr_y_cb = np.append(arr_y_cb, y_cb)
@@ -84,11 +90,11 @@ class Ephemeris:
 
         ax.set_aspect("equal")
 
-        # Get initial and final states
-        x0 = self.arr_x[0]
-        y0 = self.arr_y[0]
-        xf = self.arr_x[-1]
-        yf = self.arr_y[-1]
+        # Get initial and final states in AU
+        x0 = x_au[0]
+        y0 = y_au[0]
+        xf = x_au[-1]
+        yf = y_au[-1]
 
         if (plot.rcParams["figure.facecolor"] == "black"):
             markerfacecolor_in = "white"
@@ -121,16 +127,16 @@ class Ephemeris:
             color=background_color,
             markersize=8,
         )
-        ax.plot(self.arr_x, self.arr_y, label="Trajectory")
+        ax.plot(x_au, y_au, label="Trajectory")
 
-        if (radius_central_body > 0.1* max_lim):
+        if (radius_cb_au > 0.1* max_lim):
             ax.plot(arr_x_cb, arr_y_cb, label="Central Body",linewidth=4, color="gold")
         else:
             ax.plot(arr_x_cb, arr_y_cb, label="Central Body", color=background_color, markerfacecolor="gold", linestyle=None, marker="o", markersize=8)
 
         ax.set_title("Trajectory")
-        ax.set_xlabel("X [km]")
-        ax.set_ylabel("Y [km]")
+        ax.set_xlabel("X [AU]")
+        ax.set_ylabel("Y [AU]")
         ax.set_xlim([-max_lim, max_lim])
         ax.set_ylim([-max_lim, max_lim])
         ax.legend()
@@ -214,6 +220,11 @@ class Ephemeris:
         ax.set_ylabel("Throttle")
         fig.tight_layout()
         ax.legend(loc="lower right")
+        if flag_show:
+            plot.show()
+        figs.append(fig)
+
+        fig = self.plot_xy()
         if flag_show:
             plot.show()
         figs.append(fig)
@@ -341,6 +352,9 @@ class Ephemeris:
         fig = self.fig_xy
         ax = self.ax_xy
 
+        # Convert to AU
+        scale = Constants.SMA_EARTH
+
         arr_x = np.array([])
         arr_y = np.array([])
 
@@ -351,7 +365,8 @@ class Ephemeris:
             arr_x = np.append(arr_x, x)
             arr_y = np.append(arr_y, y)
 
-        ax.plot(arr_x, arr_y, label=label, color=color_in)
+        # Convert arrays to AU before plotting
+        ax.plot(arr_x / scale, arr_y / scale, label=label, color=color_in)
         ax.legend()  # Update legend to include the new plot
 
         self.fig_xy = fig
@@ -364,9 +379,10 @@ class Ephemeris:
         fig = self.fig_xy
         ax = self.ax_xy
 
-
-        max_x = max(abs(self.arr_x))
-        max_y = max(abs(self.arr_y))
+        # Convert to AU
+        scale = Constants.SMA_EARTH
+        max_x = max(abs(self.arr_x / scale))
+        max_y = max(abs(self.arr_y / scale))
 
         for line in ax.get_lines():
             x_data = line.get_xdata()
@@ -382,27 +398,6 @@ class Ephemeris:
 
         ax.set_xlim([-max_lim, max_lim])
         ax.set_ylim([-max_lim, max_lim])
-
-        self.fig_xy = fig
-        self.ax_xy = ax
-
-        return self.fig_xy
-    
-    def add_target_icon(self, x_target, y_target, marker_in="+", color_in="red", size_in=12):
-        # Add a target icon to the existing XY plot
-        fig = self.fig_xy
-        ax = self.ax_xy
-
-        ax.plot(
-            x_target,
-            y_target,
-            label="Target",
-            marker=marker_in,
-            linestyle=None,
-            color=color_in,
-            markersize=size_in,
-        )
-        ax.legend()  # Update legend to include the new plot
 
         self.fig_xy = fig
         self.ax_xy = ax

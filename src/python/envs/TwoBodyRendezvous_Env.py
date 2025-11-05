@@ -1,5 +1,6 @@
 import numpy as np
 import gymnasium as gym
+import warnings
 from typing import Optional
 from scipy.integrate import solve_ivp
 from constants.constants import Constants
@@ -38,6 +39,13 @@ class TwoBodyRendezvous_Env(gym.Env):
         )  # characteristic time (s)
         self.m_star = kwargs.get("m_star", 3366.0)  # characteristic mass (kg)
         self.step_size = kwargs.get("step_size", 86400)  # environment step size (s)
+        self.a_min_env_nd = kwargs.get("a_min_env_nd", Constants.SMA_VENUS)  # min semi-major axis for env [AU]
+        self.a_max_env_nd = kwargs.get("a_max_env_nd", Constants.SMA_MARS)  # max semi-major axis for env [AU]
+        self.e_min_env = kwargs.get("e_min_env", 0.0)  # min eccentricity for env
+        self.e_max_env = kwargs.get("e_max_env", 0.5)  # max eccentricity for env
+        self.w_min_env_rad = kwargs.get("w_min_env_rad", 0.0)  # min argument of periapsis for env [rad]
+        self.w_max_env_rad = kwargs.get("w_max_env_rad", 2*np.pi)  # max argument of periapsis for env [deg]
+
         self.arr_mu = np.array([self.param_mu])  # solar mu [m^3/s^2]
         self.planet_radii = np.array([Constants.RADIUS_SUN_M])  # solar radius [m]
         self.elapsed_t = 0.0
@@ -136,9 +144,9 @@ class TwoBodyRendezvous_Env(gym.Env):
         mu = self.param_mu
 
         # set ranges for initial state parameters
-        a_range = [Constants.SMA_VENUS, Constants.SMA_MARS]  # initial radius range (m)
-        e_range = [0.0, 0.5]  # initial eccentricity range
-        w_range = [0.0, 2 * np.pi]  # initial argument of periapsis range (rad)
+        a_range = [self.a_min_env_nd, self.a_max_env_nd]  # initial radius range (m)
+        e_range = [self.e_min_env, self.e_max_env]  # initial eccentricity range
+        w_range = [self.w_min_env_rad, self.w_max_env_rad]  # initial argument of periapsis range (rad)
         theta_range = [0.0, 2 * np.pi]  # initial true anomaly range (rad)
 
         # set the initial spacecraft parameters
@@ -370,8 +378,13 @@ class TwoBodyRendezvous_Env(gym.Env):
             dtype=np.float32,
         )
 
-        # solve ODE
-        solution = solve_ivp(env_EOM_TBT_v2, t_span, y0, method="RK45", args=(params,))
+        # solve ODE - catch step size warning as exception
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error', message='Required step size is less than spacing between numbers')
+            try:
+                solution = solve_ivp(env_EOM_TBT_v2, t_span, y0, method="RK45", args=(params,))
+            except UserWarning as w:
+                raise Exception(f"Integration failed in env.step(): {str(w)}") from w
 
         # extract the final state vector from ODE solution (last column in y)
         y_final = (solution.y[:, -1]).astype(np.float32)
