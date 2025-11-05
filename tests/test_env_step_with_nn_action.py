@@ -30,7 +30,7 @@ def test_env_step_with_nn_action(flag_report_live=False):
 
     # paths
     path_test_dir = os.path.normpath(
-        os.path.join(os.getcwd(), "data\\test_data\\test_env_step_with_nn_action\\")
+        os.path.join(os.getcwd(), "data", "test_data", "test_env_step_with_nn_action")
     )
     path_test_report = os.path.normpath(
         os.path.join(path_test_dir, "output_test_env_step_with_nn_action_log.txt")

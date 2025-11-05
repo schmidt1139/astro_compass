@@ -83,7 +83,7 @@ def test_env_step_with_action(flag_report_live=False):
 
     # write the log to a text file
     dir_test = os.path.normpath(
-        os.path.join(os.getcwd(), "data\\test_data\\test_env_step_with_action\\")
+        os.path.join(os.getcwd(), "data", "test_data", "test_env_step_with_action")
     )
     path_test_report = os.path.normpath(
         os.path.join(dir_test, "output_test_env_step_with_action_log.txt")

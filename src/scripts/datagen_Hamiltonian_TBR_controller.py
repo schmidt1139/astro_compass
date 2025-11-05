@@ -1,3 +1,4 @@
+import os
 import matplotlib.pyplot as plot
 import time
 import numpy as np
@@ -30,7 +31,7 @@ def datagen_Hamiltonian_TBR_controller(flag_report_live):
         "num_trajs": 10,  # number of trajectories to simulate
         "max_steps": 1000,  # maximum number of steps per trajectory
         "tof_scale": [1.0, 1.0, 2.0],  # scale factor for time of flight
-        "data_path": "data\\z_script_output\\training_TBR_circular\\",  # path to save data files
+        "data_path": os.path.join("data", "z_script_output", "training_TBR_circular"),  # path to save data files
         "eps_threshold": 0.0001,
         "flag_plot_traj": True,  # flag to plot trajectories
         "init_costate_guesses": 4,  # number of initial costate guesses to try
@@ -46,7 +47,7 @@ def datagen_Hamiltonian_TBR_controller(flag_report_live):
     }
 
     # Write configuration parameters to file
-    path_config = params["data_path"] + "test_TBR_hamiltonian_config.txt"
+    path_config = os.path.join(params["data_path"], "test_TBR_hamiltonian_config.txt")
     write_config_file(params, path_config)
 
     test_log = []
@@ -88,7 +89,7 @@ def datagen_Hamiltonian_TBR_controller(flag_report_live):
         #check if solved
         if flag_solved == True:
             arr_pass_count.append(1)
-            sa_output_ephems.append(params["data_path"] + ephem_filename + ".txt")
+            sa_output_ephems.append(os.path.join(params["data_path"], ephem_filename + ".txt"))
             if params["flag_plot_traj"] == True and eph_output is not None:
                 eph_output.save_plots(params["data_path"], ephem_filename, params, env)
 
@@ -111,7 +112,7 @@ def datagen_Hamiltonian_TBR_controller(flag_report_live):
         test_log = log("Average time per successful trajectory: " + str(elapsed_time/total_pass) + " seconds", test_log, flag_report_live) 
 
     #write test log to file
-    path_log = params["data_path"] + "datagen_Hamiltonian_TBR_controller_log.txt"
+    path_log = os.path.join(params["data_path"], "datagen_Hamiltonian_TBR_controller_log.txt")
     write_log_to_file(path_log, test_log)
 
 

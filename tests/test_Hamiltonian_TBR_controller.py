@@ -1,3 +1,4 @@
+import os
 import matplotlib.pyplot as plot
 import time
 
@@ -32,7 +33,7 @@ def test_Hamiltonian_TBR_Controller(flag_report_live):
         "num_trajs": 2,  # number of trajectories to simulate
         "max_steps": 1000,  # maximum number of steps per trajectory
         "tof_scale": [1.0, 1.0, 2.0],  # scale factor for time of flight
-        "data_path": "data\\test_data\\test_TBR_hamiltonian\\",  # path to save data files
+        "data_path": os.path.join("data", "test_data", "test_TBR_hamiltonian"),  # path to save data files
         "eps_threshold": 0.0001,
         "flag_plot_traj": True,  # flag to plot trajectories
         "init_costate_guesses": 4,  # number of initial costate guesses to try
@@ -41,7 +42,7 @@ def test_Hamiltonian_TBR_Controller(flag_report_live):
     }
 
     # Write configuration parameters to file
-    path_config = params["data_path"] + "test_TBR_hamiltonian_config.txt"
+    path_config = os.path.join(params["data_path"], "test_TBR_hamiltonian_config.txt")
     write_config_file(params, path_config)
 
     test_log = []
@@ -76,7 +77,7 @@ def test_Hamiltonian_TBR_Controller(flag_report_live):
         #check if solved
         if flag_solved == True:
             arr_pass_count.append(1)
-            sa_output_ephems.append(params["data_path"] + ephem_filename + ".txt")
+            sa_output_ephems.append(os.path.join(params["data_path"], ephem_filename + ".txt"))
             if params["flag_plot_traj"] == True:
                 eph_output.save_plots(params["data_path"], ephem_filename, params, env)
 
@@ -114,7 +115,7 @@ def test_Hamiltonian_TBR_Controller(flag_report_live):
     for output_file in sa_output_ephems:
         # Extract seed number from filename like "test_TBR_ephem_traj_seed_47.txt"
         seed_num = output_file.split("_seed_")[1].split(".txt")[0]
-        truth_file = params["data_path"] + f"test_TBR_ephem_traj_seed_{seed_num}_truth.txt"
+        truth_file = os.path.join(params["data_path"], f"test_TBR_ephem_traj_seed_{seed_num}_truth.txt")
         sa_truth_ephems.append(truth_file)
     
     flag_all_match = False

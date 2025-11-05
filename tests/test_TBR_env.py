@@ -1,3 +1,4 @@
+import os
 from utils.log_utils import log
 from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from constants.constants import Constants
@@ -114,9 +115,9 @@ def test_TBR_env(flag_report_live: bool = False):
                 flag_continue = False
 
         #fig = eph.plot_xy();
-        #fig.savefig("data\\test_data\\test_TBR\\test_traj_" + str(count_traj) + "_TBR_env.png")
+        #fig.savefig(os.path.join("data", "test_data", "test_TBR", "test_traj_") + str(count_traj) + "_TBR_env.png")
 
-        eph.write_to_file("data\\test_data\\test_TBR\\test_traj_ephemeris_" + str(count_traj) + "_TBR_env.txt")
+        eph.write_to_file(os.path.join("data", "test_data", "test_TBR", "test_traj_ephemeris_") + str(count_traj) + "_TBR_env.txt")
         
         test_log = log("Final observation vector\n", test_log, flag_report_live)
         test_log = log("x_nd: " + str(obs[0]), test_log, flag_report_live)
@@ -132,11 +133,11 @@ def test_TBR_env(flag_report_live: bool = False):
 
         # load truth data for comparison
         eph_truth = Ephemeris_v2()
-        eph_truth.read_from_file("data\\test_data\\test_TBR\\test_traj_ephemeris_" + str(count_traj) + "_TBR_env_truth.txt")
+        eph_truth.read_from_file(os.path.join("data", "test_data", "test_TBR", "test_traj_ephemeris_") + str(count_traj) + "_TBR_env_truth.txt")
 
         # re-ingest ephemeris data for comparison
         eph_comp = Ephemeris_v2()
-        eph_comp.read_from_file("data\\test_data\\test_TBR\\test_traj_ephemeris_" + str(count_traj) + "_TBR_env.txt")
+        eph_comp.read_from_file(os.path.join("data", "test_data", "test_TBR", "test_traj_ephemeris_") + str(count_traj) + "_TBR_env.txt")
 
         for i in range(eph_comp.num_vectors):
 

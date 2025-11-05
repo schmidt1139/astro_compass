@@ -24,7 +24,7 @@ def ingest_ephem_and_plot(path_to_ephemeris):
     print("Final vector: ", state_vector)
 
 
-directory = "data\\test_data\\"
+directory = os.path.join("data", "test_data")
 ephem_file_name = "ephemeris_nn_propagation.txt"
 path_to_ephemeris = directory + ephem_file_name
 

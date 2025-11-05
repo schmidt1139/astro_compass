@@ -111,14 +111,14 @@ def test_Hamiltonians(flag_report_live=False):
     )
     # print(sol)
 
-    eph_out.write_to_file("data\\test_data\\test_hamiltonians\\test_H_ephem.txt")
+    eph_out.write_to_file(os.path.join("data", "test_data", "test_hamiltonians", "test_H_ephem.txt"))
     eph1 = Ephemeris()
-    eph1.read_from_file("data\\test_data\\test_hamiltonians\\test_H_ephem.txt")
+    eph1.read_from_file(os.path.join("data", "test_data", "test_hamiltonians", "test_H_ephem.txt"))
     test_log = log("Wrote test ephem", test_log, flag_report_live)
 
     # compare to truth file
     eph2 = Ephemeris()
-    eph2.read_from_file("data\\test_data\\test_hamiltonians\\test_H_ephem_truth.txt")
+    eph2.read_from_file(os.path.join("data", "test_data", "test_hamiltonians", "test_H_ephem_truth.txt"))
     test_log = log("Read truth ephem", test_log, flag_report_live)
 
     # step through and compare each vector

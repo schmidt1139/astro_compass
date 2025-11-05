@@ -23,7 +23,7 @@ args = {
     "sma_target": 1.49598e08,  # Target sma of final circular orbit [km]
     "max_thrust": 1.33,  # Max thrust of the spacecraft engine [N]
     "ISP": 3872.0,  # Specific impulse of the spacecraft engine [s]
-    "filename_ephemeris_out": "data\\training_ephems\\solution_ephemeris.txt" #output path
+    "filename_ephemeris_out": os.path.join("data", "training_ephems", "solution_ephemeris.txt") #output path
 }
 
 # END USER INPUTS --------------------------------------------------------------

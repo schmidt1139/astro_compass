@@ -116,9 +116,9 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
     # print("GPU available: ", torch.cuda.is_available())  # Should print True if GPU is available)
 
     # paths
-    path_nns = os.path.normpath(os.path.join(os.getcwd(), "data\\neural_networks\\"))
+    path_nns = os.path.normpath(os.path.join(os.getcwd(), "data", "neural_networks"))
     path_output = os.path.normpath(
-        os.path.join(os.getcwd(), "data\\test_data\\test_SAC_training_TBR\\")
+        os.path.join(os.getcwd(), "data", "test_data", "test_SAC_training_TBR")
     )
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
     path_output_log = os.path.join(path_output, "SAC_Training_Log.txt")

@@ -1,3 +1,4 @@
+import os
 from utils.log_utils import log
 from constants.constants import Constants
 from core.hamiltonian_control_TBR import Hamiltonian_Controller_TBR, FirstGuessException
@@ -95,7 +96,7 @@ def gen_Hamiltonian_trajectory(env, seed_traj, params, ephem_filename,
         test_log = log("x_i_target: " + str(init_obs[5]), test_log, flag_report_live)
         test_log = log("y_i_target: " + str(init_obs[6]), test_log, flag_report_live)
         
-        file_name = params["data_path"] + ephem_filename + ".txt"
+        file_name = os.path.join(params["data_path"], ephem_filename + ".txt")
         eph_out.write_to_file(file_name)
         test_log = log("Wrote test ephem to following path...", test_log, flag_report_live)
         test_log = log(file_name, test_log, flag_report_live)

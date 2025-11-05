@@ -97,12 +97,12 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
 
     # paths
     # time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
-    path_nns = os.path.normpath(os.path.join(os.getcwd(), "data\\neural_networks\\"))
+    path_nns = os.path.normpath(os.path.join(os.getcwd(), "data", "neural_networks"))
     path_training_data = os.path.normpath(
-        os.path.join(os.getcwd(), "data\\training_ephems\\test_set_bang_bang\\")
+        os.path.join(os.getcwd(), "data", "training_ephems", "test_set_bang_bang")
     )
     path_output = os.path.normpath(
-        os.path.join(os.getcwd(), "data\\test_data\\test_seeded_SAC_training\\")
+        os.path.join(os.getcwd(), "data", "test_data", "test_seeded_SAC_training")
     )
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
     path_output_log = os.path.join(path_output, "SAC_Training_Log.txt")
