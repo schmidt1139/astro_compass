@@ -113,8 +113,8 @@ def test_TBR_env(flag_report_live: bool = False):
             if steps >= params["max_steps"]:
                 flag_continue = False
 
-        fig = eph.plot_xy();
-        fig.savefig("data\\test_data\\test_TBR\\test_traj_" + str(count_traj) + "_TBR_env.png")
+        #fig = eph.plot_xy();
+        #fig.savefig("data\\test_data\\test_TBR\\test_traj_" + str(count_traj) + "_TBR_env.png")
 
         eph.write_to_file("data\\test_data\\test_TBR\\test_traj_ephemeris_" + str(count_traj) + "_TBR_env.txt")
         
@@ -219,4 +219,3 @@ def test_TBR_env(flag_report_live: bool = False):
         test_log = log("Test FAILED: Discrepancies found between trajectories and truth data.", test_log, flag_report_live)
 
     return flag_test_pass
-
