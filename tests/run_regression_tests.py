@@ -4,8 +4,17 @@ import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend to avoid Tkinter threading issues
 import gymnasium as gym
 
+# Set unbuffered output for real-time console feedback
+os.environ['PYTHONUNBUFFERED'] = '1'
+
+# Get the project root directory and change to it
+# This ensures relative paths in tests work correctly
+tests_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(tests_dir)
+os.chdir(project_root)
+print(f"Working directory set to: {os.getcwd()}")
+
 # Add the tests directory to the path so we can import test modules
-tests_dir = os.path.dirname(__file__)
 if tests_dir not in sys.path:
     sys.path.insert(0, tests_dir)
 

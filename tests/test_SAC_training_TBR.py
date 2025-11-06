@@ -1,6 +1,12 @@
+import os
+# Limit threads BEFORE importing numpy/torch to avoid resource exhaustion on shared systems
+os.environ['OMP_NUM_THREADS'] = '4'
+os.environ['MKL_NUM_THREADS'] = '4'
+os.environ['OPENBLAS_NUM_THREADS'] = '4'
+os.environ['NUMEXPR_NUM_THREADS'] = '4'
+
 import gymnasium as gym
 import sys
-import os
 import matplotlib.pyplot as plt
 import random
 import filecmp
@@ -292,7 +298,7 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
     fig_xy.savefig(os.path.join(path_output, "SAC_Test_Traj.png"))
 
     test_log = log("Complete!", test_log, flag_report_live)
-    test_log = log("Plots saved to: " + path_output, test_log, flag_report_live)
+    test_log = log("Plots saved!", test_log, flag_report_live)
 
     # save log to file
     with open(os.path.join(path_output, "SAC_Training_Log.txt"), "w") as f:

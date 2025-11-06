@@ -481,7 +481,8 @@ class Ephemeris_v2:
 
         for i, fig in enumerate(figs):
             plot_title = fig.axes[0].get_title().replace(" ", "_").lower()
-            file_path = os.path.join(directory_path, f"{file_tag}_{plot_title}.png")
+            # Normalize path to handle platform differences and invalid characters
+            file_path = os.path.normpath(os.path.join(directory_path, f"{file_tag}_{plot_title}.png"))
             fig.savefig(file_path, dpi=300)
 
 
@@ -498,7 +499,8 @@ class Ephemeris_v2:
         fig_xy = self.adjust_plot_limits()
 
         plot_title = fig_xy.axes[0].get_title().replace(" ", "_").lower()
-        file_path = os.path.join(directory_path, f"{file_tag}_{plot_title}.png")
+        # Normalize path to handle platform differences and invalid characters
+        file_path = os.path.normpath(os.path.join(directory_path, f"{file_tag}_{plot_title}.png"))
         fig_xy.savefig(file_path, dpi=300)
 
 

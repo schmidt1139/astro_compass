@@ -57,10 +57,6 @@ def test_env_step_with_nn_action(flag_report_live=False):
         nn_control_param_dict
     )  # load the state parameter dictionary
 
-    test_log = log(
-        "Neural Net loaded from: " + str(path_input_nn), test_log, flag_report_live
-    )
-
     test_log = log("Observation: ", test_log, flag_report_live)
     test_log = log("X: " + str(observation[0]), test_log, flag_report_live)
     test_log = log("Y: " + str(observation[1]), test_log, flag_report_live)

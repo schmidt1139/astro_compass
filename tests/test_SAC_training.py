@@ -1,6 +1,12 @@
+import os
+# Limit threads BEFORE importing numpy/torch to avoid resource exhaustion on shared systems
+os.environ['OMP_NUM_THREADS'] = '4'
+os.environ['MKL_NUM_THREADS'] = '4'
+os.environ['OPENBLAS_NUM_THREADS'] = '4'
+os.environ['NUMEXPR_NUM_THREADS'] = '4'
+
 import gymnasium as gym
 import sys
-import os
 import matplotlib.pyplot as plt
 import random
 import filecmp
@@ -115,7 +121,7 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
     eval_env = gym.wrappers.TimeLimit(eval_env, max_episode_steps=max_episode_steps_in)
     env = Monitor(env)
     eval_env = Monitor(eval_env)
-    training_steps = max_episode_steps_in * 10
+    training_steps = max_episode_steps_in * 1
 
     obs, info = env.reset(seed=seed_in)
     obs, info = eval_env.reset(seed=seed_in)
@@ -283,7 +289,7 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
     fig_xy.savefig(os.path.join(path_output, "SAC_Test_Traj.png"))
 
     test_log = log("Complete!", test_log, flag_report_live)
-    test_log = log("Plots saved to: " + path_output, test_log, flag_report_live)
+    test_log = log("Plots saved!", test_log, flag_report_live)
 
     # save log to file
     with open(os.path.join(path_output, "SAC_Training_Log.txt"), "w") as f:

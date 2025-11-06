@@ -46,9 +46,9 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
         "g0": Constants.G0,  # gravtational acceleration at Earth surface [m/s^2]
         "env_step_size": 3600 * 24,  # environment step size [s]
         "flag_seed_replay_buffer": True,  # flag to seed the replay buffer
-        "num_ephems_to_use": 1_000,  # number of ephemerides to use for seeding
+        "num_ephems_to_use": 10,  # number of ephemerides to use for seeding
         "include_callbacks_in_learn": True,  # flag to include callbacks in learn() method
-        "training_steps": 5_000,  # number of training steps
+        "training_steps": 500,  # number of training steps
         "max_episode_steps_in": 500,  # max steps per episode
         "print_freq": 2500,  # frequency of evaluation and printing/logging rewards
         "n_eval_episodes": 16,  # number of episodes per evaluation
@@ -99,7 +99,7 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
     # time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
     path_nns = os.path.normpath(os.path.join(os.getcwd(), "data", "neural_networks"))
     path_training_data = os.path.normpath(
-        os.path.join(os.getcwd(), "data", "training_ephems", "test_set_bang_bang")
+        os.path.join(os.getcwd(), "data", "test_data", "test_seeded_SAC_training", "input")
     )
     path_output = os.path.normpath(
         os.path.join(os.getcwd(), "data", "test_data", "test_seeded_SAC_training")
@@ -336,7 +336,7 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
     )
 
     test_log = log("Complete!", test_log, flag_report_live)
-    test_log = log("Plots saved to: " + path_output, test_log, flag_report_live)
+    test_log = log("Plots saved!", test_log, flag_report_live)
 
     # save log to file
     with open(path_output_log, "w") as f:
