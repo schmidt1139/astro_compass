@@ -128,5 +128,3 @@ def test_Hamiltonian_TBR_Controller(flag_report_live):
             test_log = log("Some trajectories do not match truth data.", test_log, flag_report_live)
 
         return flag_all_match
-
-test_Hamiltonian_TBR_Controller(True)
