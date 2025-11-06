@@ -1,12 +1,6 @@
-import os
-# Limit threads BEFORE importing numpy/torch to avoid resource exhaustion on shared systems
-os.environ['OMP_NUM_THREADS'] = '4'
-os.environ['MKL_NUM_THREADS'] = '4'
-os.environ['OPENBLAS_NUM_THREADS'] = '4'
-os.environ['NUMEXPR_NUM_THREADS'] = '4'
-
 import gymnasium as gym
 import sys
+import os
 import matplotlib.pyplot as plt
 import random
 import filecmp

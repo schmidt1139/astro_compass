@@ -1,11 +1,16 @@
 import sys
 import os
+
+# CRITICAL: Set thread limits BEFORE any other imports to prevent resource exhaustion on shared systems
+os.environ['OMP_NUM_THREADS'] = '4'
+os.environ['MKL_NUM_THREADS'] = '4'
+os.environ['OPENBLAS_NUM_THREADS'] = '4'
+os.environ['NUMEXPR_NUM_THREADS'] = '4'
+os.environ['PYTHONUNBUFFERED'] = '1'  # Unbuffered output for real-time console feedback
+
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend to avoid Tkinter threading issues
 import gymnasium as gym
-
-# Set unbuffered output for real-time console feedback
-os.environ['PYTHONUNBUFFERED'] = '1'
 
 # Get the project root directory and change to it
 # This ensures relative paths in tests work correctly
