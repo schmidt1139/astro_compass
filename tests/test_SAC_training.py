@@ -13,12 +13,13 @@ from stable_baselines3 import SAC
 from stable_baselines3.common.monitor import Monitor
 
 # Adding python src code directory
-# Adding python src code directory
-os.chdir("C:/Users/micha/MSI_Data/Masters_Thesis/astro_compass")
+# Get the project root directory (parent of tests/)
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.chdir(project_root)
 print("Now working in:", os.getcwd())
 
-sys.path.append(os.path.relpath("src/python/"))
-sys.path.append(os.path.relpath("src/scripts/"))
+sys.path.append(os.path.join(project_root, "src", "python"))
+sys.path.append(os.path.join(project_root, "src", "scripts"))
 
 from constants.constants import Constants
 from utils.log_utils import log
