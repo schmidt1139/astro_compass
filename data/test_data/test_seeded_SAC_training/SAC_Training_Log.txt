@@ -21,7 +21,6 @@ Parameter Start:
 Parameter End.
 
 
-GPU available: True
 Environment has been reset
 Seed: 42
 Max steps per episode: 500
@@ -29,7 +28,7 @@ Experience buffer size: 0
 Experience buffer capacity: 1000000
 Importing training data into replay buffer
 Using only first 10 ephemerides
-Reading ephemerides from: c:\Users\micha\MSI_Data\Masters_Thesis\astro_compass\data\test_data\test_seeded_SAC_training\input
+Reading ephemerides
 Number of ephemerides loaded into replay buffer: 10
 Number of total state vectors: 1000
 Seeded experience buffer size: 1000

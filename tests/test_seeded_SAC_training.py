@@ -96,10 +96,6 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
 
     plt.style.use("data/support_files/dark_scientific.mplstyle")
 
-    test_log = log(
-        "GPU available: " + str(torch.cuda.is_available()), test_log, flag_report_live
-    )
-
     # paths
     # time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
     path_nns = os.path.normpath(os.path.join(os.getcwd(), "data", "neural_networks"))
