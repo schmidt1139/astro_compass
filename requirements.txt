@@ -7,6 +7,8 @@ gymnasium>=0.29.0
 # Deep Learning and RL Training
 torch>=2.0.0
 stable-baselines3>=2.0.0
+tqdm>=4.65.0  # Progress bars for SB3 training
+rich>=13.0.0  # Rich text and formatting for progress bars
 
 # Scientific Computing
 numpy>=1.24.0
