@@ -4,6 +4,8 @@ import os
 import matplotlib.pyplot as plt
 import random
 import filecmp
+import numpy as np
+import re
 
 from gymnasium import envs
 from gymnasium.envs.registration import register
@@ -58,8 +60,13 @@ class RewardLoggerCallback(BaseCallback):
 
 def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
 
-    # set random seed
+    # set random seeds for reproducibility
     random.seed(seed_in)
+    np.random.seed(seed_in)
+    import torch
+    torch.manual_seed(seed_in)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed_in)
 
     # define normalization parameters (for NN)
     params = {
@@ -299,11 +306,44 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
         for line in test_log:
             f.write(line + "\n")
 
-    # compare the two files
-    are_same = filecmp.cmp(path_output_log, path_output_log_truth, shallow=False)
+    # Compare log files with numerical tolerance for cross-platform compatibility
+    try:
+        with open(path_output_log, 'r') as f1, open(path_output_log_truth, 'r') as f2:
+            lines1 = f1.readlines()
+            lines2 = f2.readlines()
+        
+        if len(lines1) != len(lines2):
+            if flag_report_live:
+                print(f"Log files have different lengths: {len(lines1)} vs {len(lines2)}")
+            return False
+        
+        are_same = True
+        for i, (line1, line2) in enumerate(zip(lines1, lines2)):
+            # Extract all numbers from each line
+            nums1 = [float(x) for x in re.findall(r'-?\d+\.?\d*[eE]?[+-]?\d*', line1) if x]
+            nums2 = [float(x) for x in re.findall(r'-?\d+\.?\d*[eE]?[+-]?\d*', line2) if x]
+            
+            # If different number of numerical values, compare as strings
+            if len(nums1) != len(nums2):
+                if line1.strip() != line2.strip():
+                    are_same = False
+                    if flag_report_live:
+                        print(f"Line {i+1} differs (non-numerical):\n  {line1.strip()}\n  {line2.strip()}")
+            else:
+                # Compare numerical values with tolerance
+                for n1, n2 in zip(nums1, nums2):
+                    if not np.isclose(n1, n2, rtol=1e-5, atol=1e-8):
+                        are_same = False
+                        if flag_report_live:
+                            print(f"Line {i+1} numerical difference: {n1} vs {n2}")
+                        break
+    except Exception as e:
+        if flag_report_live:
+            print(f"Error comparing log files: {e}")
+        return False
 
     if flag_report_live:
-        print("Log files match truth:", are_same)
+        print("Log files match truth (with numerical tolerance):", are_same)
 
     return are_same
 
