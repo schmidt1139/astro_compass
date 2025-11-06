@@ -2,10 +2,10 @@ import gymnasium as gym
 import sys
 import os
 import torch
-import filecmp
 
 from gymnasium import envs
 from gymnasium.envs.registration import register
+from utils.test_utils import compare_log_files_with_tolerance
 from envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 
 
@@ -134,7 +134,7 @@ def test_env_step_with_nn_action(flag_report_live=False):
         for line in test_log:
             f.write(line + "\n")
 
-    # compare the two files
-    are_same = filecmp.cmp(path_test_report, path_test_truth, shallow=False)
+    # Compare log files with numerical tolerance for cross-platform compatibility
+    are_same = compare_log_files_with_tolerance(path_test_report, path_test_truth, flag_report_live=False)
 
     return are_same

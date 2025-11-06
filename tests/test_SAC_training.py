@@ -3,9 +3,7 @@ import sys
 import os
 import matplotlib.pyplot as plt
 import random
-import filecmp
 import numpy as np
-import re
 
 from gymnasium import envs
 from gymnasium.envs.registration import register
@@ -25,6 +23,7 @@ sys.path.append(os.path.join(project_root, "src", "scripts"))
 
 from constants.constants import Constants
 from utils.log_utils import log
+from utils.test_utils import compare_log_files_with_tolerance
 from core.ephemeris import Ephemeris
 from core.spacecraft import Spacecraft
 from utils.state_vector_utils import cartesian_to_polar
@@ -298,40 +297,7 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
             f.write(line + "\n")
 
     # Compare log files with numerical tolerance for cross-platform compatibility
-    try:
-        with open(path_output_log, 'r') as f1, open(path_output_log_truth, 'r') as f2:
-            lines1 = f1.readlines()
-            lines2 = f2.readlines()
-        
-        if len(lines1) != len(lines2):
-            if flag_report_live:
-                print(f"Log files have different lengths: {len(lines1)} vs {len(lines2)}")
-            return False
-        
-        are_same = True
-        for i, (line1, line2) in enumerate(zip(lines1, lines2)):
-            # Extract all numbers from each line
-            nums1 = [float(x) for x in re.findall(r'-?\d+\.?\d*[eE]?[+-]?\d*', line1) if x]
-            nums2 = [float(x) for x in re.findall(r'-?\d+\.?\d*[eE]?[+-]?\d*', line2) if x]
-            
-            # If different number of numerical values, compare as strings
-            if len(nums1) != len(nums2):
-                if line1.strip() != line2.strip():
-                    are_same = False
-                    if flag_report_live:
-                        print(f"Line {i+1} differs (non-numerical):\n  {line1.strip()}\n  {line2.strip()}")
-            else:
-                # Compare numerical values with tolerance
-                for n1, n2 in zip(nums1, nums2):
-                    if not np.isclose(n1, n2, rtol=1e-5, atol=1e-8):
-                        are_same = False
-                        if flag_report_live:
-                            print(f"Line {i+1} numerical difference: {n1} vs {n2}")
-                        break
-    except Exception as e:
-        if flag_report_live:
-            print(f"Error comparing log files: {e}")
-        return False
+    are_same = compare_log_files_with_tolerance(path_output_log, path_output_log_truth, flag_report_live=flag_report_live)
 
     if flag_report_live:
         print("Log files match truth (with numerical tolerance):", are_same)

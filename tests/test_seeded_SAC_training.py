@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import random
-import filecmp
+import numpy as np
 
 from gymnasium import envs
 from gymnasium.envs.registration import register
@@ -14,6 +14,7 @@ from stable_baselines3 import SAC
 from stable_baselines3.common.monitor import Monitor
 from constants.constants import Constants
 from utils.log_utils import log, log_parameters
+from utils.test_utils import compare_log_files_with_tolerance
 from core.ephemeris import Ephemeris
 from core.spacecraft import Spacecraft
 from utils.state_vector_utils import cartesian_to_polar
@@ -30,8 +31,12 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
     test_log = []
     test_log = log("SAC Training Script", test_log, flag_report_live)
 
-    # set random seed
+    # set random seeds for reproducibility
     random.seed(seed_in)
+    np.random.seed(seed_in)
+    torch.manual_seed(seed_in)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed_in)
 
     # define normalization parameters (for NN)
     params = {
@@ -343,10 +348,10 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
         for line in test_log:
             f.write(line + "\n")
 
-    # compare the two files
-    are_same = filecmp.cmp(path_output_log, path_output_log_truth, shallow=False)
+    # Compare log files with numerical tolerance for cross-platform compatibility
+    are_same = compare_log_files_with_tolerance(path_output_log, path_output_log_truth, flag_report_live=flag_report_live)
 
     if flag_report_live:
-        print("Log files match truth:", are_same)
+        print("Log files match truth (with numerical tolerance):", are_same)
 
     return are_same
