@@ -1,0 +1,24 @@
+mu: 1.3e+20
+max_T: 0.00133
+ISP: 3872.0
+l_star: 149598023000
+m_star: 3366.0
+t_star: 5074778.662111725
+g0: 9.80665
+env_step_size: 86400
+seed_env_init: 44237
+num_trajs: 1
+max_steps: 1000
+tof_scale: [1.0, 1.0, 2.0]
+data_path: data\z_script_output\training_TBR_circular
+eps_threshold: 0.0001
+flag_plot_traj: True
+init_costate_guesses: 4
+root_max_iters: 800
+a_min_env_nd: 57910000000.0
+a_max_env_nd: 778479000000.0
+e_min_env: 0.0001
+e_max_env: 0.0001
+w_min_env_deg: 0.0
+w_max_env_deg: 0.0
+flag_report_live: True

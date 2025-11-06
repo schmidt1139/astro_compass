@@ -27,8 +27,8 @@ def datagen_Hamiltonian_TBR_controller(flag_report_live):
         "t_star": (Constants.SMA_EARTH**3 / (Constants.MU_SUN_M)) ** 0.5,  # characteristic time - derived
         "g0": Constants.G0,  # gravitational acceleration at Earth surface [m/s^2]
         "env_step_size": 3600 * 24,  # environment step size [s]
-        "seed_env_init": 44235,  # random seed for environment
-        "num_trajs": 10,  # number of trajectories to simulate
+        "seed_env_init": 44237,  # random seed for environment
+        "num_trajs": 1,  # number of trajectories to simulate
         "max_steps": 1000,  # maximum number of steps per trajectory
         "tof_scale": [1.0, 1.0, 2.0],  # scale factor for time of flight
         "data_path": os.path.join("data", "z_script_output", "training_TBR_circular"),  # path to save data files
@@ -36,7 +36,6 @@ def datagen_Hamiltonian_TBR_controller(flag_report_live):
         "flag_plot_traj": True,  # flag to plot trajectories
         "init_costate_guesses": 4,  # number of initial costate guesses to try
         "root_max_iters": 800,  # maximum number of root finding iterations
-        "flag_compare_to_truth": True,  # flag to compare output to truth data
         "a_min_env_nd": Constants.SMA_MERCURY,  # min semi-major axis for env [m]
         "a_max_env_nd": Constants.SMA_JUPITER,  # max semi-major axis for env [m]
         "e_min_env": 0.0001,  # min eccentricity for env
