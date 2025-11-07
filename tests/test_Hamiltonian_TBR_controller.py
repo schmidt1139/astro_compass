@@ -72,7 +72,8 @@ def test_Hamiltonian_TBR_Controller(flag_report_live):
         #str_gen_time = time.strftime("%Y%m%d_%H%M%S")
         ephem_filename = "test_TBR_ephem_traj_seed_" + str(seed_traj)
 
-        flag_solved, test_log, eph_output = gen_Hamiltonian_trajectory(env, seed_traj, params, ephem_filename)
+        tof_scale = 1.0
+        flag_solved, test_log, eph_output = gen_Hamiltonian_trajectory(env, seed_traj, tof_scale, params, ephem_filename)
 
         #check if solved
         if flag_solved == True:
