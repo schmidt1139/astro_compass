@@ -5,7 +5,7 @@ from core.hamiltonian_control_TBR import Hamiltonian_Controller_TBR, FirstGuessE
 from core.ephemeris_v2 import Ephemeris_v2
 from core.exceptions import SpacecraftCollisionException, LowMassException
 
-def gen_Hamiltonian_trajectory(env, seed_traj, params, ephem_filename,
+def gen_Hamiltonian_trajectory(env, seed_traj, tof_scale, params, ephem_filename,
                                 test_log=[],flag_report_live=False):
 
     #function to generate a single hamiltonian trajectory
@@ -40,10 +40,10 @@ def gen_Hamiltonian_trajectory(env, seed_traj, params, ephem_filename,
     TOF = 0.0
 
     if (T_target > T_i):
-        input_TOF = T_target * params["t_star"] * params["tof_scale"][0]
+        input_TOF = T_target * params["t_star"] * tof_scale
         test_log = log(f"Using TOF: {input_TOF/Constants.YEARS_TO_SEC} years", test_log, flag_report_live)    
     else:
-        input_TOF = T_i * params["t_star"] * params["tof_scale"][0]
+        input_TOF = T_i * params["t_star"] * tof_scale
         test_log = log(f"Using TOF: {input_TOF/Constants.YEARS_TO_SEC} years", test_log, flag_report_live)    
 
     kwargs = {
