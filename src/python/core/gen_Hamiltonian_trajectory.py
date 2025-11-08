@@ -95,10 +95,12 @@ def gen_Hamiltonian_trajectory(env, seed_traj, tof_scale, params, ephem_filename
         test_log = log("Target initial x,y:", test_log, flag_report_live)
         test_log = log("x_i_target: " + str(init_obs[5]), test_log, flag_report_live)
         test_log = log("y_i_target: " + str(init_obs[6]), test_log, flag_report_live)
+        test_log = log("", test_log, flag_report_live)
+        test_log = log("Final mass nd: " + str(eph_out.arr_m[-1]/params["m_star"]), test_log, flag_report_live)
         
         file_name = os.path.join(params["data_path"], ephem_filename + ".txt")
         eph_out.write_to_file(file_name)
-        test_log = log("Wrote test ephem to following path...", test_log, flag_report_live)
+        test_log = log("Wrote ephem to following path...", test_log, flag_report_live)
         test_log = log(file_name, test_log, flag_report_live)
 
         return flag_solved, test_log, eph_out

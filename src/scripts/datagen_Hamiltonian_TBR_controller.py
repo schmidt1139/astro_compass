@@ -1,4 +1,6 @@
 import os
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend for headless environments
 import matplotlib.pyplot as plot
 import time
 import numpy as np
@@ -13,12 +15,14 @@ from utils.log_utils import write_log_to_file, write_config_file, read_config_fi
 
 
 
-def datagen_Hamiltonian_TBR_controller(flag_report_live):
+def datagen_Hamiltonian_TBR_controller():
 
     start_time = time.time()
 
     path_config = os.path.join("data", "config", "datagen_Hamiltonian_TBR_controller_config.txt")
     params = read_config_file(path_config)
+
+    flag_report_live = params.get("flag_report_live", False)
 
     # Write configuration parameters to file
     time_str = time.strftime("%Y%m%d_%H%M%S")
@@ -78,18 +82,21 @@ def datagen_Hamiltonian_TBR_controller(flag_report_live):
                                                             seed_traj, 
                                                             tof_scale, 
                                                             params, 
-                                                            ephem_filename)
+                                                            ephem_filename,
+                                                            test_log,
+                                                            flag_report_live=flag_report_live)
 
         #check if solved
+        str_gen_time = time.strftime("%b %d %Y %H:%M:%S")
         if flag_solved == True:
-            print(f"Trajectory seed {seed_traj} solved successfully.\n")
+            print(f"[{str_gen_time}] Trajectory seed {seed_traj} solved successfully.\n")
             arr_pass_count.append(1)
             sa_output_ephems.append(os.path.join(params["data_path"], ephem_filename + ".txt"))
             if params["flag_plot_traj"] == True and eph_output is not None:
                 eph_output.save_plots(params["data_path"], ephem_filename, params, env)
 
         else:
-            print(f"Trajectory seed {seed_traj} failed to solve, moving on.\n")
+            print(f"[{str_gen_time}] Trajectory seed {seed_traj} failed to solve, moving on.\n")
             arr_pass_count.append(0)
 
         seed_traj += 1  # increment trajectory seed
@@ -112,4 +119,4 @@ def datagen_Hamiltonian_TBR_controller(flag_report_live):
     write_log_to_file(path_log, test_log)
 
 
-datagen_Hamiltonian_TBR_controller(False)  # Set to True for verbose output
+datagen_Hamiltonian_TBR_controller()  # Set to True for verbose output
