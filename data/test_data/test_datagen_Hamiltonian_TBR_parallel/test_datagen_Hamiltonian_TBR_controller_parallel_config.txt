@@ -1,0 +1,26 @@
+mu: 1.3e+20
+max_T: 0.00133
+ISP: 3872.0
+l_star: 149598023000
+m_star: 3366.0
+t_star: 5074778.662111725
+g0: 9.80665
+env_step_size: 86400
+seed_env_init: 1138347471
+num_trajs: 8
+tof_scales: [1.0, 1.0, 1.25]
+data_path: .\
+eps_threshold: 0.0001
+flag_plot_traj: False
+init_costate_guesses: 4
+root_max_iters: 1600
+a_min_env_nd: 1.082e11
+a_max_env_nd: 2.32495e11
+e_min_env: 0.0001
+e_max_env: 0.0001
+w_min_env_deg: 0.0
+w_max_env_deg: 0.0
+flag_report_live: True
+randomize_seeds: False
+randomize_tofs: False
+num_cores: 4
