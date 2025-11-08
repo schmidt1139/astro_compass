@@ -62,10 +62,19 @@ echo ""
 
 # Install project dependencies
 echo "📚 Installing project dependencies..."
-echo "   This will install: gymnasium, stable-baselines3, torch, matplotlib, numpy"
+echo "   This will install: gymnasium, stable-baselines3, torch, matplotlib, numpy, scipy"
 echo "   Location: $PROJECT_DIR/venv/lib/python*/site-packages/"
 echo ""
 
+# Check if requirements.txt exists
+if [ -f "requirements.txt" ]; then
+    echo "   Installing from requirements.txt..."
+    pip install -r requirements.txt
+else
+    echo "   ⚠️  requirements.txt not found, installing via setup.py..."
+fi
+
+# Install package in development mode
 pip install -e . 
 
 echo ""

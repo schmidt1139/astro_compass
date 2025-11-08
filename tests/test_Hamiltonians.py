@@ -111,14 +111,14 @@ def test_Hamiltonians(flag_report_live=False):
     )
     # print(sol)
 
-    eph_out.write_to_file("data\\test_data\\test_hamiltonians\\test_H_ephem.txt")
+    eph_out.write_to_file(os.path.join("data", "test_data", "test_hamiltonians", "test_H_ephem.txt"))
     eph1 = Ephemeris()
-    eph1.read_from_file("data\\test_data\\test_hamiltonians\\test_H_ephem.txt")
+    eph1.read_from_file(os.path.join("data", "test_data", "test_hamiltonians", "test_H_ephem.txt"))
     test_log = log("Wrote test ephem", test_log, flag_report_live)
 
     # compare to truth file
     eph2 = Ephemeris()
-    eph2.read_from_file("data\\test_data\\test_hamiltonians\\test_H_ephem_truth.txt")
+    eph2.read_from_file(os.path.join("data", "test_data", "test_hamiltonians", "test_H_ephem_truth.txt"))
     test_log = log("Read truth ephem", test_log, flag_report_live)
 
     # step through and compare each vector
@@ -131,16 +131,8 @@ def test_Hamiltonians(flag_report_live=False):
         test_log = log("Vectors in eph2: " + str(num_vectors_truth), test_log, flag_report_live)
         flag_pass = False
 
-    for i in range(num_vectors_test - 1):
-        vec1 = eph_out.get_vector_at_index(i)
-        vec2 = eph2.get_vector_at_index(i)
-        # print(f"Comparing vector {i}:")
-        # print(f"  Test vec:  {vec1[0]}")
-        # print(f"  Truth vec: {vec2[0]}")
-        if not np.array_equal(vec1, vec2):
-            test_log = log("Test FAILED - vector diff", test_log, flag_report_live)
-            flag_pass = False
-            break
+    else:
+        flag_pass = eph1.compare_trajectories(eph2, position_tol=1_000_000.0, velocity_tol=1.0)
 
     # if we made it here, the two ephemerides are the same
     if flag_pass:

@@ -159,6 +159,46 @@ def ensure_os_import(content: str, filepath: str) -> str:
     return '\n'.join(lines)
 
 
+def fix_path_concatenations(content: str) -> tuple[str, int]:
+    """
+    Fix path concatenations using + operator.
+    
+    Converts: params["data_path"] + "file.txt"
+    To:       os.path.join(params["data_path"], "file.txt")
+    
+    Returns:
+        Tuple of (modified_content, number_of_fixes)
+    """
+    fixes = 0
+    
+    # Pattern to match dictionary key access followed by + string
+    # Matches: params["data_path"] + "filename.txt"
+    # Also matches: params["data_path"] + variable + ".txt"
+    pattern = r'(\w+\["[^"]*path[^"]*"\])\s*\+\s*([^;\n]+)'
+    
+    def replace_concat(match):
+        nonlocal fixes
+        base_path = match.group(1)
+        rest = match.group(2).strip()
+        
+        # Split by + to handle multiple concatenations
+        parts = [p.strip() for p in rest.split('+')]
+        
+        # Join the parts
+        if len(parts) == 1:
+            fixes += 1
+            return f'os.path.join({base_path}, {parts[0]})'
+        else:
+            # Multiple parts concatenated
+            fixes += 1
+            combined = ' + '.join(parts)
+            return f'os.path.join({base_path}, {combined})'
+    
+    content = re.sub(pattern, replace_concat, content)
+    
+    return content, fixes
+
+
 def fix_paths_in_os_join(content: str) -> tuple[str, int]:
     """
     Fix Windows backslashes inside os.path.join() calls.
@@ -243,13 +283,19 @@ def migrate_file(filepath: str, replacements: list, dry_run: bool = False) -> bo
             changes_made = True
             print(f"  ✓ Replaced: {old_str[:60]}...")
     
-    # Second, fix any remaining backslashes in os.path.join calls
+    # Second, fix path concatenations using + operator
+    content, concat_fixes = fix_path_concatenations(content)
+    if concat_fixes > 0:
+        changes_made = True
+        print(f"  ✓ Fixed {concat_fixes} path concatenation(s) using + operator")
+    
+    # Third, fix any remaining backslashes in os.path.join calls
     content, path_fixes = fix_paths_in_os_join(content)
     if path_fixes > 0:
         changes_made = True
         print(f"  ✓ Fixed {path_fixes} path(s) in os.path.join() calls")
     
-    # Third, fix standalone paths with backslashes (not in os.path.join)
+    # Fourth, fix standalone paths with backslashes (not in os.path.join)
     # Look for string literals with backslashes
     lines = content.split('\n')
     for i, line in enumerate(lines):

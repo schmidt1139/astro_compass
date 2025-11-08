@@ -196,7 +196,7 @@ def test_random_env_rest(env):
     print("")
     
     #report test summary to a file
-    file_path = "..\\..\\data\\test_data\\test_random_TBT_transfer_report.csv"
+    file_path = os.path.join("..", "..", "data", "test_data", "test_random_TBT_transfer_report.csv")
     
     with open(file_path, "w") as f:
         for line in sa_report:
@@ -217,7 +217,7 @@ def test_random_env_rest(env):
     print("")
 
     # report test summary to a file
-    file_path = "..\\..\\data\\test_data\\test_random_TBT_transfer_report.csv"
+    file_path = os.path.join("..", "..", "data", "test_data", "test_random_TBT_transfer_report.csv")
 
     with open(file_path, "w") as f:
         for line in sa_report:

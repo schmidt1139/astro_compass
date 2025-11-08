@@ -38,8 +38,11 @@ def read_config_file(path_config):
         for line in f:
             key, value = line.strip().split(': ', 1)
             try:
+                # Check if value is a boolean (True/False/true/false)
+                if value.lower() in ['true', 'false']:
+                    value = value.lower() == 'true'
                 # Check if value is an array (starts with '[' and ends with ']')
-                if value.startswith('[') and value.endswith(']'):
+                elif value.startswith('[') and value.endswith(']'):
                     # Parse array by removing brackets and splitting by comma
                     array_str = value[1:-1]  # Remove '[' and ']'
                     if array_str.strip():  # Check if not empty

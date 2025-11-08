@@ -1,7 +1,6 @@
 Test Environment Step with Neural Network Thrust Action
 Environment has been reset
 Seed: 42
-Neural Net loaded from: C:\Users\micha\MSI_Data\Masters_Thesis\astro_compass\data\test_data\test_env_step_with_nn_action\nn_controller_weights_smoothed_full_10e3_epochs.pth
 Observation: 
 X: 34863220.0
 Y: -229866220.0

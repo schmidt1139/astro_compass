@@ -268,7 +268,7 @@ ax.set_xlabel(r"Elapsed Time (days)")
 ax.set_ylabel(r"Non-Dimensional States")
 ax.legend()
 fig.tight_layout()
-fig.savefig("..\\..\\data\\plots\\states_nd.pdf")  # Vector format
+fig.savefig(os.path.join("..", "..", "data", "plots", "states_nd.pdf"))  # Vector format
 plot.show()
 
 fig, ax = plot.subplots(figsize=(6, 6))
@@ -282,7 +282,7 @@ ax.set_xlabel(r"Elapsed Time (days)")
 ax.set_ylabel(r'Non-Dimensional Co-States $\vec{\lambda}$')
 ax.legend()
 fig.tight_layout()
-fig.savefig("..\\..\\data\\plots\\costates_nd.pdf")  # Vector format
+fig.savefig(os.path.join("..", "..", "data", "plots", "costates_nd.pdf"))  # Vector format
 plot.show()
 
 fig, ax = plot.subplots(figsize=(6, 6))

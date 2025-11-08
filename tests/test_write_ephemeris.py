@@ -88,7 +88,7 @@ def test_write_ephemeris(env, filename_eph):
 env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
 
 # Ephemeris filename
-dir_ephemeris_out = "..\\..\\data\\training_ephems\\"
+dir_ephemeris_out = os.path.join("..", "..", "data", "training_ephems")
 filename_ephemeris_out = dir_ephemeris_out + "test_ephemeris.txt"
 
 test_write_ephemeris(env, filename_ephemeris_out)

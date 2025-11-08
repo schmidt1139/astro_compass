@@ -64,10 +64,10 @@ def train_neural_network():
 
     # paths
     dir_training_dir = (
-        "..\\data\\training_ephems\\test_set_bang_bang_subset\\"  # path to training data
+        os.path.join("..", "data", "training_ephems", "test_set_bang_bang_subset")  # path to training data
     )
-    dir_plots = "..\\data\\plots\\"  # path for storing plot data
-    dir_nn = "..\\data\\neural_networks\\"  # path for saving trained nn
+    dir_plots = os.path.join("..", "data", "plots")  # path for storing plot data
+    dir_nn = os.path.join("..", "data", "neural_networks")  # path for saving trained nn
     path_training_dir = os.path.normpath(os.path.join(os.getcwd(), dir_training_dir))
     path_plots = os.path.normpath(os.path.join(os.getcwd(), dir_plots))
     path_nn = os.path.normpath(os.path.join(os.getcwd(), dir_nn))

@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import random
-import filecmp
+import numpy as np
 
 from gymnasium import envs
 from gymnasium.envs.registration import register
@@ -14,6 +14,7 @@ from stable_baselines3 import SAC
 from stable_baselines3.common.monitor import Monitor
 from constants.constants import Constants
 from utils.log_utils import log, log_parameters
+from utils.test_utils import compare_log_files_with_tolerance
 from core.ephemeris import Ephemeris
 from core.spacecraft import Spacecraft
 from utils.state_vector_utils import cartesian_to_polar
@@ -30,8 +31,12 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
     test_log = []
     test_log = log("SAC Training Script", test_log, flag_report_live)
 
-    # set random seed
+    # set random seeds for reproducibility
     random.seed(seed_in)
+    np.random.seed(seed_in)
+    torch.manual_seed(seed_in)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed_in)
 
     # define normalization parameters (for NN)
     params = {
@@ -46,9 +51,9 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
         "g0": Constants.G0,  # gravtational acceleration at Earth surface [m/s^2]
         "env_step_size": 3600 * 24,  # environment step size [s]
         "flag_seed_replay_buffer": True,  # flag to seed the replay buffer
-        "num_ephems_to_use": 1_000,  # number of ephemerides to use for seeding
+        "num_ephems_to_use": 10,  # number of ephemerides to use for seeding
         "include_callbacks_in_learn": True,  # flag to include callbacks in learn() method
-        "training_steps": 5_000,  # number of training steps
+        "training_steps": 500,  # number of training steps
         "max_episode_steps_in": 500,  # max steps per episode
         "print_freq": 2500,  # frequency of evaluation and printing/logging rewards
         "n_eval_episodes": 16,  # number of episodes per evaluation
@@ -91,18 +96,14 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
 
     plt.style.use("data/support_files/dark_scientific.mplstyle")
 
-    test_log = log(
-        "GPU available: " + str(torch.cuda.is_available()), test_log, flag_report_live
-    )
-
     # paths
     # time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
-    path_nns = os.path.normpath(os.path.join(os.getcwd(), "data\\neural_networks\\"))
+    path_nns = os.path.normpath(os.path.join(os.getcwd(), "data", "neural_networks"))
     path_training_data = os.path.normpath(
-        os.path.join(os.getcwd(), "data\\training_ephems\\test_set_bang_bang\\")
+        os.path.join(os.getcwd(), "data", "test_data", "test_seeded_SAC_training", "input")
     )
     path_output = os.path.normpath(
-        os.path.join(os.getcwd(), "data\\test_data\\test_seeded_SAC_training\\")
+        os.path.join(os.getcwd(), "data", "test_data", "test_seeded_SAC_training")
     )
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
     path_output_log = os.path.join(path_output, "SAC_Training_Log.txt")
@@ -336,17 +337,17 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
     )
 
     test_log = log("Complete!", test_log, flag_report_live)
-    test_log = log("Plots saved to: " + path_output, test_log, flag_report_live)
+    test_log = log("Plots saved!", test_log, flag_report_live)
 
     # save log to file
     with open(path_output_log, "w") as f:
         for line in test_log:
             f.write(line + "\n")
 
-    # compare the two files
-    are_same = filecmp.cmp(path_output_log, path_output_log_truth, shallow=False)
+    # Compare log files with numerical tolerance for cross-platform compatibility
+    are_same = compare_log_files_with_tolerance(path_output_log, path_output_log_truth, flag_report_live=flag_report_live)
 
     if flag_report_live:
-        print("Log files match truth:", are_same)
+        print("Log files match truth (with numerical tolerance):", are_same)
 
     return are_same

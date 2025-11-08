@@ -2,10 +2,10 @@ import gymnasium as gym
 import sys
 import os
 import torch
-import filecmp
 
 from gymnasium import envs
 from gymnasium.envs.registration import register
+from utils.test_utils import compare_log_files_with_tolerance
 from envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 
 
@@ -30,7 +30,7 @@ def test_env_step_with_nn_action(flag_report_live=False):
 
     # paths
     path_test_dir = os.path.normpath(
-        os.path.join(os.getcwd(), "data\\test_data\\test_env_step_with_nn_action\\")
+        os.path.join(os.getcwd(), "data", "test_data", "test_env_step_with_nn_action")
     )
     path_test_report = os.path.normpath(
         os.path.join(path_test_dir, "output_test_env_step_with_nn_action_log.txt")
@@ -56,10 +56,6 @@ def test_env_step_with_nn_action(flag_report_live=False):
     nn_controller.load_state_dict(
         nn_control_param_dict
     )  # load the state parameter dictionary
-
-    test_log = log(
-        "Neural Net loaded from: " + str(path_input_nn), test_log, flag_report_live
-    )
 
     test_log = log("Observation: ", test_log, flag_report_live)
     test_log = log("X: " + str(observation[0]), test_log, flag_report_live)
@@ -138,7 +134,7 @@ def test_env_step_with_nn_action(flag_report_live=False):
         for line in test_log:
             f.write(line + "\n")
 
-    # compare the two files
-    are_same = filecmp.cmp(path_test_report, path_test_truth, shallow=False)
+    # Compare log files with numerical tolerance for cross-platform compatibility
+    are_same = compare_log_files_with_tolerance(path_test_report, path_test_truth, flag_report_live=False)
 
     return are_same

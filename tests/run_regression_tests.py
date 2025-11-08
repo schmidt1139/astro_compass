@@ -1,11 +1,25 @@
 import sys
 import os
+
+# CRITICAL: Set thread limits BEFORE any other imports to prevent resource exhaustion on shared systems
+os.environ['OMP_NUM_THREADS'] = '4'
+os.environ['MKL_NUM_THREADS'] = '4'
+os.environ['OPENBLAS_NUM_THREADS'] = '4'
+os.environ['NUMEXPR_NUM_THREADS'] = '4'
+os.environ['PYTHONUNBUFFERED'] = '1'  # Unbuffered output for real-time console feedback
+
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend to avoid Tkinter threading issues
 import gymnasium as gym
 
+# Get the project root directory and change to it
+# This ensures relative paths in tests work correctly
+tests_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(tests_dir)
+os.chdir(project_root)
+print(f"Working directory set to: {os.getcwd()}")
+
 # Add the tests directory to the path so we can import test modules
-tests_dir = os.path.dirname(__file__)
 if tests_dir not in sys.path:
     sys.path.insert(0, tests_dir)
 
@@ -18,6 +32,7 @@ from test_SAC_training import test_SAC_training
 from test_seeded_SAC_training import test_seeded_SAC_training
 from test_TBR_env import test_TBR_env
 from test_Hamiltonian_TBR_controller import test_Hamiltonian_TBR_Controller
+from test_datagen_Hamiltonian_TBR_controller_parallel import test_datagen_Hamiltonian_TBR_parallel
 
 
 
@@ -27,6 +42,14 @@ def run_regression_tests(flag_report_live=False):
 
     arr_test_pass_bools = []
     arr_test_names = []
+
+    test_name = "test_datagen_Hamiltonian_TBR_parallel"
+    arr_test_names.append(test_name)
+    test_num = len(arr_test_names)
+    print(f"\n\nRunning Test {test_num}: {test_name}")
+    flag_test_pass = test_datagen_Hamiltonian_TBR_parallel(flag_report_live)
+    print(f"\n\n{test_name} passed:  ", flag_test_pass)
+    arr_test_pass_bools.append(flag_test_pass)
 
     test_name = "test_TBR_env"
     arr_test_names.append(test_name)

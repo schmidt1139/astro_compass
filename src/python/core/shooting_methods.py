@@ -91,21 +91,24 @@ class Hamiltonian_Controller_TBR_Shooting:
                 )
             except SpacecraftCollisionException as e:
                 # Spacecraft got too close to central body
-                print("\n" + "="*60)
-                print("INTEGRATION FAILURE - Spacecraft Collision:")
-                print("="*60)
-                print(f"Error: {str(e)}")
-                print(f"Initial co-state guess: {lam_guess_shooting}")
-                print(f"Initial state [x,y,vx,vy,m]: {arr_full_y0[:5]}")
-                print(f"Initial r: {np.linalg.norm(arr_full_y0[:2]):.6e}")
-                print("="*60 + "\n")
+                if (self.flag_report_live):
+                    print("\n" + "="*60)
+                    print("INTEGRATION FAILURE - Spacecraft Collision:")
+                    print("="*60)
+                    print(f"Error: {str(e)}")
+                    print(f"Initial co-state guess: {lam_guess_shooting}")
+                    print(f"Initial state [x,y,vx,vy,m]: {arr_full_y0[:5]}")
+                    print(f"Initial r: {np.linalg.norm(arr_full_y0[:2]):.6e}")
+                    print("="*60 + "\n")
                 raise
             except LowMassException as e:
+                
                 # Spacecraft mass got too low
-                print("\n" + "="*60)
-                print("INTEGRATION FAILURE - Low Mass:")
-                print("="*60)
-                print(f"Error: {str(e)}")
+                if (self.flag_report_live):
+                    print("\n" + "="*60)
+                    print("INTEGRATION FAILURE - Low Mass:")
+                    print("="*60)
+                    print(f"Error: {str(e)}")
                 print(f"Initial co-state guess: {lam_guess_shooting}")
                 print(f"Initial state [x,y,vx,vy,m]: {arr_full_y0[:5]}")
                 print(f"Initial mass: {arr_full_y0[4]:.6e}")
@@ -117,14 +120,15 @@ class Hamiltonian_Controller_TBR_Shooting:
                 raise
             except UserWarning as w:
                 # Print diagnostics when step size error occurs
-                print("\n" + "="*60)
-                print("INTEGRATION FAILURE - Step Size Error:")
-                print("="*60)
-                print(f"Error: {str(w)}")
-                print(f"Initial co-state guess: {lam_guess_shooting}")
-                print(f"Initial state [x,y,vx,vy,m]: {arr_full_y0[:5]}")
-                print(f"Initial r: {np.linalg.norm(arr_full_y0[:2]):.6e}")
-                print("="*60 + "\n")
+                if (self.flag_report_live):
+                    print("\n" + "="*60)
+                    print("INTEGRATION FAILURE - Step Size Error:")
+                    print("="*60)
+                    print(f"Error: {str(w)}")
+                    print(f"Initial co-state guess: {lam_guess_shooting}")
+                    print(f"Initial state [x,y,vx,vy,m]: {arr_full_y0[:5]}")
+                    print(f"Initial r: {np.linalg.norm(arr_full_y0[:2]):.6e}")
+                    print("="*60 + "\n")
                 raise Exception(f"Integration failed in shooting iteration: {str(w)}") from w
 
         if sol.status == -1:
@@ -132,17 +136,18 @@ class Hamiltonian_Controller_TBR_Shooting:
             if sol.y.shape[1] > 0:
                 last_state = sol.y[:, -1]
                 last_time = sol.t[-1]
-                print("\n" + "="*60)
-                print("INTEGRATION FAILURE - Last Integrated State:")
-                print("="*60)
-                print(f"Message: {sol.message}")
-                print(f"Last time reached: {last_time:.6e} (target: {self.input_TOF_nd:.6e})")
-                print(f"Last position [x, y]: [{last_state[0]:.6e}, {last_state[1]:.6e}]")
-                print(f"Last velocity [vx, vy]: [{last_state[2]:.6e}, {last_state[3]:.6e}]")
-                print(f"Last mass: {last_state[4]:.6e}")
-                print(f"Last r: {np.linalg.norm(last_state[:2]):.6e}")
-                print(f"Last co-states [lam_x, lam_y, lam_vx, lam_vy, lam_m]: {last_state[5:]}")
-                print("="*60 + "\n")
+                if (self.flag_report_live):
+                    print("\n" + "="*60)
+                    print("INTEGRATION FAILURE - Last Integrated State:")
+                    print("="*60)
+                    print(f"Message: {sol.message}")
+                    print(f"Last time reached: {last_time:.6e} (target: {self.input_TOF_nd:.6e})")
+                    print(f"Last position [x, y]: [{last_state[0]:.6e}, {last_state[1]:.6e}]")
+                    print(f"Last velocity [vx, vy]: [{last_state[2]:.6e}, {last_state[3]:.6e}]")
+                    print(f"Last mass: {last_state[4]:.6e}")
+                    print(f"Last r: {np.linalg.norm(last_state[:2]):.6e}")
+                    print(f"Last co-states [lam_x, lam_y, lam_vx, lam_vy, lam_m]: {last_state[5:]}")
+                    print("="*60 + "\n")
             raise Exception("Integration failed")
 
         # extract final cartesian state
@@ -214,6 +219,10 @@ class Hamiltonian_Controller_TBR_Shooting:
                 residual_norm = np.linalg.norm(lam_sol.fun)
                 success = lam_sol.success
                 iters_taken = lam_sol.nfev
+
+                self._log_controller_info(
+                    f"Attempt {counter_first_guess} completed - Residual norm: {np.linalg.norm(lam_sol.fun)}"
+                )
                 
             except SpacecraftCollisionException as e:
                 # Collision during root finding - mark as failed and continue

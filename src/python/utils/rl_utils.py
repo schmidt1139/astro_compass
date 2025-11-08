@@ -125,7 +125,7 @@ def import_training_into_replay_buffer(
         "Using only first " + str(num_ephems_to_use) + " ephemerides", test_log, True
     )
     set_ephems = read_ephems_from_dir(path_training_data, num_ephems_to_use)
-    test_log = log("Reading ephemerides from: " + path_training_data, test_log, True)
+    test_log = log("Reading ephemerides", test_log, True)
 
     # count number of ephemerides
     num_ephems = len(set_ephems)

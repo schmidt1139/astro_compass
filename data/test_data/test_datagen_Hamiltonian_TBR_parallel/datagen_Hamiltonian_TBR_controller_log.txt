@@ -1,0 +1,13 @@
+Test Two-Body Rendezvous Hamiltonian Controller
+Queuing trajectory 1 with seed 1138347471 and tof scale 1.0
+Queuing trajectory 2 with seed 1138347472 and tof scale 1.0
+Queuing trajectory 3 with seed 1138347473 and tof scale 1.0
+Queuing trajectory 4 with seed 1138347474 and tof scale 1.0
+Queuing trajectory 5 with seed 1138347475 and tof scale 1.0
+Queuing trajectory 6 with seed 1138347476 and tof scale 1.0
+Queuing trajectory 7 with seed 1138347477 and tof scale 1.0
+Queuing trajectory 8 with seed 1138347478 and tof scale 1.0
+Total trajectories attempted: 8
+Total trajectories solved: 7
+Total elapsed time: 3.90 minutes
+Average time per successful trajectory: 33.39043811389378 seconds

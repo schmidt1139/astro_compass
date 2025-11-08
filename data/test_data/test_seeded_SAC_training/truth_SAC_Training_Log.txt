@@ -12,53 +12,52 @@ Parameter Start:
   g0: 9.80665
   env_step_size: 86400
   flag_seed_replay_buffer: True
-  num_ephems_to_use: 1000
+  num_ephems_to_use: 10
   include_callbacks_in_learn: True
-  training_steps: 5000
+  training_steps: 500
   max_episode_steps_in: 500
   print_freq: 2500
   n_eval_episodes: 16
 Parameter End.
 
 
-GPU available: True
 Environment has been reset
 Seed: 42
 Max steps per episode: 500
 Experience buffer size: 0
 Experience buffer capacity: 1000000
 Importing training data into replay buffer
-Using only first 1000 ephemerides
-Reading ephemerides from: C:\Users\micha\MSI_Data\Masters_Thesis\astro_compass\data\training_ephems\test_set_bang_bang
-Number of ephemerides loaded into replay buffer: 1000
-Number of total state vectors: 100000
-Seeded experience buffer size: 100000
+Using only first 10 ephemerides
+Reading ephemerides
+Number of ephemerides loaded into replay buffer: 10
+Number of total state vectors: 1000
+Seeded experience buffer size: 1000
 Seeded experience buffer capacity: 1000000
-Experience buffer size: 105000
+Experience buffer size: 1500
 Experience buffer capacity: 1000000
-Episodes: 10
-Timesteps: 5000
+Episodes: 1
+Timesteps: 500
 Training complete
 FINAL TRAINING METRICS
-Total episodes: 10
-Total timesteps (model.num_timesteps): 5000
-Average episode reward: 391.44685100000004
-Best episode reward: 416.816491
-Last episode reward: 376.753903
+Total episodes: 1
+Total timesteps (model.num_timesteps): 500
+Average episode reward: 373.462337
+Best episode reward: 373.462337
+Last episode reward: 373.462337
 Average episode length: 500.0
-Best eval mean reward: 444.988276375
+Best eval mean reward: -inf
 Plotting test trajectory...
 Test trajectory complete
 Steps taken: 500
-Total reward: 406.94727
-Final x: -0.7812819 
-Final y: -0.46871054 
-Final vx: 0.6998444 
-Final vy: -0.86793435 
-Final m: 0.8158742 
-Final sma: 157355074396.43784 
-Final ecc: 0.19107880850284972 
+Total reward: 281.5026
+Final x: -1.6668698 
+Final y: 1.7860259 
+Final vx: -0.4020525 
+Final vy: -0.21160044 
+Final m: 0.76300806 
+Final sma: 244578947849.9031 
+Final ecc: 0.5443316077023979 
 terminated: False 
 truncated: True 
 Complete!
-Plots saved to: C:\Users\micha\MSI_Data\Masters_Thesis\astro_compass\data\test_data\test_seeded_SAC_training
+Plots saved!

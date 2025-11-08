@@ -3,7 +3,7 @@ import sys
 import os
 import matplotlib.pyplot as plt
 import random
-import filecmp
+import numpy as np
 
 from gymnasium import envs
 from gymnasium.envs.registration import register
@@ -13,15 +13,17 @@ from stable_baselines3 import SAC
 from stable_baselines3.common.monitor import Monitor
 
 # Adding python src code directory
-# Adding python src code directory
-os.chdir("C:/Users/micha/MSI_Data/Masters_Thesis/astro_compass")
+# Get the project root directory (parent of tests/)
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.chdir(project_root)
 print("Now working in:", os.getcwd())
 
-sys.path.append(os.path.relpath("src/python/"))
-sys.path.append(os.path.relpath("src/scripts/"))
+sys.path.append(os.path.join(project_root, "src", "python"))
+sys.path.append(os.path.join(project_root, "src", "scripts"))
 
 from constants.constants import Constants
 from utils.log_utils import log
+from utils.test_utils import compare_log_files_with_tolerance
 from core.ephemeris import Ephemeris
 from core.spacecraft import Spacecraft
 from utils.state_vector_utils import cartesian_to_polar
@@ -57,8 +59,13 @@ class RewardLoggerCallback(BaseCallback):
 
 def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
 
-    # set random seed
+    # set random seeds for reproducibility
     random.seed(seed_in)
+    np.random.seed(seed_in)
+    import torch
+    torch.manual_seed(seed_in)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed_in)
 
     # define normalization parameters (for NN)
     params = {
@@ -116,9 +123,9 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
     # print("GPU available: ", torch.cuda.is_available())  # Should print True if GPU is available)
 
     # paths
-    path_nns = os.path.normpath(os.path.join(os.getcwd(), "data\\neural_networks\\"))
+    path_nns = os.path.normpath(os.path.join(os.getcwd(), "data", "neural_networks"))
     path_output = os.path.normpath(
-        os.path.join(os.getcwd(), "data\\test_data\\test_SAC_training_TBR\\")
+        os.path.join(os.getcwd(), "data", "test_data", "test_SAC_training_TBR")
     )
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
     path_output_log = os.path.join(path_output, "SAC_Training_Log.txt")
@@ -291,18 +298,18 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
     fig_xy.savefig(os.path.join(path_output, "SAC_Test_Traj.png"))
 
     test_log = log("Complete!", test_log, flag_report_live)
-    test_log = log("Plots saved to: " + path_output, test_log, flag_report_live)
+    test_log = log("Plots saved!", test_log, flag_report_live)
 
     # save log to file
     with open(os.path.join(path_output, "SAC_Training_Log.txt"), "w") as f:
         for line in test_log:
             f.write(line + "\n")
 
-    # compare the two files
-    are_same = filecmp.cmp(path_output_log, path_output_log_truth, shallow=False)
+    # Compare log files with numerical tolerance for cross-platform compatibility
+    are_same = compare_log_files_with_tolerance(path_output_log, path_output_log_truth, flag_report_live=flag_report_live)
 
     if flag_report_live:
-        print("Log files match truth:", are_same)
+        print("Log files match truth (with numerical tolerance):", are_same)
 
     return are_same
 

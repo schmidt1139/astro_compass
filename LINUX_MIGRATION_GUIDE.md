@@ -124,8 +124,10 @@ deactivate
 # Verify you're in the virtual environment
 which python  # Should show: /home/youruser/astro_compass/venv/bin/python
 
-# Install the package in development mode (installs dependencies from setup.py)
-# This installs: gymnasium, stable-baselines3, torch, matplotlib, numpy
+# Option 1: Install using requirements.txt (recommended)
+pip install -r requirements.txt
+
+# Option 2: Install the package in development mode (uses requirements.txt)
 pip install -e .
 
 # All packages are installed to: venv/lib/python3.X/site-packages/
@@ -137,6 +139,14 @@ python -c "from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env; print('
 # Check what's installed in YOUR environment only
 pip list
 ```
+
+**What gets installed:**
+- `gymnasium>=0.29.0` - Reinforcement learning environment framework
+- `torch>=2.0.0` - PyTorch for neural networks
+- `stable-baselines3>=2.0.0` - RL algorithms (SAC, etc.)
+- `numpy>=1.24.0` - Numerical computing
+- `scipy>=1.10.0` - Scientific computing (integrators, optimizers)
+- `matplotlib>=3.7.0` - Plotting and visualization
 
 **What just happened:**
 - Dependencies were installed **only** to `~/astro_compass/venv/`

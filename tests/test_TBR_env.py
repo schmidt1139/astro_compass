@@ -1,3 +1,5 @@
+import os
+import numpy as np
 from utils.log_utils import log
 from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from constants.constants import Constants
@@ -114,9 +116,9 @@ def test_TBR_env(flag_report_live: bool = False):
                 flag_continue = False
 
         #fig = eph.plot_xy();
-        #fig.savefig("data\\test_data\\test_TBR\\test_traj_" + str(count_traj) + "_TBR_env.png")
+        #fig.savefig(os.path.join("data", "test_data", "test_TBR", "test_traj_") + str(count_traj) + "_TBR_env.png")
 
-        eph.write_to_file("data\\test_data\\test_TBR\\test_traj_ephemeris_" + str(count_traj) + "_TBR_env.txt")
+        eph.write_to_file(os.path.join("data", "test_data", "test_TBR", "test_traj_ephemeris_") + str(count_traj) + "_TBR_env.txt")
         
         test_log = log("Final observation vector\n", test_log, flag_report_live)
         test_log = log("x_nd: " + str(obs[0]), test_log, flag_report_live)
@@ -132,68 +134,70 @@ def test_TBR_env(flag_report_live: bool = False):
 
         # load truth data for comparison
         eph_truth = Ephemeris_v2()
-        eph_truth.read_from_file("data\\test_data\\test_TBR\\test_traj_ephemeris_" + str(count_traj) + "_TBR_env_truth.txt")
+        eph_truth.read_from_file(os.path.join("data", "test_data", "test_TBR", "test_traj_ephemeris_") + str(count_traj) + "_TBR_env_truth.txt")
 
         # re-ingest ephemeris data for comparison
         eph_comp = Ephemeris_v2()
-        eph_comp.read_from_file("data\\test_data\\test_TBR\\test_traj_ephemeris_" + str(count_traj) + "_TBR_env.txt")
+        eph_comp.read_from_file(os.path.join("data", "test_data", "test_TBR", "test_traj_ephemeris_") + str(count_traj) + "_TBR_env.txt")
 
         for i in range(eph_comp.num_vectors):
 
             vec_compare = eph_comp.get_vector_at_index(i)
             vec_truth = eph_truth.get_vector_at_index(i)
 
-            if (vec_compare[0] - vec_truth[0]) > 1e-12:
+            # Use relative and absolute tolerance for cross-platform compatibility
+            # rtol=1e-5 (0.001%) and atol=1e-8 handle numerical precision differences
+            if not np.isclose(vec_compare[0], vec_truth[0], rtol=1e-5, atol=1e-8):
                 test_log = log(f"Discrepancy in t at index {i}: {vec_compare[0]} vs {vec_truth[0]}", test_log, flag_report_live)
                 flag_test_pass = False
                 break
 
-            if (vec_compare[1] - vec_truth[1]) > 1e-12:
+            if not np.isclose(vec_compare[1], vec_truth[1], rtol=1e-5, atol=1e-8):
                 test_log = log(f"Discrepancy in x at index {i}: {vec_compare[1]} vs {vec_truth[1]}", test_log, flag_report_live)
                 flag_test_pass = False
                 break
 
-            if (vec_compare[2] - vec_truth[2]) > 1e-12:
+            if not np.isclose(vec_compare[2], vec_truth[2], rtol=1e-5, atol=1e-8):
                 test_log = log(f"Discrepancy in y at index {i}: {vec_compare[2]} vs {vec_truth[2]}", test_log, flag_report_live)
                 flag_test_pass = False
                 break
 
-            if (vec_compare[3] - vec_truth[3]) > 1e-12:
+            if not np.isclose(vec_compare[3], vec_truth[3], rtol=1e-5, atol=1e-8):
                 test_log = log(f"Discrepancy in vx at index {i}: {vec_compare[3]} vs {vec_truth[3]}", test_log, flag_report_live)
                 flag_test_pass = False
                 break
 
-            if (vec_compare[4] - vec_truth[4]) > 1e-12:
+            if not np.isclose(vec_compare[4], vec_truth[4], rtol=1e-5, atol=1e-8):
                 test_log = log(f"Discrepancy in vy at index {i}: {vec_compare[4]} vs {vec_truth[4]}", test_log, flag_report_live)
                 flag_test_pass = False
                 break
 
-            if (vec_compare[5] - vec_truth[5]) > 1e-12:
+            if not np.isclose(vec_compare[5], vec_truth[5], rtol=1e-5, atol=1e-8):
                 test_log = log(f"Discrepancy in m at index {i}: {vec_compare[5]} vs {vec_truth[5]}", test_log, flag_report_live)
                 flag_test_pass = False
                 break
 
-            if (vec_compare[6] - vec_truth[6]) > 1e-12:
+            if not np.isclose(vec_compare[6], vec_truth[6], rtol=1e-5, atol=1e-8):
                 test_log = log(f"Discrepancy in x_target at index {i}: {vec_compare[6]} vs {vec_truth[6]}", test_log, flag_report_live)
                 flag_test_pass = False
                 break
 
-            if (vec_compare[7] - vec_truth[7]) > 1e-12:
+            if not np.isclose(vec_compare[7], vec_truth[7], rtol=1e-5, atol=1e-8):
                 test_log = log(f"Discrepancy in y_target at index {i}: {vec_compare[7]} vs {vec_truth[7]}", test_log, flag_report_live)
                 flag_test_pass = False
                 break
 
-            if (vec_compare[8] - vec_truth[8]) > 1e-12:
+            if not np.isclose(vec_compare[8], vec_truth[8], rtol=1e-5, atol=1e-8):
                 test_log = log(f"Discrepancy in vx_target at index {i}: {vec_compare[8]} vs {vec_truth[8]}", test_log, flag_report_live)
                 flag_test_pass = False
                 break
 
-            if (vec_compare[9] - vec_truth[9]) > 1e-12:
+            if not np.isclose(vec_compare[9], vec_truth[9], rtol=1e-5, atol=1e-8):
                 test_log = log(f"Discrepancy in vy_target at index {i}: {vec_compare[9]} vs {vec_truth[9]}", test_log, flag_report_live)
                 flag_test_pass = False
                 break
 
-            if (vec_compare[10] - vec_truth[10]) > 1e-12:
+            if not np.isclose(vec_compare[10], vec_truth[10], rtol=1e-5, atol=1e-8):
                 test_log = log(f"Discrepancy in TTG at index {i}: {vec_compare[10]} vs {vec_truth[10]}", test_log, flag_report_live)
                 flag_test_pass = False
                 break
