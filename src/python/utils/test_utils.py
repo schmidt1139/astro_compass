@@ -28,7 +28,9 @@ def compare_trajectories(sa_output_ephems, sa_truth_ephems, test_log, version, f
         else:
             raise ValueError("Invalid version specified for ephemeris comparison.")
 
-        test_log = log(f"Comparing trajectory {index} to truth file: {sa_truth_ephems[index]}", test_log, flag_report_live)
+        test_log = log(f"Comparing trajectory files", test_log, flag_report_live)
+        test_log = log(f"Output: {ephem_file}", test_log, flag_report_live)
+        test_log = log(f"Truth: {sa_truth_ephems[index]}", test_log, flag_report_live)
 
         flag_same = eph.compare_trajectories(eph_truth, position_tol=1_000_000.0, velocity_tol=1.0)
 

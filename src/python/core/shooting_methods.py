@@ -219,6 +219,10 @@ class Hamiltonian_Controller_TBR_Shooting:
                 residual_norm = np.linalg.norm(lam_sol.fun)
                 success = lam_sol.success
                 iters_taken = lam_sol.nfev
+
+                self._log_controller_info(
+                    f"Attempt {counter_first_guess} completed - Residual norm: {np.linalg.norm(lam_sol.fun)}"
+                )
                 
             except SpacecraftCollisionException as e:
                 # Collision during root finding - mark as failed and continue
