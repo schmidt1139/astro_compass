@@ -3,100 +3,25 @@ import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend for headless environments
 import matplotlib.pyplot as plot
 import time
-import numpy as np
+
 from multiprocessing import Pool, cpu_count
-from functools import partial
 
-from constants.constants import Constants
 from utils.log_utils import log
-from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
-from constants.constants import Constants
-from utils.test_utils import compare_trajectories
-from core.gen_Hamiltonian_trajectory import gen_Hamiltonian_trajectory
 from utils.log_utils import write_log_to_file, write_config_file, read_config_file
-from core.process_single_trajectory import process_single_trajectory
+from core.datagen import run_parallel_trajectory_generation
 
-def prepare_trajectory_tasks(params):
-    """
-    Prepare the list of trajectory tasks to be processed in parallel.
-    
-    Args:
-        params: Dictionary of parameters
 
-    Returns:
-        List of trajectory tasks as tuples (traj_num, seed_traj, tof_scale)
-    """
-    trajectory_tasks = []
-    for traj_num in range(params["num_trajs"]):
-        if params["randomize_seeds"]:
-            seed_traj = np.random.randint(0, 2**31 - 1)
-        else:
-            seed_traj = params["seed_env_init"] + traj_num
-
-        if params["randomize_tofs"]:
-            tof_scale = np.random.choice(params["tof_scales"])
-        else:
-            tof_scale = params["tof_scales"][0]
-
-        trajectory_tasks.append((traj_num, seed_traj, tof_scale))
-    
-    return trajectory_tasks
-
-def datagen_Hamiltonian_TBR_controller_parallel(flag_report_live):
+def datagen_Hamiltonian_TBR_controller_parallel():
 
     start_time = time.time()
 
     path_config = os.path.join("data", "config", "datagen_Hamiltonian_TBR_controller_parallel_config.txt")
     params = read_config_file(path_config)
 
-    # Write configuration parameters to file
-    time_str = time.strftime("%Y%m%d_%H%M%S")
-    path_config = os.path.join(params["data_path"], "datagen_Hamiltonian_TBR_controller_parallel_config_" + time_str + ".txt")
-    write_config_file(params, path_config)
-
-    test_log = []
-    test_log = log(
-        "Test Two-Body Rendezvous Hamiltonian Controller", test_log, flag_report_live
-    )
-
-    plot.style.use(os.path.join("data", "support_files", "dark_scientific.mplstyle"))
-
-    # Ensure boolean parameters are actually booleans (config might read as strings)
-    if isinstance(params.get("randomize_seeds"), str):
-        params["randomize_seeds"] = params["randomize_seeds"].lower() in ['true', '1', 'yes']
-    if isinstance(params.get("randomize_tofs"), str):
-        params["randomize_tofs"] = params["randomize_tofs"].lower() in ['true', '1', 'yes']
-
-    # Determine number of processes to use
-    num_processes = min(cpu_count(), params.get("num_cores", cpu_count()))
-    print("CPU count:", cpu_count())
-    print(f"Using {num_processes} parallel processes to generate {params['num_trajs']} trajectories")
-
-    # Prepare list of trajectories to process
-    trajectory_tasks = prepare_trajectory_tasks(params)
-
-    # Process trajectories in parallel
-    arr_pass_count = []
-    sa_output_ephems = []
-    completed = 0
+    # Run parallel trajectory generation
+    test_log, arr_pass_count, sa_output_ephems = run_parallel_trajectory_generation(params)
     
-    with Pool(processes=num_processes) as pool:
-        # Use partial to pass params to each worker
-        process_func = partial(process_single_trajectory, params=params)
-        
-        # Process all trajectories in parallel with live updates
-        for result in pool.imap_unordered(process_func, trajectory_tasks):
-            flag_solved, ephem_path, seed_traj, str_gen_time = result
-            completed += 1
-            
-            if flag_solved:
-                print(f"[{str_gen_time}] [{completed}/{params['num_trajs']}] Trajectory seed {seed_traj} solved successfully.")
-                arr_pass_count.append(1)
-                sa_output_ephems.append(ephem_path)
-            else:
-                print(f"[{str_gen_time}] [{completed}/{params['num_trajs']}] Trajectory seed {seed_traj} failed to solve.")
-                arr_pass_count.append(0)
-
+    flag_report_live = params.get("flag_report_live", False)
 
     total_pass = sum(arr_pass_count)
 
@@ -113,4 +38,4 @@ def datagen_Hamiltonian_TBR_controller_parallel(flag_report_live):
 
 
 if __name__ == "__main__":
-    datagen_Hamiltonian_TBR_controller_parallel(True)  # Set to True for verbose output
+    datagen_Hamiltonian_TBR_controller_parallel()

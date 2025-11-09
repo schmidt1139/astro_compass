@@ -4,18 +4,20 @@ import matplotlib.pyplot as plot
 from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from core.gen_Hamiltonian_trajectory import gen_Hamiltonian_trajectory
 
-def process_single_trajectory(traj_info, params):
+def process_single_trajectory(params):
     """
     Process a single trajectory. This function will be called in parallel.
     
     Args:
-        traj_info: Tuple of (traj_num, seed_traj, tof_scale)
-        params: Dictionary of parameters
+        params: Dictionary of parameters containing all trajectory-specific settings
+                including 'traj_num', 'seed_traj', and 'tof_scale'
         
     Returns:
         Tuple of (success, ephem_path, seed_traj, str_gen_time)
     """
-    traj_num, seed_traj, tof_scale = traj_info
+    traj_num = params["traj_num"]
+    seed_traj = params["seed_traj"]
+    tof_scale = params["tof_scale"]
     
     # Create environment for this process
     env = TwoBodyRendezvous_Env(
@@ -27,12 +29,18 @@ def process_single_trajectory(traj_info, params):
         t_star=params["t_star"],
         g0=params["g0"],
         step_size=params["env_step_size"],
-        a_min_env_nd=params["a_min_env_nd"],
-        a_max_env_nd=params["a_max_env_nd"],
-        e_min_env=params["e_min_env"],
-        e_max_env=params["e_max_env"],
-        w_min_env_deg=params["w_min_env_deg"],
-        w_max_env_deg=params["w_max_env_deg"],
+        a_min_init_env_nd=params["a_min_init_env_nd"],
+        a_max_init_env_nd=params["a_max_init_env_nd"],
+        e_min_init_env=params["e_min_init_env"],
+        e_max_init_env=params["e_max_init_env"],
+        w_min_init_env_deg=params["w_min_init_env_deg"],
+        w_max_init_env_deg=params["w_max_init_env_deg"],
+        a_min_final_env_nd=params["a_min_final_env_nd"],
+        a_max_final_env_nd=params["a_max_final_env_nd"],
+        e_min_final_env=params["e_min_final_env"],
+        e_max_final_env=params["e_max_final_env"],
+        w_min_final_env_deg=params["w_min_final_env_deg"],
+        w_max_final_env_deg=params["w_max_final_env_deg"]
     )
     
     # Generate filename

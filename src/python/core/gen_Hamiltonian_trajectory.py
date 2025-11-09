@@ -39,12 +39,8 @@ def gen_Hamiltonian_trajectory(env, seed_traj, tof_scale, params, ephem_filename
     T_target = info["orbital_period_target_nd"]
     TOF = 0.0
 
-    if (T_target > T_i):
-        input_TOF = T_target * params["t_star"] * tof_scale
-        test_log = log(f"Using TOF: {input_TOF/Constants.YEARS_TO_SEC} years", test_log, flag_report_live)    
-    else:
-        input_TOF = T_i * params["t_star"] * tof_scale
-        test_log = log(f"Using TOF: {input_TOF/Constants.YEARS_TO_SEC} years", test_log, flag_report_live)    
+    input_TOF = max(T_i, T_target) * params["t_star"] * tof_scale
+    test_log = log(f"Using TOF: {input_TOF/Constants.YEARS_TO_SEC} years", test_log, flag_report_live)    
 
     kwargs = {
         "flag_report_live": flag_report_live,

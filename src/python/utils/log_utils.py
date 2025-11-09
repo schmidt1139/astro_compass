@@ -59,4 +59,12 @@ def read_config_file(path_config):
             except ValueError:
                 pass  # Keep as string if conversion fails
             params[key] = value
+
+
+    # Ensure boolean parameters are actually booleans (config might read as strings)
+    if isinstance(params.get("randomize_seeds"), str):
+        params["randomize_seeds"] = params["randomize_seeds"].lower() in ['true', '1', 'yes']
+    if isinstance(params.get("randomize_tofs"), str):
+        params["randomize_tofs"] = params["randomize_tofs"].lower() in ['true', '1', 'yes']
+
     return params

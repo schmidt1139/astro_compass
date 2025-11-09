@@ -1,0 +1,206 @@
+import os
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend for headless environments
+import matplotlib.pyplot as plot
+import time
+import numpy as np
+from multiprocessing import Pool, cpu_count
+
+from utils.log_utils import log
+from utils.log_utils import write_config_file
+from core.process_single_trajectory import process_single_trajectory
+
+
+def prepare_trajectory_tasks(params):
+    """
+    Prepare the list of trajectory tasks to be processed in parallel.
+    
+    Args:
+        params: Dictionary of parameters
+
+    Returns:
+        List of trajectory tasks as tuples (traj_num, seed_traj, tof_scale)
+    """
+    trajectory_tasks = []
+    list_params = []
+    
+    for traj_num in range(params["num_trajs"]):
+        # Create a copy of params for this trajectory to avoid modifying the original
+        params_i = params.copy()
+        params_i["traj_num"] = traj_num
+
+        if params["randomize_seeds"]:
+            seed_traj = np.random.randint(0, 2**31 - 1)
+        else:
+            seed_traj = params["seed_env_init"] + traj_num
+        params_i["seed_traj"] = seed_traj
+
+        if params["randomize_tofs"]:
+            tof_weights = params.get("tof_weights", None)
+            if tof_weights is not None:
+                tof_scale = np.random.choice(params["tof_scales"], p=tof_weights)
+            else:
+                tof_scale = np.random.choice(params["tof_scales"])
+        else:
+            tof_scale = params["tof_scales"][0]
+        params_i["tof_scale"] = tof_scale
+
+        # Set randomized orbital element limits if specified
+        if params["randomize_limits"]:
+
+            # select limits based on one random scenario
+            scenario_index = np.random.choice(len(params["kep_scenario_weights"]), p=params["kep_scenario_weights"])
+            params_i["scenario_index"] = scenario_index
+            a_min_init_env_nd = params["a_min_init_env_nd"][scenario_index]
+            a_max_init_env_nd = params["a_max_init_env_nd"][scenario_index]
+            e_min_init_env = params["e_min_init_env"][scenario_index]
+            e_max_init_env = params["e_max_init_env"][scenario_index]
+            w_min_init_env_deg = params["w_min_init_env_deg"][scenario_index]
+            w_max_init_env_deg = params["w_max_init_env_deg"][scenario_index]
+
+            a_min_final_env_nd = params["a_min_final_env_nd"][scenario_index]
+            a_max_final_env_nd = params["a_max_final_env_nd"][scenario_index]
+            e_min_final_env = params["e_min_final_env"][scenario_index]
+            e_max_final_env = params["e_max_final_env"][scenario_index]
+            w_min_final_env_deg = params["w_min_final_env_deg"][scenario_index]
+            w_max_final_env_deg = params["w_max_final_env_deg"][scenario_index]
+
+            params_i["a_min_init_env_nd"] = a_min_init_env_nd
+            params_i["a_max_init_env_nd"] = a_max_init_env_nd
+            params_i["e_min_init_env"] = e_min_init_env
+            params_i["e_max_init_env"] = e_max_init_env
+            params_i["w_min_init_env_deg"] = w_min_init_env_deg
+            params_i["w_max_init_env_deg"] = w_max_init_env_deg
+
+            params_i["a_min_final_env_nd"] = a_min_final_env_nd
+            params_i["a_max_final_env_nd"] = a_max_final_env_nd
+            params_i["e_min_final_env"] = e_min_final_env
+            params_i["e_max_final_env"] = e_max_final_env
+            params_i["w_min_final_env_deg"] = w_min_final_env_deg
+            params_i["w_max_final_env_deg"] = w_max_final_env_deg
+
+        else:
+            params_i["scenario_index"] = 0
+            params_i["a_min_init_env_nd"] = params["a_min_init_env_nd"][0]
+            params_i["a_max_init_env_nd"] = params["a_max_init_env_nd"][0]
+            params_i["e_min_init_env"] = params["e_min_init_env"][0]
+            params_i["e_max_init_env"] = params["e_max_init_env"][0]
+            params_i["w_min_init_env_deg"] = params["w_min_init_env_deg"][0]
+            params_i["w_max_init_env_deg"] = params["w_max_init_env_deg"][0]
+
+            params_i["a_min_final_env_nd"] = params["a_min_final_env_nd"][0]
+            params_i["a_max_final_env_nd"] = params["a_max_final_env_nd"][0]
+            params_i["e_min_final_env"] = params["e_min_final_env"][0]
+            params_i["e_max_final_env"] = params["e_max_final_env"][0]
+            params_i["w_min_final_env_deg"] = params["w_min_final_env_deg"][0]
+            params_i["w_max_final_env_deg"] = params["w_max_final_env_deg"][0]
+
+        list_params.append(params_i)
+    
+    return list_params
+
+def run_parallel_trajectory_generation(params):
+    """
+    Run parallel trajectory generation with live updates and timeout support.
+    
+    Args:
+        params: Dictionary of parameters containing all configuration settings
+        
+    Returns:
+        tuple: (test_log, arr_pass_count, sa_output_ephems)
+    """
+    flag_report_live = params.get("flag_report_live", False)
+
+    # Write configuration parameters to file
+    time_str = time.strftime("%Y%m%d_%H%M%S")
+    path_config = os.path.join(params["data_path"], "configs", "datagen_Hamiltonian_TBR_controller_parallel_config_" + time_str + ".txt")
+    #create configs directory if it doesn't exist
+    os.makedirs(os.path.dirname(path_config), exist_ok=True)
+    write_config_file(params, path_config)
+
+    test_log = []
+    test_log = log(
+        "Test Two-Body Rendezvous Hamiltonian Controller", test_log, flag_report_live
+    )
+
+    plot.style.use(os.path.join("data", "support_files", "dark_scientific.mplstyle"))
+
+    # Determine number of processes to use
+    num_processes = min(cpu_count(), params.get("num_cores", cpu_count()))
+    print("CPU count:", cpu_count())
+    print(f"Using {num_processes} parallel processes to generate {params['num_trajs']} trajectories")
+    
+    # Get timeout per trajectory (in seconds)
+    timeout_per_trajectory = params.get("timeout_per_trajectory", 300)  # Default 5 minutes
+    print(f"Timeout per trajectory: {timeout_per_trajectory} seconds")
+
+    # Prepare list of trajectories to process
+    trajectory_tasks = prepare_trajectory_tasks(params)
+    for param in trajectory_tasks:
+        test_log = log(f"Queuing trajectory {param['traj_num']+1} with seed {param['seed_traj']} and tof scale {param['tof_scale']} and scenario {param['scenario_index']}", test_log, flag_report_live)
+
+    # Process trajectories in parallel
+    arr_pass_count = []
+    sa_output_ephems = []
+    completed = 0
+    
+    with Pool(processes=num_processes) as pool:
+        # Submit all tasks asynchronously with timeout support
+        async_results = []
+        start_times = {}
+        for task in trajectory_tasks:
+            async_result = pool.apply_async(process_single_trajectory, (task,))
+            async_results.append((async_result, task))
+            start_times[id(async_result)] = time.time()  # Track start time for each task
+        
+        # Poll for completed results (live updates as they finish)
+        remaining_results = list(async_results)
+        while remaining_results:
+            # Check each result to see if it's ready
+            for async_result, task in remaining_results[:]:  # Create a copy to iterate over
+                seed_traj = task['seed_traj']
+                elapsed = time.time() - start_times[id(async_result)]
+                
+                # Check if this task has exceeded timeout
+                if elapsed > timeout_per_trajectory:
+                    completed += 1
+                    print(f"[{time.strftime('%b %d %Y %H:%M:%S')}] [{completed}/{params['num_trajs']}] Trajectory seed {seed_traj} TIMED OUT after {timeout_per_trajectory}s.")
+                    arr_pass_count.append(0)
+                    remaining_results.remove((async_result, task))
+                    # Note: The process will continue running, but we move on
+                    continue
+                
+                # Check if this result is ready (non-blocking)
+                if async_result.ready():
+                    try:
+                        # Get the result with timeout (should be instant since ready() returned True)
+                        flag_solved, ephem_path, result_seed, str_gen_time = async_result.get(timeout=1)
+                        completed += 1
+                        
+                        if flag_solved:
+                            print(f"[{str_gen_time}] [{completed}/{params['num_trajs']}] Trajectory seed {seed_traj} solved successfully.")
+                            arr_pass_count.append(1)
+                            sa_output_ephems.append(ephem_path)
+                        else:
+                            print(f"[{str_gen_time}] [{completed}/{params['num_trajs']}] Trajectory seed {seed_traj} failed to solve.")
+                            arr_pass_count.append(0)
+                        
+                        # Remove from remaining results
+                        remaining_results.remove((async_result, task))
+                        
+                    except TimeoutError:
+                        completed += 1
+                        print(f"[{time.strftime('%b %d %Y %H:%M:%S')}] [{completed}/{params['num_trajs']}] Trajectory seed {seed_traj} GET TIMEOUT.")
+                        arr_pass_count.append(0)
+                        remaining_results.remove((async_result, task))
+                    except Exception as e:
+                        completed += 1
+                        print(f"[{time.strftime('%b %d %Y %H:%M:%S')}] [{completed}/{params['num_trajs']}] Trajectory seed {seed_traj} ERROR: {type(e).__name__}: {str(e)}")
+                        arr_pass_count.append(0)
+                        remaining_results.remove((async_result, task))
+            
+            # Small sleep to avoid busy-waiting
+            if remaining_results:
+                time.sleep(0.1)
+
+    return test_log, arr_pass_count, sa_output_ephems
