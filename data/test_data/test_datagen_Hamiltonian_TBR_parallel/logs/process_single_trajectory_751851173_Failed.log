@@ -1,0 +1,96 @@
+Test Two-Body Rendezvous Hamiltonian Controller
+Initial observation vector
+
+x_nd: -1.2536563
+y_nd: -0.16362627
+vx_nd: 0.11510782
+vy_nd: -0.88183326
+mass_nd: 1.0
+x_target_nd: 1.0192341
+y_target_nd: 0.6501792
+vx_target_nd: -0.48910245
+vy_target_nd: 0.7668178
+
+Elapsed time: 0.0
+ODE Solution: None
+delta_state: None
+planet_radii: [6.957e+08]
+a: 1.2641639709472656
+e: 9.999999747378752e-05
+w: 90.0
+theta: 187.4361572265625
+max_thrust: 1.33
+ISP: 3872.0
+dx: -2.272890329360962
+dy: -0.8138054609298706
+dr: 2.414189100265503
+dvx: 0.6042102575302124
+dvy: -1.648651123046875
+dv: 1.755881667137146
+r_target: 180857192448.0
+v_target: 0.909522294998169
+dr_norm: 1.9969230890274048
+dv_norm: 1.9305537939071655
+orbital_period_nd: 8.930689811706543
+orbital_period_years: 1.436144471168518
+a_target: 1.2090564124798129
+e_target: 0.00010002145273858863
+w_target: 89.97323599404011
+theta_target: 32.56095946480368
+orbital_period_target_nd: 8.353139138094335
+mu: 1.3e+20
+step_count: 0
+TOF: 45321275.002466194
+TOF_nd: 8.93068999064622
+
+Using TOF: 1.436144471168518 years
+Hamiltonian not found: Cannot find good initial co-state guess
+
+
+Parameter Start:
+  mu: 1.3e+20
+  max_T: 0.00133
+  ISP: 3872.0
+  l_star: 149598023000
+  m_star: 3366.0
+  t_star: 5074778.662111725
+  g0: 9.80665
+  env_step_size: 86400
+  seed_env_init: 751851167
+  num_trajs: 16
+  tof_scales: [1.0, 0.75, 1.0, 1.25]
+  tof_weights: [0.25, 0.25, 0.25, 0.25]
+  data_path: data\test_data\test_datagen_Hamiltonian_TBR_parallel\
+  eps_threshold: 0.0001
+  flag_plot_traj: True
+  init_costate_guesses: 8
+  root_max_iters: 10000
+  kep_scenario_weights: [0.5, 0.5]
+  a_min_init_env_nd: 149598023000.0
+  a_max_init_env_nd: 232495000000.0
+  e_min_init_env: 0.0001
+  e_max_init_env: 0.0001
+  w_min_init_env_deg: 0.0
+  w_max_init_env_deg: 0.0
+  a_min_final_env_nd: 149598023000.0
+  a_max_final_env_nd: 232495000000.0
+  e_min_final_env: 0.0001
+  e_max_final_env: 0.0001
+  w_min_final_env_deg: 0.0
+  w_max_final_env_deg: 0.0
+  flag_report_live: True
+  randomize_seeds: False
+  randomize_tofs: False
+  randomize_limits: False
+  num_cores: 4
+  timeout_per_trajectory: 300
+  flag_debug_h_targeter: False
+  gamma: 0.75
+  traj_num: 6
+  seed_traj: 751851173
+  tof_scale: 1.0
+  tof_index: 0
+  scenario_index: 0
+Parameter End.
+
+
