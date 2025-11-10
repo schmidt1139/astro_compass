@@ -22,8 +22,8 @@ def datagen_Hamiltonian_TBR_controller_parallel():
     if "data_path" not in params:
         raise ValueError("data_path must be specified in configuration file")
     
-    # Remove leading/trailing backslashes or slashes that could cause issues
-    data_path = params["data_path"].strip().strip("\\/")
+    # Remove leading/trailing whitespace
+    data_path = params["data_path"].strip()
     
     # If it's not already an absolute path, make it relative to the current working directory
     if not os.path.isabs(data_path):
