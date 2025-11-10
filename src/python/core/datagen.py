@@ -10,6 +10,17 @@ from utils.log_utils import log
 from utils.log_utils import write_config_file
 from core.process_single_trajectory import process_single_trajectory
 
+def record_pass_stats(arr_pass_count, tof_index, scenario_index):
+    """
+    Record pass statistics for TOF scales and scenarios.
+    
+    Args:
+        arr_pass_count: List of pass counts
+        tof_index: Index of the TOF scale
+        scenario_index: Index of the scenario
+    """
+    arr_pass_count[tof_index, scenario_index] += 1
+
 
 def prepare_trajectory_tasks(params):
     """
@@ -21,9 +32,14 @@ def prepare_trajectory_tasks(params):
     Returns:
         List of trajectory tasks as tuples (traj_num, seed_traj, tof_scale)
     """
+    # Seed the random number generator for reproducibility
+    np.random.seed(params.get("seed_env_init", 42))
+    
     trajectory_tasks = []
     list_params = []
-    
+    counts_tof_scale = np.zeros(len(params["tof_scales"]), dtype=int)
+    counts_scenario = np.zeros(len(params["kep_scenario_weights"]), dtype=int)
+
     for traj_num in range(params["num_trajs"]):
         # Create a copy of params for this trajectory to avoid modifying the original
         params_i = params.copy()
@@ -38,12 +54,16 @@ def prepare_trajectory_tasks(params):
         if params["randomize_tofs"]:
             tof_weights = params.get("tof_weights", None)
             if tof_weights is not None:
-                tof_scale = np.random.choice(params["tof_scales"], p=tof_weights)
+                tof_index = np.random.choice(len(params["tof_scales"]), p=tof_weights)
             else:
-                tof_scale = np.random.choice(params["tof_scales"])
+                tof_index = np.random.choice(len(params["tof_scales"]))
+            tof_scale = params["tof_scales"][tof_index]
         else:
+            tof_index = 0
             tof_scale = params["tof_scales"][0]
+
         params_i["tof_scale"] = tof_scale
+        params_i["tof_index"] = tof_index
 
         # Set randomized orbital element limits if specified
         if params["randomize_limits"]:
@@ -80,6 +100,7 @@ def prepare_trajectory_tasks(params):
             params_i["w_max_final_env_deg"] = w_max_final_env_deg
 
         else:
+            scenario_index = 0
             params_i["scenario_index"] = 0
             params_i["a_min_init_env_nd"] = params["a_min_init_env_nd"][0]
             params_i["a_max_init_env_nd"] = params["a_max_init_env_nd"][0]
@@ -95,9 +116,14 @@ def prepare_trajectory_tasks(params):
             params_i["w_min_final_env_deg"] = params["w_min_final_env_deg"][0]
             params_i["w_max_final_env_deg"] = params["w_max_final_env_deg"][0]
 
+        #update counters
+        counts_tof_scale[tof_index] += 1
+        counts_scenario[scenario_index] += 1
         list_params.append(params_i)
     
-    return list_params
+    arr_pass_count_stats = np.zeros((len(params["tof_scales"]), len(params["kep_scenario_weights"])), dtype=int)
+
+    return list_params, counts_tof_scale, counts_scenario, arr_pass_count_stats
 
 def run_parallel_trajectory_generation(params):
     """
@@ -135,7 +161,7 @@ def run_parallel_trajectory_generation(params):
     print(f"Timeout per trajectory: {timeout_per_trajectory} seconds")
 
     # Prepare list of trajectories to process
-    trajectory_tasks = prepare_trajectory_tasks(params)
+    trajectory_tasks, counts_tof_scale, counts_scenario, arr_pass_count_stats = prepare_trajectory_tasks(params)
     for param in trajectory_tasks:
         test_log = log(f"Queuing trajectory {param['traj_num']+1} with seed {param['seed_traj']} and tof scale {param['tof_scale']} and scenario {param['scenario_index']}", test_log, flag_report_live)
 
@@ -145,62 +171,44 @@ def run_parallel_trajectory_generation(params):
     completed = 0
     
     with Pool(processes=num_processes) as pool:
-        # Submit all tasks asynchronously with timeout support
-        async_results = []
-        start_times = {}
-        for task in trajectory_tasks:
-            async_result = pool.apply_async(process_single_trajectory, (task,))
-            async_results.append((async_result, task))
-            start_times[id(async_result)] = time.time()  # Track start time for each task
+        # Use imap_unordered for better handling - tasks only start when a worker is available
+        async_results = pool.imap_unordered(process_single_trajectory, trajectory_tasks, chunksize=1)
         
-        # Poll for completed results (live updates as they finish)
-        remaining_results = list(async_results)
-        while remaining_results:
-            # Check each result to see if it's ready
-            for async_result, task in remaining_results[:]:  # Create a copy to iterate over
-                seed_traj = task['seed_traj']
-                elapsed = time.time() - start_times[id(async_result)]
-                
-                # Check if this task has exceeded timeout
-                if elapsed > timeout_per_trajectory:
-                    completed += 1
-                    print(f"[{time.strftime('%b %d %Y %H:%M:%S')}] [{completed}/{params['num_trajs']}] Trajectory seed {seed_traj} TIMED OUT after {timeout_per_trajectory}s.")
-                    arr_pass_count.append(0)
-                    remaining_results.remove((async_result, task))
-                    # Note: The process will continue running, but we move on
-                    continue
-                
-                # Check if this result is ready (non-blocking)
-                if async_result.ready():
-                    try:
-                        # Get the result with timeout (should be instant since ready() returned True)
-                        flag_solved, ephem_path, result_seed, str_gen_time = async_result.get(timeout=1)
-                        completed += 1
-                        
-                        if flag_solved:
-                            print(f"[{str_gen_time}] [{completed}/{params['num_trajs']}] Trajectory seed {seed_traj} solved successfully.")
-                            arr_pass_count.append(1)
-                            sa_output_ephems.append(ephem_path)
-                        else:
-                            print(f"[{str_gen_time}] [{completed}/{params['num_trajs']}] Trajectory seed {seed_traj} failed to solve.")
-                            arr_pass_count.append(0)
-                        
-                        # Remove from remaining results
-                        remaining_results.remove((async_result, task))
-                        
-                    except TimeoutError:
-                        completed += 1
-                        print(f"[{time.strftime('%b %d %Y %H:%M:%S')}] [{completed}/{params['num_trajs']}] Trajectory seed {seed_traj} GET TIMEOUT.")
-                        arr_pass_count.append(0)
-                        remaining_results.remove((async_result, task))
-                    except Exception as e:
-                        completed += 1
-                        print(f"[{time.strftime('%b %d %Y %H:%M:%S')}] [{completed}/{params['num_trajs']}] Trajectory seed {seed_traj} ERROR: {type(e).__name__}: {str(e)}")
-                        arr_pass_count.append(0)
-                        remaining_results.remove((async_result, task))
+        # Process results as they complete
+        for result in async_results:
+            flag_solved, ephem_path, result_seed, str_gen_time, timed_out, processing_time, params_result = result
+            completed += 1
             
-            # Small sleep to avoid busy-waiting
-            if remaining_results:
-                time.sleep(0.1)
+            if timed_out:
+                print(f"[{str_gen_time}] [{completed}/{params['num_trajs']}] Trajectory seed {result_seed} TIMED OUT after {processing_time:.1f}s (limit: {timeout_per_trajectory}s).")
+                arr_pass_count.append(0)
+            elif flag_solved:
+                print(f"[{str_gen_time}] [{completed}/{params['num_trajs']}] Trajectory seed {result_seed} solved successfully.")
+                arr_pass_count.append(1)
+                tof_index = params_result["tof_index"]
+                scenario_index = params_result["scenario_index"]
+                arr_pass_count_stats[tof_index, scenario_index] += 1
+                sa_output_ephems.append(ephem_path)
+            else:
+                print(f"[{str_gen_time}] [{completed}/{params['num_trajs']}] Trajectory seed {result_seed} failed to solve.")
+                arr_pass_count.append(0)
+
+    # summarize counts
+    print("Trajectory generation summary:")
+    for i, count in enumerate(counts_tof_scale):
+        print(f"  TOF scale {params['tof_scales'][i]}: {count} trajectories")
+    for i, count in enumerate(counts_scenario):
+        print(f"  Scenario {i}: {count} trajectories")
+
+    # summarize success rates
+    print("Trajectory generation success rates:")
+    for i, count in enumerate(counts_tof_scale):
+        print(f"  TOF scale {params['tof_scales'][i]}: {arr_pass_count_stats[i, :].sum()} solved out of {count} trajectories")
+    for i, count in enumerate(counts_scenario):
+        print(f"  Scenario {i}: {arr_pass_count_stats[:, i].sum()} solved out of {count} trajectories")
+
+    # determine success rate for TOF scales
+    total_solved = sum(arr_pass_count)
+
 
     return test_log, arr_pass_count, sa_output_ephems
