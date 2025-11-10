@@ -47,6 +47,8 @@ def gen_Hamiltonian_trajectory(env, seed_traj, tof_scale, params, ephem_filename
         "eps_threshold": params["eps_threshold"],
         "init_costate_guesses": params["init_costate_guesses"],
         "root_max_iters": params["root_max_iters"],
+        "timeout_per_trajectory": params.get("timeout_per_trajectory", None),
+        "gamma": params.get("gamma", 0.5),
     }
 
     init_obs = obs
@@ -93,11 +95,6 @@ def gen_Hamiltonian_trajectory(env, seed_traj, tof_scale, params, ephem_filename
         test_log = log("y_i_target: " + str(init_obs[6]), test_log, flag_report_live)
         test_log = log("", test_log, flag_report_live)
         test_log = log("Final mass nd: " + str(eph_out.arr_m[-1]/params["m_star"]), test_log, flag_report_live)
-        
-        file_name = os.path.join(params["data_path"], ephem_filename + ".txt")
-        eph_out.write_to_file(file_name)
-        test_log = log("Wrote ephem to following path...", test_log, flag_report_live)
-        test_log = log(file_name, test_log, flag_report_live)
 
         return flag_solved, test_log, eph_out
         

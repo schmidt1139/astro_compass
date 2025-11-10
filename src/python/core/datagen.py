@@ -149,6 +149,8 @@ def run_parallel_trajectory_generation(params):
         "Test Two-Body Rendezvous Hamiltonian Controller", test_log, flag_report_live
     )
 
+    test_log = log(f"Starting at {time_str}", test_log, True)
+
     plot.style.use(os.path.join("data", "support_files", "dark_scientific.mplstyle"))
 
     # Determine number of processes to use
@@ -194,21 +196,29 @@ def run_parallel_trajectory_generation(params):
                 arr_pass_count.append(0)
 
     # summarize counts
+    sa_summary = []
+    sa_summary.append(f"\nTrajectory Generation Summary:\n")
+    sa_summary.append("------------------------------\n")
     print("Trajectory generation summary:")
     for i, count in enumerate(counts_tof_scale):
         print(f"  TOF scale {params['tof_scales'][i]}: {count} trajectories")
+        sa_summary.append(f"  TOF scale {params['tof_scales'][i]}: {count} trajectories\n")
     for i, count in enumerate(counts_scenario):
         print(f"  Scenario {i}: {count} trajectories")
-
+        sa_summary.append(f"  Scenario {i}: {count} trajectories\n")
+    sa_summary.append("------------------------------\n")
     # summarize success rates
     print("Trajectory generation success rates:")
+    sa_summary.append(f"\nTrajectory generation success rates:\n")
     for i, count in enumerate(counts_tof_scale):
         print(f"  TOF scale {params['tof_scales'][i]}: {arr_pass_count_stats[i, :].sum()} solved out of {count} trajectories")
+        sa_summary.append(f"  TOF scale {params['tof_scales'][i]}: {arr_pass_count_stats[i, :].sum()} solved out of {count} trajectories\n")
     for i, count in enumerate(counts_scenario):
         print(f"  Scenario {i}: {arr_pass_count_stats[:, i].sum()} solved out of {count} trajectories")
+        sa_summary.append(f"  Scenario {i}: {arr_pass_count_stats[:, i].sum()} solved out of {count} trajectories\n")
 
     # determine success rate for TOF scales
     total_solved = sum(arr_pass_count)
 
 
-    return test_log, arr_pass_count, sa_output_ephems
+    return test_log, arr_pass_count, sa_output_ephems, sa_summary

@@ -14,3 +14,12 @@ class SpacecraftCollisionException(Exception):
 class LowMassException(Exception):
     """Exception raised when spacecraft mass gets too low during integration."""
     pass
+
+class TimeoutException(Exception):
+    """Exception raised when a trajectory computation times out."""
+    pass
+
+
+def timeout_handler(signum, frame):
+    """Signal handler for timeout."""
+    raise TimeoutException("Trajectory computation timed out")

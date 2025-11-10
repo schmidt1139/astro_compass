@@ -1,11 +1,12 @@
 import numpy as np
 import warnings
+import time
 from scipy.integrate import solve_ivp
 from scipy.optimize import root
 from core.propagation import (
     Hamiltonian_EOM_TBT_v2
 )
-from core.exceptions import FirstGuessException, SpacecraftCollisionException, LowMassException
+from core.exceptions import FirstGuessException, SpacecraftCollisionException, LowMassException, TimeoutException
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -42,6 +43,13 @@ class Hamiltonian_Controller_TBR_Shooting:
         def _log_controller_info(self, info: str) -> None: ...
 
     def shooting_iteration(self, lam_guess_shooting, eps):
+
+        elapsed_time = time.time() - self.start_time
+        if (self.timeout_per_trajectory is not None) and (elapsed_time > self.timeout_per_trajectory):
+            raise TimeoutException("Shooting iteration timed out")
+        
+        #print(f"DEBUG [{elapsed_time:.2f}]: {self.shooting_iters} Shooting iteration with guess:", lam_guess_shooting)
+
         # construct full state vector at t=0
         arr_full_y0 = np.hstack((self.arr_y0_nd, lam_guess_shooting))
 
@@ -255,6 +263,8 @@ class Hamiltonian_Controller_TBR_Shooting:
                     f"Initial guess root finding converged with residual: {residual_norm:.4e}"
                 )
                 self._log_controller_info("f evals: " + " " + str(iters_taken))
+
+                self.flag_initial_costate_found = True
                 return lam_guess
             
             else:

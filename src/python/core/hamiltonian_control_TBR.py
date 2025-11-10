@@ -1,5 +1,6 @@
 import numpy as np
 import warnings
+import time
 from scipy.optimize import root
 from scipy.integrate import solve_ivp
 
@@ -122,6 +123,9 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
         # Targeter log string array
         self.log = []
 
+        self.start_time = time.time()
+        self.log.append(f"Initialization started at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+
         self.env = env  # The Two body transfer gym environment
         self.init_observation = init_observation  # The initial state of the env
         self.init_info = init_info  # Initial env info dict
@@ -149,19 +153,26 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
         self.root_max_iters = 400
         self.smoothing_method = 0  # Choose from 0 (tanh), 1 (homotopic)
         self.flag_stop_targeting = False
-        self.ivp_solve_rtol = 10 ** (-9)
-        self.ivp_solve_atol = 10 ** (-12)
+        self.rtol_explore = 1e-6
+        self.atol_explore = 1e-9
+        self.ivp_solve_rtol = self.rtol_explore
+        self.ivp_solve_atol = self.atol_explore
+        self.rtol_final = 1e-9
+        self.atol_final = 1e-12
         self.shooting_iters = 0
         self.flag_report_live = False
         self.init_costate_guesses = 16
+        self.timeout_per_trajectory = None  # in seconds, None for no timeout
+        self.flag_initial_costate_found = False
 
         # Check keyword args and override values
-        allowed_kwargs = {"flag_report_live", "eps_threshold","init_costate_guesses","root_max_iters"}
+        allowed_kwargs = {"flag_report_live", "eps_threshold","init_costate_guesses","root_max_iters",
+                          "gamma","timeout_per_trajectory"}
 
         for key, val in kwargs.items():
             if key in allowed_kwargs:
                 setattr(self, key, val)
-                #self._log_controller_info("kwarg " + key + " set to " + str(val))
+                self._log_controller_info("kwarg " + key + " set to " + str(val))
             else:
                 raise ValueError(f"Unknown keyword argument: {key}")
         
@@ -295,6 +306,8 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
             # next initial guess is the previous solution
             arr_lam_sol_0 = arr_lam_sol_k
 
+            time_elapsed = time.time() - self.start_time
+            self._log_controller_info(f"Time elapsed: {time_elapsed:.2f} seconds")
             self._log_controller_info("arr_lam_sol_k: " + str(arr_lam_sol_k))
             self._log_controller_info("root f evals: " + " " + str(f_iters))
             self._log_controller_info("Residual mag: " + str(residual_mag))
@@ -381,6 +394,8 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
         final_residual_norm = np.linalg.norm(final_residual)
 
         if sol.status == -1 or self.flag_stop_targeting:
+            elapsed_time = time.time() - self.start_time
+            self._log_controller_info(f"Total time elapsed: {elapsed_time:.2f} seconds")
             self._log_controller_info(sol.message)
             self.flag_solved = False
             self._log_controller_info("Targeter failed to converge")
@@ -389,6 +404,8 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
             self._log_controller_info("Root tol: " + str(self.root_tol))
             self._log_controller_info(f"Final integration residual: {final_residual_norm:.4e}")
         else:
+            elapsed_time = time.time() - self.start_time
+            self._log_controller_info(f"Total time elapsed: {elapsed_time:.2f} seconds")
             self.flag_solved = True
             self._log_controller_info("Targeter converged")
             self._log_controller_info("Shooting iters: " + str(self.shooting_iters))

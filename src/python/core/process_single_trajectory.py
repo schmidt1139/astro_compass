@@ -1,9 +1,12 @@
 import os
 import time
+import signal
 import matplotlib.pyplot as plot
 from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from core.gen_Hamiltonian_trajectory import gen_Hamiltonian_trajectory
 from utils.log_utils import write_log_to_file, log, log_parameters
+from core.exceptions import TimeoutException, timeout_handler
+
 
 def process_single_trajectory(params):
     """
@@ -20,6 +23,7 @@ def process_single_trajectory(params):
     seed_traj = params["seed_traj"]
     tof_scale = params["tof_scale"]
     flag_report_live = params.get("flag_report_live", False)
+    scenario_index = params["scenario_index"]
     
     #print(f"[DEBUG] traj_num={traj_num}, seed={seed_traj}, flag_report_live={flag_report_live}, in params: {'flag_report_live' in params}")
     
@@ -49,25 +53,68 @@ def process_single_trajectory(params):
     
     # Generate filename
     tof_scale_str = str(tof_scale).replace('.', 'p')
-    ephem_filename = f"test_TBR_ephem_traj_seed_{seed_traj}_tof_{tof_scale_str}"
+    ephem_dir = os.path.join(params["data_path"], "ephems")
+    plot_dir = os.path.join(params["data_path"], "plots")
+    ephem_filename = f"test_TBR_ephem_traj_seed_{seed_traj}_tof_{tof_scale_str}_scenario_{scenario_index}"
     
     # Record when this worker actually starts processing
     worker_start_time = time.time()
     
-    # Generate trajectory
+    # Get timeout setting
+    timeout_per_trajectory = params.get("timeout_per_trajectory", 300)
+    
+    # Generate trajectory with timeout enforcement
     test_log = []
-    flag_solved, test_log, eph_output = gen_Hamiltonian_trajectory(
-        env, seed_traj, tof_scale, params, ephem_filename, test_log, 
-        flag_report_live = False
-    )
+    timed_out = False
+    flag_solved = False
+    eph_output = None
+    flag_debug_h_targeter = params.get("flag_debug_h_targeter", False)
+    
+    # Set up timeout signal (only works on Unix-like systems)
+    try:
+        # Set the timeout alarm
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(timeout_per_trajectory)
+        
+        try:
+            flag_solved, test_log, eph_output = gen_Hamiltonian_trajectory(
+                env, seed_traj, tof_scale, params, ephem_filename, test_log, 
+                flag_report_live = flag_debug_h_targeter
+            )
+        except TimeoutException:
+            timed_out = True
+            flag_solved = False
+        finally:
+            # Cancel the alarm
+            signal.alarm(0)
+    except (AttributeError, ValueError):
+        # signal.SIGALRM not available on Windows, fall back to no timeout enforcement
+        try:
+            flag_solved, test_log, eph_output = gen_Hamiltonian_trajectory(
+                env, seed_traj, tof_scale, params, ephem_filename, test_log, 
+                flag_report_live = flag_debug_h_targeter
+            )
+        except TimeoutException:
+            timed_out = True
+            flag_solved = False
     
     str_gen_time = time.strftime("%b %d %Y %H:%M:%S")
     
+    # Calculate actual processing time
+    processing_time = time.time() - worker_start_time
+    
+    # Check if we exceeded timeout (fallback for systems without signal support)
+    if not timed_out and processing_time > timeout_per_trajectory:
+        timed_out = True
+
     # Save plots if solved
     if flag_solved and params["flag_plot_traj"] and eph_output is not None:
-        eph_output.save_plots(params["data_path"], ephem_filename, params, env)
-    
-    ephem_path = os.path.join(params["data_path"], ephem_filename + ".txt") if flag_solved else None
+        eph_output.save_plots(plot_dir, ephem_filename, params, env)
+
+    # write ephemeris if solved
+    ephem_path = os.path.join(ephem_dir, ephem_filename + ".txt") if flag_solved else None
+    if flag_solved and eph_output is not None:
+        eph_output.write_to_file(os.path.join(ephem_dir, ephem_filename + ".txt"))
     
     # write log to file
     if (flag_report_live):
@@ -96,12 +143,5 @@ def process_single_trajectory(params):
 
     # Close any plots to free memory
     plot.close('all')
-    
-    # Calculate actual processing time
-    processing_time = time.time() - worker_start_time
-    
-    # Check if we exceeded timeout
-    timeout_per_trajectory = params.get("timeout_per_trajectory", 300)
-    timed_out = processing_time > timeout_per_trajectory
     
     return (flag_solved, ephem_path, seed_traj, str_gen_time, timed_out, processing_time, params)
