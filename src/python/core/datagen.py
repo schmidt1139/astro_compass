@@ -32,8 +32,12 @@ def prepare_trajectory_tasks(params):
     Returns:
         List of trajectory tasks as tuples (traj_num, seed_traj, tof_scale)
     """
-    # Seed the random number generator for reproducibility
-    np.random.seed(params.get("seed_env_init", 42))
+    # Seed the random number generator
+    # If seed_env_init is None or "None", use time-based seed for different trajectories each run
+    seed = params.get("seed_env_init", None)
+    if seed is None or (isinstance(seed, str) and seed.lower() == "none"):
+        seed = int(time.time() * 1000) % (2**31)  # Use current time as seed
+    np.random.seed(int(seed))
     
     trajectory_tasks = []
     list_params = []
@@ -139,9 +143,10 @@ def run_parallel_trajectory_generation(params):
 
     # Write configuration parameters to file
     time_str = time.strftime("%Y%m%d_%H%M%S")
-    path_config = os.path.join(params["data_path"], "configs", "datagen_Hamiltonian_TBR_controller_parallel_config_" + time_str + ".txt")
+    config_dir = os.path.join(params["data_path"], "configs")
+    path_config = os.path.join(config_dir, "datagen_Hamiltonian_TBR_controller_parallel_config_" + time_str + ".txt")
     #create configs directory if it doesn't exist
-    os.makedirs(os.path.dirname(path_config), exist_ok=True)
+    os.makedirs(config_dir, exist_ok=True)
     write_config_file(params, path_config)
 
     test_log = []

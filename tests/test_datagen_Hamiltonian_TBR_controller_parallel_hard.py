@@ -30,6 +30,19 @@ def test_datagen_Hamiltonian_TBR_parallel_hard(flag_report_live):
     path_config = os.path.join(workspace_root, "data", "test_data", "test_datagen_Hamiltonian_TBR_parallel_hard", "test_datagen_Hamiltonian_TBR_controller_parallel_config_hard.txt")
     params = read_config_file(path_config)
 
+    # Validate and normalize data_path
+    if "data_path" not in params:
+        raise ValueError("data_path must be specified in configuration file")
+    
+    # Strip whitespace and normalize path
+    data_path = params["data_path"].strip()
+    
+    # Convert to absolute path if relative
+    if not os.path.isabs(data_path):
+        data_path = os.path.abspath(data_path)
+    
+    params["data_path"] = os.path.normpath(data_path)
+
     # Run parallel trajectory generation
     test_log, arr_pass_count, sa_output_ephems, sa_summary = run_parallel_trajectory_generation(params)
 
