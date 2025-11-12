@@ -19,12 +19,19 @@ def process_single_trajectory(params):
     Returns:
         Tuple of (success, ephem_path, seed_traj, str_gen_time)
     """
-    traj_num = params["traj_num"]
+
     seed_traj = params["seed_traj"]
     tof_scale = params["tof_scale"]
     flag_report_live = params.get("flag_report_live", False)
     scenario_index = params["scenario_index"]
+    flag_report_logs = params.get("report_logs", False)
+    flag_debug_h_targeter = params.get("flag_debug_h_targeter", False)
+    flag_report_live = params.get("flag_report_live", False)
+    flag_print_targeter_output = False
     
+    if (flag_report_live and flag_debug_h_targeter):
+        flag_print_targeter_output = True
+
     #print(f"[DEBUG] traj_num={traj_num}, seed={seed_traj}, flag_report_live={flag_report_live}, in params: {'flag_report_live' in params}")
     
     # Create environment for this process
@@ -68,7 +75,6 @@ def process_single_trajectory(params):
     timed_out = False
     flag_solved = False
     eph_output = None
-    flag_debug_h_targeter = params.get("flag_debug_h_targeter", False)
     
     # Set up timeout signal (only works on Unix-like systems)
     try:
@@ -79,7 +85,7 @@ def process_single_trajectory(params):
         try:
             flag_solved, test_log, eph_output = gen_Hamiltonian_trajectory(
                 env, seed_traj, tof_scale, params, ephem_filename, test_log, 
-                flag_report_live = flag_debug_h_targeter
+                flag_report_live = flag_print_targeter_output
             )
         except TimeoutException:
             timed_out = True
@@ -92,7 +98,7 @@ def process_single_trajectory(params):
         try:
             flag_solved, test_log, eph_output = gen_Hamiltonian_trajectory(
                 env, seed_traj, tof_scale, params, ephem_filename, test_log, 
-                flag_report_live = flag_debug_h_targeter
+                flag_report_live = flag_print_targeter_output
             )
         except TimeoutException:
             timed_out = True
@@ -116,11 +122,12 @@ def process_single_trajectory(params):
     if flag_solved and eph_output is not None:
         eph_output.write_to_file(os.path.join(ephem_dir, ephem_filename + ".txt"))
     
-    # write log to file
-    if (flag_report_live):
-        
-        # Add parameters to the log after trajectory generation
-        test_log = log_parameters(params, test_log, False)
+    # Add parameters to the log after trajectory generation
+    test_log = log_parameters(params, test_log, False)
+
+
+    # record log to file if requested
+    if (flag_report_logs == True):
 
         # flag solved string
         flag_solved_str = "Solved" if flag_solved else "Failed"
@@ -129,7 +136,7 @@ def process_single_trajectory(params):
         # Convert to absolute path to ensure it works in multiprocessing workers
         data_path_abs = os.path.abspath(params["data_path"])
         log_dir = os.path.join(data_path_abs, "logs")
-        
+
         try:
             os.makedirs(log_dir, exist_ok=True)
             log_file_path = os.path.join(log_dir, f"process_single_trajectory_{seed_traj}_{flag_solved_str}.log")

@@ -95,4 +95,4 @@ if __name__ == "__main__":
     datagen_Hamiltonian_TBR_controller_parallel()
     profiler.disable()
     stats = pstats.Stats(profiler)
-    stats = stats.sort_stats('ncalls')
+    stats.sort_stats('cumulative')

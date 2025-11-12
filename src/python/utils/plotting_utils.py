@@ -96,6 +96,64 @@ class SACRolloutData:
         self.arr_reward_tot.append(self.sum_reward)
 
 
+class SACRolloutData_TBR:
+
+    def __init__(self):
+        self.arr_time = []
+        self.arr_reward_tot = []
+        self.arr_reward = []
+        self.arr_throttle = []
+        self.arr_alpha_x = []
+        self.arr_alpha_y = []
+        self.arr_x = []
+        self.arr_y = []
+        self.arr_vx = []
+        self.arr_vy = []
+        self.arr_m = []
+        self.arr_x_target = []
+        self.arr_y_target = []
+        self.arr_vx_target = []
+        self.arr_vy_target = []
+        self.arr_ttg = []
+        self.sum_reward = 0.0
+
+    def add_step(
+        self,
+        time,
+        reward,
+        throttle,
+        alpha_x,
+        alpha_y,
+        x,
+        y,
+        vx,
+        vy,
+        m,
+        x_target,
+        y_target,
+        vx_target,
+        vy_target,
+        ttg,
+    ):
+        self.arr_time.append(time)  # convert to days
+        self.arr_reward.append(reward)
+        self.arr_throttle.append(throttle)
+        self.arr_alpha_x.append(alpha_x)
+        self.arr_alpha_y.append(alpha_y)
+        self.arr_x.append(x)
+        self.arr_y.append(y)
+        self.arr_vx.append(vx)
+        self.arr_vy.append(vy)
+        self.arr_m.append(m)
+        self.arr_x_target.append(x_target)
+        self.arr_y_target.append(y_target)
+        self.arr_vx_target.append(vx_target)
+        self.arr_vy_target.append(vy_target)
+        self.arr_ttg.append(ttg)
+        self.sum_reward += reward
+        self.arr_reward_tot.append(self.sum_reward)
+
+
 def plot_SAC_training(
     SACRolloutData, arr_episode_numbers, arr_episode_rs, path_output, eph
 ):
@@ -197,6 +255,114 @@ def plot_SAC_training(
     fig_orb = eph.plot_xy()
     eph.plot_xy_ref_orbit(Constants.SMA_MARS, "Mars", "#b7410e")
     eph.plot_xy_ref_orbit(Constants.SMA_EARTH, "Earth")
+    fig_orb.savefig(os.path.join(path_output, "SAC_Test_Traj.png"), dpi=300)
+
+def plot_SAC_training_TBR(
+    SACRolloutData_TBR, arr_episode_numbers, arr_episode_rs, path_output, eph,
+    params, env
+):
+
+    # plot reward over time
+    plt.figure()
+    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_reward_tot, label="Reward")
+    plt.xlabel("Time [days]")
+    plt.ylabel("Reward")
+    plt.title("SAC Training Reward over Time")
+    plt.legend()
+    plt.grid(True, alpha=0.3)  # Force grid on with some transparency
+    plt.savefig(os.path.join(path_output, "SAC_Training_Reward.png"), dpi=300)
+
+    plt.figure()
+    arr_ttg_days = [ttg * params["t_star"] / Constants.DAYS_TO_SEC for ttg in SACRolloutData_TBR.arr_ttg]
+    arr_zeros = [0.0 for ttg in SACRolloutData_TBR.arr_ttg]
+    plt.plot(SACRolloutData_TBR.arr_time, arr_ttg_days, label="Time to Target", color="magenta")
+    plt.plot(SACRolloutData_TBR.arr_time, arr_zeros, label="Target Reached", linestyle="--", color="orange")
+    plt.xlabel("Time [days]")
+    plt.ylabel("Time to Target [days]")
+    plt.title("SAC Training Time to Target over Time")
+    plt.legend()
+    plt.grid(True, alpha=0.3)  # Force grid on with some transparency
+    plt.savefig(os.path.join(path_output, "SAC_Training_Time_to_Target.png"), dpi=300)
+
+    # plot reward over time per step
+    plt.figure()
+    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_reward, label="Reward")
+    plt.xlabel("Time [days]")
+    plt.ylabel("Reward per Step")
+    plt.title("SAC Training Reward Per Step over Time")
+    plt.legend()
+    plt.grid(True, alpha=0.3)  # Force grid on with some transparency
+    plt.savefig(os.path.join(path_output, "SAC_Training_Reward_Per_Step.png"), dpi=300)
+
+    # plot throttle over time
+    plt.figure()
+    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_throttle, label="Throttle")
+    plt.xlabel("Time [days]")
+    plt.ylabel("Throttle")
+    plt.title("SAC Training Throttle over Time")
+    plt.legend()
+    plt.grid(True, alpha=0.3)  # Force grid on with some transparency
+    plt.savefig(os.path.join(path_output, "SAC_Training_Throttle.png"), dpi=300)
+
+    # plot attitude over time
+    plt.figure()
+    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_alpha_x, label="alpha_x")
+    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_alpha_y, label="alpha_y")
+    plt.xlabel("Time [days]")
+    plt.ylabel("Attitude")
+    plt.title("SAC Training Burn Attitude over Time")
+    plt.legend()
+    plt.grid(True, alpha=0.3)  # Force grid on with some transparency
+    plt.savefig(os.path.join(path_output, "SAC_Training_Alpha.png"), dpi=300)
+
+    # plot nd state over time
+    plt.figure()
+    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_x, label="x", color="cyan")
+    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_y, label="y", color="magenta")
+    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_vx, label="vx", color="orange")
+    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_vy, label="vy", color="pink")
+    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_x_target, label="x_target", linestyle="--", color="cyan")
+    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_y_target, label="y_target", linestyle="--", color="magenta")
+    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_vx_target, label="vx_target", linestyle="--", color="orange")
+    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_vy_target, label="vy_target", linestyle="--", color="pink")
+    plt.xlabel("Time [days]")
+    plt.ylabel("ND state")
+    plt.title("SAC Training ND State over Time")
+    plt.legend()
+    plt.grid(True, alpha=0.3)  # Force grid on with some transparency
+    plt.savefig(os.path.join(path_output, "SAC_ND_State.png"), dpi=300)
+
+    # plot nd state over time
+    plt.figure()
+    plt.plot(arr_episode_numbers, arr_episode_rs, label="Training Reward per Episode")
+    plt.xlabel("Episode Number")
+    plt.ylabel("Reward")
+    plt.title("SAC Reward Per Episode During Training")
+    plt.legend()
+    plt.grid(True, alpha=0.3)  # Force grid on with some transparency
+    plt.savefig(
+        os.path.join(path_output, "SAC_Training_reward_per_episode.png"), dpi=300
+    )
+
+    # generate and save figures
+    fig_orb = eph.plot_xy()
+    x_target = SACRolloutData_TBR.arr_x_target[-1]*params["l_star"]
+    y_target = SACRolloutData_TBR.arr_y_target[-1]*params["l_star"]
+    vx_target = SACRolloutData_TBR.arr_vx_target[-1]*params["l_star"]/params["t_star"]
+    vy_target = SACRolloutData_TBR.arr_vy_target[-1]*params["l_star"]/params["t_star"]
+    fig_orb = plot_overlay_ballistic_orbit(
+        x_target,
+        y_target,
+        vx_target,
+        vy_target,
+        env,
+        fig_orb,
+        params,
+        eph,
+        label_in="Target Orbit",
+        color_in="lime"
+    )
+
     fig_orb.savefig(os.path.join(path_output, "SAC_Test_Traj.png"), dpi=300)
 
 def plot_overlay_ballistic_orbit(x, y, vx, vy, env, fig, params, eph, label_in,

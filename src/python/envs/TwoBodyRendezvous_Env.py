@@ -305,14 +305,16 @@ class TwoBodyRendezvous_Env(gym.Env):
         TTG_nd = TTG / self.t_star
         r = (x**2 + y**2) ** 0.5
 
+        mass = self._state[4] / self.m_star
+
         # extract orbital elements
         e = self._keplerian_elements[1]
 
         # determine reward based on state input, also check if state is terminal
         deltas = self.calc_deltas()
-        dx, dy, dr, dvx, dvy, dv, r_target, v_target, dr_norm, dv_norm = deltas
+        dx_nd, dy_nd, dr, dvx_nd, dvy_nd, dv_nd, r_target, v_target, dr_norm, dv_norm = deltas
 
-        residual = dx**2 + dy**2 + dvx**2 + dvy**2
+        residual = dx_nd**2 + dy_nd**2 + dvx_nd**2 + dvy_nd**2
 
         # central body parameters
         cb_rad = self.planet_radii[0] / self.l_star  # central body radius in nd units
@@ -328,10 +330,10 @@ class TwoBodyRendezvous_Env(gym.Env):
             reward = 0.0
             terminated = True
         elif TTG <= 0.0:
-            reward = 1/residual * 1/TTG_nd # terminate based on time running out
+            reward = -residual
             terminated = True
         else:
-            reward = 1/residual * 1/TTG_nd # reward based on distance from target and time remaining
+            reward = -self.mass_increment / self.m_star  # reward is based on fuel used
 
         return reward, terminated
 
@@ -414,6 +416,8 @@ class TwoBodyRendezvous_Env(gym.Env):
         vx_plus = y_final[2]
         vy_plus = y_final[3]
         mass_plus = y_final[4]
+
+        self.mass_increment = mass - mass_plus
 
         # update the spacecraft object
         sc.update_state_cartesian(*y_final)
