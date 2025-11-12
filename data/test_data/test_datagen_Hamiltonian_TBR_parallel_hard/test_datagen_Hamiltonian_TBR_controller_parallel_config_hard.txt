@@ -32,5 +32,6 @@ flag_report_live: True
 randomize_seeds: False
 randomize_tofs: False
 randomize_limits: False
+flag_debug_h_targeter: False
 num_cores: 4
 timeout_per_trajectory: 120
