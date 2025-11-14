@@ -1,5 +1,4 @@
 import gymnasium as gym
-import sys
 import os
 import torch
 import matplotlib.pyplot as plt
@@ -9,12 +8,8 @@ from datetime import datetime
 from gymnasium import envs
 from gymnasium.envs.registration import register
 from stable_baselines3.common.callbacks import EvalCallback, CallbackList
-from stable_baselines3 import SAC
+from stable_baselines3 import SAC as SB3_SAC
 from stable_baselines3.common.monitor import Monitor
-
-
-print("Now working in:", os.getcwd())
-
 from constants.constants import Constants
 from utils.log_utils import log
 from core.ephemeris_v2 import Ephemeris_v2 as Ephemeris
@@ -22,8 +17,9 @@ from core.spacecraft import Spacecraft
 from utils.log_utils import write_log_to_file, write_config_file, read_config_file
 from utils.state_vector_utils import cartesian_to_polar
 from utils.plotting_utils import SACRolloutData_TBR, plot_SAC_training, SACRolloutData, plot_SAC_training_TBR
-from utils.rl_utils import log_training_perf, RewardLoggerCallback
+from utils.rl_utils import log_training_perf, RewardLoggerCallback, pre_train
 from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
+
 
 
 def SAC_training_TBR(seed_in=42):
@@ -36,8 +32,6 @@ def SAC_training_TBR(seed_in=42):
 
     # define normalization parameters (for NN)
     params = read_config_file(path_config)
-
-
 
     # initialize the environment
     env = TwoBodyRendezvous_Env(
@@ -60,7 +54,10 @@ def SAC_training_TBR(seed_in=42):
         e_min_final_env=params["e_min_final_env"],
         e_max_final_env=params["e_max_final_env"],
         w_min_final_env_deg=params["w_min_final_env_deg"],
-        w_max_final_env_deg=params["w_max_final_env_deg"]
+        w_max_final_env_deg=params["w_max_final_env_deg"],
+        pos_r_weight=params.get("pos_r_weight", 1.0),
+        vel_r_weight=params.get("vel_r_weight", 1.0),
+        tof_scale=params.get("tof_scale", 1.0),
     )
 
     eval_env = TwoBodyRendezvous_Env(
@@ -83,17 +80,20 @@ def SAC_training_TBR(seed_in=42):
         e_min_final_env=params["e_min_final_env"],
         e_max_final_env=params["e_max_final_env"],
         w_min_final_env_deg=params["w_min_final_env_deg"],
-        w_max_final_env_deg=params["w_max_final_env_deg"]
+        w_max_final_env_deg=params["w_max_final_env_deg"],
+        pos_r_weight=params.get("pos_r_weight", 1.0),
+        vel_r_weight=params.get("vel_r_weight", 1.0),
+        tof_scale=params.get("tof_scale", 1.0),
     )
 
-    max_episode_steps_in = 5000
+    max_episode_steps_in = params["max_episode_steps"]
     env = gym.wrappers.TimeLimit(env, max_episode_steps=max_episode_steps_in)
     eval_env = gym.wrappers.TimeLimit(eval_env, max_episode_steps=max_episode_steps_in)
     env = Monitor(env)
     eval_env = Monitor(eval_env)
-    training_steps = 100_000
+    training_steps = params["training_steps"]
 
-    plt.style.use("data/support_files/dark_scientific.mplstyle")
+    plt.style.use("data/support_files/light_paper.mplstyle")
 
     test_log = []
     test_log = log("SAC Training Script", test_log, True)
@@ -104,13 +104,20 @@ def SAC_training_TBR(seed_in=42):
     # paths
     time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
     path_nns = os.path.normpath(os.path.join(os.getcwd(), "data\\neural_networks\\"))
-    path_output = os.path.normpath(
-        os.path.join(
-            os.getcwd(), "data\\script_output\\SAC_training_" + time_tag + "\\"
-        )
-    )
+    
+    # Handle both absolute and relative paths for output_dir
+    output_base = params["output_dir"]
+    if not os.path.isabs(output_base):
+        output_base = os.path.join(os.getcwd(), output_base)
+    path_output = os.path.normpath(os.path.join(output_base, "SAC_training_" + time_tag))
+    
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
     os.makedirs(path_output, exist_ok=True)
+    params["output_dir_specific"] = path_output
+
+    #make a subdir for checkpoints
+    path_checkpoints = os.path.normpath(os.path.join(path_output, "checkpoints"))
+    os.makedirs(path_checkpoints, exist_ok=True)
 
     # reset the environment
     observation, info = env.reset(seed=seed_in)
@@ -121,24 +128,35 @@ def SAC_training_TBR(seed_in=42):
     )
 
     # Create the SAC model with TensorBoard logging
-    model = SAC("MlpPolicy", env, verbose=1, device="cpu", seed=seed_in, tensorboard_log=path_output)
+    buffer_size = params.get("buffer_size", 1000000)  # Default 1M transitions
+    model = SB3_SAC("MlpPolicy", env, verbose=1, device="cpu", seed=seed_in, 
+                    tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
+                    buffer_size=buffer_size)
+    
+    # pre-train networks if specified
+    if params["pre_train_networks"]:
+        test_log, arr_actor_loss_pt, arr_critic_loss_pt = pre_train(test_log, model, params, env)
+        # Remove the minimal logger from pre-training so model.learn() can set up TensorBoard properly
+        # This ensures TensorBoard logging works correctly during actual training
+        if hasattr(model, '_logger'):
+            delattr(model, '_logger')
 
-    # Train the agent
-    callback = RewardLoggerCallback(print_freq=10000)
+    callback = RewardLoggerCallback(print_freq=params["print_freq"])
     # Eval callback: saves best model by mean reward on eval_env
     eval_callback = EvalCallback(
         eval_env,
         best_model_save_path=path_output,
         log_path=path_output,
-        eval_freq=1000,  # adjust frequency
-        n_eval_episodes=5,  # episodes per evaluation
+        eval_freq=params["eval_freq"],  # adjust frequency
+        n_eval_episodes=params["n_eval_episodes"],  # episodes per evaluation
         deterministic=True,
         render=False,
     )
     callback_list = CallbackList([eval_callback, callback])
 
+    # Train the agent
     model.learn(
-        total_timesteps=training_steps, progress_bar=True, callback=callback_list
+        total_timesteps=training_steps, progress_bar=True, callback=callback_list, tb_log_name=params["tb_log_name"]
     )
 
     # After training:
@@ -189,6 +207,11 @@ def SAC_training_TBR(seed_in=42):
         vy_target_i = obs[8] * params["l_star"] / params["t_star"]
         ttg_i = obs[9] * params["t_star"]
 
+        #info of interest
+        pos_r_component = info.get("pos_r_component", None)
+        vel_r_component = info.get("vel_r_component", None)
+        mass_r_component = info.get("mass_r_component", None)
+
         # log data to ephemeris
         eph.add_data(t_i, x_i, y_i, vx_i, vy_i, m_i, x_target_i, y_target_i, vx_target_i, vy_target_i, ttg_i, alpha_x, alpha_y, throttle)
 
@@ -219,7 +242,10 @@ def SAC_training_TBR(seed_in=42):
             obs[6],
             obs[7],
             obs[8],
-            obs[9]
+            obs[9],
+            pos_r_component,
+            vel_r_component,
+            mass_r_component,
         )
 
         if terminated or truncated:
@@ -238,6 +264,12 @@ def SAC_training_TBR(seed_in=42):
     test_log = log("terminated: " + str(terminated) + " ", test_log, True)
     test_log = log("truncated: " + str(truncated) + " ", test_log, True)
 
+    #final env info
+    for key, value in info.items():
+        if key != "ODE Solution":
+            test_log = log(f"{key}: {value}", test_log, True)
+
+
     # plot the results
     plot_SAC_training_TBR(
         rollout_data1,
@@ -246,7 +278,9 @@ def SAC_training_TBR(seed_in=42):
         path_output,
         eph,
         params,
-        env.unwrapped  # Unwrap to get the base TwoBodyRendezvous_Env
+        env.unwrapped,  # Unwrap to get the base TwoBodyRendezvous_Env
+        arr_actor_loss_pt,
+        arr_critic_loss_pt,
     )
 
     env.close()
@@ -261,9 +295,10 @@ def SAC_training_TBR(seed_in=42):
     test_log = log("Plots saved to: " + path_output, test_log, True)
 
     # save log to file
-    with open(os.path.join(path_output, "SAC_Training_Log.txt"), "w") as f:
-        for line in test_log:
-            f.write(line + "\n")
+    write_log_to_file(os.path.join(path_output, "SAC_Training_Log.txt"), test_log)
+
+    # write config to output dir
+    write_config_file(params, os.path.join(path_output, "SAC_Training_Config.txt"))
 
 
 SAC_training_TBR()

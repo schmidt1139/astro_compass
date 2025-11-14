@@ -51,6 +51,10 @@ class TwoBodyRendezvous_Env(gym.Env):
         self.e_max_final_env = kwargs.get("e_max_final_env", 0.5)  # max eccentricity for env
         self.w_min_final_env_rad = kwargs.get("w_min_final_env_deg", 0.0) * np.pi / 180  # min argument of periapsis for env [rad]
         self.w_max_final_env_rad = kwargs.get("w_max_final_env_deg", 360) * np.pi / 180  # max argument of periapsis for env [rad]
+        self.pos_weight = kwargs.get("pos_r_weight", 1.0)
+        self.vel_weight = kwargs.get("vel_r_weight", 1.0)
+        self.mass_weight = kwargs.get("mass_weight", 1.0)
+        self.tof_scale = kwargs.get("tof_scale", 1.0)
 
         self.arr_mu = np.array([self.param_mu])  # solar mu [m^3/s^2]
         self.planet_radii = np.array([Constants.RADIUS_SUN_M])  # solar radius [m]
@@ -132,10 +136,21 @@ class TwoBodyRendezvous_Env(gym.Env):
             "w_target": np.rad2deg(w_target),
             "theta_target": np.rad2deg(theta_target),
             "orbital_period_target_nd": T_target_nd,
+            "orbital_period_target_years": T_target_nd * self.t_star / Constants.YEARS_TO_SEC,
             "mu": self.param_mu,
             "step_count": self.step_count,
             "TOF": self.TOF,
-            "TOF_nd": self.TOF_nd
+            "TOF_nd": self.TOF_nd,
+            "timesteps_in_TOF": self.timesteps_in_TOF,
+            "pos_residual": self.pos_residual,
+            "vel_residual": self.vel_residual,
+            "tof_scale": self.tof_scale,
+            "r_weight": self.pos_weight,
+            "v_weight": self.vel_weight,
+            "mass_weight": self.mass_weight,
+            "pos_r_component": self.pos_r_component,
+            "vel_r_component": self.vel_r_component,
+            "mass_r_component": self.mass_r_component
         }
 
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None):
@@ -225,8 +240,14 @@ class TwoBodyRendezvous_Env(gym.Env):
             TTG_nd = T_i 
             TTG_dim = T_i * self.t_star
 
+
+        TTG_nd = TTG_nd * self.tof_scale
+        TTG_dim = TTG_nd * self.t_star
+
         self.TOF = TTG_dim
         self.TOF_nd = TTG_nd
+
+        self.timesteps_in_TOF = int(TTG_dim / self.step_size) + 1
 
         self._keplerian_elements[0] = a
         self._keplerian_elements[1] = e
@@ -248,6 +269,14 @@ class TwoBodyRendezvous_Env(gym.Env):
         self._state = np.array([x_0, y_0, vx_0, vy_0, mass, x_f, y_f, vx_f, vy_f, TTG_dim], dtype=np.float32)
         observation = np.array([x_nd, y_nd, vx_nd, vy_nd, mass_nd, x_target_nd, y_target_nd, vx_target_nd, vy_target_nd, TTG_nd], dtype=np.float32)
         self.elapsed_t = 0.0
+
+        deltas = self.calc_deltas()
+        dx_nd, dy_nd, dr, dvx_nd, dvy_nd, dv_nd, r_target, v_target, dr_norm, dv_norm = deltas
+        self.pos_residual = ( dx_nd**2 + dy_nd**2 ) ** 0.5
+        self.vel_residual = ( dvx_nd**2 + dvy_nd**2 ) ** 0.5
+        self.pos_r_component = np.exp(-self.pos_residual**2)*self.pos_weight
+        self.vel_r_component = np.exp(-self.vel_residual**2)*self.vel_weight
+        self.mass_r_component = 0.0
 
         info = self._get_info(
             None, #placeholder for ODE data - only provided in step()
@@ -313,16 +342,21 @@ class TwoBodyRendezvous_Env(gym.Env):
         # determine reward based on state input, also check if state is terminal
         deltas = self.calc_deltas()
         dx_nd, dy_nd, dr, dvx_nd, dvy_nd, dv_nd, r_target, v_target, dr_norm, dv_norm = deltas
+        self.pos_residual = ( dx_nd**2 + dy_nd**2 ) ** 0.5
+        self.vel_residual = ( dvx_nd**2 + dvy_nd**2 ) ** 0.5
 
         residual = dx_nd**2 + dy_nd**2 + dvx_nd**2 + dvy_nd**2
+
+        self.pos_r_component = np.exp(-self.pos_residual**2)*self.pos_weight
+        self.vel_r_component = np.exp(-self.vel_residual**2)*self.vel_weight
+        self.mass_r_component = -self.mass_increment / self.m_star * self.mass_weight
 
         # central body parameters
         cb_rad = self.planet_radii[0] / self.l_star  # central body radius in nd units
 
         terminated = False
 
-        # Check if a collision has taken place, terminate with negative reward
-        # Otherwise, compute a reward based on distance from target SMA
+        
         if r < cb_rad:
             reward = 0.0
             terminated = True
@@ -330,10 +364,10 @@ class TwoBodyRendezvous_Env(gym.Env):
             reward = 0.0
             terminated = True
         elif TTG <= 0.0:
-            reward = -residual
+            reward = self.mass_r_component + self.pos_r_component + self.vel_r_component  # final reward is based on distance to target
             terminated = True
         else:
-            reward = -self.mass_increment / self.m_star  # reward is based on fuel used
+            reward = self.mass_r_component + self.pos_r_component + self.vel_r_component  # reward is based on fuel used
 
         return reward, terminated
 
@@ -522,10 +556,46 @@ class TwoBodyRendezvous_Env(gym.Env):
         self._keplerian_elements[2] = w
         self._keplerian_elements[3] = theta
 
+        # convert initial and final states to polar coordinates
+        r_0, theta_0, r_dot_0, v_theta_0 = cartesian_to_polar(x_in, y_in, vx_in, vy_in)
+        r_f, theta_f, r_dot_f, v_theta_f = cartesian_to_polar(x_target_in, y_target_in, vx_target_in, vy_target_in)
+
+        # Initialize spacecraft objects for initial and final states
+        sc_init = Spacecraft(r_0, theta_0, r_dot_0, v_theta_0, m_in, self.C1, self.C2)
+        sc_fin = Spacecraft(r_f, theta_f, r_dot_f, v_theta_f, m_in, self.C1, self.C2)
+
+        # calculate orbital elements for initial and final states
+        a_init, e_init, w_init, theta_init = sc_init.calc_Planar_OE(
+            x_cb, y_cb, vx_cb, vy_cb, self.param_mu
+        )
+        a_fin, e_fin, w_fin, theta_fin = sc_fin.calc_Planar_OE(
+            x_cb, y_cb, vx_cb, vy_cb, self.param_mu
+        )
+
+        # determine orbital periods
+        a_nd = a_init / Constants.SMA_EARTH
+        a_f_nd = a_fin / Constants.SMA_EARTH
+        T_i = 2 * np.pi * ( a_nd**3 / 1.0 ) ** 0.5
+        T_target = 2 * np.pi * ( a_f_nd**3 / 1.0 ) ** 0.5
+
+        #set mass increment to zero
+        self.mass_increment = 0.0
+
+        #determine total time of flight based on initial + target orbit
+        if (T_target > T_i):
+            self.TOF = T_target * self.t_star * self.tof_scale
+            self.TOF_nd = T_target * self.tof_scale
+        else:
+            self.TOF = T_i * self.t_star * self.tof_scale
+            self.TOF_nd = T_i * self.tof_scale
+
+        self.timesteps_in_TOF = int(self.TOF / self.step_size) + 1
+
         info = self._get_info(
             None, #placeholder for ODE data - only provided in step()
             None, #placeholder for delta_r data - only provided in step()
         )
+
         observation = self._convert_state_to_obs()
 
         return observation, info

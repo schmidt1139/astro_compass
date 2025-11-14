@@ -1,5 +1,6 @@
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 import os
 from constants.constants import Constants
 from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
@@ -115,6 +116,9 @@ class SACRolloutData_TBR:
         self.arr_vx_target = []
         self.arr_vy_target = []
         self.arr_ttg = []
+        self.arr_pos_r_component = []
+        self.arr_vel_r_component = []
+        self.arr_mass_r_component = []
         self.sum_reward = 0.0
 
     def add_step(
@@ -134,6 +138,9 @@ class SACRolloutData_TBR:
         vx_target,
         vy_target,
         ttg,
+        pos_r_component,
+        vel_r_component,
+        mass_r_component,
     ):
         self.arr_time.append(time)  # convert to days
         self.arr_reward.append(reward)
@@ -150,6 +157,9 @@ class SACRolloutData_TBR:
         self.arr_vx_target.append(vx_target)
         self.arr_vy_target.append(vy_target)
         self.arr_ttg.append(ttg)
+        self.arr_pos_r_component.append(pos_r_component)
+        self.arr_vel_r_component.append(vel_r_component)
+        self.arr_mass_r_component.append(mass_r_component)
         self.sum_reward += reward
         self.arr_reward_tot.append(self.sum_reward)
 
@@ -259,13 +269,13 @@ def plot_SAC_training(
 
 def plot_SAC_training_TBR(
     SACRolloutData_TBR, arr_episode_numbers, arr_episode_rs, path_output, eph,
-    params, env
+    params, env, arr_actor_loss_pt, arr_critic_loss_pt
 ):
 
     # plot reward over time
     plt.figure()
-    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_reward_tot, label="Reward")
-    plt.xlabel("Time [days]")
+    plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, SACRolloutData_TBR.arr_reward_tot, label="Reward")
+    plt.xlabel("Time [years]")
     plt.ylabel("Reward")
     plt.title("SAC Training Reward over Time")
     plt.legend()
@@ -275,10 +285,10 @@ def plot_SAC_training_TBR(
     plt.figure()
     arr_ttg_days = [ttg * params["t_star"] / Constants.DAYS_TO_SEC for ttg in SACRolloutData_TBR.arr_ttg]
     arr_zeros = [0.0 for ttg in SACRolloutData_TBR.arr_ttg]
-    plt.plot(SACRolloutData_TBR.arr_time, arr_ttg_days, label="Time to Target", color="magenta")
-    plt.plot(SACRolloutData_TBR.arr_time, arr_zeros, label="Target Reached", linestyle="--", color="orange")
-    plt.xlabel("Time [days]")
-    plt.ylabel("Time to Target [days]")
+    plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, arr_ttg_days, label="Time to Target", color="magenta")
+    plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, arr_zeros, label="Target Reached", linestyle="--", color="orange")
+    plt.xlabel("Time [years]")
+    plt.ylabel("Time to Target [years]")
     plt.title("SAC Training Time to Target over Time")
     plt.legend()
     plt.grid(True, alpha=0.3)  # Force grid on with some transparency
@@ -286,18 +296,29 @@ def plot_SAC_training_TBR(
 
     # plot reward over time per step
     plt.figure()
-    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_reward, label="Reward")
-    plt.xlabel("Time [days]")
+    plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, SACRolloutData_TBR.arr_reward, label="Reward")
+    plt.xlabel("Time [years]")
     plt.ylabel("Reward per Step")
     plt.title("SAC Training Reward Per Step over Time")
     plt.legend()
     plt.grid(True, alpha=0.3)  # Force grid on with some transparency
     plt.savefig(os.path.join(path_output, "SAC_Training_Reward_Per_Step.png"), dpi=300)
 
+    plt.figure()
+    plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, SACRolloutData_TBR.arr_pos_r_component, label="Position r component")
+    plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, SACRolloutData_TBR.arr_vel_r_component, label="Velocity r component")
+    plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, SACRolloutData_TBR.arr_mass_r_component, label="Mass r component")
+    plt.xlabel("Time [years]")
+    plt.ylabel("Reward Contribution")
+    plt.title("SAC Training Reward Contribution over Time")
+    plt.legend()
+    plt.grid(True, alpha=0.3)  # Force grid on with some transparency
+    plt.savefig(os.path.join(path_output, "SAC_Training_Reward_Contribution.png"), dpi=300)
+
     # plot throttle over time
     plt.figure()
-    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_throttle, label="Throttle")
-    plt.xlabel("Time [days]")
+    plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, SACRolloutData_TBR.arr_throttle, label="Throttle")
+    plt.xlabel("Time [years]")
     plt.ylabel("Throttle")
     plt.title("SAC Training Throttle over Time")
     plt.legend()
@@ -306,9 +327,10 @@ def plot_SAC_training_TBR(
 
     # plot attitude over time
     plt.figure()
-    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_alpha_x, label="alpha_x")
-    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_alpha_y, label="alpha_y")
-    plt.xlabel("Time [days]")
+    arr_time_years = np.array(SACRolloutData_TBR.arr_time) / 365.25
+    plt.plot(arr_time_years, SACRolloutData_TBR.arr_alpha_x, label="alpha_x")
+    plt.plot(arr_time_years, SACRolloutData_TBR.arr_alpha_y, label="alpha_y")
+    plt.xlabel("Time [years]")
     plt.ylabel("Attitude")
     plt.title("SAC Training Burn Attitude over Time")
     plt.legend()
@@ -317,15 +339,15 @@ def plot_SAC_training_TBR(
 
     # plot nd state over time
     plt.figure()
-    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_x, label="x", color="cyan")
-    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_y, label="y", color="magenta")
-    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_vx, label="vx", color="orange")
-    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_vy, label="vy", color="pink")
-    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_x_target, label="x_target", linestyle="--", color="cyan")
-    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_y_target, label="y_target", linestyle="--", color="magenta")
-    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_vx_target, label="vx_target", linestyle="--", color="orange")
-    plt.plot(SACRolloutData_TBR.arr_time, SACRolloutData_TBR.arr_vy_target, label="vy_target", linestyle="--", color="pink")
-    plt.xlabel("Time [days]")
+    plt.plot(arr_time_years, SACRolloutData_TBR.arr_x, label="x", color="cyan")
+    plt.plot(arr_time_years, SACRolloutData_TBR.arr_y, label="y", color="magenta")
+    plt.plot(arr_time_years, SACRolloutData_TBR.arr_vx, label="vx", color="orange")
+    plt.plot(arr_time_years, SACRolloutData_TBR.arr_vy, label="vy", color="pink")
+    plt.plot(arr_time_years, SACRolloutData_TBR.arr_x_target, label="x_target", linestyle="--", color="cyan")
+    plt.plot(arr_time_years, SACRolloutData_TBR.arr_y_target, label="y_target", linestyle="--", color="magenta")
+    plt.plot(arr_time_years, SACRolloutData_TBR.arr_vx_target, label="vx_target", linestyle="--", color="orange")
+    plt.plot(arr_time_years, SACRolloutData_TBR.arr_vy_target, label="vy_target", linestyle="--", color="pink")
+    plt.xlabel("Time [years]")
     plt.ylabel("ND state")
     plt.title("SAC Training ND State over Time")
     plt.legend()
@@ -344,8 +366,31 @@ def plot_SAC_training_TBR(
         os.path.join(path_output, "SAC_Training_reward_per_episode.png"), dpi=300
     )
 
+    # Create 2x1 subplot for actor and critic losses
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 8))
+    
+    # Plot critic loss on top
+    ax1.plot(arr_critic_loss_pt, label="Critic Loss", color='blue')
+    ax1.set_xlabel("Iterations")
+    ax1.set_ylabel("Critic Loss")
+    ax1.set_title("Pre-Training Critic Loss vs Iterations")
+    ax1.legend()
+    ax1.grid(True, alpha=0.3)
+    
+    # Plot actor loss on bottom
+    ax2.plot(arr_actor_loss_pt, label="Actor Loss", color='orange')
+    ax2.set_xlabel("Iterations")
+    ax2.set_ylabel("Actor Loss")
+    ax2.set_title("Pre-Training Actor Loss vs Iterations")
+    ax2.legend()
+    ax2.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.savefig(os.path.join(path_output, "SAC_Actor_Critic_Losses.png"), dpi=300)
+    plt.close(fig)
+
     # generate and save figures
-    fig_orb = eph.plot_xy()
+    fig_orb = eph.plot_xy(color_in="#9c179e")
     x_target = SACRolloutData_TBR.arr_x_target[-1]*params["l_star"]
     y_target = SACRolloutData_TBR.arr_y_target[-1]*params["l_star"]
     vx_target = SACRolloutData_TBR.arr_vx_target[-1]*params["l_star"]/params["t_star"]
@@ -360,9 +405,25 @@ def plot_SAC_training_TBR(
         params,
         eph,
         label_in="Target Orbit",
-        color_in="lime"
+        color_in="#ed7953"
     )
+    fig_orb = plot_overlay_ballistic_orbit(
+        SACRolloutData_TBR.arr_x[0]*params["l_star"],
+        SACRolloutData_TBR.arr_y[0]*params["l_star"],
+        SACRolloutData_TBR.arr_vx[0]*params["l_star"]/params["t_star"],
+        SACRolloutData_TBR.arr_vy[0]*params["l_star"]/params["t_star"],
+        env,
+        fig_orb,
+        params,
+        eph,
+        label_in="Initial Orbit",
+        color_in="#0d0887"
+    )
+    fig_orb = eph.add_target_icon( x_target, y_target, 
+         color_in="#ed7953"
+     )
 
+    fig_orb = eph.adjust_plot_limits()
     fig_orb.savefig(os.path.join(path_output, "SAC_Test_Traj.png"), dpi=300)
 
 def plot_overlay_ballistic_orbit(x, y, vx, vy, env, fig, params, eph, label_in,
