@@ -469,7 +469,8 @@ def train_on_replay_buffer(model, params, test_log):
             test_log,
             True
         )
-        return test_log
+        # Return empty loss arrays if we can't train
+        return test_log, [], []
     
     test_log = log(f"Replay buffer size: {buffer_size}", test_log, True)
     test_log = log(f"Batch size: {batch_size}", test_log, True)
