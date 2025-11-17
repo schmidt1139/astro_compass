@@ -1,3 +1,5 @@
+import os
+from Constants import Constants
 import torch
 import torch.nn as nn
 import numpy as np
@@ -5,7 +7,7 @@ import numpy as np
 from utils.log_utils import log
 from core.training_data_generation import read_ephems_from_dir
 from stable_baselines3.common.callbacks import BaseCallback
-
+from stable_baselines3.common.evaluation import evaluate_policy
 
 def log_training_perf(
     test_log, callback, eval_callback, model, training_steps, flag_verbose
@@ -299,23 +301,28 @@ def pre_train(test_log, model, params, env):
             f"Environment observation space shape {env.observation_space.shape} does not match expected shape for ephemeris version {ephem_version}"
         )
 
-    # Import training data into replay buffer
-    import_training_into_replay_buffer_v2(
-        params["path_training_data"],  # path to directory containing training ephemerides
-        test_log,  # log
-        model,  # SAC model
-        env,
-        params,
-    )
+    if not params.get("read_replay_buffer", False):
+        # Import training data into replay buffer
+        test_log = log("Importing training data into replay buffer", test_log, True)
+        import_training_into_replay_buffer_v2(
+            params["path_training_data"],  # path to directory containing training ephemerides
+            test_log,  # log
+            model,  # SAC model
+            env,
+            params,
+        )
+
+    else:
+        test_log = log("Buffer read in directly", test_log, True)
 
     test_log = log(
             "Updated experience buffer size: " + str(model.replay_buffer.size()), test_log, True
         )  # current number of transitions
     
     # Train networks on replay buffer
-    test_log, critic_loss_reduced, actor_loss_reduced = train_on_replay_buffer(model, params, test_log)
+    test_log, critic_loss_reduced, actor_loss_reduced = train_on_replay_buffer(model, params, test_log, env)
 
-    return test_log, critic_loss_reduced, actor_loss_reduced
+    return test_log, actor_loss_reduced, critic_loss_reduced
 
 
 def import_training_into_replay_buffer_v2(
@@ -434,8 +441,14 @@ def import_training_into_replay_buffer_v2(
             # Add experience to replay buffer
             add_experience_to_replay_buffer(model, obs, action, reward, next_obs, done)
 
+    # optionally save the updated replay buffer to disk
+    if params.get("save_replay_buffer", False):
+        path_replay_buffer = os.path.join(params["path_replay_buffer"], "replay_buffer.pkl")
+        model.save_replay_buffer(path_replay_buffer)
+        test_log = log(f"Replay buffer saved to {path_replay_buffer}", test_log, True)
 
-def train_on_replay_buffer(model, params, test_log):
+
+def train_on_replay_buffer(model, params, test_log, env):
     """
     Train the SAC networks using only the experiences currently in the replay buffer.
     Does not collect any new experiences from the environment.
@@ -497,6 +510,12 @@ def train_on_replay_buffer(model, params, test_log):
     # Track losses
     critic_losses = []
     actor_losses = []
+    mean_rewards = []
+    std_rewards = []
+
+    # Optionally log progress
+    log_interval = params.get("pt_log_interval", 1000)
+    checkpoint_interval = params.get("checkpoint_freq", 10_000)
     
     # Train the networks by sampling from replay buffer
     for step in tqdm(range(num_gradient_steps), desc="Pre-training"):
@@ -521,15 +540,36 @@ def train_on_replay_buffer(model, params, test_log):
             # Logger not set up or accessible, skip logging
             pass
         
-        # Optionally log progress
-        log_interval = params.get("pt_log_interval", 1000)
         if (step + 1) % log_interval == 0:
+
             if critic_losses and actor_losses:
                 avg_critic = np.mean(critic_losses[-log_interval:])
                 avg_actor = np.mean(actor_losses[-log_interval:])
                 tqdm.write(f"Step {step + 1}: Critic Loss: {avg_critic:.4f}, Actor Loss: {avg_actor:.4f}")
             else:
                 tqdm.write(f"Completed {step + 1}/{num_gradient_steps} gradient steps")
+
+        # also checkpoint the model
+        if (step + 1) % checkpoint_interval == 0:
+
+            # evaluate current policy
+            mean_reward, std_reward = evaluate_policy(
+                model, 
+                env, 
+                n_eval_episodes=params.get("n_eval_episodes", 10),
+                deterministic=True
+            )
+
+            mean_rewards.append(mean_reward)
+            std_rewards.append(std_reward)
+
+            tqdm.write(f"Evaluation after {step + 1} steps: Mean Reward: {mean_reward:.2f} +/- {std_reward:.2f}")
+
+            path = os.path.join(params["output_dir_specific"], "checkpoints")
+            checkpoint_path = os.path.join(path, f"sac_pretrained_step_{step + 1}.zip")
+            model.save(checkpoint_path)
+            tqdm.write(f"Saved model checkpoint to {checkpoint_path}")
+
     
     test_log = log(
         f"Completed {num_gradient_steps} gradient steps on replay buffer",
@@ -555,7 +595,12 @@ def train_on_replay_buffer(model, params, test_log):
         pd.DataFrame(actor_loss_reduced, columns=["actor_loss"]).to_csv(
             os.path.join(path, "actor_losses.csv"), index=False
         )
-        
+
+        pd.DataFrame({
+            "mean_reward": mean_rewards,
+            "std_reward": std_rewards
+        }).to_csv(os.path.join(path, "eval_rewards.csv"), index=True)
+
         test_log = log(
             f"Saved loss curves to {path}",
             test_log,

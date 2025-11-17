@@ -2,8 +2,10 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import pandas as pd
 from constants.constants import Constants
 from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
+from utils. h_rl_fusion import calc_rewards_from_H_ephem
 
 
 def format_plots():
@@ -269,12 +271,25 @@ def plot_SAC_training(
 
 def plot_SAC_training_TBR(
     SACRolloutData_TBR, arr_episode_numbers, arr_episode_rs, path_output, eph,
-    params, env, arr_actor_loss_pt, arr_critic_loss_pt
+    params, env, arr_actor_loss_pt, arr_critic_loss_pt, ephem_H=None
 ):
-
-    # plot reward over time
+    
+    if ephem_H is not None:
+        results = calc_rewards_from_H_ephem(ephem_H, env, params)
+        arr_time_H = results[0]
+        arr_reward_H = results[1]
+        arr_r_pos_H = results[2]
+        arr_r_vel_H = results[3]
+        arr_r_mass_H = results[4]
+        arr_r_tot = results[5]
+        arr_u_H = ephem_H.arr_u
+        arr_alpha_x_H = ephem_H.arr_alpha_x
+        arr_alpha_y_H = ephem_H.arr_alpha_y
+        
+            # plot reward over time
     plt.figure()
     plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, SACRolloutData_TBR.arr_reward_tot, label="Reward")
+    plt.plot(np.array(arr_time_H)/365.25, arr_r_tot, label="Hamiltonian Ephem Reward", linestyle="--", color="red")
     plt.xlabel("Time [years]")
     plt.ylabel("Reward")
     plt.title("SAC Training Reward over Time")
@@ -285,7 +300,8 @@ def plot_SAC_training_TBR(
     plt.figure()
     arr_ttg_days = [ttg * params["t_star"] / Constants.DAYS_TO_SEC for ttg in SACRolloutData_TBR.arr_ttg]
     arr_zeros = [0.0 for ttg in SACRolloutData_TBR.arr_ttg]
-    plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, arr_ttg_days, label="Time to Target", color="magenta")
+
+    plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, np.array(arr_ttg_days)/365.25, label="Time to Target", color="magenta")
     plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, arr_zeros, label="Target Reached", linestyle="--", color="orange")
     plt.xlabel("Time [years]")
     plt.ylabel("Time to Target [years]")
@@ -296,7 +312,20 @@ def plot_SAC_training_TBR(
 
     # plot reward over time per step
     plt.figure()
+    percentile_95_SAC = np.percentile(SACRolloutData_TBR.arr_reward, 95)
+    percentile_5_SAC = np.percentile(SACRolloutData_TBR.arr_reward, 5)
+    if ephem_H is not None:
+        percentile_95_H = np.percentile(arr_reward_H, 95)
+        percentile_5_H = np.percentile(arr_reward_H, 5)
+        max_percentile = max(percentile_95_SAC, percentile_95_H)
+        min_percentile = min(percentile_5_SAC, percentile_5_H)
+    else:
+        max_percentile = percentile_95_SAC
+        min_percentile = percentile_5_SAC
+
     plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, SACRolloutData_TBR.arr_reward, label="Reward")
+    plt.plot(np.array(arr_time_H)/365.25, arr_reward_H, label="Hamiltonian Ephem Reward", linestyle="--", color="red")
+    plt.ylim(min_percentile, 1.1*max_percentile)
     plt.xlabel("Time [years]")
     plt.ylabel("Reward per Step")
     plt.title("SAC Training Reward Per Step over Time")
@@ -308,6 +337,23 @@ def plot_SAC_training_TBR(
     plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, SACRolloutData_TBR.arr_pos_r_component, label="Position r component")
     plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, SACRolloutData_TBR.arr_vel_r_component, label="Velocity r component")
     plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, SACRolloutData_TBR.arr_mass_r_component, label="Mass r component")
+    plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, SACRolloutData_TBR.arr_reward, label="Composite Reward")
+    plt.plot(np.array(arr_time_H)/365.25, arr_r_pos_H, label="Hamiltonian Ephem Position r component", linestyle="--", color="red")
+    plt.plot(np.array(arr_time_H)/365.25, arr_r_vel_H, label="Hamiltonian Ephem Velocity r component", linestyle="--", color="blue")
+    plt.plot(np.array(arr_time_H)/365.25, arr_r_mass_H, label="Hamiltonian Ephem Mass r component", linestyle="--", color="green")
+    plt.plot(np.array(arr_time_H)/365.25, arr_reward_H, label="Hamiltonian Ephem Composite Reward", linestyle="--", color="orange")
+    percentile_95_H = np.percentile(arr_reward_H, 95)
+    percentile_95_SAC = np.percentile(SACRolloutData_TBR.arr_reward, 95)
+    max_percentile = max(percentile_95_SAC, percentile_95_H)
+    if ephem_H is not None:
+        percentile_95_H = np.percentile(arr_reward_H, 95)
+        percentile_5_H = np.percentile(arr_reward_H, 5)
+        max_percentile = max(percentile_95_SAC, percentile_95_H)
+        min_percentile = min(percentile_5_SAC, percentile_5_H)
+    else:
+        max_percentile = percentile_95_SAC
+        min_percentile = percentile_5_SAC
+    plt.ylim(min_percentile, 1.1*max_percentile)
     plt.xlabel("Time [years]")
     plt.ylabel("Reward Contribution")
     plt.title("SAC Training Reward Contribution over Time")
@@ -318,6 +364,8 @@ def plot_SAC_training_TBR(
     # plot throttle over time
     plt.figure()
     plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, SACRolloutData_TBR.arr_throttle, label="Throttle")
+    if ephem_H is not None:
+        plt.plot(np.array(arr_time_H)/365.25, arr_u_H, label="Hamiltonian Ephem Throttle", linestyle="--", color="red")
     plt.xlabel("Time [years]")
     plt.ylabel("Throttle")
     plt.title("SAC Training Throttle over Time")
@@ -330,6 +378,9 @@ def plot_SAC_training_TBR(
     arr_time_years = np.array(SACRolloutData_TBR.arr_time) / 365.25
     plt.plot(arr_time_years, SACRolloutData_TBR.arr_alpha_x, label="alpha_x")
     plt.plot(arr_time_years, SACRolloutData_TBR.arr_alpha_y, label="alpha_y")
+    if ephem_H is not None:
+        plt.plot(np.array(arr_time_H)/365.25, arr_alpha_x_H, label="Hamiltonian Ephem alpha_x", linestyle="--", color="red")
+        plt.plot(np.array(arr_time_H)/365.25, arr_alpha_y_H, label="Hamiltonian Ephem alpha_y", linestyle="--", color="blue")
     plt.xlabel("Time [years]")
     plt.ylabel("Attitude")
     plt.title("SAC Training Burn Attitude over Time")
@@ -367,11 +418,11 @@ def plot_SAC_training_TBR(
     )
 
     # Create 2x1 subplot for actor and critic losses
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 8))
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 8), constrained_layout=True)
     
     # Plot critic loss on top
     ax1.plot(arr_critic_loss_pt, label="Critic Loss", color='blue')
-    ax1.set_xlabel("Iterations")
+    ax1.set_xlabel("Iterations (updated every " + str(params["loss_report_rate"]) + " steps)")
     ax1.set_ylabel("Critic Loss")
     ax1.set_title("Pre-Training Critic Loss vs Iterations")
     ax1.legend()
@@ -385,12 +436,11 @@ def plot_SAC_training_TBR(
     ax2.legend()
     ax2.grid(True, alpha=0.3)
     
-    plt.tight_layout()
     plt.savefig(os.path.join(path_output, "SAC_Actor_Critic_Losses.png"), dpi=300)
     plt.close(fig)
 
     # generate and save figures
-    fig_orb = eph.plot_xy(color_in="#9c179e")
+    fig_orb = eph.plot_xy(color_in="#7e03a8")
     x_target = SACRolloutData_TBR.arr_x_target[-1]*params["l_star"]
     y_target = SACRolloutData_TBR.arr_y_target[-1]*params["l_star"]
     vx_target = SACRolloutData_TBR.arr_vx_target[-1]*params["l_star"]/params["t_star"]
@@ -405,7 +455,7 @@ def plot_SAC_training_TBR(
         params,
         eph,
         label_in="Target Orbit",
-        color_in="#ed7953"
+        color_in="#cc4778"
     )
     fig_orb = plot_overlay_ballistic_orbit(
         SACRolloutData_TBR.arr_x[0]*params["l_star"],
@@ -420,11 +470,50 @@ def plot_SAC_training_TBR(
         color_in="#0d0887"
     )
     fig_orb = eph.add_target_icon( x_target, y_target, 
-         color_in="#ed7953"
+         color_in="#cc4778"
      )
+
+    if params.get("flag_gen_H_traj", False) and (ephem_H is not None):
+        fig_orb = eph.overlay_ref_orbit(
+            ephem=ephem_H,
+            label="Hamiltonian Trajectory",
+            color_in="#f89540"
+        )
 
     fig_orb = eph.adjust_plot_limits()
     fig_orb.savefig(os.path.join(path_output, "SAC_Test_Traj.png"), dpi=300)
+
+    #write reward data to csv - handle different length arrays
+    sac_time = np.array(SACRolloutData_TBR.arr_time)/365.25
+    sac_reward = SACRolloutData_TBR.arr_reward
+    h_time = np.array(arr_time_H)/365.25
+    h_reward = arr_reward_H
+    
+    # Find max length and pad shorter arrays with NaN
+    max_len = max(len(sac_time), len(h_time))
+    
+    # downsample to every 10th point for saving
+    sac_time = sac_time[::10]
+    sac_reward = sac_reward[::10]
+    h_time = h_time[::10]
+    h_reward = h_reward[::10]
+    arr_r_pos_H = arr_r_pos_H[::10]
+    arr_r_vel_H = arr_r_vel_H[::10]
+    arr_r_mass_H = arr_r_mass_H[::10]
+
+    df = pd.DataFrame({
+        'Time_years': list(sac_time) + [np.nan] * (max_len - len(sac_time)),
+        'SAC_Reward_per_Step': list(sac_reward) + [np.nan] * (max_len - len(sac_reward)),
+        'arr_time_H_years': list(h_time) + [np.nan] * (max_len - len(h_time)),
+        'arr_r_pos_H_per_step': list(arr_r_pos_H) + [np.nan] * (max_len - len(arr_r_pos_H)),
+        'arr_r_vel_H_per_step': list(arr_r_vel_H) + [np.nan] * (max_len - len(arr_r_vel_H)),
+        'arr_r_mass_H_per_step': list(arr_r_mass_H) + [np.nan] * (max_len - len(arr_r_mass_H)),
+        'Hamiltonian_Ephem_Reward_per_Step': list(h_reward) + [np.nan] * (max_len - len(h_reward)),
+        'Cumulative_Hamiltonian_Ephem_Reward': list(np.cumsum(h_reward)) + [np.nan] * (max_len - len(h_reward))
+
+    })
+    df.to_csv(os.path.join(path_output, "SAC_Rewards.csv"), index=False)
+
 
 def plot_overlay_ballistic_orbit(x, y, vx, vy, env, fig, params, eph, label_in,
                                  color_in="lime"):

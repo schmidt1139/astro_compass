@@ -51,10 +51,18 @@ class TwoBodyRendezvous_Env(gym.Env):
         self.e_max_final_env = kwargs.get("e_max_final_env", 0.5)  # max eccentricity for env
         self.w_min_final_env_rad = kwargs.get("w_min_final_env_deg", 0.0) * np.pi / 180  # min argument of periapsis for env [rad]
         self.w_max_final_env_rad = kwargs.get("w_max_final_env_deg", 360) * np.pi / 180  # max argument of periapsis for env [rad]
-        self.pos_weight = kwargs.get("pos_r_weight", 1.0)
-        self.vel_weight = kwargs.get("vel_r_weight", 1.0)
-        self.mass_weight = kwargs.get("mass_weight", 1.0)
+        # Support both naming conventions for weights
+        self.pos_weight = kwargs.get("pos_r_weight", kwargs.get("r_weight", 1.0))
+        self.vel_weight = kwargs.get("vel_r_weight", kwargs.get("v_weight", 1.0))
+        self.mass_weight = kwargs.get("mass_r_weight", kwargs.get("mass_weight", 1.0))
         self.tof_scale = kwargs.get("tof_scale", 1.0)
+        self.r_dist_weight = kwargs.get("r_dist_weight", self.pos_weight)
+        self.v_dist_weight = kwargs.get("v_dist_weight", self.vel_weight)
+        self.success_threshold_pos = kwargs.get("success_threshold_pos", 0.01)  # 1% of characteristic length
+        self.success_threshold_vel = kwargs.get("success_threshold_vel", 0.01)  # 1% of characteristic velocity
+        self.terminal_bonus = kwargs.get("terminal_bonus", 100.0)  # Large bonus for precise rendezvous
+        self.precision_mult = kwargs.get("precision_mult", 10.0)  # Small bonus for being within success thresholds
+        self.terminal_bonus = kwargs.get("terminal_bonus", 100.0)  # Large bonus for precise rendezvous
 
         self.arr_mu = np.array([self.param_mu])  # solar mu [m^3/s^2]
         self.planet_radii = np.array([Constants.RADIUS_SUN_M])  # solar radius [m]
@@ -274,8 +282,8 @@ class TwoBodyRendezvous_Env(gym.Env):
         dx_nd, dy_nd, dr, dvx_nd, dvy_nd, dv_nd, r_target, v_target, dr_norm, dv_norm = deltas
         self.pos_residual = ( dx_nd**2 + dy_nd**2 ) ** 0.5
         self.vel_residual = ( dvx_nd**2 + dvy_nd**2 ) ** 0.5
-        self.pos_r_component = np.exp(-self.pos_residual**2)*self.pos_weight
-        self.vel_r_component = np.exp(-self.vel_residual**2)*self.vel_weight
+        self.pos_r_component = 0.0
+        self.vel_r_component = 0.0
         self.mass_r_component = 0.0
 
         info = self._get_info(
@@ -347,9 +355,18 @@ class TwoBodyRendezvous_Env(gym.Env):
 
         residual = dx_nd**2 + dy_nd**2 + dvx_nd**2 + dvy_nd**2
 
-        self.pos_r_component = np.exp(-self.pos_residual**2)*self.pos_weight
-        self.vel_r_component = np.exp(-self.vel_residual**2)*self.vel_weight
+        # Separate exponentials for position and velocity - provides smoother gradient
+        self.pos_r_component = np.exp(- self.r_dist_weight * self.pos_residual**2) * self.pos_weight
+        self.vel_r_component = np.exp(- self.v_dist_weight * self.vel_residual**2) * self.vel_weight
         self.mass_r_component = -self.mass_increment / self.m_star * self.mass_weight
+
+        #Step-based shaping reward (always provided for learning)
+        if self.pos_residual < self.success_threshold_pos and self.vel_residual < self.success_threshold_vel:
+            precision_mult = self.precision_mult  # Small bonus for being within success thresholds
+            self.pos_r_component = self.pos_r_component * precision_mult
+            self.vel_r_component = self.vel_r_component * precision_mult
+
+        shaping_reward = self.pos_r_component + self.vel_r_component + self.mass_r_component
 
         # central body parameters
         cb_rad = self.planet_radii[0] / self.l_star  # central body radius in nd units
@@ -363,11 +380,17 @@ class TwoBodyRendezvous_Env(gym.Env):
         elif e >= 1.0:
             reward = 0.0
             terminated = True
-        elif TTG <= 0.0:
-            reward = self.mass_r_component + self.pos_r_component + self.vel_r_component  # final reward is based on distance to target
+        elif TTG <= 0.0:          
+            if self.pos_residual < self.success_threshold_pos and self.vel_residual < self.success_threshold_vel:
+                terminal_bonus = self.terminal_bonus  # Large bonus for precise rendezvous
+            else:
+                terminal_bonus = 0.0
+            
+            reward = shaping_reward + terminal_bonus
             terminated = True
         else:
-            reward = self.mass_r_component + self.pos_r_component + self.vel_r_component  # reward is based on fuel used
+            # During trajectory: only shaping reward
+            reward = shaping_reward
 
         return reward, terminated
 

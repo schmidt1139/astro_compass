@@ -3,6 +3,7 @@ import os
 import torch
 import matplotlib.pyplot as plt
 import random
+import torch.nn as nn
 
 from datetime import datetime
 from gymnasium import envs
@@ -19,6 +20,7 @@ from utils.state_vector_utils import cartesian_to_polar
 from utils.plotting_utils import SACRolloutData_TBR, plot_SAC_training, SACRolloutData, plot_SAC_training_TBR
 from utils.rl_utils import log_training_perf, RewardLoggerCallback, pre_train
 from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
+from core.process_single_trajectory import process_single_trajectory
 
 
 
@@ -57,7 +59,14 @@ def SAC_training_TBR(seed_in=42):
         w_max_final_env_deg=params["w_max_final_env_deg"],
         pos_r_weight=params.get("pos_r_weight", 1.0),
         vel_r_weight=params.get("vel_r_weight", 1.0),
+        mass_r_weight=params.get("mass_r_weight", 1.0),
         tof_scale=params.get("tof_scale", 1.0),
+        r_dist_weight=params.get("r_dist_weight", 1.0),
+        v_dist_weight=params.get("v_dist_weight", 1.0),
+        success_threshold_pos=params.get("success_threshold_pos", 0.01),
+        success_threshold_vel=params.get("success_threshold_vel", 0.01),
+        terminal_bonus=params.get("terminal_bonus", 100.0),
+        precision_mult=params.get("precision_mult", 10.0)
     )
 
     eval_env = TwoBodyRendezvous_Env(
@@ -83,7 +92,14 @@ def SAC_training_TBR(seed_in=42):
         w_max_final_env_deg=params["w_max_final_env_deg"],
         pos_r_weight=params.get("pos_r_weight", 1.0),
         vel_r_weight=params.get("vel_r_weight", 1.0),
+        mass_r_weight=params.get("mass_r_weight", 1.0),
         tof_scale=params.get("tof_scale", 1.0),
+        r_dist_weight=params.get("r_dist_weight", 1.0),
+        v_dist_weight=params.get("v_dist_weight", 1.0),
+        success_threshold_pos=params.get("success_threshold_pos", 0.01),
+        success_threshold_vel=params.get("success_threshold_vel", 0.01),
+        terminal_bonus=params.get("terminal_bonus", 100.0),
+        precision_mult=params.get("precision_mult", 10.0)
     )
 
     max_episode_steps_in = params["max_episode_steps"]
@@ -117,7 +133,11 @@ def SAC_training_TBR(seed_in=42):
 
     #make a subdir for checkpoints
     path_checkpoints = os.path.normpath(os.path.join(path_output, "checkpoints"))
+    path_ephems = os.path.normpath(os.path.join(path_output, "ephems"))
+    path_plots = os.path.normpath(os.path.join(path_output, "plots"))
     os.makedirs(path_checkpoints, exist_ok=True)
+    os.makedirs(path_ephems, exist_ok=True)
+    os.makedirs(path_plots, exist_ok=True)
 
     # reset the environment
     observation, info = env.reset(seed=seed_in)
@@ -129,9 +149,32 @@ def SAC_training_TBR(seed_in=42):
 
     # Create the SAC model with TensorBoard logging
     buffer_size = params.get("buffer_size", 1000000)  # Default 1M transitions
-    model = SB3_SAC("MlpPolicy", env, verbose=1, device="cpu", seed=seed_in, 
-                    tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
-                    buffer_size=buffer_size)
+
+    #load model if specified, otherwise create new
+    if params["load_model_checkpoint"]:
+        test_log = log("Loading SAC model from: " + params["path_SAC_model_load"], test_log, True)
+        model = SB3_SAC.load(params["path_SAC_model_load"], env=env, device="cpu", seed=seed_in,
+                             tensorboard_log=path_output)  # Use path_output so SB3 creates SAC_1/ subdirectory
+    else:
+
+        # Implement custom NN architectures
+        nn_arch_type = params.get("nn_arch_type", "default")
+        if nn_arch_type == "custom":
+            # define the policy architecture
+            policy_kwargs = dict(
+                net_arch=[32, 32, 32, 32, 32],  # four hidden layers with 32 units each
+                activation_fn=nn.LeakyReLU,  # LeakyReLU activation function
+            )
+            raise NotImplementedError("Custom NN architecture not implemented yet.")
+        else:
+            #use default architecture
+            model = SB3_SAC("MlpPolicy", env, learning_rate=params["learning_rate"], verbose=1, device="cpu", seed=seed_in,
+                            tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
+                            buffer_size=buffer_size)
+        
+    if params["read_replay_buffer"]:
+        test_log = log("Loading replay buffer from: " + params["path_replay_buffer"], test_log, True)
+        model.load_replay_buffer(params["path_replay_buffer"])
     
     # pre-train networks if specified
     if params["pre_train_networks"]:
@@ -173,7 +216,7 @@ def SAC_training_TBR(seed_in=42):
     model.save(path_SAC_model)
 
     # Optionally, test the trained agent
-    obs, info = env.reset(seed=42)
+    obs, info = env.reset(seed=params.get("seed_traj", 42))
     eph = Ephemeris()  # create new ephemeris object
 
     rollout_data1 = SACRolloutData_TBR()
@@ -184,6 +227,22 @@ def SAC_training_TBR(seed_in=42):
     flag_continue = True
     terminated = False
     truncated = False
+
+    # optionally generate hamiltonian trajectory
+    if params.get("flag_gen_H_traj", False):
+        test_log = log("Generating Hamiltonian trajectory for comparison...", test_log, True)
+        params["data_path"] = path_output
+        params["scenario_index"] = 0
+        params["flag_plot_traj"] = False
+        results = process_single_trajectory(params)
+        ephem_path = results[1]
+        ephem_H = Ephemeris()
+        try:
+            ephem_H.read_from_file(ephem_path)
+        except Exception as e:
+            test_log = log("Error generating Hamiltonian trajectory file: " + str(e), test_log, True)
+            params["flag_gen_H_traj"] = False
+
 
     while flag_continue:
 
@@ -281,6 +340,7 @@ def SAC_training_TBR(seed_in=42):
         env.unwrapped,  # Unwrap to get the base TwoBodyRendezvous_Env
         arr_actor_loss_pt,
         arr_critic_loss_pt,
+        ephem_H if params.get("flag_gen_H_traj", False) else None,
     )
 
     env.close()
