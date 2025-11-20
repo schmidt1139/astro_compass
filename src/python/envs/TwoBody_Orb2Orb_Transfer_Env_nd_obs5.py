@@ -39,10 +39,14 @@ class TwoBody_Orb2Orb_Transfer_Env_nd_obs5(gym.Env):
         )  # characteristic time (s)
         self.m_star = kwargs.get("m_star", 3366.0)  # characteristic mass (kg)
         self.step_size = kwargs.get("step_size", 86400)  # environment step size (s)
+        self.mass_penalty = kwargs.get("mass_penalty", 100000.0)  # mass penalty factor
         self.arr_mu = np.array([self.param_mu / 10**9])  # solar mu [km^3/s^2]
         self.planet_radii = np.array([Constants.RADIUS_SUN_M])  # solar radius [m]
         self.elapsed_t = 0.0
         self.episode_reward = 0.0
+        self.reward_distance = 0.0
+        self.reward_mass = 0.0
+        self.dm_nd = 0.0
 
         # define the action space
         # The action space consists of three variables:
@@ -68,6 +72,9 @@ class TwoBody_Orb2Orb_Transfer_Env_nd_obs5(gym.Env):
             "theta": np.rad2deg(self._keplerian_elements[3]),
             "max_thrust": self._spacecraft.max_thrust,
             "ISP": self._spacecraft.specific_impulse,
+            "dm_nd": self.dm_nd,
+            "reward_distance_component": self.reward_distance,
+            "reward_mass_component": self.reward_mass,
         }
 
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None):
@@ -170,7 +177,11 @@ class TwoBody_Orb2Orb_Transfer_Env_nd_obs5(gym.Env):
             # and desired position
             r_diff = r - sma_target
             r_diff_nd = r_diff / (Constants.SMA_EARTH)
-            reward = np.exp(-(r_diff_nd**2))
+            reward_distance = np.exp(-(r_diff_nd**2))
+            self.reward_distance = reward_distance
+            reward_mass = - self.dm_nd * self.mass_penalty  # small reward for mass used
+            self.reward_mass = reward_mass
+            reward = reward_distance + reward_mass  # reward for mass used
 
         return reward, terminated
 
@@ -209,6 +220,9 @@ class TwoBody_Orb2Orb_Transfer_Env_nd_obs5(gym.Env):
         u = action[0]  # throttle control
         alpha_x = action[1]  # spacecraft thrust x-direction
         alpha_y = action[2]  # spacecraft thrust y-direction
+
+        # save non-dim mass
+        mass_nd_0 = mass / self.m_star
 
         # step the spacecraft forward
         t_span = (0.0, self.step_size)
@@ -261,12 +275,17 @@ class TwoBody_Orb2Orb_Transfer_Env_nd_obs5(gym.Env):
 
         # the observation is just the state vector
         # non dim state in observation
+        x, y, vx, vy, mass = y_final
         x_nd = x / self.l_star * 1000
         y_nd = y / self.l_star * 1000
         vx_nd = vx / (self.l_star / self.t_star) * 1000
         vy_nd = vy / (self.l_star / self.t_star) * 1000
         mass_nd = mass / self.m_star
         observation = np.array([x_nd, y_nd, vx_nd, vy_nd, mass_nd], dtype=np.float32)
+
+        #mass increment
+        dm_nd = mass_nd_0 - mass_nd
+        self.dm_nd = dm_nd
 
         # extract other environment information
         info = self._get_info(solution, delta_r)

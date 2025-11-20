@@ -142,6 +142,7 @@ def run_parallel_trajectory_generation(params):
     flag_report_live = params.get("flag_report_live", False)
 
     # Write configuration parameters to file
+    start_time = time.time()  # Store start time for elapsed time calculations
     time_str = time.strftime("%Y%m%d_%H%M%S")
     config_dir = os.path.join(params["data_path"], "configs")
     path_config = os.path.join(config_dir, "datagen_Hamiltonian_TBR_controller_parallel_config_" + time_str + ".txt")
@@ -185,19 +186,21 @@ def run_parallel_trajectory_generation(params):
         for result in async_results:
             flag_solved, ephem_path, result_seed, str_gen_time, timed_out, processing_time, params_result = result
             completed += 1
+
+            elapsed_seconds = time.time() - start_time
             
             if timed_out:
-                print(f"[{str_gen_time}] [{completed}/{params['num_trajs']}] Trajectory seed {result_seed} TIMED OUT after {processing_time:.1f}s (limit: {timeout_per_trajectory}s).")
+                print(f"[{str_gen_time}  {elapsed_seconds:.1f}s] [{completed}/{params['num_trajs']}] Trajectory seed {result_seed} TIMED OUT after {processing_time:.1f}s (limit: {timeout_per_trajectory}s).")
                 arr_pass_count.append(0)
             elif flag_solved:
-                print(f"[{str_gen_time}] [{completed}/{params['num_trajs']}] Trajectory seed {result_seed} solved successfully.")
+                print(f"[{str_gen_time}  {elapsed_seconds:.1f}s] [{completed}/{params['num_trajs']}] Trajectory seed {result_seed} solved successfully.")
                 arr_pass_count.append(1)
                 tof_index = params_result["tof_index"]
                 scenario_index = params_result["scenario_index"]
                 arr_pass_count_stats[tof_index, scenario_index] += 1
                 sa_output_ephems.append(ephem_path)
             else:
-                print(f"[{str_gen_time}] [{completed}/{params['num_trajs']}] Trajectory seed {result_seed} failed to solve.")
+                print(f"[{str_gen_time}  {elapsed_seconds:.1f}s] [{completed}/{params['num_trajs']}] Trajectory seed {result_seed} failed to solve.")
                 arr_pass_count.append(0)
 
     # summarize counts

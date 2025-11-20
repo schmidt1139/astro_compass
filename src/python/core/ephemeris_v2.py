@@ -48,7 +48,7 @@ class Ephemeris_v2:
         self.num_vectors = self.num_vectors + 1
 
     def plot_xy(
-        self, radius_central_body=Constants.RADIUS_SUN_M, plot_label="Trajectory"
+        self, radius_central_body=Constants.RADIUS_SUN_M, plot_label="Trajectory", color_in="#5c01a6"
     ):
         
         #plot.style.use("data/support_files/dark_scientific.mplstyle");
@@ -89,11 +89,11 @@ class Ephemeris_v2:
         yf = y_au[-1]
 
         if (plot.rcParams["figure.facecolor"] == "black"):
-            markerfacecolor_in = "white"
+            markerfacecolor_in = color_in
             markeredgecolor_in = "white"
             background_color = "black"
         else:
-            markerfacecolor_in = "black"
+            markerfacecolor_in = color_in
             markeredgecolor_in = "black"
             background_color = "white"
 
@@ -104,7 +104,7 @@ class Ephemeris_v2:
             marker="o",
             color=background_color,
             linestyle=None,
-            markerfacecolor=markerfacecolor_in,
+            markerfacecolor='none',
             markeredgecolor=markeredgecolor_in,
             markersize=8,
         )
@@ -119,12 +119,12 @@ class Ephemeris_v2:
             color=background_color,
             markersize=8,
         )
-        ax.plot(x_au, y_au, label="Trajectory")
+        ax.plot(x_au, y_au, label="Trajectory", color=color_in)
 
         if (radius_cb_au > 0.1* max_lim):
-            ax.plot(arr_x_cb, arr_y_cb, label="Central Body",linewidth=4, color="gold")
+            ax.plot(arr_x_cb, arr_y_cb, label="Central Body",linewidth=4, color="#f0f921")
         else:
-            ax.plot(arr_x_cb, arr_y_cb, label="Central Body", color=background_color, markerfacecolor="gold", linestyle=None, marker="o", markersize=8)
+            ax.plot(arr_x_cb, arr_y_cb, label="Central Body", color=background_color, markerfacecolor="#f0f921", linestyle=None, marker="o", markersize=8)
 
         ax.set_title("Trajectory")
         ax.set_xlabel("X [AU]")

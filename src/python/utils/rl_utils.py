@@ -1,11 +1,14 @@
+import os
+from Constants import Constants
 import torch
 import torch.nn as nn
 import numpy as np
 
+from tqdm import tqdm
 from utils.log_utils import log
 from core.training_data_generation import read_ephems_from_dir
 from stable_baselines3.common.callbacks import BaseCallback
-
+from stable_baselines3.common.evaluation import evaluate_policy
 
 def log_training_perf(
     test_log, callback, eval_callback, model, training_steps, flag_verbose
@@ -146,7 +149,7 @@ def import_training_into_replay_buffer(
     dones = []
 
     # collect all states and actions from ephemerides
-    for eph in set_ephems:
+    for eph in tqdm(set_ephems, desc="Processing ephemerides"):
         for i in range(eph.num_vectors):
 
             # Extract the vector and separate into state and action components
@@ -194,6 +197,12 @@ def import_training_into_replay_buffer(
             rewards.append(reward)
             next_states.append(obs)
             dones.append(done)
+
+        # optionally save the updated replay buffer to disk
+    if params.get("save_replay_buffer", False):
+        path_replay_buffer = os.path.join(params["path_replay_buffer"], "replay_buffer.pkl")
+        model.save_replay_buffer(path_replay_buffer)
+        test_log = log(f"Replay buffer saved to {path_replay_buffer}", test_log, True)
 
 
 def add_experience_to_replay_buffer(model, obs, action, reward, next_obs, done):
@@ -253,3 +262,374 @@ class RewardLoggerCallback(BaseCallback):
             self.episode_rewards.append(ep_info["r"])
             self.episode_lengths.append(ep_info["l"])
         self._last_ep_buffer_len = len(ep_infos)
+
+
+def pre_train(test_log, model, params, env):
+    
+    test_log = log("Pre-training networks...", test_log, True)
+    test_log = log("Replay buffer type: " + str(type(model.replay_buffer)), test_log, True)
+
+    # Check if replay buffer is initialized
+    if model.replay_buffer is not None:
+        test_log = log(
+            "Experience buffer size: " + str(model.replay_buffer.size()), test_log, True
+        )  # current number of transitions
+        test_log = log(
+            "Experience buffer capacity: " + str(model.replay_buffer.buffer_size), test_log, True
+        )  # capacity
+    else:
+        test_log = log("Replay buffer is not initialized yet.", test_log, True)
+
+    #check what ephem version to assume
+    if "ephem_version" in params:
+        ephem_version = params["ephem_version"]
+    else:
+        ephem_version = 1.0  # default to version 1 if not specified
+
+    test_log = log(
+        f"Assuming ephemeris version: {ephem_version}", test_log, True
+    )
+
+    # check env state dimensions
+    test_log = log(
+        f"Environment observation space shape: {env.observation_space.shape}",
+        test_log,
+        True,
+    )
+
+    if (ephem_version == 2.0 and env.observation_space.shape[0] == 10 ):
+        test_log = log(
+            "Environment observation space matches expected shape for ephemeris version 2.0",
+            test_log,
+            True,
+        )
+    elif (ephem_version == 1.0 and env.observation_space.shape[0] == 5 ):
+        test_log = log(
+            "Environment observation space matches expected shape for ephemeris version 1.0",
+            test_log,
+            True,
+        )
+    else:
+        raise ValueError(
+            f"Environment observation space shape {env.observation_space.shape} does not match expected shape for ephemeris version {ephem_version}"
+        )
+
+    if not params.get("read_replay_buffer", False):
+
+        if ephem_version == 2.0:
+            # Import training data into replay buffer
+            test_log = log("Importing training data into replay buffer v2.0", test_log, True)
+            import_training_into_replay_buffer_v2(
+                params["path_training_data"],  # path to directory containing training ephemerides
+                test_log,  # log
+                model,  # SAC model
+                env,
+                params,
+            )
+        elif ephem_version == 1.0:
+            # Import training data into replay buffer
+            test_log = log("Importing training data into replay buffer v1.0", test_log, True)
+            import_training_into_replay_buffer(
+                params["path_training_data"],  # path to directory containing training ephemerides
+                test_log,  # log
+                model,  # SAC model
+                env,
+                params,
+            )
+
+    else:
+        test_log = log("Buffer read in directly", test_log, True)
+
+    test_log = log(
+            "Updated experience buffer size: " + str(model.replay_buffer.size()), test_log, True
+        )  # current number of transitions
+    
+    # Train networks on replay buffer
+    test_log, critic_loss_reduced, actor_loss_reduced = train_on_replay_buffer(model, params, test_log, env)
+
+    return test_log, actor_loss_reduced, critic_loss_reduced
+
+
+def import_training_into_replay_buffer_v2(
+    path_training_data, test_log, model, env, params
+):
+    """
+    Import training data from ephemeris v2.0 files into the replay buffer.
+    Handles 10-dimensional observation space (x, y, vx, vy, m, x_t, y_t, vx_t, vy_t, ttg).
+    """
+    from tqdm import tqdm
+    
+    test_log = log("Importing training data (v2.0) into replay buffer", test_log, True)
+
+    # read ephemerides from directory
+    num_ephems_to_use = params.get("num_ephems_to_use", None)
+    ephem_version = params.get("ephem_version", 2.0)
+    step_size = params.get("ephem_step_size", 1)  # Sample every Nth vector
+    
+    test_log = log(f"Reading ephemerides (version {ephem_version})", test_log, True)
+    set_ephems = read_ephems_from_dir(path_training_data, num_ephems_to_use, version=ephem_version)
+    
+    num_ephems = len(set_ephems)
+    test_log = log(
+        f"Number of ephemerides loaded: {num_ephems}",
+        test_log,
+        True,
+    )
+
+    # Count total experiences that will be added (accounting for step_size)
+    total_experiences = sum(eph.num_vectors // step_size for eph in set_ephems)
+    test_log = log(
+        f"Total experiences to import (with step_size={step_size}): {total_experiences}",
+        test_log,
+        True,
+    )
+
+    # Process each ephemeris with progress bar
+    for eph in tqdm(set_ephems, desc="Processing ephemerides"):
+        for i in range(0, eph.num_vectors - 1, step_size):  # -1 to ensure we have next_obs
+            
+            # Current state vector
+            state_vec = eph.get_vector_at_index(i)
+            # Next state vector
+            next_state_vec = eph.get_vector_at_index(i + 1)
+            
+            # Extract current state components (v2.0 format)
+            et = state_vec[0]
+            x = state_vec[1]
+            y = state_vec[2]
+            vx = state_vec[3]
+            vy = state_vec[4]
+            m = state_vec[5]
+            x_target = state_vec[6]
+            y_target = state_vec[7]
+            vx_target = state_vec[8]
+            vy_target = state_vec[9]
+            ttg = state_vec[10]
+            alpha_x = state_vec[11]
+            alpha_y = state_vec[12]
+            u = state_vec[13]
+            
+            # Extract next state components
+            x_next = next_state_vec[1]
+            y_next = next_state_vec[2]
+            vx_next = next_state_vec[3]
+            vy_next = next_state_vec[4]
+            m_next = next_state_vec[5]
+            x_target_next = next_state_vec[6]
+            y_target_next = next_state_vec[7]
+            vx_target_next = next_state_vec[8]
+            vy_target_next = next_state_vec[9]
+            ttg_next = next_state_vec[10]
+
+            # Non-dimensionalize observations (10-dimensional)
+            obs = np.array([
+                x / params["l_star"],
+                y / params["l_star"],
+                vx / (params["l_star"] / params["t_star"]),
+                vy / (params["l_star"] / params["t_star"]),
+                m / params["m_star"],
+                x_target / params["l_star"],
+                y_target / params["l_star"],
+                vx_target / (params["l_star"] / params["t_star"]),
+                vy_target / (params["l_star"] / params["t_star"]),
+                ttg / params["t_star"]
+            ], dtype=np.float32)
+            
+            next_obs = np.array([
+                x_next / params["l_star"],
+                y_next / params["l_star"],
+                vx_next / (params["l_star"] / params["t_star"]),
+                vy_next / (params["l_star"] / params["t_star"]),
+                m_next / params["m_star"],
+                x_target_next / params["l_star"],
+                y_target_next / params["l_star"],
+                vx_target_next / (params["l_star"] / params["t_star"]),
+                vy_target_next / (params["l_star"] / params["t_star"]),
+                ttg_next / params["t_star"]
+            ], dtype=np.float32)
+            
+            # Action
+            action = np.array([u, alpha_x, alpha_y], dtype=np.float32)
+            
+            # Compute reward using environment's reward function
+            # Set the environment state to compute reward
+            unwrapped_env = env.unwrapped
+            dim_state = np.array([x, y, vx, vy, m, x_target, y_target, vx_target, vy_target, ttg])
+            unwrapped_env.set_state(dim_state)
+            
+            # calc_reward returns (reward, terminated)
+            reward, terminated = unwrapped_env.calc_reward()
+            
+            # Done flag (true at end of trajectory OR if terminated by environment)
+            done = (i + step_size >= eph.num_vectors - 1) or terminated
+            
+            # Add experience to replay buffer
+            add_experience_to_replay_buffer(model, obs, action, reward, next_obs, done)
+
+    # optionally save the updated replay buffer to disk
+    if params.get("save_replay_buffer", False):
+        path_replay_buffer = os.path.join(params["path_replay_buffer"], "replay_buffer.pkl")
+        model.save_replay_buffer(path_replay_buffer)
+        test_log = log(f"Replay buffer saved to {path_replay_buffer}", test_log, True)
+
+
+def train_on_replay_buffer(model, params, test_log, env):
+    """
+    Train the SAC networks using only the experiences currently in the replay buffer.
+    Does not collect any new experiences from the environment.
+    
+    Args:
+        model: SAC model instance
+        params: Dictionary containing training parameters
+        test_log: Logging list
+        
+    Returns:
+        Updated test_log
+    """
+    from tqdm import tqdm
+    import pandas as pd
+    import os
+    
+    num_gradient_steps = params.get("pretrain_gradient_steps", 10000)
+    batch_size = params.get("batch_size", 256)
+    
+    test_log = log(
+        f"Training networks on replay buffer with {num_gradient_steps} gradient steps",
+        test_log,
+        True
+    )
+    
+    # Check that we have enough samples
+    buffer_size = model.replay_buffer.size()
+    if buffer_size < batch_size:
+        test_log = log(
+            f"Warning: Replay buffer has only {buffer_size} samples, less than batch size {batch_size}",
+            test_log,
+            True
+        )
+        # Return empty loss arrays if we can't train
+        return test_log, [], []
+    
+    test_log = log(f"Replay buffer size: {buffer_size}", test_log, True)
+    test_log = log(f"Batch size: {batch_size}", test_log, True)
+    
+    # Set up a minimal logger for pre-training if one doesn't exist
+    # model.train() requires a logger to record learning rate and other metrics
+    # We'll use a simple logger that doesn't interfere with TensorBoard
+    if not hasattr(model, '_logger') or model._logger is None:
+        from stable_baselines3.common.logger import Logger
+        # Create a minimal logger that just stores values without writing anywhere
+        model._logger = Logger(folder=None, output_formats=[])
+    
+    # Set up progress tracking (needed by some internal SB3 methods)
+    model._current_progress_remaining = 1.0
+    
+    # Set the number of timesteps so model.train() knows where we are
+    if not hasattr(model, '_total_timesteps'):
+        model._total_timesteps = 0
+    if not hasattr(model, 'num_timesteps'):
+        model.num_timesteps = 0
+    
+    test_log = log(f"Training on replay buffer", test_log, True)
+    
+    # Track losses
+    critic_losses = []
+    actor_losses = []
+    mean_rewards = []
+    std_rewards = []
+
+    # Optionally log progress
+    log_interval = params.get("pt_log_interval", 1000)
+    checkpoint_interval = params.get("checkpoint_freq", 10_000)
+    
+    # Train the networks by sampling from replay buffer
+    for step in tqdm(range(num_gradient_steps), desc="Pre-training"):
+        # This performs one gradient update on actor and critic networks
+        model.train(gradient_steps=1)
+        
+        # Try to get losses from the model's internal tracking
+        # Note: SAC stores these internally but they may not be accessible immediately
+        try:
+            # Check if _logger attribute exists (not the property)
+            if hasattr(model, '_logger') and model._logger is not None:
+                # Try to get values from logger's name_to_value dict
+                if hasattr(model._logger, 'name_to_value'):
+                    critic_loss = model._logger.name_to_value.get("train/critic_loss", None)
+                    actor_loss = model._logger.name_to_value.get("train/actor_loss", None)
+                    
+                    if critic_loss is not None:
+                        critic_losses.append(critic_loss)
+                    if actor_loss is not None:
+                        actor_losses.append(actor_loss)
+        except (AttributeError, KeyError):
+            # Logger not set up or accessible, skip logging
+            pass
+        
+        if (step + 1) % log_interval == 0:
+
+            if critic_losses and actor_losses:
+                avg_critic = np.mean(critic_losses[-log_interval:])
+                avg_actor = np.mean(actor_losses[-log_interval:])
+                tqdm.write(f"Step {step + 1}: Critic Loss: {avg_critic:.4f}, Actor Loss: {avg_actor:.4f}")
+            else:
+                tqdm.write(f"Completed {step + 1}/{num_gradient_steps} gradient steps")
+
+        # also checkpoint the model
+        if (step + 1) % checkpoint_interval == 0:
+
+            # evaluate current policy
+            mean_reward, std_reward = evaluate_policy(
+                model, 
+                env, 
+                n_eval_episodes=params.get("n_eval_episodes", 10),
+                deterministic=True
+            )
+
+            mean_rewards.append(mean_reward)
+            std_rewards.append(std_reward)
+
+            tqdm.write(f"Evaluation after {step + 1} steps: Mean Reward: {mean_reward:.2f} +/- {std_reward:.2f}")
+
+            path = os.path.join(params["output_dir_specific"], "checkpoints")
+            checkpoint_path = os.path.join(path, f"sac_pretrained_step_{step + 1}.zip")
+            model.save(checkpoint_path)
+            tqdm.write(f"Saved model checkpoint to {checkpoint_path}")
+
+    
+    test_log = log(
+        f"Completed {num_gradient_steps} gradient steps on replay buffer",
+        test_log,
+        True
+    )
+
+    # Save arrays of losses to csv files
+    if "output_dir_specific" in params:
+        path = params["output_dir_specific"]
+        
+        # Save losses (downsample by 10x for file size)
+        critic_loss_reduced = []
+        actor_loss_reduced = []
+        for i in range(len(critic_losses)):
+            if i % 10 == 0:
+                critic_loss_reduced.append(critic_losses[i])
+                actor_loss_reduced.append(actor_losses[i])
+
+        pd.DataFrame(critic_loss_reduced, columns=["critic_loss"]).to_csv(
+            os.path.join(path, "critic_losses.csv"), index=False
+        )
+        pd.DataFrame(actor_loss_reduced, columns=["actor_loss"]).to_csv(
+            os.path.join(path, "actor_losses.csv"), index=False
+        )
+
+        pd.DataFrame({
+            "mean_reward": mean_rewards,
+            "std_reward": std_rewards
+        }).to_csv(os.path.join(path, "eval_rewards.csv"), index=True)
+
+        test_log = log(
+            f"Saved loss curves to {path}",
+            test_log,
+            True
+        )
+
+    return test_log, critic_loss_reduced, actor_loss_reduced

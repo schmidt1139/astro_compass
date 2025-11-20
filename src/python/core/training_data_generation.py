@@ -1,9 +1,11 @@
 import sys
 import os
+from tqdm import tqdm
 
 from datetime import datetime
 from core.hamiltonian_control import Hamiltonian_Controller_TBT
 from core.ephemeris import Ephemeris
+from core.ephemeris_v2 import Ephemeris_v2
 from multiprocessing import cpu_count
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
@@ -85,23 +87,31 @@ def generate_nn_training_data_parallel(env, args):
             )
 
 
-def read_ephems_from_dir(directory, num_ephems_to_use=None):
+def read_ephems_from_dir(directory, num_ephems_to_use=None, version=1.0):
 
     filenames = os.listdir(directory)
     list_ephems = []
     counter = 0
 
-    for file in filenames:
+    end_i = len(filenames)
+    if num_ephems_to_use is not None:
+        end_i = min(num_ephems_to_use, len(filenames))
+
+    for i in tqdm(range(end_i)):
+
+        file = filenames[i]
 
         path = os.path.join(directory, file)
 
-        eph = Ephemeris()
+        if version == 1.0:
+            eph = Ephemeris()
+        else:
+            eph = Ephemeris_v2()
+
         eph.read_from_file(path)
 
         list_ephems.append(eph)
 
         counter += 1
-        if num_ephems_to_use is not None and counter >= num_ephems_to_use:
-            break
 
     return list_ephems

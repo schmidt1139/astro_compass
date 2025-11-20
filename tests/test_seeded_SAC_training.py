@@ -299,6 +299,8 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
             arr_OE[1],
             0.0,
             1.0,
+            0.0,
+            0.0
         )
 
         if terminated or truncated:

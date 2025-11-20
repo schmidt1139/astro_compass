@@ -85,11 +85,11 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
         self.input_TOF_nd = input_TOF_nd
 
         # initial co-state guess
-        lam_x0 = 0.1
-        lam_y0 = 0.1
-        lam_vx0 = 0.1
-        lam_vy0 = 0.1
-        lam_m0 = 0.1
+        lam_x0 = 0.01
+        lam_y0 = 0.01
+        lam_vx0 = 0.01
+        lam_vy0 = 0.01
+        lam_m0 = 0.01
 
         # Pack initial co-state vector
         self.arr_lam_0 = np.array([lam_x0, lam_y0, lam_vx0, lam_vy0, lam_m0])
@@ -153,8 +153,8 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
         self.root_max_iters = 400
         self.smoothing_method = 0  # Choose from 0 (tanh), 1 (homotopic)
         self.flag_stop_targeting = False
-        self.rtol_explore = 1e-6
-        self.atol_explore = 1e-9
+        self.rtol_explore = 1e-7
+        self.atol_explore = 1e-10
         self.ivp_solve_rtol = self.rtol_explore
         self.ivp_solve_atol = self.atol_explore
         self.rtol_final = 1e-9
@@ -167,7 +167,8 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
 
         # Check keyword args and override values
         allowed_kwargs = {"flag_report_live", "eps_threshold","init_costate_guesses","root_max_iters",
-                          "gamma","timeout_per_trajectory"}
+                          "gamma","timeout_per_trajectory","rtol_explore","atol_explore","ivp_solve_rtol",
+                          "ivp_solve_atol","root_tol","root_tol_max"}
 
         for key, val in kwargs.items():
             if key in allowed_kwargs:

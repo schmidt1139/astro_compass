@@ -42,6 +42,7 @@ def SAC_training(seed_in=42):
         ** 0.5,  # characteristic time - derived
         "g0": Constants.G0,  # gravtational acceleration at Earth surface [m/s^2]
         "env_step_size": 3600 * 24,  # environment step size [s]
+        "num_eval_episodes": 16,  # number of evaluation episodes
     }
 
     # initialize the environment
@@ -76,7 +77,8 @@ def SAC_training(seed_in=42):
     eval_env = Monitor(eval_env)
     training_steps = max_episode_steps_in * 1
 
-    plt.style.use("data/support_files/dark_scientific.mplstyle")
+    #plt.style.use("data/support_files/dark_scientific.mplstyle")
+    plt.style.use("data/support_files/light_paper.mplstyle")
 
     test_log = []
     test_log = log("SAC Training Script", test_log, True)
@@ -89,7 +91,7 @@ def SAC_training(seed_in=42):
     path_nns = os.path.normpath(os.path.join(os.getcwd(), "data\\neural_networks\\"))
     path_output = os.path.normpath(
         os.path.join(
-            os.getcwd(), "data\\script_output\\SAC_training_" + time_tag + "\\"
+            os.getcwd(), "data\\script_output\\SAC_training_TBT_unseeded_" + time_tag + "\\"
         )
     )
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
@@ -114,7 +116,7 @@ def SAC_training(seed_in=42):
         best_model_save_path=path_output,
         log_path=path_output,
         eval_freq=1000,  # adjust frequency
-        n_eval_episodes=5,  # episodes per evaluation
+        n_eval_episodes=params["n_eval_episodes"],  # episodes per evaluation
         deterministic=True,
         render=False,
     )
@@ -205,13 +207,13 @@ def SAC_training(seed_in=42):
 
     test_log = log("Test trajectory complete", test_log, True)
     test_log = log("Steps taken: " + str(count_step), test_log, True)
-    test_log = log("Total reward: " + str(sum_reward), test_log, True)
+    test_log = log("Total reward: " + str(rollout_data1.sum_reward), test_log, True)
     test_log = log("Final x: " + str(obs[0]) + " ", test_log, True)
     test_log = log("Final y: " + str(obs[1]) + " ", test_log, True)
     test_log = log("Final vx: " + str(obs[2]) + " ", test_log, True)
     test_log = log("Final vy: " + str(obs[3]) + " ", test_log, True)
     test_log = log("Final m: " + str(obs[4]) + " ", test_log, True)
-    test_log = log("Final sma: " + str(obs[6]) + " ", test_log, True)
+    test_log = log("Final sma: " + str(arr_OE[0]) + " ", test_log, True)
     test_log = log("Final ecc: " + str(arr_OE[1]) + " ", test_log, True)
     test_log = log("terminated: " + str(terminated) + " ", test_log, True)
     test_log = log("truncated: " + str(truncated) + " ", test_log, True)
