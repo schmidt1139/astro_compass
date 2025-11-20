@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 
+from tqdm import tqdm
 from utils.log_utils import log
 from core.training_data_generation import read_ephems_from_dir
 from stable_baselines3.common.callbacks import BaseCallback
@@ -148,7 +149,7 @@ def import_training_into_replay_buffer(
     dones = []
 
     # collect all states and actions from ephemerides
-    for eph in set_ephems:
+    for eph in tqdm(set_ephems, desc="Processing ephemerides"):
         for i in range(eph.num_vectors):
 
             # Extract the vector and separate into state and action components
@@ -196,6 +197,12 @@ def import_training_into_replay_buffer(
             rewards.append(reward)
             next_states.append(obs)
             dones.append(done)
+
+        # optionally save the updated replay buffer to disk
+    if params.get("save_replay_buffer", False):
+        path_replay_buffer = os.path.join(params["path_replay_buffer"], "replay_buffer.pkl")
+        model.save_replay_buffer(path_replay_buffer)
+        test_log = log(f"Replay buffer saved to {path_replay_buffer}", test_log, True)
 
 
 def add_experience_to_replay_buffer(model, obs, action, reward, next_obs, done):
@@ -296,21 +303,39 @@ def pre_train(test_log, model, params, env):
             test_log,
             True,
         )
+    elif (ephem_version == 1.0 and env.observation_space.shape[0] == 5 ):
+        test_log = log(
+            "Environment observation space matches expected shape for ephemeris version 1.0",
+            test_log,
+            True,
+        )
     else:
         raise ValueError(
             f"Environment observation space shape {env.observation_space.shape} does not match expected shape for ephemeris version {ephem_version}"
         )
 
     if not params.get("read_replay_buffer", False):
-        # Import training data into replay buffer
-        test_log = log("Importing training data into replay buffer", test_log, True)
-        import_training_into_replay_buffer_v2(
-            params["path_training_data"],  # path to directory containing training ephemerides
-            test_log,  # log
-            model,  # SAC model
-            env,
-            params,
-        )
+
+        if ephem_version == 2.0:
+            # Import training data into replay buffer
+            test_log = log("Importing training data into replay buffer v2.0", test_log, True)
+            import_training_into_replay_buffer_v2(
+                params["path_training_data"],  # path to directory containing training ephemerides
+                test_log,  # log
+                model,  # SAC model
+                env,
+                params,
+            )
+        elif ephem_version == 1.0:
+            # Import training data into replay buffer
+            test_log = log("Importing training data into replay buffer v1.0", test_log, True)
+            import_training_into_replay_buffer(
+                params["path_training_data"],  # path to directory containing training ephemerides
+                test_log,  # log
+                model,  # SAC model
+                env,
+                params,
+            )
 
     else:
         test_log = log("Buffer read in directly", test_log, True)

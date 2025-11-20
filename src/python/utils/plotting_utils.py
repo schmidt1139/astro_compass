@@ -62,6 +62,8 @@ class SACRolloutData:
         self.arr_ecc = []
         self.arr_ecc_target = []
         self.arr_ecc_max = []
+        self.arr_reward_mass = []
+        self.arr_reward_distance = []
         self.sum_reward = 0.0
 
     def add_step(
@@ -80,6 +82,8 @@ class SACRolloutData:
         ecc,
         ecc_target,
         ecc_max,
+        reward_mass,
+        reward_distance
     ):
         self.arr_time.append(time)  # convert to days
         self.arr_reward.append(reward)
@@ -97,6 +101,8 @@ class SACRolloutData:
         self.arr_ecc_max.append(ecc_max)
         self.sum_reward += reward
         self.arr_reward_tot.append(self.sum_reward)
+        self.arr_reward_mass.append(reward_mass)
+        self.arr_reward_distance.append(reward_distance)
 
 
 class SACRolloutData_TBR:
@@ -164,10 +170,11 @@ class SACRolloutData_TBR:
         self.arr_mass_r_component.append(mass_r_component)
         self.sum_reward += reward
         self.arr_reward_tot.append(self.sum_reward)
+        
 
 
 def plot_SAC_training(
-    SACRolloutData, arr_episode_numbers, arr_episode_rs, path_output, eph
+    SACRolloutData, arr_episode_numbers, arr_episode_rs, path_output, eph, eph_h = None
 ):
 
     # plot reward over time
@@ -183,6 +190,8 @@ def plot_SAC_training(
     # plot reward over time per step
     plt.figure()
     plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_reward, label="Reward")
+    plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_reward_mass, label="Reward Mass Component")
+    plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_reward_distance, label="Reward Distance Component")
     plt.xlabel("Time [days]")
     plt.ylabel("Reward per Step")
     plt.title("SAC Training Reward Per Step over Time")
@@ -265,8 +274,14 @@ def plot_SAC_training(
 
     # generate and save figures
     fig_orb = eph.plot_xy()
-    eph.plot_xy_ref_orbit(Constants.SMA_MARS, "Mars", "#b7410e")
-    eph.plot_xy_ref_orbit(Constants.SMA_EARTH, "Earth")
+    if eph_h is not None:
+        fig_orb = eph.overlay_ref_orbit(
+            ephem=eph_h,
+            label="Hamiltonian Trajectory",
+            color_in="#f89540"
+        )
+    fig_orb = eph.plot_xy_ref_orbit(Constants.SMA_MARS, "Mars", "#b7410e")
+    fig_orb = eph.plot_xy_ref_orbit(Constants.SMA_EARTH, "Earth")
     fig_orb.savefig(os.path.join(path_output, "SAC_Test_Traj.png"), dpi=300)
 
 def plot_SAC_training_TBR(
@@ -286,10 +301,11 @@ def plot_SAC_training_TBR(
         arr_alpha_x_H = ephem_H.arr_alpha_x
         arr_alpha_y_H = ephem_H.arr_alpha_y
         
-            # plot reward over time
+    # plot reward over time
     plt.figure()
     plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, SACRolloutData_TBR.arr_reward_tot, label="Reward")
-    plt.plot(np.array(arr_time_H)/365.25, arr_r_tot, label="Hamiltonian Ephem Reward", linestyle="--", color="red")
+    if ephem_H is not None:
+        plt.plot(np.array(arr_time_H)/365.25, arr_r_tot, label="Hamiltonian Ephem Reward", linestyle="--", color="red")
     plt.xlabel("Time [years]")
     plt.ylabel("Reward")
     plt.title("SAC Training Reward over Time")
@@ -324,7 +340,8 @@ def plot_SAC_training_TBR(
         min_percentile = percentile_5_SAC
 
     plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, SACRolloutData_TBR.arr_reward, label="Reward")
-    plt.plot(np.array(arr_time_H)/365.25, arr_reward_H, label="Hamiltonian Ephem Reward", linestyle="--", color="red")
+    if ephem_H is not None:
+        plt.plot(np.array(arr_time_H)/365.25, arr_reward_H, label="Hamiltonian Ephem Reward", linestyle="--", color="red")
     plt.ylim(min_percentile, 1.1*max_percentile)
     plt.xlabel("Time [years]")
     plt.ylabel("Reward per Step")
@@ -338,10 +355,11 @@ def plot_SAC_training_TBR(
     plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, SACRolloutData_TBR.arr_vel_r_component, label="Velocity r component")
     plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, SACRolloutData_TBR.arr_mass_r_component, label="Mass r component")
     plt.plot(np.array(SACRolloutData_TBR.arr_time)/365.25, SACRolloutData_TBR.arr_reward, label="Composite Reward")
-    plt.plot(np.array(arr_time_H)/365.25, arr_r_pos_H, label="Hamiltonian Ephem Position r component", linestyle="--", color="red")
-    plt.plot(np.array(arr_time_H)/365.25, arr_r_vel_H, label="Hamiltonian Ephem Velocity r component", linestyle="--", color="blue")
-    plt.plot(np.array(arr_time_H)/365.25, arr_r_mass_H, label="Hamiltonian Ephem Mass r component", linestyle="--", color="green")
-    plt.plot(np.array(arr_time_H)/365.25, arr_reward_H, label="Hamiltonian Ephem Composite Reward", linestyle="--", color="orange")
+    if ephem_H is not None:
+        plt.plot(np.array(arr_time_H)/365.25, arr_r_pos_H, label="Hamiltonian Ephem Position r component", linestyle="--", color="red")
+        plt.plot(np.array(arr_time_H)/365.25, arr_r_vel_H, label="Hamiltonian Ephem Velocity r component", linestyle="--", color="blue")
+        plt.plot(np.array(arr_time_H)/365.25, arr_r_mass_H, label="Hamiltonian Ephem Mass r component", linestyle="--", color="green")
+        plt.plot(np.array(arr_time_H)/365.25, arr_reward_H, label="Hamiltonian Ephem Composite Reward", linestyle="--", color="orange")
     percentile_95_H = np.percentile(arr_reward_H, 95)
     percentile_95_SAC = np.percentile(SACRolloutData_TBR.arr_reward, 95)
     max_percentile = max(percentile_95_SAC, percentile_95_H)
@@ -418,26 +436,34 @@ def plot_SAC_training_TBR(
     )
 
     # Create 2x1 subplot for actor and critic losses
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 8), constrained_layout=True)
-    
-    # Plot critic loss on top
-    ax1.plot(arr_critic_loss_pt, label="Critic Loss", color='blue')
-    ax1.set_xlabel("Iterations (updated every " + str(params["loss_report_rate"]) + " steps)")
-    ax1.set_ylabel("Critic Loss")
-    ax1.set_title("Pre-Training Critic Loss vs Iterations")
-    ax1.legend()
-    ax1.grid(True, alpha=0.3)
-    
-    # Plot actor loss on bottom
-    ax2.plot(arr_actor_loss_pt, label="Actor Loss", color='orange')
-    ax2.set_xlabel("Iterations")
-    ax2.set_ylabel("Actor Loss")
-    ax2.set_title("Pre-Training Actor Loss vs Iterations")
-    ax2.legend()
-    ax2.grid(True, alpha=0.3)
-    
-    plt.savefig(os.path.join(path_output, "SAC_Actor_Critic_Losses.png"), dpi=300)
-    plt.close(fig)
+    if len(arr_critic_loss_pt) == 0 or len(arr_actor_loss_pt) == 0:
+        print("No pre-training loss data to plot.")
+    else:
+        print("Plotting pre-training actor and critic losses.")
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 8), constrained_layout=True)
+        
+        # Plot critic loss on top
+        ax1.plot(arr_critic_loss_pt, label="Critic Loss", color='blue')
+        ax1.set_xlabel("Iterations (updated every " + str(params["loss_report_rate"]) + " steps)")
+        ax1.set_ylabel("Critic Loss")
+        ax1.set_title("Pre-Training Critic Loss vs Iterations")
+        ax1.set_xscale('log')
+        ax1.set_yscale('log')
+        ax1.legend()
+        ax1.grid(True, alpha=0.3)
+        
+        # Plot actor loss on bottom
+        ax2.plot(arr_actor_loss_pt, label="Actor Loss", color='orange')
+        ax2.set_xlabel("Iterations")
+        ax2.set_ylabel("Actor Loss")
+        ax2.set_title("Pre-Training Actor Loss vs Iterations")
+        ax2.set_xscale('log')
+        #ax2.set_yscale('log')
+        ax2.legend()
+        ax2.grid(True, alpha=0.3)
+        
+        plt.savefig(os.path.join(path_output, "SAC_Actor_Critic_Losses.png"), dpi=300)
+        plt.close(fig)
 
     # generate and save figures
     fig_orb = eph.plot_xy(color_in="#7e03a8")
@@ -481,16 +507,14 @@ def plot_SAC_training_TBR(
         )
 
     fig_orb = eph.adjust_plot_limits()
-    fig_orb.savefig(os.path.join(path_output, "SAC_Test_Traj.png"), dpi=300)
+    fig_orb.savefig(os.path.join(path_output, "SAC_Test_Traj.png"), dpi=300, bbox_inches='tight')
+    plt.close(fig_orb)
 
     #write reward data to csv - handle different length arrays
     sac_time = np.array(SACRolloutData_TBR.arr_time)/365.25
     sac_reward = SACRolloutData_TBR.arr_reward
     h_time = np.array(arr_time_H)/365.25
     h_reward = arr_reward_H
-    
-    # Find max length and pad shorter arrays with NaN
-    max_len = max(len(sac_time), len(h_time))
     
     # downsample to every 10th point for saving
     sac_time = sac_time[::10]
@@ -500,6 +524,9 @@ def plot_SAC_training_TBR(
     arr_r_pos_H = arr_r_pos_H[::10]
     arr_r_vel_H = arr_r_vel_H[::10]
     arr_r_mass_H = arr_r_mass_H[::10]
+    
+    # Find max length AFTER downsampling
+    max_len = max(len(sac_time), len(h_time))
 
     df = pd.DataFrame({
         'Time_years': list(sac_time) + [np.nan] * (max_len - len(sac_time)),
@@ -530,7 +557,10 @@ def plot_overlay_ballistic_orbit(x, y, vx, vy, env, fig, params, eph, label_in,
     flag_done = False
     arr_x = []
     arr_y = []
-    while not flag_done:
+    max_steps = 10000  # Safety limit to prevent infinite loop
+    step_count = 0
+    
+    while not flag_done and step_count < max_steps:
 
         obs, reward, done, truncated, info = env.step([0.0, 0.0, 0.0])
 
@@ -542,11 +572,12 @@ def plot_overlay_ballistic_orbit(x, y, vx, vy, env, fig, params, eph, label_in,
         vy_i = obs[3] * params["l_star"] / params["t_star"]
         m_i = obs[4] * params["m_star"]
 
-        if info["Elapsed time"] >= T:
+        if info["Elapsed time"] >= T or done or truncated:
             flag_done = True
 
         arr_x.append(x_i)
         arr_y.append(y_i)
+        step_count += 1
 
     fig = eph.overlay_ref_orbit(ephem=None, label=label_in, color_in=color_in, arr_x=arr_x, arr_y=arr_y)
 

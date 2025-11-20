@@ -111,7 +111,7 @@ class Ephemeris:
             label="Initial State",
             marker="o",
             color=background_color,
-            linestyle=None,
+            linestyle="",
             markerfacecolor=markerfacecolor_in,
             markeredgecolor=markeredgecolor_in,
             markersize=8,
@@ -121,7 +121,7 @@ class Ephemeris:
             yf,
             label="Final State",
             marker="x",
-            linestyle=None,
+            linestyle="",
             markerfacecolor=markerfacecolor_in,
             markeredgecolor=markeredgecolor_in,
             color=background_color,
@@ -150,6 +150,7 @@ class Ephemeris:
     def plot_xy_ref_orbit(self, orbit_sma, label, color_in="lime"):
         fig = self.fig_xy
         ax = self.ax_xy
+        scale = Constants.SMA_EARTH
 
         arr_x_ref = np.array([])
         arr_y_ref = np.array([])
@@ -159,8 +160,8 @@ class Ephemeris:
         # plot central body
         for i in range(0, pts):
             theta = 2 * np.pi * i / pts
-            x_ref = orbit_sma * np.cos(theta)
-            y_ref = orbit_sma * np.sin(theta)
+            x_ref = orbit_sma * np.cos(theta) / scale
+            y_ref = orbit_sma * np.sin(theta) / scale
 
             arr_x_ref = np.append(arr_x_ref, x_ref)
             arr_y_ref = np.append(arr_y_ref, y_ref)
@@ -348,7 +349,12 @@ class Ephemeris:
         return vector
     
     def overlay_ref_orbit(self, ephem, label, color_in="lime"):
+
         # Overlay a reference Keplerian orbit on the existing XY plot
+        fig = self.fig_xy
+        ax = self.ax_xy
+
+        # insert line break
         fig = self.fig_xy
         ax = self.ax_xy
 

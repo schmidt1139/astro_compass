@@ -5,7 +5,8 @@ def calc_rewards_from_H_ephem(ephem_H, env, params):
 
     test_log = {}
     model = None  # Placeholder, as model is not used in this function
-    arr_elapsed_time = np.array(ephem_H.arr_et)/Constants.DAYS_TO_SEC
+    #arr_elapsed_time = np.array(ephem_H.arr_et)/Constants.DAYS_TO_SEC
+    arr_elapsed_time = []
     arr_rewards = []
     arr_pos_r_components = []
     arr_vel_r_components = []
@@ -14,7 +15,8 @@ def calc_rewards_from_H_ephem(ephem_H, env, params):
     r_tot = 0.0
 
     for i in range(ephem_H.num_vectors):
-        
+            
+    
         state_H = ephem_H.get_vector_at_index(i)
 
         obs, info = env.reset()
@@ -48,10 +50,13 @@ def calc_rewards_from_H_ephem(ephem_H, env, params):
 
         r_tot += reward
 
+        arr_elapsed_time.append(ephem_H.arr_et[i]/Constants.DAYS_TO_SEC)
         arr_rewards.append(reward)
         arr_pos_r_components.append(reward_pos_comp)
         arr_vel_r_components.append(reward_vel_comp)
         arr_mass_r_components.append(reward_mass_comp)
         arr_r_tot.append(r_tot)
+
+
 
     return [arr_elapsed_time, arr_rewards, arr_pos_r_components, arr_vel_r_components, arr_mass_r_components, arr_r_tot]

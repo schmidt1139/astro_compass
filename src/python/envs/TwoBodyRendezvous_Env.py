@@ -63,6 +63,8 @@ class TwoBodyRendezvous_Env(gym.Env):
         self.terminal_bonus = kwargs.get("terminal_bonus", 100.0)  # Large bonus for precise rendezvous
         self.precision_mult = kwargs.get("precision_mult", 10.0)  # Small bonus for being within success thresholds
         self.terminal_bonus = kwargs.get("terminal_bonus", 100.0)  # Large bonus for precise rendezvous
+        self.tof_weight = kwargs.get("tof_weight", 1.0)  # Weighting factor for time component of reward
+        self.time_dist_weight = kwargs.get("time_dist_weight", 1.0)  # Weighting factor for time distribution
 
         self.arr_mu = np.array([self.param_mu])  # solar mu [m^3/s^2]
         self.planet_radii = np.array([Constants.RADIUS_SUN_M])  # solar radius [m]
@@ -356,6 +358,7 @@ class TwoBodyRendezvous_Env(gym.Env):
         residual = dx_nd**2 + dy_nd**2 + dvx_nd**2 + dvy_nd**2
 
         # Separate exponentials for position and velocity - provides smoother gradient
+        self.time_component = np.exp(- self.time_dist_weight * TTG_nd**2) * self.tof_weight
         self.pos_r_component = np.exp(- self.r_dist_weight * self.pos_residual**2) * self.pos_weight
         self.vel_r_component = np.exp(- self.v_dist_weight * self.vel_residual**2) * self.vel_weight
         self.mass_r_component = -self.mass_increment / self.m_star * self.mass_weight
@@ -366,6 +369,9 @@ class TwoBodyRendezvous_Env(gym.Env):
             self.pos_r_component = self.pos_r_component * precision_mult
             self.vel_r_component = self.vel_r_component * precision_mult
 
+        #shaping_reward = self.time_component * ( self.pos_r_component + self.vel_r_component ) + self.mass_r_component
+        self.pos_r_component = self.pos_r_component * self.time_component
+        self.vel_r_component = self.vel_r_component * self.time_component
         shaping_reward = self.pos_r_component + self.vel_r_component + self.mass_r_component
 
         # central body parameters
