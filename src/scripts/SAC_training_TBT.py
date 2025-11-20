@@ -1,8 +1,11 @@
+from Training_Data_Generation import generate_nn_training_data
+from core.hamiltonian_control import Hamiltonian_Controller_TBT
 import gymnasium as gym
 import os
 import torch
 import matplotlib.pyplot as plt
 import random
+import torch.nn as nn
 
 from datetime import datetime
 from gymnasium import envs
@@ -12,18 +15,21 @@ from stable_baselines3 import SAC as SB3_SAC
 from stable_baselines3.common.monitor import Monitor
 from constants.constants import Constants
 from utils.log_utils import log
-from core.ephemeris_v2 import Ephemeris_v2 as Ephemeris
+from core.ephemeris import Ephemeris as Ephemeris
 from core.spacecraft import Spacecraft
 from utils.log_utils import write_log_to_file, write_config_file, read_config_file
 from utils.state_vector_utils import cartesian_to_polar
-from utils.plotting_utils import SACRolloutData_TBR, plot_SAC_training, SACRolloutData, plot_SAC_training_TBR
+from utils.plotting_utils import plot_SAC_training, SACRolloutData
 from utils.rl_utils import log_training_perf, RewardLoggerCallback, pre_train
-from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
+from envs.TwoBody_Orb2Orb_Transfer_Env_nd_obs5 import TwoBody_Orb2Orb_Transfer_Env_nd_obs5
 from core.process_single_trajectory import process_single_trajectory
 
 
 
-def SAC_training_TBT(seed_in=42):
+def SAC_training_TBR(seed_in=42):
+
+    test_log = []
+    test_log = log("SAC Training Script", test_log, True)
 
     # set random seed
     random.seed(seed_in)
@@ -35,7 +41,7 @@ def SAC_training_TBT(seed_in=42):
     params = read_config_file(path_config)
 
     # initialize the environment
-    env = TwoBodyRendezvous_Env(
+    env = TwoBody_Orb2Orb_Transfer_Env_nd_obs5(
         mu=params["mu"],
         max_T=params["max_T"],
         ISP=params["ISP"],
@@ -44,31 +50,10 @@ def SAC_training_TBT(seed_in=42):
         t_star=params["t_star"],
         g0=params["g0"],
         step_size=params["env_step_size"],
-        a_min_init_env_nd=params["a_min_init_env_nd"],
-        a_max_init_env_nd=params["a_max_init_env_nd"],
-        e_min_init_env=params["e_min_init_env"],
-        e_max_init_env=params["e_max_init_env"],
-        w_min_init_env_deg=params["w_min_init_env_deg"],
-        w_max_init_env_deg=params["w_max_init_env_deg"],
-        a_min_final_env_nd=params["a_min_final_env_nd"],
-        a_max_final_env_nd=params["a_max_final_env_nd"],
-        e_min_final_env=params["e_min_final_env"],
-        e_max_final_env=params["e_max_final_env"],
-        w_min_final_env_deg=params["w_min_final_env_deg"],
-        w_max_final_env_deg=params["w_max_final_env_deg"],
-        pos_r_weight=params.get("pos_r_weight", 1.0),
-        vel_r_weight=params.get("vel_r_weight", 1.0),
-        mass_r_weight=params.get("mass_r_weight", 1.0),
-        tof_scale=params.get("tof_scale", 1.0),
-        r_dist_weight=params.get("r_dist_weight", 1.0),
-        v_dist_weight=params.get("v_dist_weight", 1.0),
-        success_threshold_pos=params.get("success_threshold_pos", 0.01),
-        success_threshold_vel=params.get("success_threshold_vel", 0.01),
-        terminal_bonus=params.get("terminal_bonus", 100.0),
-        precision_mult=params.get("precision_mult", 10.0)
+        mass_penalty=params["mass_penalty"]
     )
 
-    eval_env = TwoBodyRendezvous_Env(
+    eval_env = TwoBody_Orb2Orb_Transfer_Env_nd_obs5(
         mu=params["mu"],
         max_T=params["max_T"],
         ISP=params["ISP"],
@@ -76,42 +61,13 @@ def SAC_training_TBT(seed_in=42):
         m_star=params["m_star"],
         t_star=params["t_star"],
         g0=params["g0"],
-        step_size=params["env_step_size"],
-        a_min_init_env_nd=params["a_min_init_env_nd"],
-        a_max_init_env_nd=params["a_max_init_env_nd"],
-        e_min_init_env=params["e_min_init_env"],
-        e_max_init_env=params["e_max_init_env"],
-        w_min_init_env_deg=params["w_min_init_env_deg"],
-        w_max_init_env_deg=params["w_max_init_env_deg"],
-        a_min_final_env_nd=params["a_min_final_env_nd"],
-        a_max_final_env_nd=params["a_max_final_env_nd"],
-        e_min_final_env=params["e_min_final_env"],
-        e_max_final_env=params["e_max_final_env"],
-        w_min_final_env_deg=params["w_min_final_env_deg"],
-        w_max_final_env_deg=params["w_max_final_env_deg"],
-        pos_r_weight=params.get("pos_r_weight", 1.0),
-        vel_r_weight=params.get("vel_r_weight", 1.0),
-        mass_r_weight=params.get("mass_r_weight", 1.0),
-        tof_scale=params.get("tof_scale", 1.0),
-        r_dist_weight=params.get("r_dist_weight", 1.0),
-        v_dist_weight=params.get("v_dist_weight", 1.0),
-        success_threshold_pos=params.get("success_threshold_pos", 0.01),
-        success_threshold_vel=params.get("success_threshold_vel", 0.01),
-        terminal_bonus=params.get("terminal_bonus", 100.0),
-        precision_mult=params.get("precision_mult", 10.0)
+        step_size=params["env_step_size"]
     )
 
-    max_episode_steps_in = params["max_episode_steps"]
-    env = gym.wrappers.TimeLimit(env, max_episode_steps=max_episode_steps_in)
-    eval_env = gym.wrappers.TimeLimit(eval_env, max_episode_steps=max_episode_steps_in)
-    env = Monitor(env)
-    eval_env = Monitor(eval_env)
-    training_steps = params["training_steps"]
+    sma_t_i = Constants.SMA_EARTH
 
     plt.style.use("data/support_files/light_paper.mplstyle")
 
-    test_log = []
-    test_log = log("SAC Training Script", test_log, True)
     print(
         "GPU available: ", torch.cuda.is_available()
     )  # Should print True if GPU is available)
@@ -124,11 +80,19 @@ def SAC_training_TBT(seed_in=42):
     output_base = params["output_dir"]
     if not os.path.isabs(output_base):
         output_base = os.path.join(os.getcwd(), output_base)
-    path_output = os.path.normpath(os.path.join(output_base, "SAC_training_" + time_tag))
+    path_output = os.path.normpath(os.path.join(output_base, "SAC_training_TBT_" + time_tag))
     
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
     os.makedirs(path_output, exist_ok=True)
     params["output_dir_specific"] = path_output
+
+    #env wrappers
+    max_episode_steps_in = params["max_episode_steps"]
+    env = gym.wrappers.TimeLimit(env, max_episode_steps=max_episode_steps_in)
+    eval_env = gym.wrappers.TimeLimit(eval_env, max_episode_steps=max_episode_steps_in)
+    env = Monitor(env)
+    eval_env = Monitor(eval_env)
+    training_steps = params["training_steps"]
 
     #make a subdir for checkpoints
     path_checkpoints = os.path.normpath(os.path.join(path_output, "checkpoints"))
@@ -148,18 +112,52 @@ def SAC_training_TBT(seed_in=42):
 
     # Create the SAC model with TensorBoard logging
     buffer_size = params.get("buffer_size", 1000000)  # Default 1M transitions
-    model = SB3_SAC("MlpPolicy", env, verbose=1, device="cpu", seed=seed_in, 
-                    tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
-                    buffer_size=buffer_size)
-    
+
+    #load model if specified, otherwise create new
+    if params["load_model_checkpoint"]:
+        test_log = log("Loading SAC model from: " + params["path_SAC_model_load"], test_log, True)
+        model = SB3_SAC.load(params["path_SAC_model_load"], env=env, device="cpu", seed=seed_in,
+                             tensorboard_log=path_output)  # Use path_output so SB3 creates SAC_1/ subdirectory
+    else:
+        # Implement custom NN architectures
+        nn_arch_type = params.get("nn_arch_type", "default")
+        if nn_arch_type == "custom":
+            #use default architecture
+            # define the policy architecture
+            policy_kwargs = dict(
+                net_arch=[32, 32, 32, 32, 32],  # four hidden layers with 32 units each
+                activation_fn=nn.LeakyReLU,  # LeakyReLU activation function
+                optimizer_kwargs=dict(eps=1e-5)
+            )
+            model = SB3_SAC("MlpPolicy", 
+                env, 
+                learning_rate=params["learning_rate"],
+                verbose=1, 
+                device="cpu", seed=seed_in,
+                tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
+                buffer_size=buffer_size, 
+                tau=params.get("tau", 0.005),
+                train_freq=params.get("train_freq", 1),
+                gradient_steps=params.get("gradient_steps", 1),
+                policy_kwargs=policy_kwargs)
+
+        else:
+            #use default architecture
+            policy_kwargs = dict(
+                optimizer_kwargs=dict(eps=1e-5)  # More stable Adam optimizer
+            )
+            model = SB3_SAC("MlpPolicy", env, learning_rate=params["learning_rate"], verbose=1, device="cpu", seed=seed_in,
+                            tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
+                            buffer_size=buffer_size,
+                            tau=params.get("tau", 0.005),
+                            train_freq=params.get("train_freq", 1),
+                            gradient_steps=params.get("gradient_steps", 1),
+                            policy_kwargs=policy_kwargs)
+        
+        
     if params["read_replay_buffer"]:
         test_log = log("Loading replay buffer from: " + params["path_replay_buffer"], test_log, True)
         model.load_replay_buffer(params["path_replay_buffer"])
-
-    # TODO Implement custom NN architectures
-    nn_arch_type = params.get("nn_arch_type", "default")
-    if nn_arch_type == "custom":
-        raise NotImplementedError("Custom NN architecture not implemented yet.")
     
     # pre-train networks if specified
     if params["pre_train_networks"]:
@@ -168,6 +166,7 @@ def SAC_training_TBT(seed_in=42):
         # This ensures TensorBoard logging works correctly during actual training
         if hasattr(model, '_logger'):
             delattr(model, '_logger')
+
 
     callback = RewardLoggerCallback(print_freq=params["print_freq"])
     # Eval callback: saves best model by mean reward on eval_env
@@ -180,7 +179,8 @@ def SAC_training_TBT(seed_in=42):
         deterministic=True,
         render=False,
     )
-    callback_list = CallbackList([eval_callback, callback])
+    #callback_list = CallbackList([eval_callback, callback])
+    callback_list = CallbackList([callback])
 
     # Train the agent
     model.learn(
@@ -204,7 +204,7 @@ def SAC_training_TBT(seed_in=42):
     obs, info = env.reset(seed=params.get("seed_traj", 42))
     eph = Ephemeris()  # create new ephemeris object
 
-    rollout_data1 = SACRolloutData_TBR()
+    rollout_data1 = SACRolloutData()
     sum_reward = 0.0
 
     test_log = log("Plotting test trajectory...", test_log, True)
@@ -213,16 +213,49 @@ def SAC_training_TBT(seed_in=42):
     terminated = False
     truncated = False
 
-    # optionally generate hamiltonian trajectory
+    # optionally generate hamiltonian trajectory off of ephem
     if params.get("flag_gen_H_traj", False):
         test_log = log("Generating Hamiltonian trajectory for comparison...", test_log, True)
         params["data_path"] = path_output
         params["scenario_index"] = 0
         params["flag_plot_traj"] = False
-        results = process_single_trajectory(params)
-        ephem_path = results[1]
+
+        init_observation = []
+        init_observation.append(obs[0]*params["l_star"]/1000)
+        init_observation.append(obs[1]*params["l_star"]/1000)
+        init_observation.append(obs[2]*params["l_star"]/params["t_star"]/1000)
+        init_observation.append(obs[3]*params["l_star"]/params["t_star"]/1000)
+        init_observation.append(obs[4]*params["m_star"])
+        init_observation.append(Constants.MU_SUN)
+        init_observation.append(Constants.SMA_EARTH/1000)
+
+        input_TOF = 1.1 * 365.25 * 24 * 60 * 60
+
+        unwrapped_env = env.unwrapped
+
+        H_controller = Hamiltonian_Controller_TBT(
+            unwrapped_env, init_observation, info, input_TOF
+        )
+
+        #modify parameters
+        H_controller.eps_threshold = params.get("eps_final", 0.0004)
+
+        # compute solution
+        flag_solved, h_sol, eps, sol, h_log = H_controller.hamiltonian_solution_finder()
+
         ephem_H = Ephemeris()
+        ephem_path = os.path.join(path_ephems, "Hamiltonian_Traj_Ephem.txt")
+        
+        if flag_solved:
+            # write output ephemeris
+            eph_out, arr_time, arr_u, arr_rho, arr_alpha_x, arr_alpha_y = (
+                H_controller.generate_output_ephemeris(eph)
+            )
+            eph_out.write_to_file(ephem_path, mod_vector_write_frequency=1)
+
+
         try:
+            test_log = log("Generated Hamiltonian trajectory for comparison...", test_log, True)
             ephem_H.read_from_file(ephem_path)
         except Exception as e:
             test_log = log("Error generating Hamiltonian trajectory file: " + str(e), test_log, True)
@@ -245,19 +278,9 @@ def SAC_training_TBT(seed_in=42):
         vx_i = obs[2] * params["l_star"] / params["t_star"]
         vy_i = obs[3] * params["l_star"] / params["t_star"]
         m_i = obs[4] * params["m_star"]
-        x_target_i = obs[5] * params["l_star"]
-        y_target_i = obs[6] * params["l_star"]
-        vx_target_i = obs[7] * params["l_star"] / params["t_star"]
-        vy_target_i = obs[8] * params["l_star"] / params["t_star"]
-        ttg_i = obs[9] * params["t_star"]
-
-        #info of interest
-        pos_r_component = info.get("pos_r_component", None)
-        vel_r_component = info.get("vel_r_component", None)
-        mass_r_component = info.get("mass_r_component", None)
 
         # log data to ephemeris
-        eph.add_data(t_i, x_i, y_i, vx_i, vy_i, m_i, x_target_i, y_target_i, vx_target_i, vy_target_i, ttg_i, alpha_x, alpha_y, throttle)
+        eph.add_data(t_i, x_i, y_i, vx_i, vy_i, m_i, alpha_x, alpha_y, throttle)
 
         # create polar state, create a temp SC object and calc OE
         r_i, theta_i, rdot_i, vtheta_i = cartesian_to_polar(x_i, y_i, vx_i, vy_i)
@@ -267,6 +290,8 @@ def SAC_training_TBT(seed_in=42):
         arr_OE = SC.calc_Planar_OE(0.0, 0.0, 0.0, 0.0, params["mu"])
 
         obs, reward, terminated, truncated, info = env.step(action)
+        reward_mass_component = info.get("reward_mass_component", 0.0)
+        reward_distance_component = info.get("reward_distance_component", 0.0)
 
         count_step = count_step + 1
 
@@ -281,15 +306,13 @@ def SAC_training_TBT(seed_in=42):
             obs[1],
             obs[2],
             obs[3],
-            obs[4],
-            obs[5],
-            obs[6],
-            obs[7],
-            obs[8],
-            obs[9],
-            pos_r_component,
-            vel_r_component,
-            mass_r_component,
+            arr_OE[0],
+            sma_t_i,
+            arr_OE[1],
+            0.0,
+            1.0,
+            reward_mass_component,
+            reward_distance_component
         )
 
         if terminated or truncated:
@@ -297,13 +320,13 @@ def SAC_training_TBT(seed_in=42):
 
     test_log = log("Test trajectory complete", test_log, True)
     test_log = log("Steps taken: " + str(count_step), test_log, True)
-    test_log = log("Total reward: " + str(sum_reward), test_log, True)
+    test_log = log("Total reward: " + str(rollout_data1.sum_reward), test_log, True)
     test_log = log("Final x: " + str(obs[0]) + " ", test_log, True)
     test_log = log("Final y: " + str(obs[1]) + " ", test_log, True)
     test_log = log("Final vx: " + str(obs[2]) + " ", test_log, True)
     test_log = log("Final vy: " + str(obs[3]) + " ", test_log, True)
     test_log = log("Final m: " + str(obs[4]) + " ", test_log, True)
-    test_log = log("Final sma: " + str(obs[6]) + " ", test_log, True)
+    test_log = log("Final sma: " + str(arr_OE[0]) + " ", test_log, True)
     test_log = log("Final ecc: " + str(arr_OE[1]) + " ", test_log, True)
     test_log = log("terminated: " + str(terminated) + " ", test_log, True)
     test_log = log("truncated: " + str(truncated) + " ", test_log, True)
@@ -315,17 +338,13 @@ def SAC_training_TBT(seed_in=42):
 
 
     # plot the results
-    plot_SAC_training_TBR(
+    plot_SAC_training(
         rollout_data1,
         arr_epsisode_numbers,
         arr_epsisode_rs,
         path_output,
         eph,
-        params,
-        env.unwrapped,  # Unwrap to get the base TwoBodyRendezvous_Env
-        arr_actor_loss_pt,
-        arr_critic_loss_pt,
-        ephem_H if params.get("flag_gen_H_traj", False) else None,
+        ephem_H if ephem_H is not None else None
     )
 
     env.close()

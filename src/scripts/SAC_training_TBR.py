@@ -66,7 +66,9 @@ def SAC_training_TBR(seed_in=42):
         success_threshold_pos=params.get("success_threshold_pos", 0.01),
         success_threshold_vel=params.get("success_threshold_vel", 0.01),
         terminal_bonus=params.get("terminal_bonus", 100.0),
-        precision_mult=params.get("precision_mult", 10.0)
+        precision_mult=params.get("precision_mult", 10.0),
+        tof_weight=params.get("tof_weight", 1.0),
+        time_dist_weight=params.get("time_dist_weight", 1.0)
     )
 
     eval_env = TwoBodyRendezvous_Env(
@@ -99,9 +101,12 @@ def SAC_training_TBR(seed_in=42):
         success_threshold_pos=params.get("success_threshold_pos", 0.01),
         success_threshold_vel=params.get("success_threshold_vel", 0.01),
         terminal_bonus=params.get("terminal_bonus", 100.0),
-        precision_mult=params.get("precision_mult", 10.0)
+        precision_mult=params.get("precision_mult", 10.0),
+        tof_weight=params.get("tof_weight", 1.0),
+        time_dist_weight=params.get("time_dist_weight", 1.0)
     )
 
+    #env wrappers
     max_episode_steps_in = params["max_episode_steps"]
     env = gym.wrappers.TimeLimit(env, max_episode_steps=max_episode_steps_in)
     eval_env = gym.wrappers.TimeLimit(eval_env, max_episode_steps=max_episode_steps_in)
@@ -165,12 +170,29 @@ def SAC_training_TBR(seed_in=42):
                 net_arch=[32, 32, 32, 32, 32],  # four hidden layers with 32 units each
                 activation_fn=nn.LeakyReLU,  # LeakyReLU activation function
             )
-            raise NotImplementedError("Custom NN architecture not implemented yet.")
+            model = SB3_SAC("MlpPolicy", 
+                            env, 
+                            learning_rate=params["learning_rate"], 
+                            verbose=1, 
+                            device="cpu", seed=seed_in,
+                            tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
+                            buffer_size=buffer_size, 
+                            tau=params.get("tau", 0.005),
+                            train_freq=params.get("train_freq", 1),
+                            gradient_steps=params.get("gradient_steps", 1),
+                            policy_kwargs=policy_kwargs)
         else:
             #use default architecture
+            policy_kwargs = dict(
+                optimizer_kwargs=dict(eps=1e-5)  # More stable Adam optimizer
+            )
             model = SB3_SAC("MlpPolicy", env, learning_rate=params["learning_rate"], verbose=1, device="cpu", seed=seed_in,
                             tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
-                            buffer_size=buffer_size)
+                            buffer_size=buffer_size,
+                            tau=params.get("tau", 0.005),
+                            train_freq=params.get("train_freq", 1),
+                            gradient_steps=params.get("gradient_steps", 1),
+                            policy_kwargs=policy_kwargs)
         
     if params["read_replay_buffer"]:
         test_log = log("Loading replay buffer from: " + params["path_replay_buffer"], test_log, True)
@@ -183,6 +205,10 @@ def SAC_training_TBR(seed_in=42):
         # This ensures TensorBoard logging works correctly during actual training
         if hasattr(model, '_logger'):
             delattr(model, '_logger')
+
+    else:
+        arr_actor_loss_pt = []
+        arr_critic_loss_pt = []
 
     callback = RewardLoggerCallback(print_freq=params["print_freq"])
     # Eval callback: saves best model by mean reward on eval_env
@@ -329,6 +355,7 @@ def SAC_training_TBR(seed_in=42):
             test_log = log(f"{key}: {value}", test_log, True)
 
 
+
     # plot the results
     plot_SAC_training_TBR(
         rollout_data1,
@@ -359,6 +386,8 @@ def SAC_training_TBR(seed_in=42):
 
     # write config to output dir
     write_config_file(params, os.path.join(path_output, "SAC_Training_Config.txt"))
+
+    print("\n\n\n")
 
 
 SAC_training_TBR()
