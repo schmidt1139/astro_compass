@@ -51,6 +51,10 @@ class TwoBodyRendezvous_Env(gym.Env):
         self.e_max_final_env = kwargs.get("e_max_final_env", 0.5)  # max eccentricity for env
         self.w_min_final_env_rad = kwargs.get("w_min_final_env_deg", 0.0) * np.pi / 180  # min argument of periapsis for env [rad]
         self.w_max_final_env_rad = kwargs.get("w_max_final_env_deg", 360) * np.pi / 180  # max argument of periapsis for env [rad]
+        self.theta_min_init_env_rad = kwargs.get("theta_min_init_env_deg", 0.0) * np.pi / 180  # min true anomaly for env [rad]
+        self.theta_max_init_env_rad = kwargs.get("theta_max_init_env_deg", 360) * np.pi / 180  # max true anomaly for env [rad]
+        self.theta_min_final_env_rad = kwargs.get("theta_min_final_env_deg", 0.0) * np.pi / 180  # min true anomaly for env [rad]
+        self.theta_max_final_env_rad = kwargs.get("theta_max_final_env_deg", 360) * np.pi / 180  # max true anomaly for env [rad]
         # Support both naming conventions for weights
         self.pos_weight = kwargs.get("pos_r_weight", kwargs.get("r_weight", 1.0))
         self.vel_weight = kwargs.get("vel_r_weight", kwargs.get("v_weight", 1.0))
@@ -178,7 +182,7 @@ class TwoBodyRendezvous_Env(gym.Env):
         a_range = [self.a_min_init_env_nd, self.a_max_init_env_nd]  # initial radius range (m)
         e_range = [self.e_min_init_env, self.e_max_init_env]  # initial eccentricity range
         w_range = [self.w_min_init_env_rad, self.w_max_init_env_rad]  # initial argument of periapsis range (rad)
-        theta_range = [0.0, 2 * np.pi]  # initial true anomaly range (rad)
+        theta_range = [self.theta_min_init_env_rad, self.theta_max_init_env_rad]  # initial true anomaly range (rad)
 
         # set the initial spacecraft parameters
         mass = 3366.0  # Assumed spacecraft total mass
@@ -205,7 +209,7 @@ class TwoBodyRendezvous_Env(gym.Env):
         a_f = self.np_random.uniform(low=a_range[0], high=a_range[1])
         e_f = self.np_random.uniform(low=e_range[0], high=e_range[1])
         w_f = self.np_random.uniform(low=w_range[0], high=w_range[1])
-        theta_f = self.np_random.uniform(low=theta_range[0], high=theta_range[1])
+        theta_f = self.np_random.uniform(low=self.theta_min_final_env_rad, high=self.theta_max_final_env_rad)
 
 
         # convert the final state to polar coordinates and cartesian
@@ -628,3 +632,6 @@ class TwoBodyRendezvous_Env(gym.Env):
         observation = self._convert_state_to_obs()
 
         return observation, info
+    
+    def get_cartesian_state(self):
+        return self._state.copy()

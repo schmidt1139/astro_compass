@@ -87,7 +87,8 @@ def generate_nn_training_data_parallel(env, args):
             )
 
 
-def read_ephems_from_dir(directory, num_ephems_to_use=None, version=1.0):
+def read_ephems_from_dir(directory, num_ephems_to_use=None, version=1.0 ,
+                         flag_return_filenames=False):
 
     filenames = os.listdir(directory)
     list_ephems = []
@@ -114,4 +115,7 @@ def read_ephems_from_dir(directory, num_ephems_to_use=None, version=1.0):
 
         counter += 1
 
-    return list_ephems
+    if flag_return_filenames:
+        return list_ephems, filenames
+    else:
+        return list_ephems

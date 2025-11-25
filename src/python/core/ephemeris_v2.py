@@ -256,7 +256,7 @@ class Ephemeris_v2:
 
             f.write(header)
 
-            for i in range(0, self.num_vectors - 1):
+            for i in range(0, self.num_vectors):
                 modulo = i % mod_vector_write_frequency
 
                 if modulo == 0:

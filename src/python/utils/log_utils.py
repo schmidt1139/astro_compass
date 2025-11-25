@@ -25,6 +25,26 @@ def write_log_to_file(file_path, log):
         for entry in log:
             f.write(entry + '\n')
 
+def read_log_from_file(file_path):
+    log = []
+    with open(file_path, 'r') as f:
+        for line in f:
+            log.append(line)
+    return log
+
+def compare_logs(log1, log2):
+    """Compare two logs line by line. Return True if they match, False otherwise."""
+    if len(log1) != len(log2):
+        print(f"Logs differ in length: {len(log1)} vs {len(log2)}")
+        return False
+
+    for line1, line2 in zip(log1, log2):
+        if line1 != line2:
+            print(f"Logs differ:\nLog1: {line1}\nLog2: {line2}")
+            return False
+
+    return True
+
 def write_config_file(params, path_config):
     """Write configuration parameters to a text file for record-keeping."""
     with open(path_config, 'w') as f:
@@ -36,6 +56,12 @@ def read_config_file(path_config):
     params = {}
     with open(path_config, 'r') as f:
         for line in f:
+
+            #check for a comment
+            # ignore lines that start with # or empty lines
+            if line.strip().startswith('#') or not line.strip():
+                continue    
+
             key, value = line.strip().split(': ', 1)
             try:
                 # Check if value is a boolean (True/False/true/false)

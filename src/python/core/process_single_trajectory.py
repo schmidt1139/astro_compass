@@ -55,7 +55,12 @@ def process_single_trajectory(params):
         e_min_final_env=params["e_min_final_env"],
         e_max_final_env=params["e_max_final_env"],
         w_min_final_env_deg=params["w_min_final_env_deg"],
-        w_max_final_env_deg=params["w_max_final_env_deg"]
+        w_max_final_env_deg=params["w_max_final_env_deg"],
+        theta_min_init_env_deg=params.get("theta_min_init_env_deg", 0.0),
+        theta_max_init_env_deg=params.get("theta_max_init_env_deg", 360.0),
+        theta_min_final_env_deg=params.get("theta_min_final_env_deg", 0.0),
+        theta_max_final_env_deg=params.get("theta_max_final_env_deg", 360.0),
+        tof_scale=params.get("tof_scale", 1.0),
     )
     
     # Generate filename

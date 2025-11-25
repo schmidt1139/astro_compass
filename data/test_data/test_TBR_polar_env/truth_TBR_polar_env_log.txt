@@ -1,0 +1,202 @@
+Test Two-Body Rendezvous Polar Env
+Initial observation vector
+
+r_nd: 0.9999
+eta_cos_nd: 1.0
+eta_sin_nd: 0.0
+v_nd: 1.0001
+fpa_cos_nd: 0.9999995
+fpa_sin_nd: 0.0009998995
+mass_nd: 1.0
+target_r_nd: 0.4791338
+target_eta_cos_nd: -1.9774307
+target_eta_sin_nd: 0.21125624
+target_v_nd: -0.17576258
+target_fpa_cos_nd: 0.007860362
+target_fpa_sin_nd: -3.927946e-05
+TTG: 12.173389
+Elapsed time: 0.0
+ODE Solution: None
+delta_state: None
+planet_radii: [6.957e+08]
+a: 1.0
+e: 9.999999747378752e-05
+w: 90.0
+theta: 360.0
+max_thrust: 1.33
+ISP: 3872.0
+dx: 2.5541868209838867
+dy: -1.9034524390698637e-16
+dr: 2.5541868209838867
+dvx: -1.2115970858054088e-17
+dvy: 1.802170753479004
+dv: 1.802170753479004
+r_target: 232518254592.0
+v_target: 0.8020707964897156
+dr_norm: 1.643317461013794
+dv_norm: 2.2468974590301514
+orbital_period_nd: 6.2831854820251465
+orbital_period_years: 1.0103992223739624
+a_target: 1.554131675847413
+e_target: 9.990924937608447e-05
+w_target: 89.99999999996488
+theta_target: 180.0
+orbital_period_target_nd: 12.173391426117968
+orbital_period_target_years: 1.957603463343134
+mu: 1.3e+20
+step_count: 0
+TOF: 61777256.61682682
+TOF_nd: 12.173389369285314
+timesteps_in_TOF: 716
+pos_residual: 2.5541868209838867
+vel_residual: 1.802170753479004
+tof_scale: 1.0
+r_weight: 1.0
+v_weight: 1.0
+throttle_r_weight: 1.0
+pos_r_component: 0.0
+vel_r_component: 0.0
+mass_r_component: 0.0
+throttle_r_component: 0.0
+time_r_component: 0.0
+r_nd: 0.9999000000000001
+eta_nd: 0.0
+v_r_nd: -6.123846349755573e-17
+v_eta_nd: 1.0001000050005002
+r_nd_f: 1.4790338277816772
+eta_nd_f: 2.9287326335906982
+v_r_nd_f: 0.007296606432646513
+v_eta_nd_f: 0.8243050575256348
+h_nd_0: 0.9999999950000003
+h_nd_f: 0.0
+cos_eta: 1.0
+sin_eta: 0.0
+cos_eta_f: 0.0
+sin_eta_f: 0.0
+fpa_nd: 0.0009998996717663514
+fpa_nd_f: 0.0
+fpa_cos: 0.9999995001003649
+fpa_sin: 0.0009998995051498521
+alpha_x: 0.0
+alpha_y: 0.0
+target_x_current: -216266850304.0
+target_y_current: 46742663168.0
+target_vx_current: -5343.65380859375
+target_vy_current: -23705.60546875
+terminated: False
+v_r_unit: 0.0009999000049995
+v_t_unit: 1.0
+v_r_target_unit: 0.008860261179506779
+v_t_target_unit: 0.999960720539093
+
+
+
+
+Final observation vector
+
+x_nd: 2.4364784
+y_nd: 0.7669248
+vx_nd: 0.6417369
+vy_nd: 0.6843683
+mass_nd: 0.94122016
+
+x_target_nd: 0.33779374
+y_target_nd: 0.6781226
+vx_target_nd: -0.8821914
+vy_target_nd: -1.7668873
+TTG: -0.6503949
+
+Elapsed time: 61862400.0
+ODE Solution:   message: The solver successfully reached the end of the integration interval.
+  success: True
+   status: 0
+        t: [ 0.000e+00  2.770e+00  3.047e+01  3.075e+02  3.077e+03
+             3.078e+04  8.640e+04]
+        y: [[ 2.801e+11  2.801e+11 ...  2.799e+11  2.795e+11]
+            [ 2.323e+11  2.323e+11 ...  2.329e+11  2.339e+11]
+            ...
+            [ 1.897e+04  1.897e+04 ...  1.895e+04  1.894e+04]
+            [ 2.284e+03  2.284e+03 ...  2.284e+03  2.283e+03]]
+      sol: None
+ t_events: None
+ y_events: None
+     nfev: 38
+     njev: 0
+      nlu: 0
+delta_state: [-5.9857306e+08  1.6373350e+09 -6.2725098e+01 -2.9140625e+01
+ -1.5131836e+00]
+planet_radii: [6.957e+08]
+a: 2.836904525756836
+e: 0.3629794716835022
+w: 41.648399353027344
+theta: 88.27305603027344
+max_thrust: 1.33
+ISP: 3872.0
+dx: 3.422882556915283
+dy: 1.5635782480239868
+dr: 3.7630972862243652
+dvx: -0.23607538640499115
+dvy: 1.4444323778152466
+dv: 1.4635971784591675
+r_target: 232518254592.0
+v_target: 0.8020707964897156
+dr_norm: 2.4211084842681885
+dv_norm: 1.8247730731964111
+orbital_period_nd: 30.022506713867188
+orbital_period_years: 4.827919960021973
+a_target: 1.554131675847413
+e_target: 9.990924937608447e-05
+w_target: 89.99999999996488
+theta_target: 180.0
+orbital_period_target_nd: 12.173391426117968
+orbital_period_target_years: 1.957603463343134
+mu: 1.3e+20
+step_count: 716
+TOF: 61777256.61682682
+TOF_nd: 12.173389369285314
+timesteps_in_TOF: 716
+pos_residual: 3.768655776977539
+vel_residual: 1.4647035598754883
+tof_scale: 1.0
+r_weight: 1.0
+v_weight: 1.0
+throttle_r_weight: 1.0
+pos_r_component: -3.768655776977539
+vel_r_component: -1.4647035598754883
+mass_r_component: 0.0
+throttle_r_component: -0.5
+time_r_component: 1.0
+r_nd: 2.43647837638855
+eta_nd: 0.6967609524726868
+v_r_nd: 0.23117510974407196
+v_eta_nd: 0.6441412568092346
+r_nd_f: 1.5542869567871094
+eta_nd_f: -3.1329345703125
+v_r_nd_f: -6.944682127141277e-07
+v_eta_nd_f: 0.8020707368850708
+h_nd_0: 1.5694361925125122
+h_nd_f: 0.0
+cos_eta: 0.7669247984886169
+sin_eta: 0.6417369246482849
+cos_eta_f: 0.0
+sin_eta_f: 0.0
+fpa_nd: 0.3445718586444855
+fpa_nd_f: 0.0
+fpa_cos: 0.9412201642990112
+fpa_sin: 0.3377937376499176
+alpha_x: 0.09300882369279861
+alpha_y: 0.9956652522087097
+target_x_current: -232509538304.0
+target_y_current: -2013121920.0
+target_vx_current: 204.72830200195312
+target_vy_current: -23643.140625
+terminated: True
+v_r_unit: 0.3377937078475952
+v_t_unit: 0.9412201642990112
+v_r_target_unit: 0.0012467728229239583
+v_t_target_unit: 0.9999999403953552
+episode: {'r': -766.9484252929688}
+
+
+
+

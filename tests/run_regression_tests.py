@@ -34,6 +34,7 @@ from test_TBR_env import test_TBR_env
 from test_Hamiltonian_TBR_controller import test_Hamiltonian_TBR_Controller
 from test_datagen_Hamiltonian_TBR_controller_parallel import test_datagen_Hamiltonian_TBR_parallel
 from test_datagen_Hamiltonian_TBR_controller_parallel_hard import test_datagen_Hamiltonian_TBR_parallel_hard
+from test_TBR_polar_env import test_TBR_polar_env
 
 
 def run_regression_tests(flag_report_live=False):
@@ -42,6 +43,14 @@ def run_regression_tests(flag_report_live=False):
 
     arr_test_pass_bools = []
     arr_test_names = []
+
+    test_name = "test_TBR_polar_env"
+    arr_test_names.append(test_name)
+    test_num = len(arr_test_names)
+    print(f"\n\nRunning Test {test_num}: {test_name}")
+    flag_test_pass = test_TBR_polar_env(flag_report_live)
+    print(f"\n\n{test_name} passed:  ", flag_test_pass)
+    arr_test_pass_bools.append(flag_test_pass)
 
     test_name = "test_TBR_env"
     arr_test_names.append(test_name)

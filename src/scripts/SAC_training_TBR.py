@@ -35,6 +35,8 @@ def SAC_training_TBR(seed_in=42):
     # define normalization parameters (for NN)
     params = read_config_file(path_config)
 
+    plt.style.use("data/support_files/light_paper.mplstyle")
+
     # initialize the environment
     env = TwoBodyRendezvous_Env(
         mu=params["mu"],

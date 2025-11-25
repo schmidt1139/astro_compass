@@ -1,5 +1,8 @@
 import os
 from Constants import Constants
+from Spacecraft import Spacecraft
+from StateVectorUtilities import cartesian_to_polar
+from core.ephemeris_v2 import Ephemeris_v2
 import torch
 import torch.nn as nn
 import numpy as np
@@ -9,6 +12,8 @@ from utils.log_utils import log
 from core.training_data_generation import read_ephems_from_dir
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.evaluation import evaluate_policy
+from utils.plotting_utils import SACRolloutData_TBR_polar
+from utils.state_vector_utils import convert_alpha_from_cart_to_fpa
 
 def log_training_perf(
     test_log, callback, eval_callback, model, training_steps, flag_verbose
@@ -297,7 +302,7 @@ def pre_train(test_log, model, params, env):
         True,
     )
 
-    if (ephem_version == 2.0 and env.observation_space.shape[0] == 10 ):
+    if (ephem_version == 2.0 and ( env.observation_space.shape[0] == 10 or env.observation_space.shape[0] == 14) ):
         test_log = log(
             "Environment observation space matches expected shape for ephemeris version 2.0",
             test_log,
@@ -390,83 +395,22 @@ def import_training_into_replay_buffer_v2(
             
             # Current state vector
             state_vec = eph.get_vector_at_index(i)
-            # Next state vector
-            next_state_vec = eph.get_vector_at_index(i + 1)
-            
-            # Extract current state components (v2.0 format)
-            et = state_vec[0]
-            x = state_vec[1]
-            y = state_vec[2]
-            vx = state_vec[3]
-            vy = state_vec[4]
-            m = state_vec[5]
-            x_target = state_vec[6]
-            y_target = state_vec[7]
-            vx_target = state_vec[8]
-            vy_target = state_vec[9]
-            ttg = state_vec[10]
-            alpha_x = state_vec[11]
-            alpha_y = state_vec[12]
-            u = state_vec[13]
-            
-            # Extract next state components
-            x_next = next_state_vec[1]
-            y_next = next_state_vec[2]
-            vx_next = next_state_vec[3]
-            vy_next = next_state_vec[4]
-            m_next = next_state_vec[5]
-            x_target_next = next_state_vec[6]
-            y_target_next = next_state_vec[7]
-            vx_target_next = next_state_vec[8]
-            vy_target_next = next_state_vec[9]
-            ttg_next = next_state_vec[10]
 
-            # Non-dimensionalize observations (10-dimensional)
-            obs = np.array([
-                x / params["l_star"],
-                y / params["l_star"],
-                vx / (params["l_star"] / params["t_star"]),
-                vy / (params["l_star"] / params["t_star"]),
-                m / params["m_star"],
-                x_target / params["l_star"],
-                y_target / params["l_star"],
-                vx_target / (params["l_star"] / params["t_star"]),
-                vy_target / (params["l_star"] / params["t_star"]),
-                ttg / params["t_star"]
-            ], dtype=np.float32)
-            
-            next_obs = np.array([
-                x_next / params["l_star"],
-                y_next / params["l_star"],
-                vx_next / (params["l_star"] / params["t_star"]),
-                vy_next / (params["l_star"] / params["t_star"]),
-                m_next / params["m_star"],
-                x_target_next / params["l_star"],
-                y_target_next / params["l_star"],
-                vx_target_next / (params["l_star"] / params["t_star"]),
-                vy_target_next / (params["l_star"] / params["t_star"]),
-                ttg_next / params["t_star"]
-            ], dtype=np.float32)
-            
-            # Action
-            action = np.array([u, alpha_x, alpha_y], dtype=np.float32)
-            
-            # Compute reward using environment's reward function
-            # Set the environment state to compute reward
-            unwrapped_env = env.unwrapped
-            dim_state = np.array([x, y, vx, vy, m, x_target, y_target, vx_target, vy_target, ttg])
-            unwrapped_env.set_state(dim_state)
-            
-            # calc_reward returns (reward, terminated)
-            reward, terminated = unwrapped_env.calc_reward()
-            
-            # Done flag (true at end of trajectory OR if terminated by environment)
-            done = (i + step_size >= eph.num_vectors - 1) or terminated
+            env_type = params["env_type"]
+
+            if env_type == "TwoBodyRendezvous_Polar_Env2":
+                obs, action, reward, next_obs, done = package_ephem_state_into_polar_SART(state_vec, env, i, eph.num_vectors)
+            elif env_type == "TwoBodyRendezvous_Polar_Env":
+                obs, action, reward, next_obs, done = package_ephem_state_into_polar_SART(state_vec, env, i, eph.num_vectors)
+            elif env_type == "TwoBodyRendezvous_Env":
+                obs, action, reward, next_obs, done = package_ephem_state_into_cart_SART(state_vec, env, i, eph.num_vectors)
+            else:
+                raise NotImplementedError(f"Environment type {env_type} not supported in v2.0 import.")
             
             # Add experience to replay buffer
             add_experience_to_replay_buffer(model, obs, action, reward, next_obs, done)
 
-    # optionally save the updated replay buffer to disk
+    # optionally save the updated replay buffer to disk when complete
     if params.get("save_replay_buffer", False):
         path_replay_buffer = os.path.join(params["path_replay_buffer"], "replay_buffer.pkl")
         model.save_replay_buffer(path_replay_buffer)
@@ -633,3 +577,199 @@ def train_on_replay_buffer(model, params, test_log, env):
         )
 
     return test_log, critic_loss_reduced, actor_loss_reduced
+
+def package_ephem_state_into_polar_SART(state_vec, env, current_index, num_vectors):
+
+    # Extract current state components (v2.0 format)
+    et = state_vec[0]
+    x = state_vec[1]
+    y = state_vec[2]
+    vx = state_vec[3]
+    vy = state_vec[4]
+    m = state_vec[5]
+    x_target = state_vec[6]
+    y_target = state_vec[7]
+    vx_target = state_vec[8]
+    vy_target = state_vec[9]
+    ttg = state_vec[10]
+    alpha_x = state_vec[11]
+    alpha_y = state_vec[12]
+    u = state_vec[13]
+
+    state_input = np.array([x, y, vx, vy, m, x_target, y_target, vx_target, vy_target, ttg])
+
+    #manually set the state of the environment
+    unwrapped_env = env.unwrapped
+    obs, info = unwrapped_env.set_state(state_input)
+    
+    # Verify that the state was set correctly
+    state_check = unwrapped_env.get_cartesian_state()
+    if not np.allclose(state_check, state_input, atol=1e-5):
+        raise ValueError("Environment state does not match expected state after setting.")
+    
+    # Convert alpha_x, alpha_y to flight path angle components
+    alpha_cos_fpa, alpha_sin_fpa = convert_alpha_from_cart_to_fpa(x, y, vx, vy, alpha_x, alpha_y)
+
+    # Action in terms of (u, alpha_cos_fpa, alpha_sin_fpa)
+    action = np.array([u, alpha_cos_fpa, alpha_sin_fpa], dtype=np.float32)
+
+    # Step the environment to get next_obs, reward, done
+    next_obs, reward, done, truncated, info = unwrapped_env.step(action)
+
+    if current_index + 1 >= num_vectors:
+        done = True
+
+    return obs, action, reward, next_obs, done
+
+
+def package_ephem_state_into_cart_SART(state_vec, env, current_index, num_vectors):
+
+    # Extract current state components (v2.0 format)
+    et = state_vec[0]
+    x = state_vec[1]
+    y = state_vec[2]
+    vx = state_vec[3]
+    vy = state_vec[4]
+    m = state_vec[5]
+    x_target = state_vec[6]
+    y_target = state_vec[7]
+    vx_target = state_vec[8]
+    vy_target = state_vec[9]
+    ttg = state_vec[10]
+    alpha_x = state_vec[11]
+    alpha_y = state_vec[12]
+    u = state_vec[13]
+
+    state_input = np.array([x, y, vx, vy, m, x_target, y_target, vx_target, vy_target, ttg])
+
+    #manually set the state of the environment
+    unwrapped_env = env.unwrapped
+    obs, info = unwrapped_env.set_state(state_input)
+    
+    # Verify that the state was set correctly
+    state_check = unwrapped_env.get_cartesian_state()
+    if not np.allclose(state_check, state_input, atol=1e-5):
+        raise ValueError("Environment state does not match expected state after setting.")
+
+    # Action in terms of (u, alpha_cos_fpa, alpha_sin_fpa)
+    action = np.array([u, alpha_x, alpha_y], dtype=np.float32)
+
+    # Step the environment to get next_obs, reward, done
+    next_obs, reward, done, truncated, info = unwrapped_env.step(action)
+
+    if current_index + 1 >= num_vectors:
+        done = True
+
+    return obs, action, reward, next_obs, done
+
+
+def rollout_model(env, params, model, test_log):
+
+    # reset the env
+    obs, info = env.reset(seed=params.get("seed_traj", 42))
+    eph = Ephemeris_v2()  # create new ephemeris object
+
+    sum_reward = 0.0
+
+    rollout_data = SACRolloutData_TBR_polar()
+
+    count_step = 0
+    flag_continue = True
+    terminated = False
+    truncated = False
+
+    while flag_continue:
+
+        # step the env
+        action, _states = model.predict(obs, deterministic=True)
+        unwrapped_env = env.unwrapped
+        state_cart = unwrapped_env.get_cartesian_state()
+        throttle = action[0]
+        alpha_fpa_cos = action[1]
+        alpha_fpa_sin = action[2]
+
+        # dim state
+        t_i = info["Elapsed time"]
+        t_i_days = t_i / (3600 * 24)
+        x_i = state_cart[0]
+        y_i = state_cart[1]
+        vx_i = state_cart[2]
+        vy_i = state_cart[3]
+        m_i = state_cart[4]
+        x_target_i = state_cart[5]
+        y_target_i = state_cart[6]
+        vx_target_i = state_cart[7]
+        vy_target_i = state_cart[8]
+        ttg_i = state_cart[9]
+
+        #info of interest
+        pos_r_component = info.get("pos_r_component", None)
+        vel_r_component = info.get("vel_r_component", None)
+        mass_r_component = info.get("mass_r_component", None)
+        throttle_r_component = info.get("throttle_r_component", None)
+        alpha_x = info.get("alpha_x", None)
+        alpha_y = info.get("alpha_y", None)
+
+        # log data to ephemeris
+        eph.add_data(t_i, x_i, y_i, vx_i, vy_i, m_i, x_target_i, y_target_i, vx_target_i, vy_target_i, ttg_i, alpha_x, alpha_y, throttle )
+
+        # create polar state, create a temp SC object and calc OE
+        r_i, theta_i, rdot_i, vtheta_i = cartesian_to_polar(x_i, y_i, vx_i, vy_i)
+        SC = Spacecraft(
+            r_i, theta_i, rdot_i, vtheta_i, m_i, params["max_T"], params["ISP"]
+        )
+        arr_OE = SC.calc_Planar_OE(0.0, 0.0, 0.0, 0.0, params["mu"])
+
+        obs, reward, terminated, truncated, info = env.step(action)
+
+        count_step = count_step + 1
+
+        # store the results
+        rollout_data.add_step(  info["Elapsed time"]/86400, # elapsed time in days
+                reward, #reward
+                action[0], #throttle
+                alpha_fpa_cos,  # fpa cos
+                alpha_fpa_sin,  # fpa sin
+                obs[0],  # r_nd
+                obs[1],  # eta_cos_nd
+                obs[2],  # eta_sin_nd
+                obs[3],  # v_nd
+                obs[4],  # fpa_cos_nd
+                obs[5],  # fpa_sin_nd
+                obs[6],  # mass_nd
+                obs[7],  # delta target_r_nd
+                obs[8],  # delta target_eta_cos_nd
+                obs[9],  # delta target_eta_sin_nd
+                obs[10],  # delta target_v_nd
+                obs[11],  # delta target_fpa_cos_nd
+                obs[12],  # delta target_fpa_sin_nd
+                obs[13],  # TTG
+                pos_r_component,  # pos_r_component
+                vel_r_component,  # vel_r_component
+                mass_r_component,
+                throttle_r_component,
+                ) 
+
+        if terminated or truncated:
+            break
+
+    test_log = log("Test trajectory complete", test_log, True)
+    test_log = log("Steps taken: " + str(count_step), test_log, True)
+    test_log = log("Total reward: " + str(sum_reward), test_log, True)
+    test_log = log("Final x: " + str(obs[0]) + " ", test_log, True)
+    test_log = log("Final y: " + str(obs[1]) + " ", test_log, True)
+    test_log = log("Final vx: " + str(obs[2]) + " ", test_log, True)
+    test_log = log("Final vy: " + str(obs[3]) + " ", test_log, True)
+    test_log = log("Final m: " + str(obs[4]) + " ", test_log, True)
+    test_log = log("Final sma: " + str(obs[6]) + " ", test_log, True)
+    test_log = log("Final ecc: " + str(arr_OE[1]) + " ", test_log, True)
+    test_log = log("terminated: " + str(terminated) + " ", test_log, True)
+    test_log = log("truncated: " + str(truncated) + " ", test_log, True)
+
+    #final env info
+    for key, value in info.items():
+        if key != "ODE Solution":
+            test_log = log(f"{key}: {value}", test_log, True)
+
+    return test_log, eph, rollout_data
+

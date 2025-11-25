@@ -61,3 +61,4 @@ def non_dimensionalize(arr_y, g0, mu, T_max, ISP, TOF, l_star, m_star, t_star):
 
     # return outputs
     return arr_y_nd, g0_nd, mu_nd, T_max_nd, ISP_nd, TOF_nd
+

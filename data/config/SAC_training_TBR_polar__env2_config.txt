@@ -1,0 +1,96 @@
+# Parameters
+
+# Environment-related 
+
+env_type: TwoBodyRendezvous_Polar_Env2
+mu: 1.3e+20
+max_T: 1.33
+ISP: 3872.0
+TOF: 34713360.0
+l_star: 149598023000
+m_star: 3366.0
+t_star: 5074778.662111725
+g0: 9.80665
+env_step_size: 1_209_600
+a_min_init_env_nd: 149598023000.0
+a_max_init_env_nd: 149598023000.0
+e_min_init_env: 0.0001
+e_max_init_env: 0.0001
+w_min_init_env_deg: 0.0
+w_max_init_env_deg: 0.0
+theta_min_init_env_deg: 0.0
+theta_max_init_env_deg: 2.0
+a_min_final_env_nd: 232495000000.0
+a_max_final_env_nd: 232495000000.0
+e_min_final_env: 0.0001
+e_max_final_env: 0.0001
+w_min_final_env_deg: 0.0
+w_max_final_env_deg: 0.0
+theta_min_final_env_deg: 180.0
+theta_max_final_env_deg: 182.0
+max_episode_steps: 5_000
+pos_r_weight: 0.1
+vel_r_weight: 0.1
+throttle_r_weight: 0.001
+tof_weight: 1.0
+tof_scale: 1.0
+v_dist_weight: 0.25
+time_dist_weight: 0.01
+success_threshold_pos: 0.01
+success_threshold_vel: 0.01
+terminal_bonus: 0.0
+precision_mult: 1.0
+prop_length_scale: 2.0
+r_dist_weight: 1.0
+v_dist_weight: 1.0
+
+# Training
+
+pre_train_networks: True
+save_replay_buffer: False
+read_replay_buffer: True
+load_model_checkpoint: False
+eval_freq: 1_000
+training_steps: 20_000
+pretrain_gradient_steps: 20_000
+n_eval_episodes: 3
+print_freq: 2_000
+buffer_size: 4_000_000
+num_ephems_to_use: 100_000
+batch_size: 256
+pt_log_interval: 2_000
+t_log_interval: 2_000
+loss_report_rate: 10
+checkpoint_freq: 1_000
+
+# Neural Nets
+
+learning_rate: 0.0003
+tau: 0.005
+train_freq: 1
+gradient_steps: 1
+max_grad_norm: 0.5
+nn_arch_type: custom
+net_arch: [256, 256]
+
+# Paths/Filenames
+
+tb_log_name: SAC_TBR_training
+output_dir: C:\Users\micha\MSI_Data\Masters_Thesis\z_script_output\SAC_Training
+path_training_data: C:\Users\micha\MSI_Data\Masters_Thesis\z_script_output\temp_out
+path_replay_buffer: C:\Users\micha\MSI_Data\Masters_Thesis\z_script_output\replay_buffers\tbr_overfit\replay_buffer.pkl
+path_SAC_model_load: C:\Users\micha\MSI_Data\Masters_Thesis\z_script_output\SAC_Training\SAC_training_20251118_161446\best_model.zip
+
+# General
+
+ephem_version: 2.0
+ephem_step_size: 70
+flag_gen_H_traj: True
+seed_traj: 48
+flag_report_live: True
+eps_threshold: 0.1
+init_costate_guesses: 32
+root_max_iters: 10_000
+timeout_per_trajectory: 600
+gamma: 0.5
+flag_debug_h_targeter: False
