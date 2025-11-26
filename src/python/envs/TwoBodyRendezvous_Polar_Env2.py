@@ -136,6 +136,7 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         self.arr_vf_polar_nd = np.array(
             [0.0, 0.0], dtype=np.float32
         )  # placeholder for target polar velocity [v_r, v_theta]
+        self.max_episode_steps = kwargs.get("max_episode_steps", 5000)
         self.h_nd_0 = 0.0  # placeholder for initial angular momentum
         self.h_nd_f = 0.0  # placeholder for final angular momentum
         self.cos_eta = 0.0  # placeholder for eta cosine component
@@ -1009,7 +1010,7 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         self._keplerian_elements[3] = theta
 
         # determine reward and terminated status
-        reward, terminated = self.calc_reward(u)
+        reward, terminated, truncated = self.calc_reward(u)
 
         # accumulate reward
         self.episode_reward += reward
@@ -1036,8 +1037,6 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
 
         # extract other environment information
         info = self._get_info(solution, delta_r)
-
-        truncated = False
 
         if terminated or truncated:
             info["episode"] = {"r": float(self.episode_reward)}
