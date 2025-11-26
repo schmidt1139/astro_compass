@@ -371,21 +371,25 @@ def _plot_tbr_polar_reward_components(
             time_years,
             SACRolloutData_TBR_polar.arr_pos_reward,
             label="Position r component",
+            color="red",
         )
         plt.plot(
             time_years,
             SACRolloutData_TBR_polar.arr_vel_reward,
             label="Velocity r component",
+            color="blue",
         )
         plt.plot(
             time_years,
             SACRolloutData_TBR_polar.arr_throttle_reward,
             label="Throttle r component",
+            color="green",
         )
         plt.plot(
             time_years,
             SACRolloutData_TBR_polar.arr_reward,
             label="Composite Reward",
+            color="black",
         )
         if h_data is not None:
             h_time_years = np.array(h_data["arr_elapsed_time"]) / 365.25
@@ -415,7 +419,7 @@ def _plot_tbr_polar_reward_components(
                 h_data["arr_rewards"],
                 label="Hamiltonian Ephem Composite Reward",
                 linestyle="--",
-                color="orange",
+                color="black",
             )
         plt.xlabel("Time [years]")
         plt.ylabel("Reward Contribution")
