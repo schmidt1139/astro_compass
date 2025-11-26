@@ -59,10 +59,14 @@ def main(params, seed_in=42):
             verbose=1,
             device=params.get("eval_device", "cpu"),
             seed=seed_in,
+            learning_starts=params.get("learning_starts", 50000),
             tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
             buffer_size=buffer_size,
             tau=params.get("tau", 0.005),
-            train_freq=params.get("train_freq", 1),
+            train_freq=(
+                params.get("train_freq", 1),
+                params.get("train_freq_unit", "step"),
+            ),
             gradient_steps=params.get("gradient_steps", 1),
             policy_kwargs=policy_kwargs,
         )
