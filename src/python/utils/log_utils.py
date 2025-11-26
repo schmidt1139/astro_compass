@@ -55,7 +55,11 @@ def write_config_file(params, path_config):
 
 
 def read_config_file(path_config):
-    """Read configuration parameters from a text file."""
+    """Read configuration parameters from a legacy text file.
+
+    Prefer using :func:`read_toml_config_file` for new code.
+    """
+
     params = {}
     with open(path_config, "r") as f:
         for line in f:
@@ -103,5 +107,47 @@ def read_config_file(path_config):
             "1",
             "yes",
         ]
+
+    return params
+
+
+def read_toml_config_file(path_config):
+    """Read TOML configuration parameters into a flat dict.
+
+    Uses the standard library ``tomllib`` (Python 3.11+) and returns a
+    single-level dictionary of parameters, mirroring the behavior of
+    :func:`read_config_file` but with TOML's native typing.
+    """
+
+    import os
+
+    import tomli as toml
+
+    with open(path_config, "rb") as f:
+        data = toml.load(f)
+
+    params = {}
+
+    def _flatten(prefix, obj):
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                _flatten(k if prefix is None else f"{prefix}.{k}", v)
+        else:
+            # For now, use just the final key (no dotted prefix) to keep
+            # compatibility with existing flat-parameter usage.
+            key = prefix.split(".")[-1] if isinstance(prefix, str) else prefix
+            params[key] = obj
+
+    _flatten(None, data)
+
+    # Expand common path-like entries
+    for key in (
+        "output_dir",
+        "path_training_data",
+        "path_replay_buffer",
+        "path_SAC_model_load",
+    ):
+        if key in params and isinstance(params[key], str):
+            params[key] = os.path.abspath(os.path.expanduser(params[key]))
 
     return params
