@@ -222,6 +222,10 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
             "v_r_target_unit": self.v_r_target_unit,
             "v_t_target_unit": self.v_t_target_unit,
         }
+    
+    def seed(self, seed=None):
+        self.np_random, seed = gym.utils.seeding.np_random(seed)
+        return [seed]
 
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None):
         # We need the following line to seed self.np_random
@@ -625,11 +629,11 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         # Separate exponentials for position and velocity - provides smoother gradient
         self.time_r_component = np.clip( (1 - (TTG_nd) * self.time_dist_weight) * self.tof_weight, 0.1, 1.0 )
 
-        self.pos_r_component = - d_r_nd**(self.r_dist_weight) * self.pos_weight
-        self.vel_r_component = - d_v_nd**(self.v_dist_weight) * self.vel_weight
+        #self.pos_r_component = - d_r_nd**(self.r_dist_weight) * self.pos_weight
+        #self.vel_r_component = - d_v_nd**(self.v_dist_weight) * self.vel_weight
 
-        #self.pos_r_component = np.exp(- self.r_dist_weight * self.pos_residual**2) * self.pos_weight
-        #self.vel_r_component = np.exp(- self.v_dist_weight * self.vel_residual**2) * self.vel_weight
+        self.pos_r_component = np.exp(- self.r_dist_weight * self.pos_residual**2) * self.pos_weight
+        self.vel_r_component = np.exp(- self.v_dist_weight * self.vel_residual**2) * self.vel_weight
 
         self.throttle_r_component = - u * self.throttle_r_weight
 
@@ -658,7 +662,7 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         if r_nd < 0.1:
             terminal_bonus = 0.0
             reward = solar_prox + step_reward + terminal_bonus
-            terminated = False
+            terminated = True
         elif (e >= 1.0 ):
             terminal_bonus = 0.0
             reward = ecc_penalty + step_reward + terminal_bonus
@@ -900,6 +904,9 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
             dtype=np.float32,
         )
 
+        # Update the spacecraft in the environment
+        self._spacecraft = sc_init = Spacecraft(0, 0, 0, 0, m_in, self.C1, self.C2)
+
         # update the spacecraft object in the environment
         self._spacecraft.update_state_cartesian(x_in, y_in, vx_in, vy_in, m_in)
 
@@ -908,6 +915,13 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         y_cb = self._arr_cb[1]
         vx_cb = self._arr_cb[2]
         vy_cb = self._arr_cb[3]
+
+        # convert initial and final states to polar coordinates
+        r_0, theta_0, r_dot_0, v_theta_0 = cartesian_to_polar(x_in, y_in, vx_in, vy_in)
+        r_f, theta_f, r_dot_f, v_theta_f = cartesian_to_polar(x_target_in, y_target_in, vx_target_in, vy_target_in)
+
+        sc_fin = Spacecraft(0, 0, 0, 0, m_in, self.C1, self.C2)
+        sc_fin.update_state_cartesian(x_target_in, y_target_in, vx_target_in, vy_target_in, m_in)
 
         # calculate the new orbital elements
         a, e, w, theta = self._spacecraft.calc_Planar_OE(
@@ -918,14 +932,6 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         self._keplerian_elements[1] = e
         self._keplerian_elements[2] = w
         self._keplerian_elements[3] = theta
-
-        # convert initial and final states to polar coordinates
-        r_0, theta_0, r_dot_0, v_theta_0 = cartesian_to_polar(x_in, y_in, vx_in, vy_in)
-        r_f, theta_f, r_dot_f, v_theta_f = cartesian_to_polar(x_target_in, y_target_in, vx_target_in, vy_target_in)
-
-        # Initialize spacecraft objects for initial and final states
-        sc_init = Spacecraft(r_0, theta_0, r_dot_0, v_theta_0, m_in, self.C1, self.C2)
-        sc_fin = Spacecraft(r_f, theta_f, r_dot_f, v_theta_f, m_in, self.C1, self.C2)
 
         # calculate orbital elements for initial and final states
         a_init, e_init, w_init, theta_init = sc_init.calc_Planar_OE(

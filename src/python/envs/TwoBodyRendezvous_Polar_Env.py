@@ -342,6 +342,10 @@ class TwoBodyRendezvous_Polar_Env(gym.Env):
 
         return observation, info
     
+    def seed(self, seed=None):
+        self.np_random, seed = gym.utils.seeding.np_random(seed)
+        return [seed]
+    
     def create_polar_observation( self, x_nd, y_nd, vx_nd, vy_nd, 
                                  x_target_nd, y_target_nd, vx_target_nd, 
                                  vy_target_nd, mass_nd, TTG_nd ):

@@ -6,7 +6,6 @@ env_type: TwoBodyRendezvous_Polar_Env2
 mu: 1.3e+20
 max_T: 1.33
 ISP: 3872.0
-TOF: 34713360.0
 l_star: 149598023000
 m_star: 3366.0
 t_star: 5074778.662111725
@@ -29,34 +28,35 @@ w_max_final_env_deg: 0.0
 theta_min_final_env_deg: 180.0
 theta_max_final_env_deg: 182.0
 max_episode_steps: 5_000
-pos_r_weight: 0.1
-vel_r_weight: 0.1
-throttle_r_weight: 0.001
+pos_r_weight: 1.0
+vel_r_weight: 0.0
+throttle_r_weight: 0.0
 tof_weight: 1.0
 tof_scale: 1.0
-v_dist_weight: 0.25
-time_dist_weight: 0.01
+time_dist_weight: 0.0
 success_threshold_pos: 0.01
 success_threshold_vel: 0.01
 terminal_bonus: 0.0
 precision_mult: 1.0
-prop_length_scale: 2.0
+prop_length_scale: 1.5
 r_dist_weight: 1.0
 v_dist_weight: 1.0
+num_vec_envs: 10
 
 # Training
 
 pre_train_networks: True
-save_replay_buffer: False
+save_pre_training_only_replay_buffer: False
+save_final_replay_buffer: True
 read_replay_buffer: True
 load_model_checkpoint: False
 eval_freq: 1_000
-training_steps: 20_000
-pretrain_gradient_steps: 20_000
+training_steps: 5_000
+pretrain_gradient_steps: 5_000
 n_eval_episodes: 3
 print_freq: 2_000
 buffer_size: 4_000_000
-num_ephems_to_use: 100_000
+num_ephems_to_use: 1_000
 batch_size: 256
 pt_log_interval: 2_000
 t_log_interval: 2_000
@@ -72,6 +72,7 @@ gradient_steps: 1
 max_grad_norm: 0.5
 nn_arch_type: custom
 net_arch: [256, 256]
+eval_device: cuda
 
 # Paths/Filenames
 

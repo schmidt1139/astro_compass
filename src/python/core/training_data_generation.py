@@ -87,33 +87,31 @@ def generate_nn_training_data_parallel(env, args):
             )
 
 
-def read_ephems_from_dir(directory, num_ephems_to_use=None, version=1.0 ,
-                         flag_return_filenames=False):
+def _read_single_ephem(path, version):
+    if version == 1.0:
+        eph = Ephemeris()
+    else:
+        eph = Ephemeris_v2()
+    eph.read_from_file(path)
+    return eph
+
+def read_ephems_from_dir(directory, num_ephems_to_use=None, version=1.0,
+                         flag_return_filenames=False, params=None):
 
     filenames = os.listdir(directory)
-    list_ephems = []
-    counter = 0
-
     end_i = len(filenames)
     if num_ephems_to_use is not None:
         end_i = min(num_ephems_to_use, len(filenames))
+    filenames = filenames[:end_i]
+    paths = [os.path.join(directory, file) for file in filenames]
 
-    for i in tqdm(range(end_i)):
+    num_workers = params.get("num_vec_envs", 1) if params is not None else 1
 
-        file = filenames[i]
-
-        path = os.path.join(directory, file)
-
-        if version == 1.0:
-            eph = Ephemeris()
-        else:
-            eph = Ephemeris_v2()
-
-        eph.read_from_file(path)
-
-        list_ephems.append(eph)
-
-        counter += 1
+    list_ephems = []
+    with ProcessPoolExecutor(max_workers=num_workers) as executor:
+        futures = [executor.submit(_read_single_ephem, path, version) for path in paths]
+        for f in tqdm(as_completed(futures), total=len(futures)):
+            list_ephems.append(f.result())
 
     if flag_return_filenames:
         return list_ephems, filenames

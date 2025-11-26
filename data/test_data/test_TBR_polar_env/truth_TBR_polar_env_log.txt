@@ -161,8 +161,8 @@ tof_scale: 1.0
 r_weight: 1.0
 v_weight: 1.0
 throttle_r_weight: 1.0
-pos_r_component: -3.768655776977539
-vel_r_component: -1.4647035598754883
+pos_r_component: 6.789172743992822e-07
+vel_r_component: 0.11702632158994675
 mass_r_component: 0.0
 throttle_r_component: -0.5
 time_r_component: 1.0
@@ -195,7 +195,7 @@ v_r_unit: 0.3377937078475952
 v_t_unit: 0.9412201642990112
 v_r_target_unit: 0.0012467728229239583
 v_t_target_unit: 0.9999999403953552
-episode: {'r': -766.9484252929688}
+episode: {'r': -343.46826171875}
 
 
 

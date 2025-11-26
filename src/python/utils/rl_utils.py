@@ -203,42 +203,58 @@ def import_training_into_replay_buffer(
             next_states.append(obs)
             dones.append(done)
 
-        # optionally save the updated replay buffer to disk
-    if params.get("save_replay_buffer", False):
-        path_replay_buffer = os.path.join(params["path_replay_buffer"], "replay_buffer.pkl")
+    # optionally save the updated replay buffer to disk
+    if params.get("save_pre_training_only_replay_buffer", False):
+        path_replay_buffer = os.path.join(params["output_dir_specific"], "replay_buffer_pre_training_only.pkl")
         model.save_replay_buffer(path_replay_buffer)
         test_log = log(f"Replay buffer saved to {path_replay_buffer}", test_log, True)
 
 
-def add_experience_to_replay_buffer(model, obs, action, reward, next_obs, done):
+def add_experience_to_replay_buffer(model, obs, action, reward, next_obs, done, params=None):
     """
-    Manually add a single experience to the SAC replay buffer
+    Add single or batched experiences to the SAC replay buffer.
 
     Args:
         model: SAC model instance
-        obs: current observation (numpy array)
-        action: action taken (numpy array)
-        reward: reward received (float)
-        next_obs: next observation (numpy array)
-        done: episode termination flag (bool)
+        obs: current observation(s), shape (obs_dim,) or (batch, obs_dim)
+        action: action(s) taken, shape (action_dim,) or (batch, action_dim)
+        reward: reward(s), float or array-like
+        next_obs: next observation(s), shape (obs_dim,) or (batch, obs_dim)
+        done: done flag(s), bool or array-like
     """
-    # Ensure arrays are the right shape and type
-    obs = np.array(obs, dtype=np.float32).reshape(1, -1)
-    action = np.array(action, dtype=np.float32).reshape(1, -1)
-    next_obs = np.array(next_obs, dtype=np.float32).reshape(1, -1)
-    reward = np.array([reward], dtype=np.float32)
-    done = np.array([done], dtype=np.float32)
+    obs = np.array(obs, dtype=np.float32)
+    action = np.array(action, dtype=np.float32)
+    next_obs = np.array(next_obs, dtype=np.float32)
+    reward = np.array(reward, dtype=np.float32)
+    done = np.array(done, dtype=np.float32)
 
-    # Add to replay buffer
+    # If single experience, reshape to (1, dim)
+    if obs.ndim == 1:
+        obs = obs.reshape(1, -1)
+    if action.ndim == 1:
+        action = action.reshape(1, -1)
+    if next_obs.ndim == 1:
+        next_obs = next_obs.reshape(1, -1)
+    if reward.ndim == 0 or (reward.ndim == 1 and reward.shape == ()):
+        reward = np.array([reward], dtype=np.float32)
+    if reward.ndim == 1 and reward.shape[0] != obs.shape[0]:
+        reward = reward.reshape(-1, 1)
+    if done.ndim == 0 or (done.ndim == 1 and done.shape == ()):
+        done = np.array([done], dtype=np.float32)
+    if done.ndim == 1 and done.shape[0] != obs.shape[0]:
+        done = done.reshape(-1, 1)
+
+    # Info dicts: one per experience
+    infos = [{} for _ in range(obs.shape[0])]
+
     model.replay_buffer.add(
         obs=obs,
         next_obs=next_obs,
         action=action,
         reward=reward,
         done=done,
-        infos=[{}],  # Empty info dict
+        infos=infos,
     )
-
 
 class RewardLoggerCallback(BaseCallback):
     def __init__(self, print_freq=1000, verbose=0):
@@ -370,9 +386,11 @@ def import_training_into_replay_buffer_v2(
     num_ephems_to_use = params.get("num_ephems_to_use", None)
     ephem_version = params.get("ephem_version", 2.0)
     step_size = params.get("ephem_step_size", 1)  # Sample every Nth vector
+    num_vec_envs = params.get("num_vec_envs", 1) 
     
     test_log = log(f"Reading ephemerides (version {ephem_version})", test_log, True)
-    set_ephems = read_ephems_from_dir(path_training_data, num_ephems_to_use, version=ephem_version)
+    set_ephems = read_ephems_from_dir(path_training_data, num_ephems_to_use, 
+                                      version=ephem_version, params=params)
     
     num_ephems = len(set_ephems)
     test_log = log(
@@ -390,7 +408,9 @@ def import_training_into_replay_buffer_v2(
     )
 
     # Process each ephemeris with progress bar
+    obs_batch, action_batch, reward_batch, next_obs_batch, done_batch = [], [], [], [], []
     for eph in tqdm(set_ephems, desc="Processing ephemerides"):
+
         for i in range(0, eph.num_vectors - 1, step_size):  # -1 to ensure we have next_obs
             
             # Current state vector
@@ -399,20 +419,35 @@ def import_training_into_replay_buffer_v2(
             env_type = params["env_type"]
 
             if env_type == "TwoBodyRendezvous_Polar_Env2":
-                obs, action, reward, next_obs, done = package_ephem_state_into_polar_SART(state_vec, env, i, eph.num_vectors)
+                obs, action, reward, next_obs, done = package_ephem_state_into_polar_SART(state_vec, env, i, eph.num_vectors, params)
             elif env_type == "TwoBodyRendezvous_Polar_Env":
-                obs, action, reward, next_obs, done = package_ephem_state_into_polar_SART(state_vec, env, i, eph.num_vectors)
+                obs, action, reward, next_obs, done = package_ephem_state_into_polar_SART(state_vec, env, i, eph.num_vectors, params)
             elif env_type == "TwoBodyRendezvous_Env":
-                obs, action, reward, next_obs, done = package_ephem_state_into_cart_SART(state_vec, env, i, eph.num_vectors)
+                obs, action, reward, next_obs, done = package_ephem_state_into_cart_SART(state_vec, env, i, eph.num_vectors, params)
             else:
                 raise NotImplementedError(f"Environment type {env_type} not supported in v2.0 import.")
             
-            # Add experience to replay buffer
-            add_experience_to_replay_buffer(model, obs, action, reward, next_obs, done)
+            obs_batch.append(obs)
+            action_batch.append(action)
+            reward_batch.append(reward)
+            next_obs_batch.append(next_obs)
+            done_batch.append(done)
+
+            if len(obs_batch) == num_vec_envs:
+                add_experience_to_replay_buffer(
+                    model,
+                    np.stack(obs_batch),
+                    np.stack(action_batch),
+                    np.array(reward_batch, dtype=np.float32).reshape(-1),
+                    np.stack(next_obs_batch),
+                    np.array(done_batch, dtype=np.float32).reshape(-1)
+                )
+                obs_batch, action_batch, reward_batch, next_obs_batch, done_batch = [], [], [], [], []
 
     # optionally save the updated replay buffer to disk when complete
     if params.get("save_replay_buffer", False):
         path_replay_buffer = os.path.join(params["path_replay_buffer"], "replay_buffer.pkl")
+
         model.save_replay_buffer(path_replay_buffer)
         test_log = log(f"Replay buffer saved to {path_replay_buffer}", test_log, True)
 
@@ -578,7 +613,9 @@ def train_on_replay_buffer(model, params, test_log, env):
 
     return test_log, critic_loss_reduced, actor_loss_reduced
 
-def package_ephem_state_into_polar_SART(state_vec, env, current_index, num_vectors):
+def package_ephem_state_into_polar_SART(state_vec, env, current_index, num_vectors, params):
+
+    env.reset()
 
     # Extract current state components (v2.0 format)
     et = state_vec[0]
@@ -600,6 +637,7 @@ def package_ephem_state_into_polar_SART(state_vec, env, current_index, num_vecto
 
     #manually set the state of the environment
     unwrapped_env = env.unwrapped
+    
     obs, info = unwrapped_env.set_state(state_input)
     
     # Verify that the state was set correctly
@@ -622,7 +660,7 @@ def package_ephem_state_into_polar_SART(state_vec, env, current_index, num_vecto
     return obs, action, reward, next_obs, done
 
 
-def package_ephem_state_into_cart_SART(state_vec, env, current_index, num_vectors):
+def package_ephem_state_into_cart_SART(state_vec, env, current_index, num_vectors, params):
 
     # Extract current state components (v2.0 format)
     et = state_vec[0]
@@ -644,8 +682,9 @@ def package_ephem_state_into_cart_SART(state_vec, env, current_index, num_vector
 
     #manually set the state of the environment
     unwrapped_env = env.unwrapped
+
     obs, info = unwrapped_env.set_state(state_input)
-    
+
     # Verify that the state was set correctly
     state_check = unwrapped_env.get_cartesian_state()
     if not np.allclose(state_check, state_input, atol=1e-5):

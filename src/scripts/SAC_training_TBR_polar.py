@@ -5,16 +5,16 @@ import matplotlib.pyplot as plt
 import random
 import torch.nn as nn
 
-from datetime import datetime
+from datetime import datetime, time
 from gymnasium import envs
 from gymnasium.envs.registration import register
 from stable_baselines3.common.callbacks import EvalCallback, CallbackList
 from stable_baselines3 import SAC as SB3_SAC
 from stable_baselines3.common.monitor import Monitor
+from stable_baselines3.common.vec_env import SubprocVecEnv
 from constants.constants import Constants
 from utils.log_utils import log
 from core.ephemeris_v2 import Ephemeris_v2 as Ephemeris
-from core.spacecraft import Spacecraft
 from utils.log_utils import write_log_to_file, write_config_file, read_config_file
 from utils.state_vector_utils import cartesian_to_polar
 from utils.plotting_utils import SACRolloutData_TBR, SACRolloutData_TBR_polar, plot_SAC_training, SACRolloutData, plot_SAC_training_TBR, plot_SAC_training_TBR_polar
@@ -26,6 +26,9 @@ from utils.env_utils import gen_rl_environment
 
 def SAC_training_TBR(seed_in=42):
 
+    #start time
+    start_time = datetime.now()
+
     # set random seed
     random.seed(seed_in)
 
@@ -36,15 +39,34 @@ def SAC_training_TBR(seed_in=42):
     params = read_config_file(path_config)
 
     # initialize the training and evaluation environments
-    env = gen_rl_environment(params)
-    eval_env = gen_rl_environment(params)   
+    #env = gen_rl_environment(params)
+    #eval_env = gen_rl_environment(params) 
 
-    #env wrappers
-    max_episode_steps_in = params["max_episode_steps"]
-    env = gym.wrappers.TimeLimit(env, max_episode_steps=max_episode_steps_in)
+    #set up vectorized environments
+    max_episode_steps_in = params["max_episode_steps"] 
+
+    def make_env(params, seed):
+        def _init():
+            env = gen_rl_environment(params)
+            env.seed(seed)
+            env = gym.wrappers.TimeLimit(env, max_episode_steps=params["max_episode_steps"])
+            env = Monitor(env)
+            return env
+        return _init
+
+    num_envs = params.get("num_vec_envs", 1)
+    env = SubprocVecEnv([make_env(params, i) for i in range(num_envs)])
+
+    #establish eval environment
+    eval_env = gen_rl_environment(params)
+    pre_train_env = gen_rl_environment(params)
+    pre_train_env.seed(seed_in)
+    pre_train_env.reset()
+    pre_train_env = gym.wrappers.TimeLimit(pre_train_env, max_episode_steps=max_episode_steps_in)
+    pre_train_env = Monitor(pre_train_env)
     eval_env = gym.wrappers.TimeLimit(eval_env, max_episode_steps=max_episode_steps_in)
-    env = Monitor(env)
     eval_env = Monitor(eval_env)
+
     training_steps = params["training_steps"]
 
     test_log = []
@@ -52,6 +74,7 @@ def SAC_training_TBR(seed_in=42):
     print(
         "GPU available: ", torch.cuda.is_available()
     )  # Should print True if GPU is available)
+    test_log = log("NN Eval Device: " + str(params.get("eval_device", "cpu")), test_log, True)
 
     # paths
     time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
@@ -76,15 +99,18 @@ def SAC_training_TBR(seed_in=42):
     os.makedirs(path_plots, exist_ok=True)
 
     # reset the environment
-    observation, info = env.reset(seed=seed_in)
+    observations = env.reset()
     test_log = log("Environment has been reset", test_log, True)
-    test_log = log("Seed: " + str(seed_in), test_log, True)
     test_log = log(
         "Max steps per episode: " + str(max_episode_steps_in), test_log, True
     )
 
     # Create the SAC model with TensorBoard logging
     buffer_size = params.get("buffer_size", 1000000)  # Default 1M transitions
+
+    # Number of vectorized environments
+    num_vec_envs = params.get("num_vec_envs", 1)
+    test_log = log(f"Number of vectorized environments: {num_vec_envs}", test_log, True)
 
     #load model if specified, otherwise create new
     if params["load_model_checkpoint"]:
@@ -106,7 +132,7 @@ def SAC_training_TBR(seed_in=42):
                             env, 
                             learning_rate=params["learning_rate"], 
                             verbose=1, 
-                            device="cpu", 
+                            device=params.get("eval_device", "cpu"),
                             seed=seed_in,
                             tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
                             buffer_size=buffer_size,
@@ -124,7 +150,7 @@ def SAC_training_TBR(seed_in=42):
                             env, 
                             learning_rate=params["learning_rate"], 
                             verbose=1, 
-                            device="cpu", 
+                            device=params.get("eval_device", "cpu"), 
                             seed=seed_in,
                             tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
                             buffer_size=buffer_size,
@@ -143,7 +169,7 @@ def SAC_training_TBR(seed_in=42):
     
     # pre-train networks if specified
     if params["pre_train_networks"]:
-        test_log, arr_actor_loss_pt, arr_critic_loss_pt = pre_train(test_log, model, params, env)
+        test_log, arr_actor_loss_pt, arr_critic_loss_pt = pre_train(test_log, model, params, pre_train_env)
         # Remove the minimal logger from pre-training so model.learn() can set up TensorBoard properly
         # This ensures TensorBoard logging works correctly during actual training
         if hasattr(model, '_logger'):
@@ -199,16 +225,25 @@ def SAC_training_TBR(seed_in=42):
             test_log = log("Error generating Hamiltonian trajectory file: " + str(e), test_log, True)
             params["flag_gen_H_traj"] = False
 
-    test_log, eph, rollout_data = rollout_model(env, params, model, test_log)
+    rollout_env = gen_rl_environment(params)
+    rollout_env.seed(seed_in)
+    
+    test_log, eph, rollout_data = rollout_model(rollout_env, params, model, test_log)
 
     # render training plots
-    plot_SAC_training_TBR_polar(rollout_data, path_plots, eph, params, env, 
+    plot_SAC_training_TBR_polar(rollout_data, path_plots, eph, params, rollout_env, 
                                 arr_episode_numbers=arr_episode_numbers, 
                                 arr_episode_rs=arr_episode_rs,
                                 arr_actor_loss_pt=arr_actor_loss_pt,
                                 arr_critic_loss_pt=arr_critic_loss_pt,
                                 ephem_H=ephem_H if params.get("flag_gen_H_traj", False) else None )
 
+    #save replay buffer if enabled
+    if params.get("save_final_replay_buffer", False):
+        path_replay_buffer = os.path.join(params["output_dir_specific"], "replay_buffer.pkl")
+        model.save_replay_buffer(path_replay_buffer)
+        test_log = log(f"Final replay buffer saved to {path_replay_buffer}", test_log, True)
+    
     env.close()
 
     # save ephemeris to file
@@ -226,7 +261,11 @@ def SAC_training_TBR(seed_in=42):
     # write config to output dir
     write_config_file(params, os.path.join(path_output, "SAC_Training_Config.txt"))
 
+    # elapsed time
+    elapsed_time = (datetime.now() - start_time).total_seconds()
+    test_log = log(f"Elapsed time: {elapsed_time:.2f} seconds", test_log, True)
+
     print("\n\n\n")
 
-
-SAC_training_TBR()
+if __name__ == "__main__":
+    SAC_training_TBR()
