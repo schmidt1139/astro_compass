@@ -3,3 +3,7 @@ __pycache__/
 data/training_ephems/
 data/horizons_ephems/
 data/plots/
+.venv/*
+astro_compass.egg-info/*
+data/pre-training-data/*
+data/output/*
