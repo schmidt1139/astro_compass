@@ -1,16 +1,23 @@
 import os
-import numpy as np
-from utils.log_utils import compare_logs, log, read_config_file, read_log_from_file, write_config_file, write_log_to_file
-from envs.TwoBodyRendezvous_Polar_Env2 import TwoBodyRendezvous_Polar_Env2
-from constants.constants import Constants
-from utils.env_utils import gen_rl_environment
+
 from core.ephemeris_v2 import Ephemeris_v2
-from utils.plotting_utils import plot_SAC_training_TBR_polar, plot_rendezvous_traj
-from utils.plotting_utils import SACRolloutData_TBR_polar
 from matplotlib import pyplot as plt
+from utils.env_utils import gen_rl_environment
+from utils.log_utils import (
+    compare_logs,
+    log,
+    read_config_file,
+    read_log_from_file,
+    write_log_to_file,
+)
+from utils.plotting_utils import (
+    SACRolloutData_TBR_polar,
+    plot_rendezvous_traj,
+    plot_SAC_training_TBR_polar,
+)
+
 
 def test_TBR_polar_env(flag_report_live: bool = False):
-
     plt.style.use("data/support_files/light_paper.mplstyle")
 
     # config path
@@ -21,9 +28,7 @@ def test_TBR_polar_env(flag_report_live: bool = False):
     params = read_config_file(path_config)
 
     test_log = []
-    test_log = log(
-        "Test Two-Body Rendezvous Polar Env", test_log, flag_report_live
-    )
+    test_log = log("Test Two-Body Rendezvous Polar Env", test_log, flag_report_live)
 
     # generate the environment
     env = gen_rl_environment(params)
@@ -36,7 +41,6 @@ def test_TBR_polar_env(flag_report_live: bool = False):
     flag_test_pass = True
 
     while count_traj < params["num_trajs"]:
-
         obs, info = env.reset(seed=seed_traj)
         state_cart = env.get_cartesian_state()
 
@@ -66,77 +70,79 @@ def test_TBR_polar_env(flag_report_live: bool = False):
         flag_continue = True
 
         eph.reset()
-        
-        eph.add_data(0.0, 
-                     state_cart[0], 
-                     state_cart[1], 
-                     state_cart[2], 
-                     state_cart[3], 
-                     state_cart[4], 
-                     state_cart[5], 
-                     state_cart[6], 
-                     state_cart[7],
-                     state_cart[8],
-                     state_cart[9],
-                     alpha_x=0.0, 
-                     alpha_y=0.0, 
-                     u=0.0)
 
+        eph.add_data(
+            0.0,
+            state_cart[0],
+            state_cart[1],
+            state_cart[2],
+            state_cart[3],
+            state_cart[4],
+            state_cart[5],
+            state_cart[6],
+            state_cart[7],
+            state_cart[8],
+            state_cart[9],
+            alpha_x=0.0,
+            alpha_y=0.0,
+            u=0.0,
+        )
 
         while flag_continue == True:
-
-            action = [ 0.5, 1.0, 1.0 ]  # action
+            action = [0.5, 1.0, 1.0]  # action
 
             obs, reward, done, truncated, info = env.step(action)
             state_cart = env.get_cartesian_state()
 
-            #get relevant information
-            pos_r_component = info["pos_r_component"]
-            vel_r_component = info["vel_r_component"]
-            mass_r_component = info["mass_r_component"]
-            throttle_r_component = info["throttle_r_component"]
+            # get relevant information
+            pos_reward = info["pos_reward"]
+            vel_reward = info["vel_reward"]
+            mass_reward = info["mass_reward"]
+            throttle_reward = info["throttle_reward"]
 
-            eph.add_data(info["Elapsed time"], 
-                        state_cart[0], 
-                        state_cart[1], 
-                        state_cart[2], 
-                        state_cart[3], 
-                        state_cart[4], 
-                        state_cart[5], 
-                        state_cart[6], 
-                        state_cart[7],
-                        state_cart[8],
-                        state_cart[9],
-                        alpha_x=action[2], 
-                        alpha_y=action[1], 
-                        u=action[0])
-            
+            eph.add_data(
+                info["Elapsed time"],
+                state_cart[0],
+                state_cart[1],
+                state_cart[2],
+                state_cart[3],
+                state_cart[4],
+                state_cart[5],
+                state_cart[6],
+                state_cart[7],
+                state_cart[8],
+                state_cart[9],
+                alpha_x=action[2],
+                alpha_y=action[1],
+                u=action[0],
+            )
+
             # store the results
-            rollout_data.add_step(  info["Elapsed time"]/86400, # elapsed time in days
-                    reward, #reward
-                    action[0], #throttle
-                    action[1],  # fpa cos
-                    action[2],  # fpa sin
-                    obs[0],  # r_nd
-                    obs[1],  # eta_cos_nd
-                    obs[2],  # eta_sin_nd
-                    obs[3],  # v_nd
-                    obs[4],  # fpa_cos_nd
-                    obs[5],  # fpa_sin_nd
-                    obs[6],  # mass_nd
-                    obs[7],  # delta target_r_nd
-                    obs[8],  # delta target_eta_cos_nd
-                    obs[9],  # delta target_eta_sin_nd
-                    obs[10],  # delta target_v_nd
-                    obs[11],  # delta target_fpa_cos_nd
-                    obs[12],  # delta target_fpa_sin_nd
-                    obs[13],  # TTG
-                    pos_r_component,  # pos_r_component
-                    vel_r_component,  # vel_r_component
-                    mass_r_component,
-                    throttle_r_component,
-                    ) 
-
+            rollout_data.add_step(
+                info["Elapsed time"] / 86400,  # elapsed time in days
+                reward,  # reward
+                action[0],  # throttle
+                action[1],  # fpa cos
+                action[2],  # fpa sin
+                obs[0],  # r_nd
+                obs[1],  # eta_cos_nd
+                obs[2],  # eta_sin_nd
+                obs[3],  # v_nd
+                obs[4],  # fpa_cos_nd
+                obs[5],  # fpa_sin_nd
+                obs[6],  # mass_nd
+                obs[7],  # delta target_r_nd
+                obs[8],  # delta target_eta_cos_nd
+                obs[9],  # delta target_eta_sin_nd
+                obs[10],  # delta target_v_nd
+                obs[11],  # delta target_fpa_cos_nd
+                obs[12],  # delta target_fpa_sin_nd
+                obs[13],  # TTG
+                pos_reward,  # pos_reward
+                vel_reward,  # vel_reward
+                mass_reward,
+                throttle_reward,
+            )
 
             steps += 1
 
@@ -146,16 +152,24 @@ def test_TBR_polar_env(flag_report_live: bool = False):
             if steps >= params["max_steps"]:
                 flag_continue = False
 
-        #fig = eph.plot_xy();
-        #fig.savefig(os.path.join("data", "test_data", "test_TBR", "test_traj_") + str(count_traj) + "_TBR_env.png")
+        # fig = eph.plot_xy();
+        # fig.savefig(os.path.join("data", "test_data", "test_TBR", "test_traj_") + str(count_traj) + "_TBR_env.png")
 
-        plot_SAC_training_TBR_polar(rollout_data, path_test, eph, params, env )
+        plot_SAC_training_TBR_polar(rollout_data, path_test, eph, params, env)
 
-        eph.write_to_file(os.path.join("data", "test_data", "test_TBR_polar_env", "test_traj_ephemeris_") + str(count_traj) + "_TBR_env.txt")
+        eph.write_to_file(
+            os.path.join(
+                "data", "test_data", "test_TBR_polar_env", "test_traj_ephemeris_"
+            )
+            + str(count_traj)
+            + "_TBR_env.txt"
+        )
 
         fig_orb = plot_rendezvous_traj(eph, env, params)
-        fig_orb.savefig(os.path.join(path_test, "SAC_Test_Traj.png"), dpi=300, bbox_inches='tight')
-        
+        fig_orb.savefig(
+            os.path.join(path_test, "SAC_Test_Traj.png"), dpi=300, bbox_inches="tight"
+        )
+
         test_log = log("Final observation vector\n", test_log, flag_report_live)
         test_log = log("x_nd: " + str(obs[0]), test_log, flag_report_live)
         test_log = log("y_nd: " + str(obs[1]), test_log, flag_report_live)
@@ -173,7 +187,6 @@ def test_TBR_polar_env(flag_report_live: bool = False):
 
         test_log = log("\n\n\n", test_log, flag_report_live)
 
-
     path_log = os.path.join(path_test, "test_TBR_polar_env_log.txt")
     write_log_to_file(path_log, test_log)
 
@@ -185,11 +198,13 @@ def test_TBR_polar_env(flag_report_live: bool = False):
     flag_logs_same = compare_logs(log_compare, truth_log)
     if not flag_logs_same:
         flag_test_pass = False
-        test_log = log("Log file does NOT match truth log file.", test_log, flag_report_live)
+        test_log = log(
+            "Log file does NOT match truth log file.", test_log, flag_report_live
+        )
     else:
         test_log = log("Log file matches truth log file.", test_log, flag_report_live)
 
-    '''
+    """
     # load truth data for comparison
     eph_truth = Ephemeris_v2()
     eph_truth.read_from_file(os.path.join("data", "test_data", "test_TBR", "test_traj_ephemeris_") + str(count_traj) + "_TBR_env_truth.txt")
@@ -205,7 +220,6 @@ def test_TBR_polar_env(flag_report_live: bool = False):
     else:
         test_log = log("Test FAILED: Discrepancies found between trajectories and truth data.", test_log, flag_report_live)
 
-    '''
+    """
 
     return flag_test_pass
-

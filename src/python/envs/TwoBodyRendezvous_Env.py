@@ -1,13 +1,13 @@
-import numpy as np
-import gymnasium as gym
 import warnings
 from typing import Optional
-from scipy.integrate import solve_ivp
+
+import gymnasium as gym
+import numpy as np
 from constants.constants import Constants
-from core.spacecraft import Spacecraft
 from core.propagation import env_EOM_TBT_v2
+from core.spacecraft import Spacecraft
+from scipy.integrate import solve_ivp
 from utils.state_vector_utils import (
-    polar_to_cartesian,
     calc_cart_from_OE,
     cartesian_to_polar,
 )
@@ -231,9 +231,9 @@ class TwoBodyRendezvous_Env(gym.Env):
             "r_weight": self.pos_weight,
             "v_weight": self.vel_weight,
             "mass_weight": self.mass_weight,
-            "pos_r_component": self.pos_r_component,
-            "vel_r_component": self.vel_r_component,
-            "mass_r_component": self.mass_r_component,
+            "pos_reward": self.pos_reward,
+            "vel_reward": self.vel_reward,
+            "mass_reward": self.mass_reward,
         }
 
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None):
@@ -406,9 +406,9 @@ class TwoBodyRendezvous_Env(gym.Env):
         ) = deltas
         self.pos_residual = (dx_nd**2 + dy_nd**2) ** 0.5
         self.vel_residual = (dvx_nd**2 + dvy_nd**2) ** 0.5
-        self.pos_r_component = 0.0
-        self.vel_r_component = 0.0
-        self.mass_r_component = 0.0
+        self.pos_reward = 0.0
+        self.vel_reward = 0.0
+        self.mass_reward = 0.0
 
         info = self._get_info(
             None,  # placeholder for ODE data - only provided in step()
@@ -496,13 +496,13 @@ class TwoBodyRendezvous_Env(gym.Env):
         self.time_component = (
             np.exp(-self.time_dist_weight * TTG_nd**2) * self.tof_weight
         )
-        self.pos_r_component = (
+        self.pos_reward = (
             np.exp(-self.r_dist_weight * self.pos_residual**2) * self.pos_weight
         )
-        self.vel_r_component = (
+        self.vel_reward = (
             np.exp(-self.v_dist_weight * self.vel_residual**2) * self.vel_weight
         )
-        self.mass_r_component = -self.mass_increment / self.m_star * self.mass_weight
+        self.mass_reward = -self.mass_increment / self.m_star * self.mass_weight
 
         # Step-based shaping reward (always provided for learning)
         if (
@@ -512,15 +512,13 @@ class TwoBodyRendezvous_Env(gym.Env):
             precision_mult = (
                 self.precision_mult
             )  # Small bonus for being within success thresholds
-            self.pos_r_component = self.pos_r_component * precision_mult
-            self.vel_r_component = self.vel_r_component * precision_mult
+            self.pos_reward = self.pos_reward * precision_mult
+            self.vel_reward = self.vel_reward * precision_mult
 
-        # shaping_reward = self.time_component * ( self.pos_r_component + self.vel_r_component ) + self.mass_r_component
-        self.pos_r_component = self.pos_r_component * self.time_component
-        self.vel_r_component = self.vel_r_component * self.time_component
-        shaping_reward = (
-            self.pos_r_component + self.vel_r_component + self.mass_r_component
-        )
+        # shaping_reward = self.time_component * ( self.pos_reward + self.vel_reward ) + self.mass_reward
+        self.pos_reward = self.pos_reward * self.time_component
+        self.vel_reward = self.vel_reward * self.time_component
+        shaping_reward = self.pos_reward + self.vel_reward + self.mass_reward
 
         # central body parameters
         cb_rad = self.planet_radii[0] / self.l_star  # central body radius in nd units

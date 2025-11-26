@@ -1,10 +1,10 @@
+import os
+
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-import os
 import pandas as pd
 from constants.constants import Constants
-from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from utils.h_rl_fusion import calc_rewards_from_H_ephem
 from utils.state_vector_utils import convert_alpha_from_cart_to_fpa
 
@@ -121,9 +121,9 @@ class SACRolloutData_TBR:
         self.arr_vx_target = []
         self.arr_vy_target = []
         self.arr_ttg = []
-        self.arr_pos_r_component = []
-        self.arr_vel_r_component = []
-        self.arr_mass_r_component = []
+        self.arr_pos_reward = []
+        self.arr_vel_reward = []
+        self.arr_mass_reward = []
         self.sum_reward = 0.0
 
     def add_step(
@@ -143,9 +143,9 @@ class SACRolloutData_TBR:
         vx_target,
         vy_target,
         ttg,
-        pos_r_component,
-        vel_r_component,
-        mass_r_component,
+        pos_reward,
+        vel_reward,
+        mass_reward,
     ):
         self.arr_time.append(time)  # convert to days
         self.arr_reward.append(reward)
@@ -162,9 +162,9 @@ class SACRolloutData_TBR:
         self.arr_vx_target.append(vx_target)
         self.arr_vy_target.append(vy_target)
         self.arr_ttg.append(ttg)
-        self.arr_pos_r_component.append(pos_r_component)
-        self.arr_vel_r_component.append(vel_r_component)
-        self.arr_mass_r_component.append(mass_r_component)
+        self.arr_pos_reward.append(pos_reward)
+        self.arr_vel_reward.append(vel_reward)
+        self.arr_mass_reward.append(mass_reward)
         self.sum_reward += reward
         self.arr_reward_tot.append(self.sum_reward)
 
@@ -195,10 +195,10 @@ class SACRolloutData_TBR_polar:
         self.arr_sin_fpa_f = []
         self.arr_ttg = []
 
-        self.arr_pos_r_component = []
-        self.arr_vel_r_component = []
-        self.arr_mass_r_component = []
-        self.arr_throttle_r_component = []
+        self.arr_pos_reward = []
+        self.arr_vel_reward = []
+        self.arr_mass_reward = []
+        self.arr_throttle_reward = []
         self.sum_reward = 0.0
 
     def add_step(
@@ -222,10 +222,10 @@ class SACRolloutData_TBR_polar:
         cos_fpa_f,
         sin_fpa_f,
         ttg,
-        pos_r_component,
-        vel_r_component,
-        mass_r_component,
-        throttle_r_component,
+        pos_reward,
+        vel_reward,
+        mass_reward,
+        throttle_reward,
     ):
         alpha_fpa = np.sqrt(alpha_r**2 + alpha_theta**2)
         alpha_r /= alpha_fpa
@@ -250,10 +250,10 @@ class SACRolloutData_TBR_polar:
         self.arr_cos_fpa_f.append(cos_fpa_f)
         self.arr_sin_fpa_f.append(sin_fpa_f)
         self.arr_ttg.append(ttg)
-        self.arr_pos_r_component.append(pos_r_component)
-        self.arr_vel_r_component.append(vel_r_component)
-        self.arr_mass_r_component.append(mass_r_component)
-        self.arr_throttle_r_component.append(throttle_r_component)
+        self.arr_pos_reward.append(pos_reward)
+        self.arr_vel_reward.append(vel_reward)
+        self.arr_mass_reward.append(mass_reward)
+        self.arr_throttle_reward.append(throttle_reward)
 
         self.sum_reward += reward
         self.arr_reward_tot.append(self.sum_reward)
@@ -486,17 +486,17 @@ def plot_SAC_training_TBR(
     plt.figure()
     plt.plot(
         np.array(SACRolloutData_TBR.arr_time) / 365.25,
-        SACRolloutData_TBR.arr_pos_r_component,
+        SACRolloutData_TBR.arr_pos_reward,
         label="Position r component",
     )
     plt.plot(
         np.array(SACRolloutData_TBR.arr_time) / 365.25,
-        SACRolloutData_TBR.arr_vel_r_component,
+        SACRolloutData_TBR.arr_vel_reward,
         label="Velocity r component",
     )
     plt.plot(
         np.array(SACRolloutData_TBR.arr_time) / 365.25,
-        SACRolloutData_TBR.arr_mass_r_component,
+        SACRolloutData_TBR.arr_mass_reward,
         label="Mass r component",
     )
     plt.plot(
@@ -793,11 +793,11 @@ def plot_SAC_training_TBR_polar(
         [
             arr_elapsed_time,
             arr_rewards,
-            arr_pos_r_components,
-            arr_vel_r_components,
-            arr_mass_r_components,
-            arr_throttle_r_components,
-            arr_time_r_components,
+            arr_pos_rewards,
+            arr_vel_rewards,
+            arr_mass_rewards,
+            arr_throttle_rewards,
+            arr_time_rewards,
             arr_r_tot,
             arr_position_res,
             arr_target_x_current,
@@ -899,17 +899,17 @@ def plot_SAC_training_TBR_polar(
         plt.figure()
         plt.plot(
             np.array(SACRolloutData_TBR_polar.arr_time) / 365.25,
-            SACRolloutData_TBR_polar.arr_pos_r_component,
+            SACRolloutData_TBR_polar.arr_pos_reward,
             label="Position r component",
         )
         plt.plot(
             np.array(SACRolloutData_TBR_polar.arr_time) / 365.25,
-            SACRolloutData_TBR_polar.arr_vel_r_component,
+            SACRolloutData_TBR_polar.arr_vel_reward,
             label="Velocity r component",
         )
         plt.plot(
             np.array(SACRolloutData_TBR_polar.arr_time) / 365.25,
-            SACRolloutData_TBR_polar.arr_throttle_r_component,
+            SACRolloutData_TBR_polar.arr_throttle_reward,
             label="Throttle r component",
         )
         plt.plot(
@@ -920,21 +920,21 @@ def plot_SAC_training_TBR_polar(
         if ephem_H is not None:
             plt.plot(
                 np.array(arr_elapsed_time) / 365.25,
-                arr_pos_r_components,
+                arr_pos_rewards,
                 label="Hamiltonian Ephem Position r component",
                 linestyle="--",
                 color="red",
             )
             plt.plot(
                 np.array(arr_elapsed_time) / 365.25,
-                arr_vel_r_components,
+                arr_vel_rewards,
                 label="Hamiltonian Ephem Velocity r component",
                 linestyle="--",
                 color="blue",
             )
             plt.plot(
                 np.array(arr_elapsed_time) / 365.25,
-                arr_throttle_r_components,
+                arr_throttle_rewards,
                 label="Hamiltonian Ephem Throttle r component",
                 linestyle="--",
                 color="green",
@@ -1201,9 +1201,9 @@ def plot_SAC_training_TBR_polar(
         h_reward = arr_rewards
         h_time = h_time[::10]
         h_reward = h_reward[::10]
-        arr_r_pos_H = arr_pos_r_components[::10]
-        arr_r_vel_H = arr_vel_r_components[::10]
-        arr_r_mass_H = arr_throttle_r_components[::10]
+        arr_r_pos_H = arr_pos_rewards[::10]
+        arr_r_vel_H = arr_vel_rewards[::10]
+        arr_r_mass_H = arr_throttle_rewards[::10]
 
     # downsample to every 10th point for saving
     sac_time = sac_time[::10]

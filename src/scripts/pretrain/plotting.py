@@ -260,11 +260,11 @@ def _calc_rewards_from_h_ephem_if_available(ephem_H, env, params):
     (
         arr_elapsed_time,
         arr_rewards,
-        arr_pos_r_components,
-        arr_vel_r_components,
-        arr_mass_r_components,
-        arr_throttle_r_components,
-        arr_time_r_components,
+        arr_pos_rewards,
+        arr_vel_rewards,
+        arr_mass_rewards,
+        arr_throttle_rewards,
+        arr_time_rewards,
         arr_r_tot,
         arr_position_res,
         arr_target_x_current,
@@ -280,10 +280,10 @@ def _calc_rewards_from_h_ephem_if_available(ephem_H, env, params):
     return {
         "arr_elapsed_time": arr_elapsed_time,
         "arr_rewards": arr_rewards,
-        "arr_pos_r_components": arr_pos_r_components,
-        "arr_vel_r_components": arr_vel_r_components,
-        "arr_mass_r_components": arr_mass_r_components,
-        "arr_throttle_r_components": arr_throttle_r_components,
+        "arr_pos_rewards": arr_pos_rewards,
+        "arr_vel_rewards": arr_vel_rewards,
+        "arr_mass_rewards": arr_mass_rewards,
+        "arr_throttle_rewards": arr_throttle_rewards,
         "arr_r_tot": arr_r_tot,
     }
 
@@ -369,17 +369,17 @@ def _plot_tbr_polar_reward_components(
         plt.figure()
         plt.plot(
             time_years,
-            SACRolloutData_TBR_polar.arr_pos_r_component,
+            SACRolloutData_TBR_polar.arr_pos_reward,
             label="Position r component",
         )
         plt.plot(
             time_years,
-            SACRolloutData_TBR_polar.arr_vel_r_component,
+            SACRolloutData_TBR_polar.arr_vel_reward,
             label="Velocity r component",
         )
         plt.plot(
             time_years,
-            SACRolloutData_TBR_polar.arr_throttle_r_component,
+            SACRolloutData_TBR_polar.arr_throttle_reward,
             label="Throttle r component",
         )
         plt.plot(
@@ -391,21 +391,21 @@ def _plot_tbr_polar_reward_components(
             h_time_years = np.array(h_data["arr_elapsed_time"]) / 365.25
             plt.plot(
                 h_time_years,
-                h_data["arr_pos_r_components"],
+                h_data["arr_pos_rewards"],
                 label="Hamiltonian Ephem Position r component",
                 linestyle="--",
                 color="red",
             )
             plt.plot(
                 h_time_years,
-                h_data["arr_vel_r_components"],
+                h_data["arr_vel_rewards"],
                 label="Hamiltonian Ephem Velocity r component",
                 linestyle="--",
                 color="blue",
             )
             plt.plot(
                 h_time_years,
-                h_data["arr_throttle_r_components"],
+                h_data["arr_throttle_rewards"],
                 label="Hamiltonian Ephem Throttle r component",
                 linestyle="--",
                 color="green",
@@ -673,9 +673,9 @@ def _write_tbr_polar_rewards_csv(SACRolloutData_TBR_polar, path_output, h_data=N
         h_reward = h_data["arr_rewards"]
         h_time = h_time[::10]
         h_reward = h_reward[::10]
-        arr_r_pos_H = h_data["arr_pos_r_components"][::10]
-        arr_r_vel_H = h_data["arr_vel_r_components"][::10]
-        arr_r_mass_H = h_data["arr_throttle_r_components"][::10]
+        arr_r_pos_H = h_data["arr_pos_rewards"][::10]
+        arr_r_vel_H = h_data["arr_vel_rewards"][::10]
+        arr_r_mass_H = h_data["arr_throttle_rewards"][::10]
 
         max_len = max(len(sac_time), len(h_time))
     else:

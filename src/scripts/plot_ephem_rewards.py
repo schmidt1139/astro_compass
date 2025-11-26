@@ -1,11 +1,10 @@
-from core.training_data_generation import read_ephems_from_dir
-from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
-from utils.h_rl_fusion import calc_rewards_from_H_ephem
-import matplotlib.pyplot as plt
-from utils.log_utils import read_config_file
-from utils.env_utils import gen_rl_environment
 import os
 
+import matplotlib.pyplot as plt
+from core.training_data_generation import read_ephems_from_dir
+from utils.env_utils import gen_rl_environment
+from utils.h_rl_fusion import calc_rewards_from_H_ephem
+from utils.log_utils import read_config_file
 from utils.plotting_utils import plot_rendezvous_traj
 
 
@@ -33,7 +32,7 @@ def plot_H_ephem_rewards():
     fig1, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 8), constrained_layout=True)
     ax1.set_xlabel("Elapsed Time (days)")
     ax1.set_ylabel("Reward")
-    ax1.set_title(f"Ephemeris Rewards Over Time")
+    ax1.set_title("Ephemeris Rewards Over Time")
     ax1.legend()
     ax2.set_xlabel("Elapsed Time (days)")
     ax2.set_ylabel("Cumulative Reward")
@@ -88,11 +87,11 @@ def plot_H_ephem_rewards():
         [
             arr_elapsed_time,
             arr_rewards,
-            arr_pos_r_components,
-            arr_vel_r_components,
-            arr_mass_r_components,
-            arr_throttle_r_components,
-            arr_time_r_components,
+            arr_pos_rewards,
+            arr_vel_rewards,
+            arr_mass_rewards,
+            arr_throttle_rewards,
+            arr_time_rewards,
             arr_r_tot,
             arr_position_res,
             arr_target_x_current,
@@ -120,45 +119,45 @@ def plot_H_ephem_rewards():
         # Plot components
         ax3.plot(
             arr_elapsed_time,
-            arr_pos_r_components,
+            arr_pos_rewards,
             label=f"Ephem {i + 1} Pos Reward",
             color=current_color,
         )
         ax4.plot(
             arr_elapsed_time,
-            arr_vel_r_components,
+            arr_vel_rewards,
             label=f"Ephem {i + 1} Vel Reward",
             color=current_color,
         )
         ax5.plot(
             arr_elapsed_time,
-            arr_throttle_r_components,
+            arr_throttle_rewards,
             label=f"Ephem {i + 1} Throttle Reward",
             color=current_color,
         )
         ax6.plot(
             arr_elapsed_time,
-            arr_pos_r_components,
+            arr_pos_rewards,
             label=f"Ephem {i + 1} Pos Reward",
             color=current_color,
             linestyle="dashed",
         )
         ax6.plot(
             arr_elapsed_time,
-            arr_vel_r_components,
+            arr_vel_rewards,
             label=f"Ephem {i + 1} Vel Reward",
             color=current_color,
             linestyle="dotted",
         )
         ax6.plot(
             arr_elapsed_time,
-            arr_throttle_r_components,
+            arr_throttle_rewards,
             label=f"Ephem {i + 1} Throttle Reward",
             color=current_color,
         )
         ax6.plot(
             arr_elapsed_time,
-            arr_time_r_components,
+            arr_time_rewards,
             label=f"Ephem {i + 1} Time Multiplier",
             color="black",
             linestyle="dashdot",
@@ -173,7 +172,7 @@ def plot_H_ephem_rewards():
 
         ax8.plot(
             arr_elapsed_time,
-            arr_time_r_components,
+            arr_time_rewards,
             label=f"Ephem {i + 1} Time Component Reward",
             color=current_color,
         )

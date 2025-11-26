@@ -1,31 +1,25 @@
-import gymnasium as gym
 import os
-import torch
-import matplotlib.pyplot as plt
 import random
-import torch.nn as nn
-
 from datetime import datetime
-from gymnasium import envs
-from gymnasium.envs.registration import register
-from stable_baselines3.common.callbacks import EvalCallback, CallbackList
-from stable_baselines3 import SAC as SB3_SAC
-from stable_baselines3.common.monitor import Monitor
-from constants.constants import Constants
-from utils.log_utils import log
+
+import gymnasium as gym
+import matplotlib.pyplot as plt
+import torch
+import torch.nn as nn
 from core.ephemeris_v2 import Ephemeris_v2 as Ephemeris
+from core.process_single_trajectory import process_single_trajectory
 from core.spacecraft import Spacecraft
-from utils.log_utils import write_log_to_file, write_config_file, read_config_file
-from utils.state_vector_utils import cartesian_to_polar
+from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
+from stable_baselines3 import SAC as SB3_SAC
+from stable_baselines3.common.callbacks import CallbackList, EvalCallback
+from stable_baselines3.common.monitor import Monitor
+from utils.log_utils import log, read_config_file, write_config_file, write_log_to_file
 from utils.plotting_utils import (
     SACRolloutData_TBR,
-    plot_SAC_training,
-    SACRolloutData,
     plot_SAC_training_TBR,
 )
-from utils.rl_utils import log_training_perf, RewardLoggerCallback, pre_train
-from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
-from core.process_single_trajectory import process_single_trajectory
+from utils.rl_utils import RewardLoggerCallback, log_training_perf, pre_train
+from utils.state_vector_utils import cartesian_to_polar
 
 
 def SAC_training_TBR(seed_in=42):
@@ -329,9 +323,9 @@ def SAC_training_TBR(seed_in=42):
         ttg_i = obs[9] * params["t_star"]
 
         # info of interest
-        pos_r_component = info.get("pos_r_component", None)
-        vel_r_component = info.get("vel_r_component", None)
-        mass_r_component = info.get("mass_r_component", None)
+        pos_reward = info.get("pos_reward", None)
+        vel_reward = info.get("vel_reward", None)
+        mass_reward = info.get("mass_reward", None)
 
         # log data to ephemeris
         eph.add_data(
@@ -379,9 +373,9 @@ def SAC_training_TBR(seed_in=42):
             obs[7],
             obs[8],
             obs[9],
-            pos_r_component,
-            vel_r_component,
-            mass_r_component,
+            pos_reward,
+            vel_reward,
+            mass_reward,
         )
 
         if terminated or truncated:

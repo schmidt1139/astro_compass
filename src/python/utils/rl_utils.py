@@ -792,10 +792,10 @@ def rollout_model(env, params, model, test_log):
         ttg_i = state_cart[9]
 
         # info of interest
-        pos_r_component = info.get("pos_r_component", None)
-        vel_r_component = info.get("vel_r_component", None)
-        mass_r_component = info.get("mass_r_component", None)
-        throttle_r_component = info.get("throttle_r_component", None)
+        pos_reward = info.get("pos_reward", None)
+        vel_reward = info.get("vel_reward", None)
+        mass_reward = info.get("mass_reward", None)
+        throttle_reward = info.get("throttle_reward", None)
         alpha_x = info.get("alpha_x", None)
         alpha_y = info.get("alpha_y", None)
 
@@ -849,10 +849,10 @@ def rollout_model(env, params, model, test_log):
             obs[11],  # delta target_fpa_cos_nd
             obs[12],  # delta target_fpa_sin_nd
             obs[13],  # TTG
-            pos_r_component,  # pos_r_component
-            vel_r_component,  # vel_r_component
-            mass_r_component,
-            throttle_r_component,
+            pos_reward,  # pos_reward
+            vel_reward,  # vel_reward
+            mass_reward,
+            throttle_reward,
         )
 
         if terminated or truncated:

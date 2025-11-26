@@ -1,19 +1,15 @@
-import numpy as np
-import gymnasium as gym
 import warnings
-from time import sleep
 from typing import Optional
-from scipy.integrate import solve_ivp
+
+import gymnasium as gym
+import numpy as np
 from constants.constants import Constants
-from core.spacecraft import Spacecraft
 from core.propagation import env_EOM_TBT_v2
+from core.spacecraft import Spacecraft
+from scipy.integrate import solve_ivp
 from utils.state_vector_utils import (
-    convert_alpha_from_fpa_to_cart,
-    convert_radial_velocity_to_cartesian,
-    polar_to_cartesian,
     calc_cart_from_OE,
     cartesian_to_polar,
-    convert_fpa_to_velocity_components,
     convert_attitude_from_radial_to_cartesian,
 )
 
@@ -270,11 +266,11 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
             "r_weight": self.pos_weight,
             "v_weight": self.vel_weight,
             "throttle_r_weight": self.throttle_r_weight,
-            "pos_r_component": self.pos_r_component,
-            "vel_r_component": self.vel_r_component,
-            "mass_r_component": self.mass_r_component,
-            "throttle_r_component": self.throttle_r_component,
-            "time_r_component": self.time_r_component,
+            "pos_reward": self.pos_reward,
+            "vel_reward": self.vel_reward,
+            "mass_reward": self.mass_reward,
+            "throttle_reward": self.throttle_reward,
+            "time_reward": self.time_reward,
             "r_nd": self.arr_r_polar_nd[0],
             "eta_nd": self.arr_r_polar_nd[1],
             "v_r_nd": self.arr_v_polar_nd[0],
@@ -482,11 +478,11 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         ) = deltas
         self.pos_residual = (dx_nd**2 + dy_nd**2) ** 0.5
         self.vel_residual = (dvx_nd**2 + dvy_nd**2) ** 0.5
-        self.pos_r_component = 0.0
-        self.vel_r_component = 0.0
-        self.mass_r_component = 0.0
-        self.throttle_r_component = 0.0
-        self.time_r_component = 0.0
+        self.pos_reward = 0.0
+        self.vel_reward = 0.0
+        self.mass_reward = 0.0
+        self.throttle_reward = 0.0
+        self.time_reward = 0.0
 
         info = self._get_info(
             None,  # placeholder for ODE data - only provided in step()
@@ -802,21 +798,21 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         residual = dx_nd**2 + dy_nd**2 + dvx_nd**2 + dvy_nd**2
 
         # Separate exponentials for position and velocity - provides smoother gradient
-        self.time_r_component = np.clip(
+        self.time_reward = np.clip(
             (1 - (TTG_nd) * self.time_dist_weight) * self.tof_weight, 0.1, 1.0
         )
 
-        # self.pos_r_component = - d_r_nd**(self.r_dist_weight) * self.pos_weight
-        # self.vel_r_component = - d_v_nd**(self.v_dist_weight) * self.vel_weight
+        # self.pos_reward = - d_r_nd**(self.r_dist_weight) * self.pos_weight
+        # self.vel_reward = - d_v_nd**(self.v_dist_weight) * self.vel_weight
 
-        self.pos_r_component = (
+        self.pos_reward = (
             np.exp(-self.r_dist_weight * self.pos_residual**2) * self.pos_weight
         )
-        self.vel_r_component = (
+        self.vel_reward = (
             np.exp(-self.v_dist_weight * self.vel_residual**2) * self.vel_weight
         )
 
-        self.throttle_r_component = -u * self.throttle_r_weight
+        self.throttle_reward = -u * self.throttle_r_weight
 
         # Step-based shaping reward (always provided for learning)
         if (
@@ -826,15 +822,13 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
             precision_mult = (
                 self.precision_mult
             )  # Small bonus for being within success thresholds
-            self.pos_r_component = self.pos_r_component * precision_mult
-            self.vel_r_component = self.vel_r_component * precision_mult
+            self.pos_reward = self.pos_reward * precision_mult
+            self.vel_reward = self.vel_reward * precision_mult
 
-        # shaping_reward = self.time_component * ( self.pos_r_component + self.vel_r_component ) + self.mass_r_component
-        self.pos_r_component = self.pos_r_component * self.time_r_component
-        self.vel_r_component = self.vel_r_component * self.time_r_component
-        step_reward = (
-            self.pos_r_component + self.vel_r_component + self.throttle_r_component
-        )
+        # shaping_reward = self.time_component * ( self.pos_reward + self.vel_reward ) + self.mass_reward
+        self.pos_reward = self.pos_reward * self.time_reward
+        self.vel_reward = self.vel_reward * self.time_reward
+        step_reward = self.pos_reward + self.vel_reward + self.throttle_reward
 
         # clip reward to avoid extreme values
         step_reward = np.clip(step_reward, -10, 10)
