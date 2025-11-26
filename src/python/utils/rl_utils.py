@@ -619,10 +619,13 @@ def train_on_replay_buffer(model, params, test_log, env):
                 f"Evaluation after {step + 1} steps: Mean Reward: {mean_reward:.2f} +/- {std_reward:.2f}"
             )
 
-            path = os.path.join(params["output_dir_specific"], "checkpoints")
-            checkpoint_path = os.path.join(path, f"sac_pretrained_step_{step + 1}.zip")
-            model.save(checkpoint_path)
-            tqdm.write(f"Saved model checkpoint to {checkpoint_path}")
+            if mean_reward >= max(mean_rewards, default=-np.inf):
+                path = os.path.join(params["output_dir_specific"], "checkpoints")
+                checkpoint_path = os.path.join(
+                    path, f"sac_pretrained_step_{step + 1}.zip"
+                )
+                model.save(checkpoint_path)
+                tqdm.write(f"Saved model checkpoint to {checkpoint_path}")
 
     test_log = log(
         f"Completed {num_gradient_steps} gradient steps on replay buffer",
