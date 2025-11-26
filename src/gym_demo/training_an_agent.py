@@ -1,7 +1,7 @@
-
 from collections import defaultdict
 import gymnasium as gym
 import numpy as np
+
 
 class BlackjackAgent:
     def __init__(
@@ -71,8 +71,6 @@ class BlackjackAgent:
         self.epsilon = max(self.final_epsilon, self.epsilon - self.epsilon_decay)
 
 
-
-
 # hyperparameters
 learning_rate = 0.01
 n_episodes = 1_000_000
@@ -90,11 +88,6 @@ agent = BlackjackAgent(
     epsilon_decay=epsilon_decay,
     final_epsilon=final_epsilon,
 )
-
-
-
-
-
 
 
 from tqdm import tqdm
@@ -116,40 +109,33 @@ for episode in tqdm(range(n_episodes)):
         obs = next_obs
 
     agent.decay_epsilon()
-    
-    
-    
-    
-    
+
 
 from matplotlib import pyplot as plt
+
 # visualize the episode rewards, episode length and training error in one figure
 fig, axs = plt.subplots(1, 3, figsize=(20, 8))
 
-rq = env.return_queue;
-lq = env.length_queue;
-te = agent.training_error;
-
-rq_mean = np.mean(rq);
-
-
+rq = env.return_queue
+lq = env.length_queue
+te = agent.training_error
+rq_mean = np.mean(rq)
 # np.convolve will compute the rolling mean for 100 episodes
 
-axs[0].plot(np.convolve(rq, np.ones(1000)/1000))
+axs[0].plot(np.convolve(rq, np.ones(1000) / 1000))
 axs[0].set_title("Episode Rewards")
 axs[0].set_xlabel("Episode")
 axs[0].set_ylabel("Reward")
 
-axs[1].plot(np.convolve(env.length_queue, np.ones(1000)/1000))
+axs[1].plot(np.convolve(env.length_queue, np.ones(1000) / 1000))
 axs[1].set_title("Episode Lengths")
 axs[1].set_xlabel("Episode")
 axs[1].set_ylabel("Length")
 
-axs[2].plot(np.convolve(agent.training_error, np.ones(1000)/1000))
+axs[2].plot(np.convolve(agent.training_error, np.ones(1000) / 1000))
 axs[2].set_title("Training Error")
 axs[2].set_xlabel("Episode")
 axs[2].set_ylabel("Temporal Difference")
 
 plt.tight_layout()
 plt.show()
-

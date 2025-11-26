@@ -179,7 +179,7 @@ class TwoBody_Orb2Orb_Transfer_Env_nd_obs5(gym.Env):
             r_diff_nd = r_diff / (Constants.SMA_EARTH)
             reward_distance = np.exp(-(r_diff_nd**2))
             self.reward_distance = reward_distance
-            reward_mass = - self.dm_nd * self.mass_penalty  # small reward for mass used
+            reward_mass = -self.dm_nd * self.mass_penalty  # small reward for mass used
             self.reward_mass = reward_mass
             reward = reward_distance + reward_mass  # reward for mass used
 
@@ -283,7 +283,7 @@ class TwoBody_Orb2Orb_Transfer_Env_nd_obs5(gym.Env):
         mass_nd = mass / self.m_star
         observation = np.array([x_nd, y_nd, vx_nd, vy_nd, mass_nd], dtype=np.float32)
 
-        #mass increment
+        # mass increment
         dm_nd = mass_nd_0 - mass_nd
         self.dm_nd = dm_nd
 
@@ -298,7 +298,6 @@ class TwoBody_Orb2Orb_Transfer_Env_nd_obs5(gym.Env):
         return observation, reward, terminated, truncated, info
 
     def set_state(self, state):
-
         # unpack the input state vector and convert m to km
         x_in = state[0] / 1000
         y_in = state[1] / 1000

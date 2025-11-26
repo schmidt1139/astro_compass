@@ -1,68 +1,72 @@
-import gymnasium as gym
 import os
-import torch
-import matplotlib.pyplot as plt
 import random
-import torch.nn as nn
+from datetime import datetime
 
-from datetime import datetime, time
-from gymnasium import envs
-from gymnasium.envs.registration import register
-from stable_baselines3.common.callbacks import EvalCallback, CallbackList
+import gymnasium as gym
+import torch
+import torch.nn as nn
+from core.ephemeris_v2 import Ephemeris_v2 as Ephemeris
+from core.process_single_trajectory import process_single_trajectory
 from stable_baselines3 import SAC as SB3_SAC
+from stable_baselines3.common.callbacks import CallbackList, EvalCallback
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import SubprocVecEnv
-from constants.constants import Constants
-from utils.log_utils import log
-from core.ephemeris_v2 import Ephemeris_v2 as Ephemeris
-from utils.log_utils import write_log_to_file, write_config_file, read_config_file
-from utils.state_vector_utils import cartesian_to_polar
-from utils.plotting_utils import SACRolloutData_TBR, SACRolloutData_TBR_polar, plot_SAC_training, SACRolloutData, plot_SAC_training_TBR, plot_SAC_training_TBR_polar
-from utils.rl_utils import log_training_perf, RewardLoggerCallback, pre_train, rollout_model
-from envs.TwoBodyRendezvous_Polar_Env import TwoBodyRendezvous_Polar_Env
-from core.process_single_trajectory import process_single_trajectory
 from utils.env_utils import gen_rl_environment
+from utils.log_utils import log, read_config_file, write_config_file, write_log_to_file
+from utils.plotting_utils import plot_SAC_training_TBR_polar
+from utils.rl_utils import (
+    RewardLoggerCallback,
+    log_training_perf,
+    pre_train,
+    rollout_model,
+)
 
 
 def SAC_training_TBR(seed_in=42):
-
-    #start time
+    # start time
     start_time = datetime.now()
 
     # set random seed
     random.seed(seed_in)
 
     # config path
-    path_config = os.path.join("data", "config", "SAC_training_TBR_polar__env2_config.txt")
+    path_config = os.path.join(
+        "data", "config", "SAC_training_TBR_polar__env2_config.txt"
+    )
 
     # define parameters
     params = read_config_file(path_config)
 
     # initialize the training and evaluation environments
-    #env = gen_rl_environment(params)
-    #eval_env = gen_rl_environment(params) 
+    # env = gen_rl_environment(params)
+    # eval_env = gen_rl_environment(params)
 
-    #set up vectorized environments
-    max_episode_steps_in = params["max_episode_steps"] 
+    # set up vectorized environments
+    max_episode_steps_in = params["max_episode_steps"]
 
     def make_env(params, seed):
         def _init():
             env = gen_rl_environment(params)
             env.seed(seed)
-            env = gym.wrappers.TimeLimit(env, max_episode_steps=params["max_episode_steps"])
+            env = gym.wrappers.TimeLimit(
+                env, max_episode_steps=params["max_episode_steps"]
+            )
             env = Monitor(env)
             return env
+
         return _init
 
     num_envs = params.get("num_vec_envs", 1)
     env = SubprocVecEnv([make_env(params, i) for i in range(num_envs)])
 
-    #establish eval environment
+    # establish eval environment
     eval_env = gen_rl_environment(params)
     pre_train_env = gen_rl_environment(params)
     pre_train_env.seed(seed_in)
     pre_train_env.reset()
-    pre_train_env = gym.wrappers.TimeLimit(pre_train_env, max_episode_steps=max_episode_steps_in)
+    pre_train_env = gym.wrappers.TimeLimit(
+        pre_train_env, max_episode_steps=max_episode_steps_in
+    )
     pre_train_env = Monitor(pre_train_env)
     eval_env = gym.wrappers.TimeLimit(eval_env, max_episode_steps=max_episode_steps_in)
     eval_env = Monitor(eval_env)
@@ -74,23 +78,27 @@ def SAC_training_TBR(seed_in=42):
     print(
         "GPU available: ", torch.cuda.is_available()
     )  # Should print True if GPU is available)
-    test_log = log("NN Eval Device: " + str(params.get("eval_device", "cpu")), test_log, True)
+    test_log = log(
+        "NN Eval Device: " + str(params.get("eval_device", "cpu")), test_log, True
+    )
 
     # paths
     time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
     path_nns = os.path.normpath(os.path.join(os.getcwd(), "data\\neural_networks\\"))
-    
+
     # Handle both absolute and relative paths for output_dir
     output_base = params["output_dir"]
     if not os.path.isabs(output_base):
         output_base = os.path.join(os.getcwd(), output_base)
-    path_output = os.path.normpath(os.path.join(output_base, "SAC_training_TBR_polar" + time_tag))
-    
+    path_output = os.path.normpath(
+        os.path.join(output_base, "SAC_training_TBR_polar" + time_tag)
+    )
+
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbr_polar_model"))
     os.makedirs(path_output, exist_ok=True)
     params["output_dir_specific"] = path_output
 
-    #make a subdir for checkpoints
+    # make a subdir for checkpoints
     path_checkpoints = os.path.normpath(os.path.join(path_output, "checkpoints"))
     path_ephems = os.path.normpath(os.path.join(path_output, "ephems"))
     path_plots = os.path.normpath(os.path.join(path_output, "plots"))
@@ -112,68 +120,89 @@ def SAC_training_TBR(seed_in=42):
     num_vec_envs = params.get("num_vec_envs", 1)
     test_log = log(f"Number of vectorized environments: {num_vec_envs}", test_log, True)
 
-    #load model if specified, otherwise create new
+    # load model if specified, otherwise create new
     if params["load_model_checkpoint"]:
-        test_log = log("Loading SAC model from: " + params["path_SAC_model_load"], test_log, True)
-        model = SB3_SAC.load(params["path_SAC_model_load"], env=env, device="cpu", seed=seed_in,
-                             tensorboard_log=path_output)  # Use path_output so SB3 creates SAC_1/ subdirectory
+        test_log = log(
+            "Loading SAC model from: " + params["path_SAC_model_load"], test_log, True
+        )
+        model = SB3_SAC.load(
+            params["path_SAC_model_load"],
+            env=env,
+            device="cpu",
+            seed=seed_in,
+            tensorboard_log=path_output,
+        )  # Use path_output so SB3 creates SAC_1/ subdirectory
     else:
         # Implement custom NN architectures
         nn_arch_type = params.get("nn_arch_type", "default")
         if nn_arch_type == "custom":
             test_log = log("Using custom neural network architecture", test_log, True)
-            test_log = log(f"Network architecture: {params['net_arch']}", test_log, True)
+            test_log = log(
+                f"Network architecture: {params['net_arch']}", test_log, True
+            )
             # define the policy architecture
             policy_kwargs = dict(
                 net_arch=params["net_arch"],  # four hidden layers with 32 units each
                 activation_fn=nn.LeakyReLU,  # LeakyReLU activation function
             )
-            model = SB3_SAC("MlpPolicy", 
-                            env, 
-                            learning_rate=params["learning_rate"], 
-                            verbose=1, 
-                            device=params.get("eval_device", "cpu"),
-                            seed=seed_in,
-                            tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
-                            buffer_size=buffer_size,
-                            tau=params.get("tau", 0.005),
-                            train_freq=params.get("train_freq", 1),
-                            gradient_steps=params.get("gradient_steps", 1),
-                            policy_kwargs=policy_kwargs)
+            model = SB3_SAC(
+                "MlpPolicy",
+                env,
+                learning_rate=params["learning_rate"],
+                verbose=1,
+                device=params.get("eval_device", "cpu"),
+                seed=seed_in,
+                tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
+                buffer_size=buffer_size,
+                tau=params.get("tau", 0.005),
+                train_freq=params.get("train_freq", 1),
+                gradient_steps=params.get("gradient_steps", 1),
+                policy_kwargs=policy_kwargs,
+            )
 
         else:
-            #use default architecture
+            # use default architecture
             policy_kwargs = dict(
                 optimizer_kwargs=dict(eps=1e-5)  # More stable Adam optimizer
             )
-            model = SB3_SAC("MlpPolicy", 
-                            env, 
-                            learning_rate=params["learning_rate"], 
-                            verbose=1, 
-                            device=params.get("eval_device", "cpu"), 
-                            seed=seed_in,
-                            tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
-                            buffer_size=buffer_size,
-                            tau=params.get("tau", 0.005),
-                            train_freq=params.get("train_freq", 1),
-                            gradient_steps=params.get("gradient_steps", 1),
-                            policy_kwargs=policy_kwargs)
-            
-    #report number of trainable parameters
+            model = SB3_SAC(
+                "MlpPolicy",
+                env,
+                learning_rate=params["learning_rate"],
+                verbose=1,
+                device=params.get("eval_device", "cpu"),
+                seed=seed_in,
+                tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
+                buffer_size=buffer_size,
+                tau=params.get("tau", 0.005),
+                train_freq=params.get("train_freq", 1),
+                gradient_steps=params.get("gradient_steps", 1),
+                policy_kwargs=policy_kwargs,
+            )
+
+    # report number of trainable parameters
     num_params = sum(p.numel() for p in model.policy.parameters() if p.requires_grad)
-    test_log = log(f"Number of trainable parameters in the model: {num_params}", test_log, True)
-        
+    test_log = log(
+        f"Number of trainable parameters in the model: {num_params}", test_log, True
+    )
+
     if params["read_replay_buffer"]:
-        test_log = log("Loading replay buffer from: " + params["path_replay_buffer"], test_log, True)
+        test_log = log(
+            "Loading replay buffer from: " + params["path_replay_buffer"],
+            test_log,
+            True,
+        )
         model.load_replay_buffer(params["path_replay_buffer"])
-    
+
     # pre-train networks if specified
     if params["pre_train_networks"]:
-        test_log, arr_actor_loss_pt, arr_critic_loss_pt = pre_train(test_log, model, params, pre_train_env)
+        test_log, arr_actor_loss_pt, arr_critic_loss_pt = pre_train(
+            test_log, model, params, pre_train_env
+        )
         # Remove the minimal logger from pre-training so model.learn() can set up TensorBoard properly
         # This ensures TensorBoard logging works correctly during actual training
-        if hasattr(model, '_logger'):
-            delattr(model, '_logger')
+        if hasattr(model, "_logger"):
+            delattr(model, "_logger")
 
     else:
         arr_actor_loss_pt = []
@@ -194,7 +223,10 @@ def SAC_training_TBR(seed_in=42):
 
     # Train the agent
     model.learn(
-        total_timesteps=training_steps, progress_bar=True, callback=callback_list, tb_log_name=params["tb_log_name"]
+        total_timesteps=training_steps,
+        progress_bar=True,
+        callback=callback_list,
+        tb_log_name=params["tb_log_name"],
     )
 
     # After training:
@@ -212,7 +244,9 @@ def SAC_training_TBR(seed_in=42):
 
     # optionally generate hamiltonian trajectory
     if params.get("flag_gen_H_traj", False):
-        test_log = log("Generating Hamiltonian trajectory for comparison...", test_log, True)
+        test_log = log(
+            "Generating Hamiltonian trajectory for comparison...", test_log, True
+        )
         params["data_path"] = path_output
         params["scenario_index"] = 0
         params["flag_plot_traj"] = False
@@ -222,28 +256,43 @@ def SAC_training_TBR(seed_in=42):
         try:
             ephem_H.read_from_file(ephem_path)
         except Exception as e:
-            test_log = log("Error generating Hamiltonian trajectory file: " + str(e), test_log, True)
+            test_log = log(
+                "Error generating Hamiltonian trajectory file: " + str(e),
+                test_log,
+                True,
+            )
             params["flag_gen_H_traj"] = False
 
     rollout_env = gen_rl_environment(params)
     rollout_env.seed(seed_in)
-    
+
     test_log, eph, rollout_data = rollout_model(rollout_env, params, model, test_log)
 
     # render training plots
-    plot_SAC_training_TBR_polar(rollout_data, path_plots, eph, params, rollout_env, 
-                                arr_episode_numbers=arr_episode_numbers, 
-                                arr_episode_rs=arr_episode_rs,
-                                arr_actor_loss_pt=arr_actor_loss_pt,
-                                arr_critic_loss_pt=arr_critic_loss_pt,
-                                ephem_H=ephem_H if params.get("flag_gen_H_traj", False) else None )
+    plot_SAC_training_TBR_polar(
+        rollout_data,
+        path_plots,
+        eph,
+        params,
+        rollout_env,
+        arr_episode_numbers=arr_episode_numbers,
+        arr_episode_rs=arr_episode_rs,
+        arr_actor_loss_pt=arr_actor_loss_pt,
+        arr_critic_loss_pt=arr_critic_loss_pt,
+        ephem_H=ephem_H if params.get("flag_gen_H_traj", False) else None,
+    )
 
-    #save replay buffer if enabled
+    # save replay buffer if enabled
     if params.get("save_final_replay_buffer", False):
-        path_replay_buffer = os.path.join(params["output_dir_specific"], "replay_buffer.pkl")
+        path_replay_buffer = os.path.join(
+            params["output_dir_specific"],
+            "replay_buffer.pkl",
+        )
         model.save_replay_buffer(path_replay_buffer)
-        test_log = log(f"Final replay buffer saved to {path_replay_buffer}", test_log, True)
-    
+        test_log = log(
+            f"Final replay buffer saved to {path_replay_buffer}", test_log, True
+        )
+
     env.close()
 
     # save ephemeris to file
@@ -266,6 +315,7 @@ def SAC_training_TBR(seed_in=42):
     test_log = log(f"Elapsed time: {elapsed_time:.2f} seconds", test_log, True)
 
     print("\n\n\n")
+
 
 if __name__ == "__main__":
     SAC_training_TBR()

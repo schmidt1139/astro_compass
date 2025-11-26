@@ -2,6 +2,7 @@ import sys
 import os
 from core.ephemeris import Ephemeris
 
+
 def ingest_ephem_and_plot(path_to_ephemeris):
     print("Ingest Ephemeris and Plot Script")
     print("Ephemeris path: ", path_to_ephemeris)
@@ -24,7 +25,9 @@ def ingest_ephem_and_plot(path_to_ephemeris):
     print("Final vector: ", state_vector)
 
 
-directory = os.path.join("C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\temp_out\\")
+directory = os.path.join(
+    "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\temp_out\\"
+)
 ephem_file_name = "test_TBR_ephem_traj_seed_2002693622_tof_1p0_scenario_0_extended.txt"
 path_to_ephemeris = directory + ephem_file_name
 

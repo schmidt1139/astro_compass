@@ -17,15 +17,18 @@ from core.ephemeris_v2 import Ephemeris_v2 as Ephemeris
 from core.spacecraft import Spacecraft
 from utils.log_utils import write_log_to_file, write_config_file, read_config_file
 from utils.state_vector_utils import cartesian_to_polar
-from utils.plotting_utils import SACRolloutData_TBR, plot_SAC_training, SACRolloutData, plot_SAC_training_TBR
+from utils.plotting_utils import (
+    SACRolloutData_TBR,
+    plot_SAC_training,
+    SACRolloutData,
+    plot_SAC_training_TBR,
+)
 from utils.rl_utils import log_training_perf, RewardLoggerCallback, pre_train
 from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from core.process_single_trajectory import process_single_trajectory
 
 
-
 def SAC_training_TBR(seed_in=42):
-
     # set random seed
     random.seed(seed_in)
 
@@ -70,7 +73,7 @@ def SAC_training_TBR(seed_in=42):
         terminal_bonus=params.get("terminal_bonus", 100.0),
         precision_mult=params.get("precision_mult", 10.0),
         tof_weight=params.get("tof_weight", 1.0),
-        time_dist_weight=params.get("time_dist_weight", 1.0)
+        time_dist_weight=params.get("time_dist_weight", 1.0),
     )
 
     eval_env = TwoBodyRendezvous_Env(
@@ -105,10 +108,10 @@ def SAC_training_TBR(seed_in=42):
         terminal_bonus=params.get("terminal_bonus", 100.0),
         precision_mult=params.get("precision_mult", 10.0),
         tof_weight=params.get("tof_weight", 1.0),
-        time_dist_weight=params.get("time_dist_weight", 1.0)
+        time_dist_weight=params.get("time_dist_weight", 1.0),
     )
 
-    #env wrappers
+    # env wrappers
     max_episode_steps_in = params["max_episode_steps"]
     env = gym.wrappers.TimeLimit(env, max_episode_steps=max_episode_steps_in)
     eval_env = gym.wrappers.TimeLimit(eval_env, max_episode_steps=max_episode_steps_in)
@@ -127,18 +130,20 @@ def SAC_training_TBR(seed_in=42):
     # paths
     time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
     path_nns = os.path.normpath(os.path.join(os.getcwd(), "data\\neural_networks\\"))
-    
+
     # Handle both absolute and relative paths for output_dir
     output_base = params["output_dir"]
     if not os.path.isabs(output_base):
         output_base = os.path.join(os.getcwd(), output_base)
-    path_output = os.path.normpath(os.path.join(output_base, "SAC_training_" + time_tag))
-    
+    path_output = os.path.normpath(
+        os.path.join(output_base, "SAC_training_" + time_tag)
+    )
+
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
     os.makedirs(path_output, exist_ok=True)
     params["output_dir_specific"] = path_output
 
-    #make a subdir for checkpoints
+    # make a subdir for checkpoints
     path_checkpoints = os.path.normpath(os.path.join(path_output, "checkpoints"))
     path_ephems = os.path.normpath(os.path.join(path_output, "ephems"))
     path_plots = os.path.normpath(os.path.join(path_output, "plots"))
@@ -157,13 +162,19 @@ def SAC_training_TBR(seed_in=42):
     # Create the SAC model with TensorBoard logging
     buffer_size = params.get("buffer_size", 1000000)  # Default 1M transitions
 
-    #load model if specified, otherwise create new
+    # load model if specified, otherwise create new
     if params["load_model_checkpoint"]:
-        test_log = log("Loading SAC model from: " + params["path_SAC_model_load"], test_log, True)
-        model = SB3_SAC.load(params["path_SAC_model_load"], env=env, device="cpu", seed=seed_in,
-                             tensorboard_log=path_output)  # Use path_output so SB3 creates SAC_1/ subdirectory
+        test_log = log(
+            "Loading SAC model from: " + params["path_SAC_model_load"], test_log, True
+        )
+        model = SB3_SAC.load(
+            params["path_SAC_model_load"],
+            env=env,
+            device="cpu",
+            seed=seed_in,
+            tensorboard_log=path_output,
+        )  # Use path_output so SB3 creates SAC_1/ subdirectory
     else:
-
         # Implement custom NN architectures
         nn_arch_type = params.get("nn_arch_type", "default")
         if nn_arch_type == "custom":
@@ -172,41 +183,57 @@ def SAC_training_TBR(seed_in=42):
                 net_arch=[32, 32, 32, 32, 32],  # four hidden layers with 32 units each
                 activation_fn=nn.LeakyReLU,  # LeakyReLU activation function
             )
-            model = SB3_SAC("MlpPolicy", 
-                            env, 
-                            learning_rate=params["learning_rate"], 
-                            verbose=1, 
-                            device="cpu", seed=seed_in,
-                            tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
-                            buffer_size=buffer_size, 
-                            tau=params.get("tau", 0.005),
-                            train_freq=params.get("train_freq", 1),
-                            gradient_steps=params.get("gradient_steps", 1),
-                            policy_kwargs=policy_kwargs)
+            model = SB3_SAC(
+                "MlpPolicy",
+                env,
+                learning_rate=params["learning_rate"],
+                verbose=1,
+                device="cpu",
+                seed=seed_in,
+                tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
+                buffer_size=buffer_size,
+                tau=params.get("tau", 0.005),
+                train_freq=params.get("train_freq", 1),
+                gradient_steps=params.get("gradient_steps", 1),
+                policy_kwargs=policy_kwargs,
+            )
         else:
-            #use default architecture
+            # use default architecture
             policy_kwargs = dict(
                 optimizer_kwargs=dict(eps=1e-5)  # More stable Adam optimizer
             )
-            model = SB3_SAC("MlpPolicy", env, learning_rate=params["learning_rate"], verbose=1, device="cpu", seed=seed_in,
-                            tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
-                            buffer_size=buffer_size,
-                            tau=params.get("tau", 0.005),
-                            train_freq=params.get("train_freq", 1),
-                            gradient_steps=params.get("gradient_steps", 1),
-                            policy_kwargs=policy_kwargs)
-        
+            model = SB3_SAC(
+                "MlpPolicy",
+                env,
+                learning_rate=params["learning_rate"],
+                verbose=1,
+                device="cpu",
+                seed=seed_in,
+                tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
+                buffer_size=buffer_size,
+                tau=params.get("tau", 0.005),
+                train_freq=params.get("train_freq", 1),
+                gradient_steps=params.get("gradient_steps", 1),
+                policy_kwargs=policy_kwargs,
+            )
+
     if params["read_replay_buffer"]:
-        test_log = log("Loading replay buffer from: " + params["path_replay_buffer"], test_log, True)
+        test_log = log(
+            "Loading replay buffer from: " + params["path_replay_buffer"],
+            test_log,
+            True,
+        )
         model.load_replay_buffer(params["path_replay_buffer"])
-    
+
     # pre-train networks if specified
     if params["pre_train_networks"]:
-        test_log, arr_actor_loss_pt, arr_critic_loss_pt = pre_train(test_log, model, params, env)
+        test_log, arr_actor_loss_pt, arr_critic_loss_pt = pre_train(
+            test_log, model, params, env
+        )
         # Remove the minimal logger from pre-training so model.learn() can set up TensorBoard properly
         # This ensures TensorBoard logging works correctly during actual training
-        if hasattr(model, '_logger'):
-            delattr(model, '_logger')
+        if hasattr(model, "_logger"):
+            delattr(model, "_logger")
 
     else:
         arr_actor_loss_pt = []
@@ -227,7 +254,10 @@ def SAC_training_TBR(seed_in=42):
 
     # Train the agent
     model.learn(
-        total_timesteps=training_steps, progress_bar=True, callback=callback_list, tb_log_name=params["tb_log_name"]
+        total_timesteps=training_steps,
+        progress_bar=True,
+        callback=callback_list,
+        tb_log_name=params["tb_log_name"],
     )
 
     # After training:
@@ -258,7 +288,9 @@ def SAC_training_TBR(seed_in=42):
 
     # optionally generate hamiltonian trajectory
     if params.get("flag_gen_H_traj", False):
-        test_log = log("Generating Hamiltonian trajectory for comparison...", test_log, True)
+        test_log = log(
+            "Generating Hamiltonian trajectory for comparison...", test_log, True
+        )
         params["data_path"] = path_output
         params["scenario_index"] = 0
         params["flag_plot_traj"] = False
@@ -268,12 +300,14 @@ def SAC_training_TBR(seed_in=42):
         try:
             ephem_H.read_from_file(ephem_path)
         except Exception as e:
-            test_log = log("Error generating Hamiltonian trajectory file: " + str(e), test_log, True)
+            test_log = log(
+                "Error generating Hamiltonian trajectory file: " + str(e),
+                test_log,
+                True,
+            )
             params["flag_gen_H_traj"] = False
 
-
     while flag_continue:
-
         # step the env
         action, _states = model.predict(obs, deterministic=True)
         throttle = action[0]
@@ -294,13 +328,28 @@ def SAC_training_TBR(seed_in=42):
         vy_target_i = obs[8] * params["l_star"] / params["t_star"]
         ttg_i = obs[9] * params["t_star"]
 
-        #info of interest
+        # info of interest
         pos_r_component = info.get("pos_r_component", None)
         vel_r_component = info.get("vel_r_component", None)
         mass_r_component = info.get("mass_r_component", None)
 
         # log data to ephemeris
-        eph.add_data(t_i, x_i, y_i, vx_i, vy_i, m_i, x_target_i, y_target_i, vx_target_i, vy_target_i, ttg_i, alpha_x, alpha_y, throttle)
+        eph.add_data(
+            t_i,
+            x_i,
+            y_i,
+            vx_i,
+            vy_i,
+            m_i,
+            x_target_i,
+            y_target_i,
+            vx_target_i,
+            vy_target_i,
+            ttg_i,
+            alpha_x,
+            alpha_y,
+            throttle,
+        )
 
         # create polar state, create a temp SC object and calc OE
         r_i, theta_i, rdot_i, vtheta_i = cartesian_to_polar(x_i, y_i, vx_i, vy_i)
@@ -351,12 +400,10 @@ def SAC_training_TBR(seed_in=42):
     test_log = log("terminated: " + str(terminated) + " ", test_log, True)
     test_log = log("truncated: " + str(truncated) + " ", test_log, True)
 
-    #final env info
+    # final env info
     for key, value in info.items():
         if key != "ODE Solution":
             test_log = log(f"{key}: {value}", test_log, True)
-
-
 
     # plot the results
     plot_SAC_training_TBR(

@@ -28,23 +28,25 @@ if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
 # initialize the environment
 env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
 
-#plotting setup
-matplotlib.rcParams.update({
-    "text.usetex": False,                      # Use LaTeX for all text
-    "font.family": "serif",                   # Use serif font
-    "font.size": 10,                          # Match AIAA body font size
-    "axes.labelsize": 10,
-    "axes.titlesize": 10,
-    "legend.fontsize": 9,
-    "xtick.labelsize": 9,
-    "ytick.labelsize": 9,
-    "lines.linewidth": 1.2,
-    "lines.markersize": 4,
-    "figure.figsize": (3.5, 2.5),             # Single-column figure
-    "figure.dpi": 300,
-    "savefig.bbox": "tight",
-    "axes.grid": False,                       # No gridlines in AIAA style
-})
+# plotting setup
+matplotlib.rcParams.update(
+    {
+        "text.usetex": False,  # Use LaTeX for all text
+        "font.family": "serif",  # Use serif font
+        "font.size": 10,  # Match AIAA body font size
+        "axes.labelsize": 10,
+        "axes.titlesize": 10,
+        "legend.fontsize": 9,
+        "xtick.labelsize": 9,
+        "ytick.labelsize": 9,
+        "lines.linewidth": 1.2,
+        "lines.markersize": 4,
+        "figure.figsize": (3.5, 2.5),  # Single-column figure
+        "figure.dpi": 300,
+        "savefig.bbox": "tight",
+        "axes.grid": False,  # No gridlines in AIAA style
+    }
+)
 
 
 num_traj = 10
@@ -71,7 +73,9 @@ C1 = init_info["max_thrust"] * 1000  # max thrust in N
 C2 = init_info["ISP"]  # spacecraft specific impulse in seconds
 
 # compute Hamiltonian Solution
-H_controller = Hamiltonian_Controller_TBT(env, init_observation, init_info, input_TOF, flag_report_live=True)
+H_controller = Hamiltonian_Controller_TBT(
+    env, init_observation, init_info, input_TOF, flag_report_live=True
+)
 
 
 # compute solution

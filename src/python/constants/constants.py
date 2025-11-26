@@ -16,5 +16,5 @@ class Constants:
     M_TO_KM = 1e-3  # m to km conversion factor
     KM_TO_M = 1e3  # km to m conversion factor
     M3_TO_KM3 = 1e-9  # m^3 to km^3 conversion factor
-    DAYS_TO_SEC = 86400 # conversion to seconds from days
-    YEARS_TO_SEC = 365.25*86400 # conversion to seconds from years
+    DAYS_TO_SEC = 86400  # conversion to seconds from days
+    YEARS_TO_SEC = 365.25 * 86400  # conversion to seconds from years

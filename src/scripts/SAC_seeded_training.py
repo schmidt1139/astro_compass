@@ -35,7 +35,6 @@ if "TwoBody_Orb2Orb_Transfer_Env_nd_obs5-v0" not in envs.registry.keys():
 
 
 def SAC_seeded_training(seed_in=42):
-
     test_log = []
     test_log = log("SAC Training Script", test_log, True)
 
@@ -123,7 +122,10 @@ def SAC_seeded_training(seed_in=42):
     )
     path_output = os.path.normpath(
         os.path.join(
-            os.getcwd(), os.path.join("data", "script_output", "SAC_seeded_training_") + time_tag + "\\"
+            os.getcwd(),
+            os.path.join("data", "script_output", "SAC_seeded_training_")
+            + time_tag
+            + "\\",
         )
     )
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
@@ -247,7 +249,6 @@ def SAC_seeded_training(seed_in=42):
     truncated = False
 
     while flag_continue:
-
         # step the env
         action, _states = model.predict(obs, deterministic=True)
         throttle = action[0]

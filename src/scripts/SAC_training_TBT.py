@@ -21,13 +21,13 @@ from utils.log_utils import write_log_to_file, write_config_file, read_config_fi
 from utils.state_vector_utils import cartesian_to_polar
 from utils.plotting_utils import plot_SAC_training, SACRolloutData
 from utils.rl_utils import log_training_perf, RewardLoggerCallback, pre_train
-from envs.TwoBody_Orb2Orb_Transfer_Env_nd_obs5 import TwoBody_Orb2Orb_Transfer_Env_nd_obs5
+from envs.TwoBody_Orb2Orb_Transfer_Env_nd_obs5 import (
+    TwoBody_Orb2Orb_Transfer_Env_nd_obs5,
+)
 from core.process_single_trajectory import process_single_trajectory
 
 
-
 def SAC_training_TBR(seed_in=42):
-
     test_log = []
     test_log = log("SAC Training Script", test_log, True)
 
@@ -50,7 +50,7 @@ def SAC_training_TBR(seed_in=42):
         t_star=params["t_star"],
         g0=params["g0"],
         step_size=params["env_step_size"],
-        mass_penalty=params["mass_penalty"]
+        mass_penalty=params["mass_penalty"],
     )
 
     eval_env = TwoBody_Orb2Orb_Transfer_Env_nd_obs5(
@@ -61,7 +61,7 @@ def SAC_training_TBR(seed_in=42):
         m_star=params["m_star"],
         t_star=params["t_star"],
         g0=params["g0"],
-        step_size=params["env_step_size"]
+        step_size=params["env_step_size"],
     )
 
     sma_t_i = Constants.SMA_EARTH
@@ -75,18 +75,20 @@ def SAC_training_TBR(seed_in=42):
     # paths
     time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
     path_nns = os.path.normpath(os.path.join(os.getcwd(), "data\\neural_networks\\"))
-    
+
     # Handle both absolute and relative paths for output_dir
     output_base = params["output_dir"]
     if not os.path.isabs(output_base):
         output_base = os.path.join(os.getcwd(), output_base)
-    path_output = os.path.normpath(os.path.join(output_base, "SAC_training_TBT_" + time_tag))
-    
+    path_output = os.path.normpath(
+        os.path.join(output_base, "SAC_training_TBT_" + time_tag)
+    )
+
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
     os.makedirs(path_output, exist_ok=True)
     params["output_dir_specific"] = path_output
 
-    #env wrappers
+    # env wrappers
     max_episode_steps_in = params["max_episode_steps"]
     env = gym.wrappers.TimeLimit(env, max_episode_steps=max_episode_steps_in)
     eval_env = gym.wrappers.TimeLimit(eval_env, max_episode_steps=max_episode_steps_in)
@@ -94,7 +96,7 @@ def SAC_training_TBR(seed_in=42):
     eval_env = Monitor(eval_env)
     training_steps = params["training_steps"]
 
-    #make a subdir for checkpoints
+    # make a subdir for checkpoints
     path_checkpoints = os.path.normpath(os.path.join(path_output, "checkpoints"))
     path_ephems = os.path.normpath(os.path.join(path_output, "ephems"))
     path_plots = os.path.normpath(os.path.join(path_output, "plots"))
@@ -113,60 +115,81 @@ def SAC_training_TBR(seed_in=42):
     # Create the SAC model with TensorBoard logging
     buffer_size = params.get("buffer_size", 1000000)  # Default 1M transitions
 
-    #load model if specified, otherwise create new
+    # load model if specified, otherwise create new
     if params["load_model_checkpoint"]:
-        test_log = log("Loading SAC model from: " + params["path_SAC_model_load"], test_log, True)
-        model = SB3_SAC.load(params["path_SAC_model_load"], env=env, device="cpu", seed=seed_in,
-                             tensorboard_log=path_output)  # Use path_output so SB3 creates SAC_1/ subdirectory
+        test_log = log(
+            "Loading SAC model from: " + params["path_SAC_model_load"], test_log, True
+        )
+        model = SB3_SAC.load(
+            params["path_SAC_model_load"],
+            env=env,
+            device="cpu",
+            seed=seed_in,
+            tensorboard_log=path_output,
+        )  # Use path_output so SB3 creates SAC_1/ subdirectory
     else:
         # Implement custom NN architectures
         nn_arch_type = params.get("nn_arch_type", "default")
         if nn_arch_type == "custom":
-            #use default architecture
+            # use default architecture
             # define the policy architecture
             policy_kwargs = dict(
                 net_arch=[32, 32, 32, 32, 32],  # four hidden layers with 32 units each
                 activation_fn=nn.LeakyReLU,  # LeakyReLU activation function
-                optimizer_kwargs=dict(eps=1e-5)
+                optimizer_kwargs=dict(eps=1e-5),
             )
-            model = SB3_SAC("MlpPolicy", 
-                env, 
+            model = SB3_SAC(
+                "MlpPolicy",
+                env,
                 learning_rate=params["learning_rate"],
-                verbose=1, 
-                device="cpu", seed=seed_in,
+                verbose=1,
+                device="cpu",
+                seed=seed_in,
                 tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
-                buffer_size=buffer_size, 
+                buffer_size=buffer_size,
                 tau=params.get("tau", 0.005),
                 train_freq=params.get("train_freq", 1),
                 gradient_steps=params.get("gradient_steps", 1),
-                policy_kwargs=policy_kwargs)
+                policy_kwargs=policy_kwargs,
+            )
 
         else:
-            #use default architecture
+            # use default architecture
             policy_kwargs = dict(
                 optimizer_kwargs=dict(eps=1e-5)  # More stable Adam optimizer
             )
-            model = SB3_SAC("MlpPolicy", env, learning_rate=params["learning_rate"], verbose=1, device="cpu", seed=seed_in,
-                            tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
-                            buffer_size=buffer_size,
-                            tau=params.get("tau", 0.005),
-                            train_freq=params.get("train_freq", 1),
-                            gradient_steps=params.get("gradient_steps", 1),
-                            policy_kwargs=policy_kwargs)
-        
-        
+            model = SB3_SAC(
+                "MlpPolicy",
+                env,
+                learning_rate=params["learning_rate"],
+                verbose=1,
+                device="cpu",
+                seed=seed_in,
+                tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
+                buffer_size=buffer_size,
+                tau=params.get("tau", 0.005),
+                train_freq=params.get("train_freq", 1),
+                gradient_steps=params.get("gradient_steps", 1),
+                policy_kwargs=policy_kwargs,
+            )
+
     if params["read_replay_buffer"]:
-        test_log = log("Loading replay buffer from: " + params["path_replay_buffer"], test_log, True)
+        test_log = log(
+            "Loading replay buffer from: " + params["path_replay_buffer"],
+            test_log,
+            True,
+        )
         model.load_replay_buffer(params["path_replay_buffer"])
-    
+
     # pre-train networks if specified
     if params["pre_train_networks"]:
-        test_log, arr_actor_loss_pt, arr_critic_loss_pt = pre_train(test_log, model, params, env)
+        test_log, arr_actor_loss_pt, arr_critic_loss_pt = pre_train(
+            test_log, model, params, env
+        )
         # Remove the minimal logger from pre-training so model.learn() can set up TensorBoard properly
         # This ensures TensorBoard logging works correctly during actual training
-        if hasattr(model, '_logger'):
-            delattr(model, '_logger')
-
+        if hasattr(model, "_logger"):
+            delattr(model, "_logger")
 
     callback = RewardLoggerCallback(print_freq=params["print_freq"])
     # Eval callback: saves best model by mean reward on eval_env
@@ -179,12 +202,15 @@ def SAC_training_TBR(seed_in=42):
         deterministic=True,
         render=False,
     )
-    #callback_list = CallbackList([eval_callback, callback])
+    # callback_list = CallbackList([eval_callback, callback])
     callback_list = CallbackList([callback])
 
     # Train the agent
     model.learn(
-        total_timesteps=training_steps, progress_bar=True, callback=callback_list, tb_log_name=params["tb_log_name"]
+        total_timesteps=training_steps,
+        progress_bar=True,
+        callback=callback_list,
+        tb_log_name=params["tb_log_name"],
     )
 
     # After training:
@@ -215,19 +241,21 @@ def SAC_training_TBR(seed_in=42):
 
     # optionally generate hamiltonian trajectory off of ephem
     if params.get("flag_gen_H_traj", False):
-        test_log = log("Generating Hamiltonian trajectory for comparison...", test_log, True)
+        test_log = log(
+            "Generating Hamiltonian trajectory for comparison...", test_log, True
+        )
         params["data_path"] = path_output
         params["scenario_index"] = 0
         params["flag_plot_traj"] = False
 
         init_observation = []
-        init_observation.append(obs[0]*params["l_star"]/1000)
-        init_observation.append(obs[1]*params["l_star"]/1000)
-        init_observation.append(obs[2]*params["l_star"]/params["t_star"]/1000)
-        init_observation.append(obs[3]*params["l_star"]/params["t_star"]/1000)
-        init_observation.append(obs[4]*params["m_star"])
+        init_observation.append(obs[0] * params["l_star"] / 1000)
+        init_observation.append(obs[1] * params["l_star"] / 1000)
+        init_observation.append(obs[2] * params["l_star"] / params["t_star"] / 1000)
+        init_observation.append(obs[3] * params["l_star"] / params["t_star"] / 1000)
+        init_observation.append(obs[4] * params["m_star"])
         init_observation.append(Constants.MU_SUN)
-        init_observation.append(Constants.SMA_EARTH/1000)
+        init_observation.append(Constants.SMA_EARTH / 1000)
 
         input_TOF = 1.1 * 365.25 * 24 * 60 * 60
 
@@ -237,7 +265,7 @@ def SAC_training_TBR(seed_in=42):
             unwrapped_env, init_observation, info, input_TOF
         )
 
-        #modify parameters
+        # modify parameters
         H_controller.eps_threshold = params.get("eps_final", 0.0004)
 
         # compute solution
@@ -245,7 +273,7 @@ def SAC_training_TBR(seed_in=42):
 
         ephem_H = Ephemeris()
         ephem_path = os.path.join(path_ephems, "Hamiltonian_Traj_Ephem.txt")
-        
+
         if flag_solved:
             # write output ephemeris
             eph_out, arr_time, arr_u, arr_rho, arr_alpha_x, arr_alpha_y = (
@@ -253,17 +281,20 @@ def SAC_training_TBR(seed_in=42):
             )
             eph_out.write_to_file(ephem_path, mod_vector_write_frequency=1)
 
-
         try:
-            test_log = log("Generated Hamiltonian trajectory for comparison...", test_log, True)
+            test_log = log(
+                "Generated Hamiltonian trajectory for comparison...", test_log, True
+            )
             ephem_H.read_from_file(ephem_path)
         except Exception as e:
-            test_log = log("Error generating Hamiltonian trajectory file: " + str(e), test_log, True)
+            test_log = log(
+                "Error generating Hamiltonian trajectory file: " + str(e),
+                test_log,
+                True,
+            )
             params["flag_gen_H_traj"] = False
 
-
     while flag_continue:
-
         # step the env
         action, _states = model.predict(obs, deterministic=True)
         throttle = action[0]
@@ -312,7 +343,7 @@ def SAC_training_TBR(seed_in=42):
             0.0,
             1.0,
             reward_mass_component,
-            reward_distance_component
+            reward_distance_component,
         )
 
         if terminated or truncated:
@@ -331,11 +362,10 @@ def SAC_training_TBR(seed_in=42):
     test_log = log("terminated: " + str(terminated) + " ", test_log, True)
     test_log = log("truncated: " + str(truncated) + " ", test_log, True)
 
-    #final env info
+    # final env info
     for key, value in info.items():
         if key != "ODE Solution":
             test_log = log(f"{key}: {value}", test_log, True)
-
 
     # plot the results
     plot_SAC_training(
@@ -344,7 +374,7 @@ def SAC_training_TBR(seed_in=42):
         arr_epsisode_rs,
         path_output,
         eph,
-        ephem_H if ephem_H is not None else None
+        ephem_H if ephem_H is not None else None,
     )
 
     env.close()

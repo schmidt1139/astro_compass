@@ -58,8 +58,7 @@ class Ephemeris:
     def plot_xy(
         self, radius_central_body=Constants.RADIUS_SUN_M, plot_label="Trajectory"
     ):
-        
-        #plot.style.use("data/support_files/dark_scientific.mplstyle");
+        # plot.style.use("data/support_files/dark_scientific.mplstyle");
 
         # Convert all data to AU at the start
         scale = Constants.SMA_EARTH
@@ -96,7 +95,7 @@ class Ephemeris:
         xf = x_au[-1]
         yf = y_au[-1]
 
-        if (plot.rcParams["figure.facecolor"] == "black"):
+        if plot.rcParams["figure.facecolor"] == "black":
             markerfacecolor_in = "white"
             markeredgecolor_in = "white"
             background_color = "black"
@@ -129,10 +128,19 @@ class Ephemeris:
         )
         ax.plot(x_au, y_au, label="Trajectory")
 
-        if (radius_cb_au > 0.1* max_lim):
-            ax.plot(arr_x_cb, arr_y_cb, label="Central Body",linewidth=4, color="gold")
+        if radius_cb_au > 0.1 * max_lim:
+            ax.plot(arr_x_cb, arr_y_cb, label="Central Body", linewidth=4, color="gold")
         else:
-            ax.plot(arr_x_cb, arr_y_cb, label="Central Body", color=background_color, markerfacecolor="gold", linestyle=None, marker="o", markersize=8)
+            ax.plot(
+                arr_x_cb,
+                arr_y_cb,
+                label="Central Body",
+                color=background_color,
+                markerfacecolor="gold",
+                linestyle=None,
+                marker="o",
+                markersize=8,
+            )
 
         ax.set_title("Trajectory")
         ax.set_xlabel("X [AU]")
@@ -179,14 +187,12 @@ class Ephemeris:
 
         # adjust limits if necessary
         if max(ax.get_xlim()) < plot_lim_ref:
-
             ax.set_xlim([-plot_lim_ref, plot_lim_ref])
             ax.set_ylim([-plot_lim_ref, plot_lim_ref])
 
         return self.fig_xy
 
     def plot_all_ephemeris_data(self, flag_show=True):
-
         plot.style.use("data/support_files/dark_scientific.mplstyle")
 
         figs = []
@@ -347,9 +353,8 @@ class Ephemeris:
         vector = np.array([et, x, y, vx, vy, m, alpha_x, alpha_y, u])
 
         return vector
-    
-    def overlay_ref_orbit(self, ephem, label, color_in="lime"):
 
+    def overlay_ref_orbit(self, ephem, label, color_in="lime"):
         # Overlay a reference Keplerian orbit on the existing XY plot
         fig = self.fig_xy
         ax = self.ax_xy
@@ -379,7 +384,7 @@ class Ephemeris:
         self.ax_xy = ax
 
         return self.fig_xy
-    
+
     def adjust_plot_limits(self):
         # Adjust the plot limits of the existing XY plot based on current data
         fig = self.fig_xy
@@ -409,13 +414,15 @@ class Ephemeris:
         self.ax_xy = ax
 
         return self.fig_xy
-    
+
     def compare_trajectories(self, other_ephem, position_tol=1e-12, velocity_tol=1e-6):
         # Compare this ephemeris trajectory to another ephemeris trajectory
         # Returns True if all corresponding states are within the specified tolerances
-        
+
         if self.num_vectors != other_ephem.num_vectors:
-            print(f"Different number of vectors: {self.num_vectors} vs {other_ephem.num_vectors}")
+            print(
+                f"Different number of vectors: {self.num_vectors} vs {other_ephem.num_vectors}"
+            )
             return False  # Different number of vectors
 
         for i in range(self.num_vectors):
@@ -424,9 +431,18 @@ class Ephemeris:
             dvx = abs(self.arr_vx[i] - other_ephem.arr_vx[i])
             dvy = abs(self.arr_vy[i] - other_ephem.arr_vy[i])
 
-            if dx > position_tol or dy > position_tol or dvx > velocity_tol or dvy > velocity_tol:
-                print(f"Difference at index {i}: x={self.arr_x[i]}, y={self.arr_y[i]}, vx={self.arr_vx[i]}, vy={self.arr_vy[i]}")
-                print(f"                 vs x={other_ephem.arr_x[i]}, y={other_ephem.arr_y[i]}, vx={other_ephem.arr_vx[i]}, vy={other_ephem.arr_vy[i]}")
+            if (
+                dx > position_tol
+                or dy > position_tol
+                or dvx > velocity_tol
+                or dvy > velocity_tol
+            ):
+                print(
+                    f"Difference at index {i}: x={self.arr_x[i]}, y={self.arr_y[i]}, vx={self.arr_vx[i]}, vy={self.arr_vy[i]}"
+                )
+                print(
+                    f"                 vs x={other_ephem.arr_x[i]}, y={other_ephem.arr_y[i]}, vx={other_ephem.arr_vx[i]}, vy={other_ephem.arr_vy[i]}"
+                )
                 return False  # States differ beyond tolerances
 
         return True  # All states are within tolerances
