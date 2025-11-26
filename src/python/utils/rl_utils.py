@@ -197,14 +197,6 @@ def import_training_into_replay_buffer(
             next_states.append(obs)
             dones.append(done)
 
-    # optionally save the updated replay buffer to disk
-    if params.get("save_pre_training_only_replay_buffer", False):
-        path_replay_buffer = os.path.join(
-            params["output_dir_specific"], "replay_buffer_pre_training_only.pkl"
-        )
-        model.save_replay_buffer(path_replay_buffer)
-        test_log = log(f"Replay buffer saved to {path_replay_buffer}", test_log, True)
-
 
 def add_experience_to_replay_buffer(
     model, obs, action, reward, next_obs, done, params=None
