@@ -808,24 +808,15 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         ) = deltas
 
         # extract the current target state
-        x_target_state_current_nd = self.target_state_current[0] / self.l_star
-        y_target_state_current_nd = self.target_state_current[1] / self.l_star
-        vx_target_state_current_nd = self.target_state_current[2] / (
-            self.l_star / self.t_star
-        )
-        vy_target_state_current_nd = self.target_state_current[3] / (
-            self.l_star / self.t_star
-        )
+        x_target_nd_i = self.target_state_current[0] / self.l_star
+        y_target_nd_i = self.target_state_current[1] / self.l_star
+        vx_target_nd_i = self.target_state_current[2] / (self.l_star / self.t_star)
+        vy_target_nd_i = self.target_state_current[3] / (self.l_star / self.t_star)
 
         # calculate the current distance to target
-        d_r_nd = np.sqrt(
-            (x_nd - x_target_state_current_nd) ** 2
-            + (y_nd - y_target_state_current_nd) ** 2
-        )
-        d_v_nd = np.sqrt(
-            (vx_nd - vx_target_state_current_nd) ** 2
-            + (vy_nd - vy_target_state_current_nd) ** 2
-        )
+        # MUST DO, otherwise you can get two big bumps rather than one bump.
+        d_r_nd = np.sqrt((x_nd - x_target_nd_i) ** 2 + (y_nd - y_target_nd_i) ** 2)
+        d_v_nd = np.sqrt((vx_nd - vx_target_nd_i) ** 2 + (vy_nd - vy_target_nd_i) ** 2)
 
         self.pos_residual = d_r_nd
         self.vel_residual = d_v_nd
@@ -833,82 +824,64 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         # complete resisdual
         residual = dx_nd**2 + dy_nd**2 + dvx_nd**2 + dvy_nd**2
 
-        # Separate exponentials for position and velocity - provides smoother gradient
-        self.time_reward = np.clip(
-            (1 - (TTG_nd) * self.time_dist_weight) * self.tof_weight, 0.1, 1.0
-        )
+        # these rewards get bigger (max 1) the closer you get to the target
+        pos_reward = np.exp(-self.r_dist_weight * self.pos_residual**2)
+        vel_reward = np.exp(-self.v_dist_weight * self.vel_residual**2)
 
-        # self.pos_reward = - d_r_nd**(self.r_dist_weight) * self.pos_weight
-        # self.vel_reward = - d_v_nd**(self.v_dist_weight) * self.vel_weight
+        # These values will be negative, approaching zero as you get closer to the target
+        self.pos_reward = (-1 + pos_reward) * self.pos_weight
+        self.vel_reward = (-1 + vel_reward) * self.vel_weight
 
-        self.pos_reward = (
-            np.exp(-self.r_dist_weight * self.pos_residual**2) * self.pos_weight
-        )
-        self.vel_reward = (
-            np.exp(-self.v_dist_weight * self.vel_residual**2) * self.vel_weight
-        )
-
+        # This value will always be negative
         self.throttle_reward = -u * self.throttle_r_weight
 
         # Step-based shaping reward (always provided for learning)
-        if (
-            self.pos_residual < self.success_threshold_pos
-            and self.vel_residual < self.success_threshold_vel
-        ):
-            precision_mult = (
-                self.precision_mult
-            )  # Small bonus for being within success thresholds
-            self.pos_reward = self.pos_reward * precision_mult
-            self.vel_reward = self.vel_reward * precision_mult
+        position_within_success_region = self.pos_residual < self.success_threshold_pos
+        velocity_within_success_region = self.vel_residual < self.success_threshold_vel
 
         # shaping_reward = self.time_component * ( self.pos_reward + self.vel_reward ) + self.mass_reward
-        self.pos_reward = self.pos_reward * self.time_reward
-        self.vel_reward = self.vel_reward * self.time_reward
-        step_reward = self.pos_reward + self.vel_reward + self.throttle_reward
 
-        # clip reward to avoid extreme values
-        step_reward = np.clip(step_reward, -10, 10)
+        # self.time_reward = np.clip(
+        #     (1 - (TTG_nd) * self.time_dist_weight) * self.tof_weight, 0.1, 1.0
+        # )
+        # self.pos_reward = self.pos_reward * self.time_reward
+        # self.vel_reward = self.vel_reward * self.time_reward
 
-        # central body parameters
-        cb_rad = self.planet_radii[0] / self.l_star  # central body radius in nd units
+        reward = self.pos_reward + self.vel_reward + self.throttle_reward
 
         terminated = False
 
-        solar_prox = -1.0
-        ecc_penalty = -1.0
+        # terminal rewards
+        exceeded_min = r_nd < 0.1  # too close to sun
+        exceeded_max = r_nd > 5.0  # too far from sun
+        # episode_timeout = self.step_count >= self.max_episode_steps
+        episode_timeout = TTG_nd <= 0.0  # out of time
+        fuel_exceeded = mass <= 0.01  # out of fuel
+        eccentricity_exceeded = e >= 2.0
 
-        if r_nd < 0.1:
-            terminal_bonus = 0.0
-            reward = solar_prox + step_reward + terminal_bonus
-            terminated = True
-        elif e >= 1.0:
-            terminal_bonus = 0.0
-            reward = ecc_penalty + step_reward + terminal_bonus
-            if r_nd > 5.0:
-                terminated = True
-            else:
-                terminated = False
-        elif self.step_count >= self.timesteps_in_prop:
-            if (
-                self.pos_residual < self.success_threshold_pos
-                and self.vel_residual < self.success_threshold_vel
-            ):
-                terminal_bonus = (
-                    self.terminal_bonus
-                )  # Large bonus for precise rendezvous
-            else:
-                terminal_bonus = 0.0
-
-            reward = step_reward + terminal_bonus
+        # Failure Conditions
+        terminated = False
+        truncated = False
+        if exceeded_min or exceeded_max:
+            reward -= 10.0
             terminated = True
 
-        else:
-            # During trajectory: only shaping reward
-            reward = step_reward
+        # if eccentricity_exceeded:
+        #     reward -= 100.0
+        #     terminated = True
+
+        if fuel_exceeded:
+            reward -= 10.0
+            terminated = True
+
+        if episode_timeout:
+            # Nothing good or bad assigned to this
+            truncated = True
 
         self.terminated = terminated
+        self.truncated = truncated
 
-        return reward, terminated
+        return reward, terminated, truncated
 
     def _apply_dV_in_VNB_frame(self, dV, X_i, Y_i, VX_i, VY_i):
         # determine the vel magnitude
