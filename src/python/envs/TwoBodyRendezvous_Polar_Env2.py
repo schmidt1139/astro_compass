@@ -18,10 +18,10 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
     def __init__(self, **kwargs):
         # define limits of the state parameters
         low_array = np.full(
-            14, -np.inf, dtype=np.float32
+            21, -np.inf, dtype=np.float32
         )  # lower bounds for state space
         high_array = np.full(
-            14, np.inf, dtype=np.float32
+            21, np.inf, dtype=np.float32
         )  # upper-bounds for state space
 
         # define the state space (in this case the observation is the state) 10 elements
@@ -647,6 +647,7 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         self.v_r_target_nd = (
             max(v_comp_target**2 - self.v_t_target_nd**2, 1e-6)
         ) ** 0.5
+
         # flight path angles
         self.fpa_nd = np.arctan2(self.v_r_nd, self.v_t_nd)
         self.fpa_target_nd = np.arctan2(self.v_r_target_nd, self.v_t_target_nd)
@@ -671,26 +672,61 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         delta_r = r_nd_target - r_nd_0
         delta_eta_cos = self.cos_eta_target - self.cos_eta
         delta_eta_sin = self.sin_eta_target - self.sin_eta
+
         delta_v = v_comp_target - v_comp
         delta_v_r = self.v_r_target_unit - self.v_r_unit
         delta_v_t = self.v_t_target_unit - self.v_t_unit
 
         # construct polar observation array
+        # polar_observation = np.array(
+        #     [
+        #         r_nd_0,
+        #         self.cos_eta,
+        #         self.sin_eta,
+        #         v_comp,
+        #         self.cos_fpa,
+        #         self.sin_fpa,
+        #         mass_nd,
+        #         delta_r,
+        #         delta_eta_cos,
+        #         delta_eta_sin,
+        #         delta_v,
+        #         delta_v_r,
+        #         delta_v_t,
+        #         TTG_nd,
+        #     ],
+        #     dtype=np.float32,
+        # )
+
         polar_observation = np.array(
             [
+                # Spherical Position SC
                 r_nd_0,
                 self.cos_eta,
                 self.sin_eta,
-                v_comp,
-                self.cos_fpa,
-                self.sin_fpa,
-                mass_nd,
-                delta_r,
-                delta_eta_cos,
-                delta_eta_sin,
-                delta_v,
-                delta_v_r,
-                delta_v_t,
+                # Spherical Position Planet
+                r_nd_target,
+                self.cos_eta_target,
+                self.sin_eta_target,
+                # Cartesian Position SC
+                x_nd,
+                y_nd,
+                vx_nd,
+                vy_nd,
+                # Cartesian Position Planet
+                x_target_nd,
+                y_target_nd,
+                vx_target_nd,
+                vy_target_nd,
+                # Differences Cartesian
+                x_target_nd - x_nd,
+                y_target_nd - y_nd,
+                vx_target_nd - vx_nd,
+                vy_target_nd - vy_nd,
+                # Differences Magnitudes
+                r_nd_target - r_nd_0,
+                v_comp_target - v_comp,
+                # Time to Go
                 TTG_nd,
             ],
             dtype=np.float32,
