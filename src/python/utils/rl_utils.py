@@ -1,4 +1,5 @@
 import os
+from turtle import done
 from Constants import Constants
 from Spacecraft import Spacecraft
 from StateVectorUtilities import cartesian_to_polar
@@ -13,7 +14,8 @@ from core.training_data_generation import read_ephems_from_dir
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.evaluation import evaluate_policy
 from utils.plotting_utils import SACRolloutData_TBR_polar
-from utils.state_vector_utils import convert_alpha_from_cart_to_fpa
+from utils.state_vector_utils import convert_alpha_from_cart_to_fpa, convert_attitude_from_cartesian_to_radial
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 def log_training_perf(
     test_log, callback, eval_callback, model, training_steps, flag_verbose
@@ -359,7 +361,7 @@ def pre_train(test_log, model, params, env):
             )
 
     else:
-        test_log = log("Buffer read in directly", test_log, True)
+        test_log = log("Buffer read in from: " + params["path_replay_buffer"], test_log, True)
 
     test_log = log(
             "Updated experience buffer size: " + str(model.replay_buffer.size()), test_log, True
@@ -445,9 +447,8 @@ def import_training_into_replay_buffer_v2(
                 obs_batch, action_batch, reward_batch, next_obs_batch, done_batch = [], [], [], [], []
 
     # optionally save the updated replay buffer to disk when complete
-    if params.get("save_replay_buffer", False):
-        path_replay_buffer = os.path.join(params["path_replay_buffer"], "replay_buffer.pkl")
-
+    if params.get("save_pre_training_only_replay_buffer", False):
+        path_replay_buffer = os.path.join(params["output_dir_specific"], "replay_buffer_pre_training_only.pkl")
         model.save_replay_buffer(path_replay_buffer)
         test_log = log(f"Replay buffer saved to {path_replay_buffer}", test_log, True)
 
@@ -646,10 +647,10 @@ def package_ephem_state_into_polar_SART(state_vec, env, current_index, num_vecto
         raise ValueError("Environment state does not match expected state after setting.")
     
     # Convert alpha_x, alpha_y to flight path angle components
-    alpha_cos_fpa, alpha_sin_fpa = convert_alpha_from_cart_to_fpa(x, y, vx, vy, alpha_x, alpha_y)
+    alpha_vr, alpha_theta = convert_attitude_from_cartesian_to_radial(x, y, alpha_x, alpha_y)
 
     # Action in terms of (u, alpha_cos_fpa, alpha_sin_fpa)
-    action = np.array([u, alpha_cos_fpa, alpha_sin_fpa], dtype=np.float32)
+    action = np.array([u, alpha_vr, alpha_theta], dtype=np.float32)
 
     # Step the environment to get next_obs, reward, done
     next_obs, reward, done, truncated, info = unwrapped_env.step(action)
@@ -812,3 +813,307 @@ def rollout_model(env, params, model, test_log):
 
     return test_log, eph, rollout_data
 
+
+def import_training_into_replay_buffer_v3(
+    set_ephems, test_log, model, env, params
+):
+    """
+    Import training data from ephemeris v3.0 files into the replay buffer.
+    Handles 10-dimensional observation space (x, y, vx, vy, m, x_t, y_t, vx_t, vy_t, ttg).
+
+    Does this without env overhead by directly setting states in the replay buffer.
+
+    Assumes ephemeris v3.0 format, which contains a moving target with full state info.
+    """
+    from tqdm import tqdm
+    
+    test_log = log("Importing training data (v3.0) into replay buffer", test_log, True)
+
+    cores = params.get("cores", 1)
+
+    
+    batches = []
+    with ProcessPoolExecutor(max_workers=cores) as executor:
+        futures = [executor.submit(extract_experiences_from_ephem, eph, params) for eph in set_ephems]
+        for f in tqdm(as_completed(futures), total=len(futures)):
+            batches.append(f.result())
+
+    # Now add all experiences to replay buffer in batches
+    for obs_batch, action_batch, reward_batch, next_obs_batch, done_batch in tqdm(batches, total=len(batches), desc="Adding experiences to replay buffer"):
+        batch_size = obs_batch.shape[0]
+        for i in range(batch_size):
+            add_experience_to_replay_buffer(
+                model,
+                obs_batch[i],
+                action_batch[i],
+                reward_batch[i],
+                next_obs_batch[i],
+                done_batch[i]
+            )
+
+    #report updated buffer size
+    test_log = log( 
+        f"Updated experience buffer size: " + str(model.replay_buffer.size()), test_log, True
+    )  # current number of transitions
+
+
+def extract_experiences_from_ephem(eph, params):
+
+    # Step through ephem and gather observations, actions, rewards, next_obs, dones
+    obs_batch = []
+    action_batch = []
+    reward_batch = []
+    next_obs_batch = []
+    done_batch = []
+
+    num_steps_per_SART = params["ephem_step_size"]
+
+
+    # Only add every num_steps_per_SART-th vector
+    for i in range(0, eph.num_vectors - 1, num_steps_per_SART):  # -1 to ensure we have next_obs
+        state_vec = eph.get_vector_at_index(i)
+
+        env_type = params["env_type"]
+
+        # unpack state
+        t = state_vec[0]
+        current_state = state_vec[1:6] # x, y, vx, vy, m
+        target_state = state_vec[6:10] # x_t, y_t, vx, vy
+        ttg = state_vec[10]
+        alpha_x = state_vec[11]
+        alpha_y = state_vec[12]
+        u = state_vec[13]
+
+        # compute polar observation
+        obs, _ = create_relative_polar_observation_fast(params, current_state, target_state, ttg)
+
+        # polar action
+        # Convert alpha_x, alpha_y to polar form
+        x = current_state[0]
+        y = current_state[1]
+        alpha_vr, alpha_theta = convert_attitude_from_cartesian_to_radial(x, y, alpha_x, alpha_y)
+        action = np.array([u, alpha_vr, alpha_theta], dtype=np.float32)
+        u = action[0]
+
+        # compute the reward
+        reward, done, _ = compute_reward_fast(params, current_state, ttg, target_state, u)
+
+        # next observation
+        next_t = t + params["env_step_size"]
+        if next_t > eph.get_vector_at_index(eph.num_vectors - 1)[0]:
+            break
+        else:
+            next_state_vec = eph.get_interpolated_vector_at_time(next_t)
+            next_current_state = next_state_vec[1:6]
+            next_target_state = next_state_vec[6:10]
+            next_ttg = next_state_vec[10]
+            next_obs, _ = create_relative_polar_observation_fast(params, next_current_state, next_target_state, next_ttg)
+
+        obs_batch.append(obs)
+        action_batch.append(action)
+        reward_batch.append(reward)
+        next_obs_batch.append(next_obs)
+        done_batch.append(done)
+
+    # After the loop, before buffer import:
+    obs_batch = np.stack(obs_batch)           # shape (N, obs_dim)
+    action_batch = np.stack(action_batch)     # shape (N, action_dim)
+    reward_batch = np.array(reward_batch).reshape(-1, 1)   # shape (N, 1)
+    next_obs_batch = np.stack(next_obs_batch) # shape (N, obs_dim)
+    done_batch = np.array(done_batch).reshape(-1, 1)       # shape (N, 1)
+
+    return obs_batch, action_batch, reward_batch, next_obs_batch, done_batch
+
+def create_relative_polar_observation_fast(params, current_state_t, target_state_t, TTG):
+
+    l_star = params["l_star"]
+    t_star = params["t_star"]
+    m_star = params["m_star"]
+    
+    x_current_nd = current_state_t[0] / l_star
+    y_current_nd = current_state_t[1] / l_star
+    vx_current_nd = current_state_t[2] / (l_star / t_star)
+    vy_current_nd = current_state_t[3] / (l_star / t_star)
+    mass_current_nd = current_state_t[4] / m_star
+
+    x_target_nd = target_state_t[0] / l_star
+    y_target_nd = target_state_t[1] / l_star
+    vx_target_nd = target_state_t[2] / (l_star / t_star)
+    vy_target_nd = target_state_t[3] / (l_star / t_star)
+
+    TTG_nd = TTG / t_star
+    
+    # convert to polar coordinates
+    r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0 = cartesian_to_polar(x_current_nd, y_current_nd, vx_current_nd, vy_current_nd)
+
+    r_nd_target, eta_nd_target, v_r_nd_target, v_eta_nd_target = cartesian_to_polar(x_target_nd, y_target_nd, vx_target_nd, vy_target_nd)
+
+    cos_eta = np.cos(eta_nd_0)
+    sin_eta = np.sin(eta_nd_0)
+    cos_eta_target = np.cos(eta_nd_target)
+    sin_eta_target = np.sin(eta_nd_target)
+
+    #determine angular momentum
+    h_nd_0 = r_nd_0 * v_eta_nd_0
+    h_nd_target = r_nd_target * v_eta_nd_target
+    # total velocity magnitudes
+    v_comp = ( vx_current_nd**2 + vy_current_nd**2 ) ** 0.5
+    v_comp_target = ( vx_target_nd**2 + vy_target_nd**2 ) ** 0.5
+
+    # transpose velocites
+    v_t_nd = h_nd_0 / r_nd_0
+    v_t_target_nd = h_nd_target / r_nd_target
+
+    v_r_nd = ( max(v_comp**2 - v_t_nd**2, 1e-6) ) ** 0.5
+    v_r_target_nd = ( max(v_comp_target**2 - v_t_target_nd**2, 1e-6) ) ** 0.5
+
+    v_r_unit = v_r_nd / v_comp if v_comp != 0 else 0.0
+    v_t_unit = v_t_nd / v_comp if v_comp != 0 else 0.0
+    v_r_target_unit = v_r_target_nd / v_comp_target if v_comp_target != 0 else 0.0
+    v_t_target_unit = v_t_target_nd / v_comp_target if v_comp_target != 0 else 0.0
+
+    # construct relative target vector
+    delta_r = r_nd_target - r_nd_0
+    delta_eta_cos = cos_eta_target - cos_eta
+    delta_eta_sin = sin_eta_target - sin_eta
+    delta_v = v_comp_target - v_comp
+    delta_v_r = v_r_target_unit - v_r_unit
+    delta_v_t = v_t_target_unit - v_t_unit
+
+    #construct polar observation array
+    polar_observation = np.array( [
+        r_nd_0,
+        cos_eta,
+        sin_eta,
+        v_comp,
+        v_r_unit,
+        v_t_unit,
+        mass_current_nd,
+        delta_r,
+        delta_eta_cos,
+        delta_eta_sin,
+        delta_v,
+        delta_v_r,
+        delta_v_t,
+        TTG_nd
+        ],
+        dtype=np.float32
+        )
+    
+    env_data = {
+        "arr_r_polar_nd": [r_nd_0, eta_nd_0], 
+        "arr_v_polar_nd": [v_r_nd_0, v_eta_nd_0],
+        "arr_rf_polar_nd": [r_nd_target, eta_nd_target],
+        "arr_vf_polar_nd": [v_r_nd_target, v_eta_nd_target],
+        "h_nd_0": h_nd_0,
+        "h_nd_target": h_nd_target,
+        "cos_eta": cos_eta,
+        "sin_eta": sin_eta,
+        "cos_eta_target": cos_eta_target,
+        "sin_eta_target": sin_eta_target,
+        "fpa_nd": 0.0,
+        "fpa_target_nd": 0.0,
+        "v_r_unit": v_r_unit,
+        "v_t_unit": v_t_unit,
+        "v_r_target_unit": v_r_target_unit,
+        "v_t_target_unit": v_t_target_unit
+    }
+    
+    return polar_observation, env_data
+    
+
+def compute_reward_fast(params, current_state_t, TTG, target_state_t, u, step_count=0, timesteps_in_prop=1000):
+
+    # non-dimensionalize states
+    x_nd = current_state_t[0] / params["l_star"]
+    y_nd = current_state_t[1] / params["l_star"]
+    vx_nd = current_state_t[2] / (params["l_star"] / params["t_star"])
+    vy_nd = current_state_t[3] / (params["l_star"] / params["t_star"])
+    x_target_nd = target_state_t[0] / params["l_star"]
+    y_target_nd = target_state_t[1] / params["l_star"]
+    vx_target_nd = target_state_t[2] / (params["l_star"] / params["t_star"])
+    vy_target_nd = target_state_t[3] / (params["l_star"] / params["t_star"])
+
+    TTG_nd = TTG / params["t_star"]
+    r_nd = (x_nd**2 + y_nd**2) ** 0.5
+
+    # extract orbital elements
+    r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0 = cartesian_to_polar(current_state_t[0], current_state_t[1], current_state_t[2], current_state_t[3])
+    sc = Spacecraft(
+        r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0, current_state_t[4], params["max_T"], params["ISP"]
+    )
+    arr_OE = sc.calc_Planar_OE(0.0, 0.0, 0.0, 0.0, params["mu"])
+    e = arr_OE[1]
+
+    # compute reward components
+    # calculate the current distance to target
+    d_r_nd = np.sqrt( (x_nd - x_target_nd)**2 + ( y_nd - y_target_nd)**2 )
+    d_v_nd = np.sqrt( (vx_nd - vx_target_nd)**2 + ( vy_nd - vy_target_nd)**2 )
+
+    # time component
+    time_r_component = np.clip( (1 - (TTG_nd) * params["time_dist_weight"]) * params["tof_weight"], 0.1, 1.0 )
+
+    pos_r_component = np.exp(- params["r_dist_weight"] * d_r_nd**2) * params["pos_r_weight"]
+    vel_r_component = np.exp(- params["v_dist_weight"] * d_v_nd**2) * params["vel_r_weight"]
+
+    throttle_r_component = - u * params["throttle_r_weight"]
+
+    #Step-based shaping reward (always provided for learning)
+    if d_r_nd < params["success_threshold_pos"] and d_v_nd < params["success_threshold_vel"]:
+        precision_mult = params["precision_mult"]  # Small bonus for being within success thresholds
+        pos_r_component = pos_r_component * precision_mult
+        vel_r_component = vel_r_component * precision_mult
+
+    #shaping_reward = self.time_component * ( self.pos_r_component + self.vel_r_component ) + self.mass_r_component
+    pos_r_component = pos_r_component * time_r_component
+    vel_r_component = vel_r_component * time_r_component
+    step_reward = pos_r_component + vel_r_component + throttle_r_component
+
+    # clip reward to avoid extreme values
+    step_reward = np.clip(step_reward, -10, 10)
+
+    terminated = False
+
+    solar_prox = -1.0
+    ecc_penalty = -1.0
+
+    if r_nd < 0.1:
+        terminal_bonus = 0.0
+        reward = solar_prox + step_reward + terminal_bonus
+        terminated = True
+    elif (e >= 1.0 ):
+        terminal_bonus = 0.0
+        reward = ecc_penalty + step_reward + terminal_bonus
+        if (r_nd > 5.0):
+            terminated = True
+        else:
+            terminated = False
+    else:
+        # During trajectory: only shaping reward
+        reward = step_reward
+
+
+    # final check for max timesteps
+    if step_count >= timesteps_in_prop:    
+
+        if d_r_nd < params["success_threshold_pos"] and d_v_nd < params["success_threshold_vel"]:
+            terminal_bonus = params["terminal_bonus"]  # Large bonus for precise rendezvous
+        else:
+            terminal_bonus = 0.0
+
+        reward = step_reward + terminal_bonus
+        terminated = True
+
+    #pack additional env info
+    env_info = {
+        "pos_residual": d_r_nd,
+        "vel_residual": d_v_nd,
+        "time_r_component": time_r_component,
+        "throttle_r_component": throttle_r_component,
+        "pos_r_component": pos_r_component,
+        "vel_r_component": vel_r_component,
+        "terminated": terminated
+    }
+
+
+    return reward, terminated, env_info
