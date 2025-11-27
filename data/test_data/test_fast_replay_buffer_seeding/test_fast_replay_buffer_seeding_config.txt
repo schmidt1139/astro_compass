@@ -2,7 +2,7 @@ path_ephems: data\test_data\test_fast_replay_buffer_seeding\input_ephems
 num_ephems_to_use: 1_000
 ephem_version: 3.0
 cores: 4
-input_buffer_size: 4_000_000
+input_buffer_size: 1_000
 ephem_step_size: 15
 
 # Env Related
