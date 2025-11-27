@@ -16,6 +16,7 @@ scipy>=1.10.0
 
 # Visualization
 matplotlib>=3.7.0
-
+tensorboard
+tomli
 # Optional: For better performance and compatibility
 # tensorboard>=2.14.0  # For training visualization with stable-baselines3

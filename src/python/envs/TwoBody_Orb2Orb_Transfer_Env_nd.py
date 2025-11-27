@@ -39,7 +39,7 @@ class TwoBody_Orb2Orb_Transfer_Env_nd(gym.Env):
         )  # characteristic time (s)
         self.m_star = kwargs.get("m_star", 3366.0)  # characteristic mass (kg)
         self.step_size = kwargs.get("step_size", 86400)  # environment step size (s)
-        print(f"Env using max thrust: {self.C1*1000} N and ISP: {self.C2} s")
+        print(f"Env using max thrust: {self.C1 * 1000} N and ISP: {self.C2} s")
         self.arr_mu = np.array([self.param_mu / 10**9])  # solar mu [km^3/s^2]
         self.planet_radii = np.array([Constants.RADIUS_SUN_M])  # solar radius [m]
         self.elapsed_t = 0.0

@@ -124,7 +124,9 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
         self.log = []
 
         self.start_time = time.time()
-        self.log.append(f"Initialization started at {time.strftime('%Y-%m-%d %H:%M:%S')}")
+        self.log.append(
+            f"Initialization started at {time.strftime('%Y-%m-%d %H:%M:%S')}"
+        )
 
         self.env = env  # The Two body transfer gym environment
         self.init_observation = init_observation  # The initial state of the env
@@ -166,9 +168,20 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
         self.flag_initial_costate_found = False
 
         # Check keyword args and override values
-        allowed_kwargs = {"flag_report_live", "eps_threshold","init_costate_guesses","root_max_iters",
-                          "gamma","timeout_per_trajectory","rtol_explore","atol_explore","ivp_solve_rtol",
-                          "ivp_solve_atol","root_tol","root_tol_max"}
+        allowed_kwargs = {
+            "flag_report_live",
+            "eps_threshold",
+            "init_costate_guesses",
+            "root_max_iters",
+            "gamma",
+            "timeout_per_trajectory",
+            "rtol_explore",
+            "atol_explore",
+            "ivp_solve_rtol",
+            "ivp_solve_atol",
+            "root_tol",
+            "root_tol_max",
+        }
 
         for key, val in kwargs.items():
             if key in allowed_kwargs:
@@ -176,7 +189,7 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
                 self._log_controller_info("kwarg " + key + " set to " + str(val))
             else:
                 raise ValueError(f"Unknown keyword argument: {key}")
-        
+
         self._log_controller_info("Hamiltonian Targeter Initialized")
 
         # report input kwargs
@@ -188,7 +201,6 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
 
         # extract the state vector boundary conditions from the problem
         self.extract_env_boundary_conditions()
-
 
     def hamiltonian_root_finder(self, eps, lam_guess):
         try_max = 10
@@ -207,7 +219,7 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
 
             # Calculate actual residual norm
             residual_norm = np.linalg.norm(lam_sol.fun)
-            
+
             # Strictly enforce residual tolerance - override solver's success flag
             if residual_norm < self.root_tol:
                 lam_sol.success = True
@@ -285,7 +297,9 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
         arr_lam_sol_k = arr_lam_sol_0
 
         # determine initial boundary values for co-states
-        arr_lam_sol_k, residual_mag, f_iters = self.hamiltonian_root_finder(eps, arr_lam_sol_0)
+        arr_lam_sol_k, residual_mag, f_iters = self.hamiltonian_root_finder(
+            eps, arr_lam_sol_0
+        )
 
         self._log_controller_info("k_max: " + str(self.max_k))
         self._log_controller_info("eps0: " + str(eps))
@@ -302,7 +316,9 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
             self._log_controller_info("eps_k: " + str(eps))
 
             # determine initial boundary values for co-states
-            arr_lam_sol_k, residual_mag, f_iters = self.hamiltonian_root_finder(eps, arr_lam_sol_0)
+            arr_lam_sol_k, residual_mag, f_iters = self.hamiltonian_root_finder(
+                eps, arr_lam_sol_0
+            )
 
             # next initial guess is the previous solution
             arr_lam_sol_0 = arr_lam_sol_k
@@ -313,7 +329,9 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
             self._log_controller_info("root f evals: " + " " + str(f_iters))
             self._log_controller_info("Residual mag: " + str(residual_mag))
             self._log_controller_info("Root tol: " + str(self.root_tol))
-            self._log_controller_info(f"flag_constrain_u at iteration: {self.flag_constrain_u}")
+            self._log_controller_info(
+                f"flag_constrain_u at iteration: {self.flag_constrain_u}"
+            )
             self._log_controller_info("")
 
             # update k counter
@@ -326,7 +344,7 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
         # iteration is complete.
         self.eps = eps
         self.arr_lam_sol = arr_lam_sol_k
-        
+
         # Log the converged parameters for debugging
         self._log_controller_info("=== Final Integration Parameters ===")
         self._log_controller_info(f"eps: {self.eps:.6e}")
@@ -359,8 +377,11 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
 
         # integrate forward in time - catch step size warning as exception
         with warnings.catch_warnings():
-            warnings.filterwarnings('error', message='Required step size is less than spacing between numbers')
-            
+            warnings.filterwarnings(
+                "error",
+                message="Required step size is less than spacing between numbers",
+            )
+
             try:
                 sol = solve_ivp(
                     Hamiltonian_EOM_TBT_v2,
@@ -373,7 +394,9 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
                     atol=self.ivp_solve_atol,
                 )
             except UserWarning as w:
-                raise Exception(f"Integration failed in final ephemeris generation: {str(w)}") from w
+                raise Exception(
+                    f"Integration failed in final ephemeris generation: {str(w)}"
+                ) from w
 
         # assign solution to controller object and set solution flag to true
         self.final_sol = sol
@@ -384,14 +407,16 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
         vx_f_final = sol.y[2, -1]
         vy_f_final = sol.y[3, -1]
         lam_m_f_final = sol.y[9, -1]
-        
-        final_residual = np.array([
-            x_f_final - self.arr_yf_nd[0],
-            y_f_final - self.arr_yf_nd[1],
-            vx_f_final - self.arr_yf_nd[2],
-            vy_f_final - self.arr_yf_nd[3],
-            lam_m_f_final - 0.0
-        ])
+
+        final_residual = np.array(
+            [
+                x_f_final - self.arr_yf_nd[0],
+                y_f_final - self.arr_yf_nd[1],
+                vx_f_final - self.arr_yf_nd[2],
+                vy_f_final - self.arr_yf_nd[3],
+                lam_m_f_final - 0.0,
+            ]
+        )
         final_residual_norm = np.linalg.norm(final_residual)
 
         if sol.status == -1 or self.flag_stop_targeting:
@@ -403,7 +428,9 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
             self._log_controller_info("Epsilon reached: " + str(self.eps))
             self._log_controller_info("Shooting iters: " + str(self.shooting_iters))
             self._log_controller_info("Root tol: " + str(self.root_tol))
-            self._log_controller_info(f"Final integration residual: {final_residual_norm:.4e}")
+            self._log_controller_info(
+                f"Final integration residual: {final_residual_norm:.4e}"
+            )
         else:
             elapsed_time = time.time() - self.start_time
             self._log_controller_info(f"Total time elapsed: {elapsed_time:.2f} seconds")
@@ -411,9 +438,15 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
             self._log_controller_info("Targeter converged")
             self._log_controller_info("Shooting iters: " + str(self.shooting_iters))
             self._log_controller_info("Root tol: " + str(self.root_tol))
-            self._log_controller_info(f"Final integration residual: {final_residual_norm:.4e}")
-            self._log_controller_info(f"Final state: x={x_f_final:.6f}, y={y_f_final:.6f}, vx={vx_f_final:.6f}, vy={vy_f_final:.6f}")
-            self._log_controller_info(f"Target state: x={self.arr_yf_nd[0]:.6f}, y={self.arr_yf_nd[1]:.6f}, vx={self.arr_yf_nd[2]:.6f}, vy={self.arr_yf_nd[3]:.6f}")
+            self._log_controller_info(
+                f"Final integration residual: {final_residual_norm:.4e}"
+            )
+            self._log_controller_info(
+                f"Final state: x={x_f_final:.6f}, y={y_f_final:.6f}, vx={vx_f_final:.6f}, vy={vy_f_final:.6f}"
+            )
+            self._log_controller_info(
+                f"Target state: x={self.arr_yf_nd[0]:.6f}, y={self.arr_yf_nd[1]:.6f}, vx={self.arr_yf_nd[2]:.6f}, vy={self.arr_yf_nd[3]:.6f}"
+            )
 
         return self.flag_solved, self.arr_lam_sol, self.eps, sol, self.log
 
@@ -477,8 +510,20 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
             lam_v_mag = np.linalg.norm(lam_v_vec)
 
             ephemeris.add_data(
-                t_i, x_i, y_i, vx_i, vy_i, m_i, x_target_i, y_target_i, vx_target_i, vy_target_i, TTG_i,
-                alpha_vec[0], alpha_vec[1], u
+                t_i,
+                x_i,
+                y_i,
+                vx_i,
+                vy_i,
+                m_i,
+                x_target_i,
+                y_target_i,
+                vx_target_i,
+                vy_target_i,
+                TTG_i,
+                alpha_vec[0],
+                alpha_vec[1],
+                u,
             )
 
             arr_u.append(u)

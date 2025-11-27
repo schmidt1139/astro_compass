@@ -100,9 +100,14 @@ def _read_single_ephem(path, version):
     eph.read_from_file(path)
     return eph
 
-def read_ephems_from_dir(directory, num_ephems_to_use=None, version=1.0,
-                         flag_return_filenames=False, params=None):
 
+def read_ephems_from_dir(
+    directory,
+    num_ephems_to_use=None,
+    version=1.0,
+    flag_return_filenames=False,
+    params=None,
+):
     filenames = os.listdir(directory)
     end_i = len(filenames)
     if num_ephems_to_use is not None:

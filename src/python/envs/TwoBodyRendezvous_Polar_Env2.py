@@ -1,11 +1,9 @@
-import numpy as np
-import gymnasium as gym
 import warnings
-from time import sleep
 from typing import Optional
-from scipy.integrate import solve_ivp
+
+import gymnasium as gym
+import numpy as np
 from constants.constants import Constants
-from core.spacecraft import Spacecraft
 from core.propagation import env_EOM_TBT_v2
 from utils.rl_utils import create_relative_polar_observation_fast
 from utils.state_vector_utils import convert_alpha_from_fpa_to_cart, convert_radial_velocity_to_cartesian, polar_to_cartesian, calc_cart_from_OE, cartesian_to_polar, convert_fpa_to_velocity_components, convert_attitude_from_radial_to_cartesian
@@ -15,10 +13,10 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
     def __init__(self, **kwargs):
         # define limits of the state parameters
         low_array = np.full(
-            14, -np.inf, dtype=np.float32
+            21, -np.inf, dtype=np.float32
         )  # lower bounds for state space
         high_array = np.full(
-            14, np.inf, dtype=np.float32
+            21, np.inf, dtype=np.float32
         )  # upper-bounds for state space
 
         # define the state space (in this case the observation is the state) 10 elements
@@ -30,53 +28,110 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
 
         # list of environment parameters (Sun is the central body)
         self.param_mu = kwargs.get("mu", Constants.MU_SUN_M)  # in m^3/s^2
-        self.C1 = (
-            kwargs.get("max_T", 1.33)
-        )  # Spacecraft max thrust (in N)
+        self.C1 = kwargs.get("max_T", 1.33)  # Spacecraft max thrust (in N)
         self.C2 = kwargs.get("ISP", 3872.0)  # Spacecraft specific impulse (s)
         self.l_star = kwargs.get(
             "l_star", Constants.SMA_EARTH
         )  # characteristic length (m)
         self.t_star = kwargs.get(
-            "t_star", (Constants.SMA_EARTH**3 / (Constants.MU_SUN_M)**0.5)
+            "t_star", (Constants.SMA_EARTH**3 / (Constants.MU_SUN_M) ** 0.5)
         )  # characteristic time (s)
         self.m_star = kwargs.get("m_star", 3366.0)  # characteristic mass (kg)
         self.step_size = kwargs.get("step_size", 86400)  # environment step size (s)
-        self.a_min_init_env_nd = kwargs.get("a_min_init_env_nd", Constants.SMA_VENUS)  # min semi-major axis for env [AU]
-        self.a_max_init_env_nd = kwargs.get("a_max_init_env_nd", Constants.SMA_MARS)  # max semi-major axis for env [AU]
-        self.e_min_init_env = kwargs.get("e_min_init_env", 0.0)  # min eccentricity for env
-        self.e_max_init_env = kwargs.get("e_max_init_env", 0.5)  # max eccentricity for env
-        self.w_min_init_env_rad = kwargs.get("w_min_init_env_deg", 0.0) * np.pi / 180  # min argument of periapsis for env [rad]
-        self.w_max_init_env_rad = kwargs.get("w_max_init_env_deg", 360) * np.pi / 180  # max argument of periapsis for env [rad]
-        self.theta_min_init_env_rad = kwargs.get("theta_min_init_env_deg", 0.0) * np.pi / 180  # min true anomaly for env [rad]
-        self.theta_max_init_env_rad = kwargs.get("theta_max_init_env_deg", 360) * np.pi / 180  # max true anomaly for env [rad]
-        self.a_min_final_env_nd = kwargs.get("a_min_final_env_nd", Constants.SMA_VENUS)  # min semi-major axis for env [AU]
-        self.a_max_final_env_nd = kwargs.get("a_max_final_env_nd", Constants.SMA_MARS)  # max semi-major axis for env [AU]
-        self.e_min_final_env = kwargs.get("e_min_final_env", 0.0)  # min eccentricity for env
-        self.e_max_final_env = kwargs.get("e_max_final_env", 0.5)  # max eccentricity for env
-        self.w_min_final_env_rad = kwargs.get("w_min_final_env_deg", 0.0) * np.pi / 180  # min argument of periapsis for env [rad]
-        self.w_max_final_env_rad = kwargs.get("w_max_final_env_deg", 360) * np.pi / 180  # max argument of periapsis for env [rad]
-        self.theta_min_final_env_rad = kwargs.get("theta_min_final_env_deg", 0.0) * np.pi / 180  # min true anomaly for env [rad]
-        self.theta_max_final_env_rad = kwargs.get("theta_max_final_env_deg", 360) * np.pi / 180  # max true anomaly for env [rad]
+        self.a_min_init_env_nd = kwargs.get(
+            "a_min_init_env_nd", Constants.SMA_VENUS
+        )  # min semi-major axis for env [AU]
+        self.a_max_init_env_nd = kwargs.get(
+            "a_max_init_env_nd", Constants.SMA_MARS
+        )  # max semi-major axis for env [AU]
+        self.e_min_init_env = kwargs.get(
+            "e_min_init_env", 0.0
+        )  # min eccentricity for env
+        self.e_max_init_env = kwargs.get(
+            "e_max_init_env", 0.5
+        )  # max eccentricity for env
+        self.w_min_init_env_rad = (
+            kwargs.get("w_min_init_env_deg", 0.0) * np.pi / 180
+        )  # min argument of periapsis for env [rad]
+        self.w_max_init_env_rad = (
+            kwargs.get("w_max_init_env_deg", 360) * np.pi / 180
+        )  # max argument of periapsis for env [rad]
+        self.theta_min_init_env_rad = (
+            kwargs.get("theta_min_init_env_deg", 0.0) * np.pi / 180
+        )  # min true anomaly for env [rad]
+        self.theta_max_init_env_rad = (
+            kwargs.get("theta_max_init_env_deg", 360) * np.pi / 180
+        )  # max true anomaly for env [rad]
+        self.a_min_final_env_nd = kwargs.get(
+            "a_min_final_env_nd", Constants.SMA_VENUS
+        )  # min semi-major axis for env [AU]
+        self.a_max_final_env_nd = kwargs.get(
+            "a_max_final_env_nd", Constants.SMA_MARS
+        )  # max semi-major axis for env [AU]
+        self.e_min_final_env = kwargs.get(
+            "e_min_final_env", 0.0
+        )  # min eccentricity for env
+        self.e_max_final_env = kwargs.get(
+            "e_max_final_env", 0.5
+        )  # max eccentricity for env
+        self.w_min_final_env_rad = (
+            kwargs.get("w_min_final_env_deg", 0.0) * np.pi / 180
+        )  # min argument of periapsis for env [rad]
+        self.w_max_final_env_rad = (
+            kwargs.get("w_max_final_env_deg", 360) * np.pi / 180
+        )  # max argument of periapsis for env [rad]
+        self.theta_min_final_env_rad = (
+            kwargs.get("theta_min_final_env_deg", 0.0) * np.pi / 180
+        )  # min true anomaly for env [rad]
+        self.theta_max_final_env_rad = (
+            kwargs.get("theta_max_final_env_deg", 360) * np.pi / 180
+        )  # max true anomaly for env [rad]
         # Support both naming conventions for weights
         self.pos_weight = kwargs.get("pos_r_weight", kwargs.get("r_weight", 1.0))
         self.vel_weight = kwargs.get("vel_r_weight", kwargs.get("v_weight", 1.0))
-        self.throttle_r_weight = kwargs.get("throttle_r_weight", kwargs.get("throttle_r_weight", 1.0))
+        self.throttle_r_weight = kwargs.get(
+            "throttle_r_weight", kwargs.get("throttle_r_weight", 1.0)
+        )
         self.tof_scale = kwargs.get("tof_scale", 1.0)
         self.r_dist_weight = kwargs.get("r_dist_weight", self.pos_weight)
         self.v_dist_weight = kwargs.get("v_dist_weight", self.vel_weight)
-        self.success_threshold_pos = kwargs.get("success_threshold_pos", 0.01)  # 1% of characteristic length
-        self.success_threshold_vel = kwargs.get("success_threshold_vel", 0.01)  # 1% of characteristic velocity
-        self.terminal_bonus = kwargs.get("terminal_bonus", 100.0)  # Large bonus for precise rendezvous
-        self.precision_mult = kwargs.get("precision_mult", 10.0)  # Small bonus for being within success thresholds
-        self.terminal_bonus = kwargs.get("terminal_bonus", 100.0)  # Large bonus for precise rendezvous
-        self.tof_weight = kwargs.get("tof_weight", 1.0)  # Weighting factor for time component of reward
-        self.time_dist_weight = kwargs.get("time_dist_weight", 1.0)  # Weighting factor for time distribution
-        self.prop_length_scale = kwargs.get("prop_length_scale", 1.0)  # Scale factor for propagation length
-        self.arr_r_polar_nd = np.array([0.0, 0.0], dtype=np.float32)  # placeholder for polar position [r, theta]
-        self.arr_v_polar_nd = np.array([0.0, 0.0], dtype=np.float32)  # placeholder for polar velocity [v_r, v_theta]
-        self.arr_rf_polar_nd = np.array([0.0, 0.0], dtype=np.float32)  # placeholder for target polar position [r, theta]
-        self.arr_vf_polar_nd = np.array([0.0, 0.0], dtype=np.float32)  # placeholder for target polar velocity [v_r, v_theta]
+        self.success_threshold_pos = kwargs.get(
+            "success_threshold_pos", 0.01
+        )  # 1% of characteristic length
+        self.success_threshold_vel = kwargs.get(
+            "success_threshold_vel", 0.01
+        )  # 1% of characteristic velocity
+        self.terminal_bonus = kwargs.get(
+            "terminal_bonus", 100.0
+        )  # Large bonus for precise rendezvous
+        self.precision_mult = kwargs.get(
+            "precision_mult", 10.0
+        )  # Small bonus for being within success thresholds
+        self.terminal_bonus = kwargs.get(
+            "terminal_bonus", 100.0
+        )  # Large bonus for precise rendezvous
+        self.tof_weight = kwargs.get(
+            "tof_weight", 1.0
+        )  # Weighting factor for time component of reward
+        self.time_dist_weight = kwargs.get(
+            "time_dist_weight", 1.0
+        )  # Weighting factor for time distribution
+        self.prop_length_scale = kwargs.get(
+            "prop_length_scale", 1.0
+        )  # Scale factor for propagation length
+        self.arr_r_polar_nd = np.array(
+            [0.0, 0.0], dtype=np.float32
+        )  # placeholder for polar position [r, theta]
+        self.arr_v_polar_nd = np.array(
+            [0.0, 0.0], dtype=np.float32
+        )  # placeholder for polar velocity [v_r, v_theta]
+        self.arr_rf_polar_nd = np.array(
+            [0.0, 0.0], dtype=np.float32
+        )  # placeholder for target polar position [r, theta]
+        self.arr_vf_polar_nd = np.array(
+            [0.0, 0.0], dtype=np.float32
+        )  # placeholder for target polar velocity [v_r, v_theta]
+        self.max_episode_steps = kwargs.get("max_episode_steps", 5000)
         self.h_nd_0 = 0.0  # placeholder for initial angular momentum
         self.h_nd_f = 0.0  # placeholder for final angular momentum
         self.cos_eta = 0.0  # placeholder for eta cosine component
@@ -109,17 +164,17 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
 
         mu = self.param_mu
 
-        #check periods
-        a_nd = self._keplerian_elements[0]/Constants.SMA_EARTH
-        
+        # check periods
+        a_nd = self._keplerian_elements[0] / Constants.SMA_EARTH
+
         with warnings.catch_warnings():
-            warnings.filterwarnings('error', category=RuntimeWarning)
+            warnings.filterwarnings("error", category=RuntimeWarning)
             try:
-                T_nd = 2 * np.pi * ( a_nd**3 / 1.0 ) ** 0.5
+                T_nd = 2 * np.pi * (a_nd**3 / 1.0) ** 0.5
             except RuntimeWarning:
                 T_nd = np.nan
-                
-        #calc deltas
+
+        # calc deltas
         deltas = self.calc_deltas()
         dx, dy, dr, dvx, dvy, dv, r_target, v_target, dr_norm, dv_norm = deltas
 
@@ -128,14 +183,28 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         vx_target = self._state[7]
         vy_target = self._state[8]
 
-        r_target, theta_target, r_dot_target, v_theta_target = cartesian_to_polar(x_target, y_target, vx_target, vy_target)
+        r_target, theta_target, r_dot_target, v_theta_target = cartesian_to_polar(
+            x_target, y_target, vx_target, vy_target
+        )
 
         # Initialize a spacecraft object with the state of the environment
-        sc_target = Spacecraft(r_target, theta_target, r_dot_target, v_theta_target, 1000.0, self.C1, self.C2)
-        sc_target.update_state_cartesian(x_target, y_target, vx_target, vy_target, 1000.0)
+        sc_target = Spacecraft(
+            r_target,
+            theta_target,
+            r_dot_target,
+            v_theta_target,
+            1000.0,
+            self.C1,
+            self.C2,
+        )
+        sc_target.update_state_cartesian(
+            x_target, y_target, vx_target, vy_target, 1000.0
+        )
 
         # calculate orbital elements
-        a_target, e_target, w_target, theta_target = sc_target.calc_Planar_OE(0.0, 0.0, 0.0, 0.0, mu)
+        a_target, e_target, w_target, theta_target = sc_target.calc_Planar_OE(
+            0.0, 0.0, 0.0, 0.0, mu
+        )
         a_target_nd = a_target / Constants.SMA_EARTH
         T_target_nd = 2 * np.pi * (a_target_nd**3 / 1.0) ** 0.5
 
@@ -143,8 +212,12 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
             print("T_target is NaN")
             print("a_target_nd:", a_target_nd)
             print(f"a_target: {a_target}, mu: {mu}")
-            print(f"x_target: {x_target}, y_target: {y_target}, vx_target: {vx_target}, vy_target: {vy_target}")
-            print(f"r_target: {r_target}, theta_target: {theta_target}, r_dot_target: {r_dot_target}, v_theta_target: {v_theta_target}")
+            print(
+                f"x_target: {x_target}, y_target: {y_target}, vx_target: {vx_target}, vy_target: {vy_target}"
+            )
+            print(
+                f"r_target: {r_target}, theta_target: {theta_target}, r_dot_target: {r_dot_target}, v_theta_target: {v_theta_target}"
+            )
             raise ValueError("T_target is NaN")
 
         return {
@@ -152,7 +225,7 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
             "ODE Solution": ode_solution,
             "delta_state": delta_r,
             "planet_radii": self.planet_radii,
-            "a": self._keplerian_elements[0]/Constants.SMA_EARTH,
+            "a": self._keplerian_elements[0] / Constants.SMA_EARTH,
             "e": self._keplerian_elements[1],
             "w": np.rad2deg(self._keplerian_elements[2]),
             "theta": np.rad2deg(self._keplerian_elements[3]),
@@ -170,12 +243,14 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
             "dv_norm": dv_norm,
             "orbital_period_nd": T_nd,
             "orbital_period_years": T_nd * self.t_star / Constants.YEARS_TO_SEC,
-            "a_target": a_target/Constants.SMA_EARTH,
+            "a_target": a_target / Constants.SMA_EARTH,
             "e_target": e_target,
             "w_target": np.rad2deg(w_target),
             "theta_target": np.rad2deg(theta_target),
             "orbital_period_target_nd": T_target_nd,
-            "orbital_period_target_years": T_target_nd * self.t_star / Constants.YEARS_TO_SEC,
+            "orbital_period_target_years": T_target_nd
+            * self.t_star
+            / Constants.YEARS_TO_SEC,
             "mu": self.param_mu,
             "step_count": self.step_count,
             "TOF": self.TOF,
@@ -187,11 +262,11 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
             "r_weight": self.pos_weight,
             "v_weight": self.vel_weight,
             "throttle_r_weight": self.throttle_r_weight,
-            "pos_r_component": self.pos_r_component,
-            "vel_r_component": self.vel_r_component,
-            "mass_r_component": self.mass_r_component,
-            "throttle_r_component": self.throttle_r_component,
-            "time_r_component": self.time_r_component,
+            "pos_reward": self.pos_reward,
+            "vel_reward": self.vel_reward,
+            "mass_reward": self.mass_reward,
+            "throttle_reward": self.throttle_reward,
+            "time_reward": self.time_reward,
             "r_nd": self.arr_r_polar_nd[0],
             "eta_nd": self.arr_r_polar_nd[1],
             "v_r_nd": self.arr_v_polar_nd[0],
@@ -222,7 +297,7 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
             "v_r_target_unit": self.v_r_target_unit,
             "v_t_target_unit": self.v_t_target_unit,
         }
-    
+
     def seed(self, seed=None):
         self.np_random, seed = gym.utils.seeding.np_random(seed)
         return [seed]
@@ -239,10 +314,22 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         mu = self.param_mu
 
         # set ranges for initial state parameters
-        a_range = [self.a_min_init_env_nd, self.a_max_init_env_nd]  # initial radius range (m)
-        e_range = [self.e_min_init_env, self.e_max_init_env]  # initial eccentricity range
-        w_range = [self.w_min_init_env_rad, self.w_max_init_env_rad]  # initial argument of periapsis range (rad)
-        theta_range = [self.theta_min_init_env_rad, self.theta_max_init_env_rad]  # initial true anomaly range (rad)
+        a_range = [
+            self.a_min_init_env_nd,
+            self.a_max_init_env_nd,
+        ]  # initial radius range (m)
+        e_range = [
+            self.e_min_init_env,
+            self.e_max_init_env,
+        ]  # initial eccentricity range
+        w_range = [
+            self.w_min_init_env_rad,
+            self.w_max_init_env_rad,
+        ]  # initial argument of periapsis range (rad)
+        theta_range = [
+            self.theta_min_init_env_rad,
+            self.theta_max_init_env_rad,
+        ]  # initial true anomaly range (rad)
 
         # set the initial spacecraft parameters
         mass = 3366.0  # Assumed spacecraft total mass
@@ -262,17 +349,28 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         r_0, theta_0, r_dot_0, v_theta_0 = cartesian_to_polar(x_0, y_0, vx_0, vy_0)
 
         # set ranges for target state parameters
-        a_range = [self.a_min_final_env_nd, self.a_max_final_env_nd]  # final radius range (m)
-        e_range = [self.e_min_final_env, self.e_max_final_env]  # final eccentricity range
-        w_range = [self.w_min_final_env_rad, self.w_max_final_env_rad]  # final argument of periapsis range (rad)
-        theta_range = [self.theta_min_final_env_rad, self.theta_max_final_env_rad]  # final true anomaly range (rad)
+        a_range = [
+            self.a_min_final_env_nd,
+            self.a_max_final_env_nd,
+        ]  # final radius range (m)
+        e_range = [
+            self.e_min_final_env,
+            self.e_max_final_env,
+        ]  # final eccentricity range
+        w_range = [
+            self.w_min_final_env_rad,
+            self.w_max_final_env_rad,
+        ]  # final argument of periapsis range (rad)
+        theta_range = [
+            self.theta_min_final_env_rad,
+            self.theta_max_final_env_rad,
+        ]  # final true anomaly range (rad)
 
         # randomly vary target state
         a_f = self.np_random.uniform(low=a_range[0], high=a_range[1])
         e_f = self.np_random.uniform(low=e_range[0], high=e_range[1])
         w_f = self.np_random.uniform(low=w_range[0], high=w_range[1])
         theta_f = self.np_random.uniform(low=theta_range[0], high=theta_range[1])
-
 
         # convert the target state to polar coordinates and cartesian
         x_f, y_f, vx_f, vy_f = calc_cart_from_OE(a_f, e_f, w_f, theta_f, mu)
@@ -299,20 +397,19 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         a_f, e_f, w_f, theta_f = sc_target.calc_Planar_OE(x_cb, y_cb, vx_cb, vy_cb, mu)
         a_nd = a / Constants.SMA_EARTH
         a_f_nd = a_f / Constants.SMA_EARTH
-        T_i = 2 * np.pi * ( a_nd**3 / 1.0 ) ** 0.5
-        T_target = 2 * np.pi * ( a_f_nd**3 / 1.0 ) ** 0.5
+        T_i = 2 * np.pi * (a_nd**3 / 1.0) ** 0.5
+        T_target = 2 * np.pi * (a_f_nd**3 / 1.0) ** 0.5
 
-        #determine time of flight
+        # determine time of flight
         TTG_dim = 0.0
         TTG_nd = 0.0
 
-        if (T_target > T_i):
+        if T_target > T_i:
             TTG_nd = T_target
             TTG_dim = T_target * self.t_star
         else:
-            TTG_nd = T_i 
+            TTG_nd = T_i
             TTG_dim = T_i * self.t_star
-
 
         TTG_nd = TTG_nd * self.tof_scale
         TTG_dim = TTG_nd * self.t_star
@@ -340,119 +437,150 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         vy_target_nd = vy_f / (self.l_star / self.t_star)
 
         # set the initial state of the environment
-        self._state = np.array([x_0, y_0, vx_0, vy_0, mass, x_f, y_f, vx_f, vy_f, TTG_dim], dtype=np.float32)
+        self._state = np.array(
+            [x_0, y_0, vx_0, vy_0, mass, x_f, y_f, vx_f, vy_f, TTG_dim],
+            dtype=np.float32,
+        )
 
         # calc target location at current time after _state has been set
         target_state_t = self.get_target_cartesian_state_at_ttg(TTG_dim)
-        target_state_polar_t = cartesian_to_polar(target_state_t[0], target_state_t[1], target_state_t[2], target_state_t[3])
-
+        target_state_polar_t = cartesian_to_polar(
+            target_state_t[0], target_state_t[1], target_state_t[2], target_state_t[3]
+        )
 
         # --------------------------------------------------------------------------------------------
         # create polar observation
-        polar_obs = self.create_relative_polar_observation(x_nd, 
-                                                           y_nd, 
-                                                           vx_nd, 
-                                                           vy_nd, 
-                                                           mass_nd, 
-                                                           TTG_nd)
-   
+        polar_obs = self.create_relative_polar_observation(
+            x_nd, y_nd, vx_nd, vy_nd, mass_nd, TTG_nd
+        )
 
         observation = polar_obs
         self.elapsed_t = 0.0
 
         deltas = self.calc_deltas()
-        dx_nd, dy_nd, dr, dvx_nd, dvy_nd, dv_nd, r_target, v_target, dr_norm, dv_norm = deltas
-        self.pos_residual = ( dx_nd**2 + dy_nd**2 ) ** 0.5
-        self.vel_residual = ( dvx_nd**2 + dvy_nd**2 ) ** 0.5
-        self.pos_r_component = 0.0
-        self.vel_r_component = 0.0
-        self.mass_r_component = 0.0
-        self.throttle_r_component = 0.0
-        self.time_r_component = 0.0
+        (
+            dx_nd,
+            dy_nd,
+            dr,
+            dvx_nd,
+            dvy_nd,
+            dv_nd,
+            r_target,
+            v_target,
+            dr_norm,
+            dv_norm,
+        ) = deltas
+        self.pos_residual = (dx_nd**2 + dy_nd**2) ** 0.5
+        self.vel_residual = (dvx_nd**2 + dvy_nd**2) ** 0.5
+        self.pos_reward = 0.0
+        self.vel_reward = 0.0
+        self.mass_reward = 0.0
+        self.throttle_reward = 0.0
+        self.time_reward = 0.0
 
         info = self._get_info(
-            None, #placeholder for ODE data - only provided in step()
-            None, #placeholder for delta_r data - only provided in step()
+            None,  # placeholder for ODE data - only provided in step()
+            None,  # placeholder for delta_r data - only provided in step()
         )
 
-        #check for NaN/inf values in observation
-        if np.any(np.isnan(observation) ) or np.any(np.isinf(observation)):
+        # check for NaN/inf values in observation
+        if np.any(np.isnan(observation)) or np.any(np.isinf(observation)):
             print("Observation array contains NaN or Inf values:")
             print(observation)
             raise ValueError("NaN value detected in observation array.")
 
         return observation, info
-    
-    def create_polar_observation( self, x_nd, y_nd, vx_nd, vy_nd, 
-                                 x_target_nd, y_target_nd, vx_target_nd, 
-                                 vy_target_nd, mass_nd, TTG_nd ):
 
+    def create_polar_observation(
+        self,
+        x_nd,
+        y_nd,
+        vx_nd,
+        vy_nd,
+        x_target_nd,
+        y_target_nd,
+        vx_target_nd,
+        vy_target_nd,
+        mass_nd,
+        TTG_nd,
+    ):
         # convert init nd state to polar
-        r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0 = cartesian_to_polar(x_nd, y_nd, vx_nd, vy_nd)
-        r_nd_target, eta_nd_target, v_r_nd_f, v_eta_nd_f = cartesian_to_polar(x_target_nd, y_target_nd, vx_target_nd, vy_target_nd)
+        r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0 = cartesian_to_polar(
+            x_nd, y_nd, vx_nd, vy_nd
+        )
+        r_nd_target, eta_nd_target, v_r_nd_f, v_eta_nd_f = cartesian_to_polar(
+            x_target_nd, y_target_nd, vx_target_nd, vy_target_nd
+        )
         self.arr_r_polar_nd = [r_nd_0, eta_nd_0]
         self.arr_v_polar_nd = [v_r_nd_0, v_eta_nd_0]
         self.arr_rf_polar_nd = [r_nd_target, eta_nd_target]
         self.arr_vf_polar_nd = [v_r_nd_f, v_eta_nd_f]
 
-        #determine angular momentum
+        # determine angular momentum
         h_nd_0 = r_nd_0 * v_eta_nd_0
         h_nd_target = r_nd_target * v_eta_nd_f
         self.h_nd_0 = h_nd_0
         self.h_nd_target = h_nd_target
 
-        #calculate eta trig components
+        # calculate eta trig components
         self.cos_eta = np.cos(eta_nd_0)
         self.sin_eta = np.sin(eta_nd_0)
         self.cos_eta_target = np.cos(eta_nd_target)
         self.sin_eta_target = np.sin(eta_nd_target)
 
         # total velocity magnitudes
-        v_comp = ( vx_nd**2 + vy_nd**2 ) ** 0.5
-        v_comp_target = ( vx_target_nd**2 + vy_target_nd**2 ) ** 0.5
+        v_comp = (vx_nd**2 + vy_nd**2) ** 0.5
+        v_comp_target = (vx_target_nd**2 + vy_target_nd**2) ** 0.5
 
         # transpose velocites
         self.v_t_nd = h_nd_0 / r_nd_0
         self.v_t_target_nd = h_nd_target / r_nd_target
 
         # radial velocities
-        self.v_r_nd = ( max(v_comp**2 - self.v_t_nd**2, 1e-6) ) ** 0.5
-        self.v_r_target_nd = ( max(v_comp_target**2 - self.v_t_target_nd**2, 1e-6) ) ** 0.5
+        self.v_r_nd = (max(v_comp**2 - self.v_t_nd**2, 1e-6)) ** 0.5
+        self.v_r_target_nd = (
+            max(v_comp_target**2 - self.v_t_target_nd**2, 1e-6)
+        ) ** 0.5
         # flight path angles
-        self.fpa_nd = np.arctan2( self.v_r_nd, self.v_t_nd )
-        self.fpa_target_nd = np.arctan2( self.v_r_target_nd, self.v_t_target_nd )
+        self.fpa_nd = np.arctan2(self.v_r_nd, self.v_t_nd)
+        self.fpa_target_nd = np.arctan2(self.v_r_target_nd, self.v_t_target_nd)
 
         # flight path angle trig components
-        self.cos_fpa = np.cos( self.fpa_nd )
-        self.sin_fpa = np.sin( self.fpa_nd )
-        self.cos_fpa_target = np.cos( self.fpa_target_nd )
-        self.sin_fpa_target = np.sin( self.fpa_target_nd )
+        self.cos_fpa = np.cos(self.fpa_nd)
+        self.sin_fpa = np.sin(self.fpa_nd)
+        self.cos_fpa_target = np.cos(self.fpa_target_nd)
+        self.sin_fpa_target = np.sin(self.fpa_target_nd)
 
-        #v unit components in radial and transverse directions
+        # v unit components in radial and transverse directions
         self.v_r_unit = self.v_r_nd / v_comp if v_comp != 0 else 0.0
         self.v_t_unit = self.v_t_nd / v_comp if v_comp != 0 else 0.0
-        self.v_r_target_unit = self.v_r_target_nd / v_comp_target if v_comp_target != 0 else 0.0
-        self.v_t_target_unit = self.v_t_target_nd / v_comp_target if v_comp_target != 0 else 0.0
+        self.v_r_target_unit = (
+            self.v_r_target_nd / v_comp_target if v_comp_target != 0 else 0.0
+        )
+        self.v_t_target_unit = (
+            self.v_t_target_nd / v_comp_target if v_comp_target != 0 else 0.0
+        )
 
-        #construct polar observation array
-        polar_observation = np.array( [
-            r_nd_0,
-            self.cos_eta,
-            self.sin_eta,
-            v_comp,
-            self.cos_fpa,
-            self.sin_fpa,
-            mass_nd,
-            r_nd_target,
-            self.cos_eta_target,
-            self.sin_eta_target,
-            v_comp_target,
-            self.v_r_target_unit,
-            self.v_t_target_unit,
-            TTG_nd
+        # construct polar observation array
+        polar_observation = np.array(
+            [
+                r_nd_0,
+                self.cos_eta,
+                self.sin_eta,
+                v_comp,
+                self.cos_fpa,
+                self.sin_fpa,
+                mass_nd,
+                r_nd_target,
+                self.cos_eta_target,
+                self.sin_eta_target,
+                v_comp_target,
+                self.v_r_target_unit,
+                self.v_t_target_unit,
+                TTG_nd,
             ],
-            dtype=np.float32
-         )
+            dtype=np.float32,
+        )
 
         return polar_observation
     
@@ -493,9 +621,8 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         self.polar_observation = polar_observation
 
         return polar_observation
-        
-    def calc_deltas(self):
 
+    def calc_deltas(self):
         # unpack state vector
         x = self._state[0]
         y = self._state[1]
@@ -514,17 +641,21 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         vy_target_norm = vy_target / (self.l_star / self.t_star)
 
         # position difference from target
-        dx = (x - x_target) / self.l_star   # delta x nd
-        dy = (y - y_target) / self.l_star    # delta y nd
-        dr = (dx**2 + dy**2) ** 0.5 # distance to target in nd units
-        r_target = (x_target_norm**2 + y_target_norm**2) ** 0.5 # target radius in nd units
+        dx = (x - x_target) / self.l_star  # delta x nd
+        dy = (y - y_target) / self.l_star  # delta y nd
+        dr = (dx**2 + dy**2) ** 0.5  # distance to target in nd units
+        r_target = (
+            x_target_norm**2 + y_target_norm**2
+        ) ** 0.5  # target radius in nd units
         dr_norm = dr / r_target if r_target != 0 else 0.0
 
         # velocity difference from target
         dvx = (vx - vx_target) / (self.l_star / self.t_star)  # delta vx in nd units
         dvy = (vy - vy_target) / (self.l_star / self.t_star)  # delta vy in nd units
-        dv = (dvx**2 + dvy**2) ** 0.5    # velocity difference to target in nd units
-        v_target = (vx_target_norm**2 + vy_target_norm**2) ** 0.5   # target velocity in nd units
+        dv = (dvx**2 + dvy**2) ** 0.5  # velocity difference to target in nd units
+        v_target = (
+            vx_target_norm**2 + vy_target_norm**2
+        ) ** 0.5  # target velocity in nd units
         dv_norm = dv / v_target if v_target != 0 else 0.0
 
         return dx, dy, dr, dvx, dvy, dv, r_target, v_target, dr_norm, dv_norm
@@ -588,17 +719,29 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
 
         # determine reward based on state input, also check if state is terminal
         deltas = self.calc_deltas()
-        dx_nd, dy_nd, dr, dvx_nd, dvy_nd, dv_nd, r_target, v_target, dr_norm, dv_norm = deltas
+        (
+            dx_nd,
+            dy_nd,
+            dr,
+            dvx_nd,
+            dvy_nd,
+            dv_nd,
+            r_target,
+            v_target,
+            dr_norm,
+            dv_norm,
+        ) = deltas
 
         # extract the current target state
-        x_target_state_current_nd = self.target_state_current[0] / self.l_star
-        y_target_state_current_nd = self.target_state_current[1] / self.l_star
-        vx_target_state_current_nd = self.target_state_current[2] / (self.l_star / self.t_star)
-        vy_target_state_current_nd = self.target_state_current[3] / (self.l_star / self.t_star)
+        x_target_nd_i = self.target_state_current[0] / self.l_star
+        y_target_nd_i = self.target_state_current[1] / self.l_star
+        vx_target_nd_i = self.target_state_current[2] / (self.l_star / self.t_star)
+        vy_target_nd_i = self.target_state_current[3] / (self.l_star / self.t_star)
 
         # calculate the current distance to target
-        d_r_nd = np.sqrt( (x_nd - x_target_state_current_nd)**2 + ( y_nd - y_target_state_current_nd)**2 )
-        d_v_nd = np.sqrt( (vx_nd - vx_target_state_current_nd)**2 + ( vy_nd - vy_target_state_current_nd)**2 )
+        # MUST DO, otherwise you can get two big bumps rather than one bump.
+        d_r_nd = np.sqrt((x_nd - x_target_nd_i) ** 2 + (y_nd - y_target_nd_i) ** 2)
+        d_v_nd = np.sqrt((vx_nd - vx_target_nd_i) ** 2 + (vy_nd - vy_target_nd_i) ** 2)
 
         self.pos_residual = d_r_nd
         self.vel_residual = d_v_nd
@@ -606,61 +749,58 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         # complete resisdual
         residual = dx_nd**2 + dy_nd**2 + dvx_nd**2 + dvy_nd**2
 
-        # Separate exponentials for position and velocity - provides smoother gradient
-        self.time_r_component = np.clip( (1 - (TTG_nd) * self.time_dist_weight) * self.tof_weight, 0.1, 1.0 )
+        # these rewards get bigger (max 1) the closer you get to the target
+        pos_reward = np.exp(-self.r_dist_weight * self.pos_residual**2)
+        vel_reward = np.exp(-self.v_dist_weight * self.vel_residual**2)
 
-        #self.pos_r_component = - d_r_nd**(self.r_dist_weight) * self.pos_weight
-        #self.vel_r_component = - d_v_nd**(self.v_dist_weight) * self.vel_weight
+        # These values will be negative, approaching zero as you get closer to the target
+        self.pos_reward = (-1 + pos_reward) * self.pos_weight
+        self.vel_reward = (-1 + vel_reward) * self.vel_weight
 
-        self.pos_r_component = np.exp(- self.r_dist_weight * self.pos_residual**2) * self.pos_weight
-        self.vel_r_component = np.exp(- self.v_dist_weight * self.vel_residual**2) * self.vel_weight
+        # This value will always be negative
+        self.throttle_reward = -u * self.throttle_r_weight
 
-        self.throttle_r_component = - u * self.throttle_r_weight
+        # Step-based shaping reward (always provided for learning)
+        position_within_success_region = self.pos_residual < self.success_threshold_pos
+        velocity_within_success_region = self.vel_residual < self.success_threshold_vel
 
-        #Step-based shaping reward (always provided for learning)
-        if self.pos_residual < self.success_threshold_pos and self.vel_residual < self.success_threshold_vel:
-            precision_mult = self.precision_mult  # Small bonus for being within success thresholds
-            self.pos_r_component = self.pos_r_component * precision_mult
-            self.vel_r_component = self.vel_r_component * precision_mult
+        # shaping_reward = self.time_component * ( self.pos_reward + self.vel_reward ) + self.mass_reward
 
-        #shaping_reward = self.time_component * ( self.pos_r_component + self.vel_r_component ) + self.mass_r_component
-        self.pos_r_component = self.pos_r_component * self.time_r_component
-        self.vel_r_component = self.vel_r_component * self.time_r_component
-        step_reward = self.pos_r_component + self.vel_r_component + self.throttle_r_component
-
-        # clip reward to avoid extreme values
-        step_reward = np.clip(step_reward, -10, 10)
+        # self.time_reward = np.clip(
+        #     (1 - (TTG_nd) * self.time_dist_weight) * self.tof_weight, 0.1, 1.0
+        # )
+        # self.pos_reward = self.pos_reward * self.time_reward
+        # self.vel_reward = self.vel_reward * self.time_reward
 
 
         terminated = False
 
-        solar_prox = -1.0
-        ecc_penalty = -1.0
+        # terminal rewards
+        exceeded_min = r_nd < 0.1  # too close to sun
+        exceeded_max = r_nd > 5.0  # too far from sun
+        # episode_timeout = self.step_count >= self.max_episode_steps
+        episode_timeout = TTG_nd <= 0.0  # out of time
+        fuel_exceeded = mass <= 0.01  # out of fuel
+        eccentricity_exceeded = e >= 2.0
 
-        if r_nd < 0.1:
-            terminal_bonus = 0.0
-            reward = solar_prox + step_reward + terminal_bonus
-            terminated = True
-        elif (e >= 1.0 ):
-            terminal_bonus = 0.0
-            reward = ecc_penalty + step_reward + terminal_bonus
-            if (r_nd > 5.0):
-                terminated = True
-            else:
-                terminated = False
-        elif self.step_count >= self.timesteps_in_prop:    
-
-            if self.pos_residual < self.success_threshold_pos and self.vel_residual < self.success_threshold_vel:
-                terminal_bonus = self.terminal_bonus  # Large bonus for precise rendezvous
-            else:
-                terminal_bonus = 0.0
-
-            reward = step_reward + terminal_bonus
+        # Failure Conditions
+        terminated = False
+        truncated = False
+        if exceeded_min or exceeded_max:
+            reward -= 10.0
             terminated = True
 
-        else:
-            # During trajectory: only shaping reward
-            reward = step_reward
+        # if eccentricity_exceeded:
+        #     reward -= 100.0
+        #     terminated = True
+
+        if fuel_exceeded:
+            reward -= 10.0
+            terminated = True
+
+        if episode_timeout:
+            # Nothing good or bad assigned to this
+            truncated = True
 
         self.terminated = terminated
 
@@ -683,7 +823,6 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         return dV_vec
 
     def step(self, action):
-
         # unpack the state vector
         x = self._state[0]
         y = self._state[1]
@@ -705,17 +844,19 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
 
         # unpack the action vector
         u = action[0]  # throttle control
-        
+
         # get flight path angle components
         alpha_r = action[1]  # radial direction component
         alpha_theta = action[2]  # transverse direction component
 
         # convert to x and y components
-        alpha_x, alpha_y = convert_attitude_from_radial_to_cartesian(x, y, alpha_r, alpha_theta)
+        alpha_x, alpha_y = convert_attitude_from_radial_to_cartesian(
+            x, y, alpha_r, alpha_theta
+        )
 
         # convert polar velocity components to cartesian
         eta = self.arr_r_polar_nd[1]
-        alpha = ( alpha_x**2 + alpha_y**2 ) ** 0.5
+        alpha = (alpha_x**2 + alpha_y**2) ** 0.5
         alpha_x = alpha_x / alpha if alpha != 0 else 0.0
         alpha_y = alpha_y / alpha if alpha != 0 else 0.0
         self.alpha_x = alpha_x
@@ -739,9 +880,14 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
 
         # solve ODE - catch step size warning as exception
         with warnings.catch_warnings():
-            warnings.filterwarnings('error', message='Required step size is less than spacing between numbers')
+            warnings.filterwarnings(
+                "error",
+                message="Required step size is less than spacing between numbers",
+            )
             try:
-                solution = solve_ivp(env_EOM_TBT_v2, t_span, y0, method="RK45", args=(params,))
+                solution = solve_ivp(
+                    env_EOM_TBT_v2, t_span, y0, method="RK45", args=(params,)
+                )
             except UserWarning as w:
                 raise Exception(f"Integration failed in env.step(): {str(w)}") from w
 
@@ -756,11 +902,16 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
 
         # update the state and elapsed time
         self.elapsed_t = self.elapsed_t + self.step_size
-        self._state = np.append(y_final, [self._state[5], self._state[6], self._state[7], self._state[8], TTG]).astype(np.float32)
+        self._state = np.append(
+            y_final,
+            [self._state[5], self._state[6], self._state[7], self._state[8], TTG],
+        ).astype(np.float32)
 
         # get target state at current time
         target_state_t = self.get_target_cartesian_state_at_ttg(TTG)
-        target_state_polar_t = cartesian_to_polar(target_state_t[0], target_state_t[1], target_state_t[2], target_state_t[3])
+        target_state_polar_t = cartesian_to_polar(
+            target_state_t[0], target_state_t[1], target_state_t[2], target_state_t[3]
+        )
 
         x_plus = y_final[0]
         y_plus = y_final[1]
@@ -785,7 +936,7 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         self._keplerian_elements[3] = theta
 
         # determine reward and terminated status
-        reward, terminated = self.calc_reward(u)
+        reward, terminated, truncated = self.calc_reward(u)
 
         # accumulate reward
         self.episode_reward += reward
@@ -804,19 +955,14 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
 
         # --------------------------------------------------------------------------------------------
         # create polar observation
-        polar_obs = self.create_relative_polar_observation(x_nd, 
-                                                           y_nd, 
-                                                           vx_nd, 
-                                                           vy_nd, 
-                                                           mass_nd, 
-                                                           TTG_nd)
-        
+        polar_obs = self.create_relative_polar_observation(
+            x_nd, y_nd, vx_nd, vy_nd, mass_nd, TTG_nd
+        )
+
         observation = polar_obs
 
         # extract other environment information
         info = self._get_info(solution, delta_r)
-
-        truncated = False
 
         if terminated or truncated:
             info["episode"] = {"r": float(self.episode_reward)}
@@ -832,22 +978,21 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         # print("")
         # sleep(2.0)
 
-        #check for NaN/inf values in observation
-        if np.any(np.isnan(observation) ) or np.any(np.isinf(observation)):
+        # check for NaN/inf values in observation
+        if np.any(np.isnan(observation)) or np.any(np.isinf(observation)):
             print("Observation array contains NaN or Inf values:")
             print(observation)
             raise ValueError("NaN value detected in observation array.")
-        
-        #check for NaN/inf values in reward
+
+        # check for NaN/inf values in reward
         if np.isnan(reward) or np.isinf(reward):
             print("Reward is NaN or Inf value:")
             print(reward)
             raise ValueError("NaN value detected in reward.")
 
         return observation, reward, terminated, truncated, info
-    
-    def _convert_state_to_obs(self):
 
+    def _convert_state_to_obs(self):
         x_nd = self._state[0] / self.l_star
         y_nd = self._state[1] / self.l_star
         vx_nd = self._state[2] / (self.l_star / self.t_star)
@@ -859,14 +1004,25 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         vy_target_nd = self._state[8] / (self.l_star / self.t_star)
         TTG_nd = self._state[9] / self.t_star
 
-        observation = np.array([x_nd, y_nd, vx_nd, vy_nd, mass_nd, x_target_nd, 
-                                y_target_nd, vx_target_nd, vy_target_nd, TTG_nd], 
-                                dtype=np.float32)
-        
+        observation = np.array(
+            [
+                x_nd,
+                y_nd,
+                vx_nd,
+                vy_nd,
+                mass_nd,
+                x_target_nd,
+                y_target_nd,
+                vx_target_nd,
+                vy_target_nd,
+                TTG_nd,
+            ],
+            dtype=np.float32,
+        )
+
         return observation
 
     def set_state(self, state):
-
         # unpack the input state vector
         x_in = state[0]
         y_in = state[1]
@@ -882,7 +1038,18 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
 
         # set the environment state to the input state vector
         self._state = np.array(
-            [x_in, y_in, vx_in, vy_in, m_in, x_target_in, y_target_in, vx_target_in, vy_target_in, TTG_in],
+            [
+                x_in,
+                y_in,
+                vx_in,
+                vy_in,
+                m_in,
+                x_target_in,
+                y_target_in,
+                vx_target_in,
+                vy_target_in,
+                TTG_in,
+            ],
             dtype=np.float32,
         )
 
@@ -900,10 +1067,14 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
 
         # convert initial and final states to polar coordinates
         r_0, theta_0, r_dot_0, v_theta_0 = cartesian_to_polar(x_in, y_in, vx_in, vy_in)
-        r_f, theta_f, r_dot_f, v_theta_f = cartesian_to_polar(x_target_in, y_target_in, vx_target_in, vy_target_in)
+        r_f, theta_f, r_dot_f, v_theta_f = cartesian_to_polar(
+            x_target_in, y_target_in, vx_target_in, vy_target_in
+        )
 
         sc_fin = Spacecraft(0, 0, 0, 0, m_in, self.C1, self.C2)
-        sc_fin.update_state_cartesian(x_target_in, y_target_in, vx_target_in, vy_target_in, m_in)
+        sc_fin.update_state_cartesian(
+            x_target_in, y_target_in, vx_target_in, vy_target_in, m_in
+        )
 
         # calculate the new orbital elements
         a, e, w, theta = self._spacecraft.calc_Planar_OE(
@@ -926,14 +1097,14 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         # determine orbital periods
         a_nd = a_init / Constants.SMA_EARTH
         a_f_nd = a_fin / Constants.SMA_EARTH
-        T_i = 2 * np.pi * ( a_nd**3 / 1.0 ) ** 0.5
-        T_target = 2 * np.pi * ( a_f_nd**3 / 1.0 ) ** 0.5
+        T_i = 2 * np.pi * (a_nd**3 / 1.0) ** 0.5
+        T_target = 2 * np.pi * (a_f_nd**3 / 1.0) ** 0.5
 
-        #set mass increment to zero
+        # set mass increment to zero
         self.mass_increment = 0.0
 
-        #determine total time of flight based on initial + target orbit
-        if (T_target > T_i):
+        # determine total time of flight based on initial + target orbit
+        if T_target > T_i:
             self.TOF = T_target * self.t_star * self.tof_scale
             self.TOF_nd = T_target * self.tof_scale
         else:
@@ -944,8 +1115,8 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         self.timesteps_in_prop = self.timesteps_in_TOF * self.prop_length_scale
 
         info = self._get_info(
-            None, #placeholder for ODE data - only provided in step()
-            None, #placeholder for delta_r data - only provided in step()
+            None,  # placeholder for ODE data - only provided in step()
+            None,  # placeholder for delta_r data - only provided in step()
         )
 
         # --------------------------------------------------------------------------------------------
@@ -961,23 +1132,31 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         vy_target_nd = vy_target_in / (self.l_star / self.t_star)
         TTG_nd = TTG_in / self.t_star
 
-        polar_obs = self.create_polar_observation(x_nd, y_nd, vx_nd, vy_nd, 
-                                                  x_target_nd, y_target_nd, vx_target_nd, 
-                                                  vy_target_nd, mass_nd, TTG_nd)
-        
-        #check for NaN/inf values in observation
-        if np.any(np.isnan(polar_obs) ) or np.any(np.isinf(polar_obs)):
+        polar_obs = self.create_polar_observation(
+            x_nd,
+            y_nd,
+            vx_nd,
+            vy_nd,
+            x_target_nd,
+            y_target_nd,
+            vx_target_nd,
+            vy_target_nd,
+            mass_nd,
+            TTG_nd,
+        )
+
+        # check for NaN/inf values in observation
+        if np.any(np.isnan(polar_obs)) or np.any(np.isinf(polar_obs)):
             print("Observation array contains NaN or Inf values:")
             print(polar_obs)
             raise ValueError("NaN value detected in observation array.")
 
         return polar_obs, info
-    
+
     def get_cartesian_state(self):
         return self._state.copy()
-    
-    def get_target_cartesian_state_at_ttg(self, ttg):
 
+    def get_target_cartesian_state_at_ttg(self, ttg):
         # unpack the state vector
         x_target = self._state[5]
         y_target = self._state[6]
@@ -992,8 +1171,8 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         params = np.array(
             [
                 self.param_mu,
-                self._spacecraft.max_thrust, # not used in target propagation
-                self._spacecraft.specific_impulse, # not used in target propagation
+                self._spacecraft.max_thrust,  # not used in target propagation
+                self._spacecraft.specific_impulse,  # not used in target propagation
                 Constants.G0,
                 0.0,
                 1.0,
@@ -1004,9 +1183,14 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
 
         # solve ODE - catch step size warning as exception
         with warnings.catch_warnings():
-            warnings.filterwarnings('error', message='Required step size is less than spacing between numbers')
+            warnings.filterwarnings(
+                "error",
+                message="Required step size is less than spacing between numbers",
+            )
             try:
-                solution = solve_ivp(env_EOM_TBT_v2, t_span, y0, method="RK45", args=(params,))
+                solution = solve_ivp(
+                    env_EOM_TBT_v2, t_span, y0, method="RK45", args=(params,)
+                )
             except UserWarning as w:
                 raise Exception(f"Integration failed in env.step(): {str(w)}") from w
 

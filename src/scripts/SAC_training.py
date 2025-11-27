@@ -26,7 +26,6 @@ from envs.TwoBody_Orb2Orb_Transfer_Env_nd import TwoBody_Orb2Orb_Transfer_Env_nd
 
 
 def SAC_training(seed_in=42):
-
     # set random seed
     random.seed(seed_in)
 
@@ -77,7 +76,7 @@ def SAC_training(seed_in=42):
     eval_env = Monitor(eval_env)
     training_steps = max_episode_steps_in * 1
 
-    #plt.style.use("data/support_files/dark_scientific.mplstyle")
+    # plt.style.use("data/support_files/dark_scientific.mplstyle")
     plt.style.use("data/support_files/light_paper.mplstyle")
 
     test_log = []
@@ -91,7 +90,8 @@ def SAC_training(seed_in=42):
     path_nns = os.path.normpath(os.path.join(os.getcwd(), "data\\neural_networks\\"))
     path_output = os.path.normpath(
         os.path.join(
-            os.getcwd(), "data\\script_output\\SAC_training_TBT_unseeded_" + time_tag + "\\"
+            os.getcwd(),
+            "data\\script_output\\SAC_training_TBT_unseeded_" + time_tag + "\\",
         )
     )
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
@@ -153,7 +153,6 @@ def SAC_training(seed_in=42):
     truncated = False
 
     while flag_continue:
-
         # step the env
         action, _states = model.predict(obs, deterministic=True)
         throttle = action[0]

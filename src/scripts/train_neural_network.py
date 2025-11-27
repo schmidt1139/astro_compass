@@ -36,7 +36,6 @@ format_plots()
 
 
 def train_neural_network():
-
     # parameters
     params = {
         "training_data_pts": 1000,  # training data batch size
@@ -64,7 +63,9 @@ def train_neural_network():
 
     # paths
     dir_training_dir = (
-        os.path.join("..", "data", "training_ephems", "test_set_bang_bang_subset")  # path to training data
+        os.path.join(
+            "..", "data", "training_ephems", "test_set_bang_bang_subset"
+        )  # path to training data
     )
     dir_plots = os.path.join("..", "data", "plots")  # path for storing plot data
     dir_nn = os.path.join("..", "data", "neural_networks")  # path for saving trained nn
@@ -72,7 +73,7 @@ def train_neural_network():
     path_plots = os.path.normpath(os.path.join(os.getcwd(), dir_plots))
     path_nn = os.path.normpath(os.path.join(os.getcwd(), dir_nn))
     path_nn = os.path.normpath(os.path.join(path_nn, "nn_controller_weights.pth"))
-    path_plot_nn_training = os.path.join(path_plots,"nn_training.jpg")
+    path_plot_nn_training = os.path.join(path_plots, "nn_training.jpg")
 
     # plotting structure init
     arr_epochs = []
@@ -103,7 +104,7 @@ def train_neural_network():
     print(str(num_ephems * set_ephems[0].num_vectors) + " training data points")
     print("Number of Neural Network Parameters: " + str(num_p))
 
-    train_dataset, val_dataset = pre_process_training_data( set_ephems, params )
+    train_dataset, val_dataset = pre_process_training_data(set_ephems, params)
 
     # Training
     # --------------------------------------------------------------------------------------------------------
@@ -121,11 +122,14 @@ def train_neural_network():
     NN_TBT.train()
 
     # using torch loader object to load training and eval data
-    train_loader = DataLoader(train_dataset, batch_size=params["training_data_pts"], shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=params["training_data_pts"], shuffle=False)
+    train_loader = DataLoader(
+        train_dataset, batch_size=params["training_data_pts"], shuffle=True
+    )
+    val_loader = DataLoader(
+        val_dataset, batch_size=params["training_data_pts"], shuffle=False
+    )
 
     while epoch <= params["training_epochs"]:
-
         # perform training epoch
         NN_TBT, avg_train_loss = training_epoch(
             NN_TBT, train_loader, val_loader, criterion, optimizer
@@ -162,7 +166,7 @@ def train_neural_network():
 
         if epoch % params["report_update"] == 0:
             print(
-                f"Epoch [{epoch}/{params["training_epochs"]}], Training Loss: {avg_train_loss:.4e}, Eval loss: {avg_loss_val:.4e}   Min loss: {min_mse:.4e}   last min: {epoch - i_at_min}   lr: {scheduler.get_last_lr()[0]:.4e}"
+                f"Epoch [{epoch}/{params['training_epochs']}], Training Loss: {avg_train_loss:.4e}, Eval loss: {avg_loss_val:.4e}   Min loss: {min_mse:.4e}   last min: {epoch - i_at_min}   lr: {scheduler.get_last_lr()[0]:.4e}"
             )
 
         if epoch % params["plot_update"] == 0:
@@ -173,10 +177,12 @@ def train_neural_network():
         epoch = epoch + 1
 
     # final training plot update
-    plot_training_loss(arr_epochs, arr_loss_train, arr_loss, path_plot_nn_training, params)
+    plot_training_loss(
+        arr_epochs, arr_loss_train, arr_loss, path_plot_nn_training, params
+    )
 
     # save NN to file
-    torch.save(NN_TBT.state_dict(), path_nn )
+    torch.save(NN_TBT.state_dict(), path_nn)
 
 
 train_neural_network()

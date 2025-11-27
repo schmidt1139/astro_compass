@@ -150,7 +150,7 @@ class Ephemeris:
 
     def plot_all_ephemeris_data(self):
         figs = []
-        
+
         fig, ax = plot.subplots(figsize=(6, 6))
         ax.plot(self.arr_et, self.arr_m, label="Spacecraft Mass")
         ax.set_title("Spacecraft Mass over Time")
@@ -181,8 +181,8 @@ class Ephemeris:
         ax.legend()
         plot.show()
         figs.append(fig)
-        
-        return figs;
+
+        return figs
 
     def write_to_file(self, file_path, mod_vector_write_frequency=1):
         file_name_base = os.path.basename(file_path)

@@ -10,14 +10,13 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from core.training_data_generation import generate_nn_training_data_parallel
-from envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env   
+from envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 
 if __name__ == "__main__":
-    
     # Initialize dictionary with input parameters to function
     args = {
-        "num_trajs": 12, #number of trajectories to generate
-        "num_threads": 6, #number of threads
+        "num_trajs": 12,  # number of trajectories to generate
+        "num_threads": 6,  # number of threads
         "TOF": 1.1 * 365.25 * 24 * 60 * 60,  # s
         "r0": 2.32495e08,  # Initial state/radius [km]
         "vr0": 0.0,  # Initial state/radial velocity [km/s]
@@ -27,15 +26,11 @@ if __name__ == "__main__":
         "sma_target": 1.49598e08,  # Target sma of final circular orbit [km]
         "max_thrust": 1.33,  # Max thrust of the spacecraft engine [N]
         "ISP": 3872.0,  # Specific impulse of the spacecraft engine [s]
-        "eps_final": 0.0001, #Final smoothing parameter to achieve
-        "output_dir":os.path.join("data", "training_ephems", "test_set3")
+        "eps_final": 0.0001,  # Final smoothing parameter to achieve
+        "output_dir": os.path.join("data", "training_ephems", "test_set3"),
     }
-    
+
     # initialize the environment
     env = TwoBody_Orb2Orb_Transfer_Env()
 
-    generate_nn_training_data_parallel(env,args)
-    
-    
-    
-    
+    generate_nn_training_data_parallel(env, args)

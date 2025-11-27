@@ -6,13 +6,14 @@ from StateVectorUtilities import cartesian_to_polar
 from core.ephemeris_v2 import Ephemeris_v2
 import torch
 import torch.nn as nn
-import numpy as np
-
-from tqdm import tqdm
-from utils.log_utils import log
+from core.ephemeris_v2 import Ephemeris_v2
 from core.training_data_generation import read_ephems_from_dir
+from Spacecraft import Spacecraft
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.evaluation import evaluate_policy
+from StateVectorUtilities import cartesian_to_polar
+from tqdm import tqdm
+from utils.log_utils import log
 from utils.plotting_utils import SACRolloutData_TBR_polar
 from utils.state_vector_utils import convert_alpha_from_cart_to_fpa, convert_attitude_from_cartesian_to_radial
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -20,7 +21,6 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 def log_training_perf(
     test_log, callback, eval_callback, model, training_steps, flag_verbose
 ):
-
     # --- add final training performance metrics to the log ---
     total_episodes = len(callback.episode_rewards)
     total_timesteps_done = getattr(model, "num_timesteps", training_steps)
@@ -62,24 +62,22 @@ def log_training_perf(
 
 
 def copy_linear_layers(src_sequential: nn.Sequential, dst_sequential: nn.Sequential):
-
     # Extract linear layers from both source and destination sequential models
     src_linears = [m for m in src_sequential.modules() if isinstance(m, nn.Linear)]
     dst_linears = [m for m in dst_sequential.modules() if isinstance(m, nn.Linear)]
 
     # Check if the networks sizes are the same
-    assert len(src_linears) == len(
-        dst_linears
-    ), f"Linear layer count mismatch: {len(src_linears)} vs {len(dst_linears)}"
+    assert len(src_linears) == len(dst_linears), (
+        f"Linear layer count mismatch: {len(src_linears)} vs {len(dst_linears)}"
+    )
 
     with torch.no_grad():
         # Step through both sets of linear layers and copy weights and biases
         for s, d in zip(src_linears, dst_linears):
-
             # ensure the shapes match before copying
-            assert (
-                s.weight.shape == d.weight.shape
-            ), f"Weight shape mismatch {s.weight.shape} vs {d.weight.shape}"
+            assert s.weight.shape == d.weight.shape, (
+                f"Weight shape mismatch {s.weight.shape} vs {d.weight.shape}"
+            )
 
             # Copy weights and biases
             d.weight.copy_(s.weight)
@@ -90,7 +88,6 @@ def copy_linear_layers(src_sequential: nn.Sequential, dst_sequential: nn.Sequent
 
 
 def load_pretrained_nn_into_SAC(supervised_controller, sac_model):
-
     src_layers = nn.Sequential(
         supervised_controller.fc1,
         supervised_controller.fc2,
@@ -126,7 +123,6 @@ def load_pretrained_nn_into_SAC(supervised_controller, sac_model):
 def import_training_into_replay_buffer(
     path_training_data, test_log, model, env, params
 ):
-
     test_log = log("Importing training data into replay buffer", test_log, True)
 
     # read ephemerides from directory
@@ -158,7 +154,6 @@ def import_training_into_replay_buffer(
     # collect all states and actions from ephemerides
     for eph in tqdm(set_ephems, desc="Processing ephemerides"):
         for i in range(eph.num_vectors):
-
             # Extract the vector and separate into state and action components
             state_vec = eph.get_vector_at_index(i)
             x = state_vec[1]
@@ -205,14 +200,10 @@ def import_training_into_replay_buffer(
             next_states.append(obs)
             dones.append(done)
 
-    # optionally save the updated replay buffer to disk
-    if params.get("save_pre_training_only_replay_buffer", False):
-        path_replay_buffer = os.path.join(params["output_dir_specific"], "replay_buffer_pre_training_only.pkl")
-        model.save_replay_buffer(path_replay_buffer)
-        test_log = log(f"Replay buffer saved to {path_replay_buffer}", test_log, True)
 
-
-def add_experience_to_replay_buffer(model, obs, action, reward, next_obs, done, params=None):
+def add_experience_to_replay_buffer(
+    model, obs, action, reward, next_obs, done, params=None
+):
     """
     Add single or batched experiences to the SAC replay buffer.
 
@@ -258,6 +249,7 @@ def add_experience_to_replay_buffer(model, obs, action, reward, next_obs, done, 
         infos=infos,
     )
 
+
 class RewardLoggerCallback(BaseCallback):
     def __init__(self, print_freq=1000, verbose=0):
         super().__init__(verbose)
@@ -288,9 +280,10 @@ class RewardLoggerCallback(BaseCallback):
 
 
 def pre_train(test_log, model, params, env):
-    
     test_log = log("Pre-training networks...", test_log, True)
-    test_log = log("Replay buffer type: " + str(type(model.replay_buffer)), test_log, True)
+    test_log = log(
+        "Replay buffer type: " + str(type(model.replay_buffer)), test_log, True
+    )
 
     # Check if replay buffer is initialized
     if model.replay_buffer is not None:
@@ -298,20 +291,20 @@ def pre_train(test_log, model, params, env):
             "Experience buffer size: " + str(model.replay_buffer.size()), test_log, True
         )  # current number of transitions
         test_log = log(
-            "Experience buffer capacity: " + str(model.replay_buffer.buffer_size), test_log, True
+            "Experience buffer capacity: " + str(model.replay_buffer.buffer_size),
+            test_log,
+            True,
         )  # capacity
     else:
         test_log = log("Replay buffer is not initialized yet.", test_log, True)
 
-    #check what ephem version to assume
+    # check what ephem version to assume
     if "ephem_version" in params:
         ephem_version = params["ephem_version"]
     else:
         ephem_version = 1.0  # default to version 1 if not specified
 
-    test_log = log(
-        f"Assuming ephemeris version: {ephem_version}", test_log, True
-    )
+    test_log = log(f"Assuming ephemeris version: {ephem_version}", test_log, True)
 
     # check env state dimensions
     test_log = log(
@@ -320,13 +313,15 @@ def pre_train(test_log, model, params, env):
         True,
     )
 
-    if (ephem_version == 2.0 and ( env.observation_space.shape[0] == 10 or env.observation_space.shape[0] == 14) ):
+    if ephem_version == 2.0 and (
+        env.observation_space.shape[0] == 10 or env.observation_space.shape[0] == 14
+    ):
         test_log = log(
             "Environment observation space matches expected shape for ephemeris version 2.0",
             test_log,
             True,
         )
-    elif (ephem_version == 1.0 and env.observation_space.shape[0] == 5 ):
+    elif ephem_version == 1.0 and env.observation_space.shape[0] == 5:
         test_log = log(
             "Environment observation space matches expected shape for ephemeris version 1.0",
             test_log,
@@ -338,12 +333,15 @@ def pre_train(test_log, model, params, env):
         )
 
     if not params.get("read_replay_buffer", False):
-
         if ephem_version == 2.0:
             # Import training data into replay buffer
-            test_log = log("Importing training data into replay buffer v2.0", test_log, True)
+            test_log = log(
+                "Importing training data into replay buffer v2.0", test_log, True
+            )
             import_training_into_replay_buffer_v2(
-                params["path_training_data"],  # path to directory containing training ephemerides
+                params[
+                    "path_training_data"
+                ],  # path to directory containing training ephemerides
                 test_log,  # log
                 model,  # SAC model
                 env,
@@ -351,9 +349,13 @@ def pre_train(test_log, model, params, env):
             )
         elif ephem_version == 1.0:
             # Import training data into replay buffer
-            test_log = log("Importing training data into replay buffer v1.0", test_log, True)
+            test_log = log(
+                "Importing training data into replay buffer v1.0", test_log, True
+            )
             import_training_into_replay_buffer(
-                params["path_training_data"],  # path to directory containing training ephemerides
+                params[
+                    "path_training_data"
+                ],  # path to directory containing training ephemerides
                 test_log,  # log
                 model,  # SAC model
                 env,
@@ -364,11 +366,15 @@ def pre_train(test_log, model, params, env):
         test_log = log("Buffer read in from: " + params["path_replay_buffer"], test_log, True)
 
     test_log = log(
-            "Updated experience buffer size: " + str(model.replay_buffer.size()), test_log, True
-        )  # current number of transitions
-    
+        "Updated experience buffer size: " + str(model.replay_buffer.size()),
+        test_log,
+        True,
+    )  # current number of transitions
+
     # Train networks on replay buffer
-    test_log, critic_loss_reduced, actor_loss_reduced = train_on_replay_buffer(model, params, test_log, env)
+    test_log, critic_loss_reduced, actor_loss_reduced = train_on_replay_buffer(
+        model, params, test_log, env
+    )
 
     return test_log, actor_loss_reduced, critic_loss_reduced
 
@@ -381,19 +387,20 @@ def import_training_into_replay_buffer_v2(
     Handles 10-dimensional observation space (x, y, vx, vy, m, x_t, y_t, vx_t, vy_t, ttg).
     """
     from tqdm import tqdm
-    
+
     test_log = log("Importing training data (v2.0) into replay buffer", test_log, True)
 
     # read ephemerides from directory
     num_ephems_to_use = params.get("num_ephems_to_use", None)
     ephem_version = params.get("ephem_version", 2.0)
     step_size = params.get("ephem_step_size", 1)  # Sample every Nth vector
-    num_vec_envs = params.get("num_vec_envs", 1) 
-    
+    num_vec_envs = params.get("num_vec_envs", 1)
+
     test_log = log(f"Reading ephemerides (version {ephem_version})", test_log, True)
-    set_ephems = read_ephems_from_dir(path_training_data, num_ephems_to_use, 
-                                      version=ephem_version, params=params)
-    
+    set_ephems = read_ephems_from_dir(
+        path_training_data, num_ephems_to_use, version=ephem_version, params=params
+    )
+
     num_ephems = len(set_ephems)
     test_log = log(
         f"Number of ephemerides loaded: {num_ephems}",
@@ -410,25 +417,45 @@ def import_training_into_replay_buffer_v2(
     )
 
     # Process each ephemeris with progress bar
-    obs_batch, action_batch, reward_batch, next_obs_batch, done_batch = [], [], [], [], []
+    obs_batch, action_batch, reward_batch, next_obs_batch, done_batch = (
+        [],
+        [],
+        [],
+        [],
+        [],
+    )
     for eph in tqdm(set_ephems, desc="Processing ephemerides"):
-
-        for i in range(0, eph.num_vectors - 1, step_size):  # -1 to ensure we have next_obs
-            
+        for i in range(
+            0, eph.num_vectors - 1, step_size
+        ):  # -1 to ensure we have next_obs
             # Current state vector
             state_vec = eph.get_vector_at_index(i)
 
             env_type = params["env_type"]
 
             if env_type == "TwoBodyRendezvous_Polar_Env2":
-                obs, action, reward, next_obs, done = package_ephem_state_into_polar_SART(state_vec, env, i, eph.num_vectors, params)
+                obs, action, reward, next_obs, done = (
+                    package_ephem_state_into_polar_SART(
+                        state_vec, env, i, eph.num_vectors, params
+                    )
+                )
             elif env_type == "TwoBodyRendezvous_Polar_Env":
-                obs, action, reward, next_obs, done = package_ephem_state_into_polar_SART(state_vec, env, i, eph.num_vectors, params)
+                obs, action, reward, next_obs, done = (
+                    package_ephem_state_into_polar_SART(
+                        state_vec, env, i, eph.num_vectors, params
+                    )
+                )
             elif env_type == "TwoBodyRendezvous_Env":
-                obs, action, reward, next_obs, done = package_ephem_state_into_cart_SART(state_vec, env, i, eph.num_vectors, params)
+                obs, action, reward, next_obs, done = (
+                    package_ephem_state_into_cart_SART(
+                        state_vec, env, i, eph.num_vectors, params
+                    )
+                )
             else:
-                raise NotImplementedError(f"Environment type {env_type} not supported in v2.0 import.")
-            
+                raise NotImplementedError(
+                    f"Environment type {env_type} not supported in v2.0 import."
+                )
+
             obs_batch.append(obs)
             action_batch.append(action)
             reward_batch.append(reward)
@@ -442,9 +469,15 @@ def import_training_into_replay_buffer_v2(
                     np.stack(action_batch),
                     np.array(reward_batch, dtype=np.float32).reshape(-1),
                     np.stack(next_obs_batch),
-                    np.array(done_batch, dtype=np.float32).reshape(-1)
+                    np.array(done_batch, dtype=np.float32).reshape(-1),
                 )
-                obs_batch, action_batch, reward_batch, next_obs_batch, done_batch = [], [], [], [], []
+                obs_batch, action_batch, reward_batch, next_obs_batch, done_batch = (
+                    [],
+                    [],
+                    [],
+                    [],
+                    [],
+                )
 
     # optionally save the updated replay buffer to disk when complete
     if params.get("save_pre_training_only_replay_buffer", False):
@@ -457,61 +490,63 @@ def train_on_replay_buffer(model, params, test_log, env):
     """
     Train the SAC networks using only the experiences currently in the replay buffer.
     Does not collect any new experiences from the environment.
-    
+
     Args:
         model: SAC model instance
         params: Dictionary containing training parameters
         test_log: Logging list
-        
+
     Returns:
         Updated test_log
     """
-    from tqdm import tqdm
-    import pandas as pd
     import os
-    
+
+    import pandas as pd
+    from tqdm import tqdm
+
     num_gradient_steps = params.get("pretrain_gradient_steps", 10000)
     batch_size = params.get("batch_size", 256)
-    
+
     test_log = log(
         f"Training networks on replay buffer with {num_gradient_steps} gradient steps",
         test_log,
-        True
+        True,
     )
-    
+
     # Check that we have enough samples
     buffer_size = model.replay_buffer.size()
     if buffer_size < batch_size:
         test_log = log(
             f"Warning: Replay buffer has only {buffer_size} samples, less than batch size {batch_size}",
             test_log,
-            True
+            True,
         )
         # Return empty loss arrays if we can't train
         return test_log, [], []
-    
+
     test_log = log(f"Replay buffer size: {buffer_size}", test_log, True)
     test_log = log(f"Batch size: {batch_size}", test_log, True)
-    
+
     # Set up a minimal logger for pre-training if one doesn't exist
     # model.train() requires a logger to record learning rate and other metrics
     # We'll use a simple logger that doesn't interfere with TensorBoard
-    if not hasattr(model, '_logger') or model._logger is None:
+    if not hasattr(model, "_logger") or model._logger is None:
         from stable_baselines3.common.logger import Logger
+
         # Create a minimal logger that just stores values without writing anywhere
         model._logger = Logger(folder=None, output_formats=[])
-    
+
     # Set up progress tracking (needed by some internal SB3 methods)
     model._current_progress_remaining = 1.0
-    
+
     # Set the number of timesteps so model.train() knows where we are
-    if not hasattr(model, '_total_timesteps'):
+    if not hasattr(model, "_total_timesteps"):
         model._total_timesteps = 0
-    if not hasattr(model, 'num_timesteps'):
+    if not hasattr(model, "num_timesteps"):
         model.num_timesteps = 0
-    
-    test_log = log(f"Training on replay buffer", test_log, True)
-    
+
+    test_log = log("Training on replay buffer", test_log, True)
+
     # Track losses
     critic_losses = []
     actor_losses = []
@@ -521,22 +556,26 @@ def train_on_replay_buffer(model, params, test_log, env):
     # Optionally log progress
     log_interval = params.get("pt_log_interval", 1000)
     checkpoint_interval = params.get("checkpoint_freq", 10_000)
-    
+
     # Train the networks by sampling from replay buffer
     for step in tqdm(range(num_gradient_steps), desc="Pre-training"):
         # This performs one gradient update on actor and critic networks
         model.train(gradient_steps=1)
-        
+
         # Try to get losses from the model's internal tracking
         # Note: SAC stores these internally but they may not be accessible immediately
         try:
             # Check if _logger attribute exists (not the property)
-            if hasattr(model, '_logger') and model._logger is not None:
+            if hasattr(model, "_logger") and model._logger is not None:
                 # Try to get values from logger's name_to_value dict
-                if hasattr(model._logger, 'name_to_value'):
-                    critic_loss = model._logger.name_to_value.get("train/critic_loss", None)
-                    actor_loss = model._logger.name_to_value.get("train/actor_loss", None)
-                    
+                if hasattr(model._logger, "name_to_value"):
+                    critic_loss = model._logger.name_to_value.get(
+                        "train/critic_loss", None
+                    )
+                    actor_loss = model._logger.name_to_value.get(
+                        "train/actor_loss", None
+                    )
+
                     if critic_loss is not None:
                         critic_losses.append(critic_loss)
                     if actor_loss is not None:
@@ -544,48 +583,52 @@ def train_on_replay_buffer(model, params, test_log, env):
         except (AttributeError, KeyError):
             # Logger not set up or accessible, skip logging
             pass
-        
-        if (step + 1) % log_interval == 0:
 
+        if (step + 1) % log_interval == 0:
             if critic_losses and actor_losses:
                 avg_critic = np.mean(critic_losses[-log_interval:])
                 avg_actor = np.mean(actor_losses[-log_interval:])
-                tqdm.write(f"Step {step + 1}: Critic Loss: {avg_critic:.4f}, Actor Loss: {avg_actor:.4f}")
+                tqdm.write(
+                    f"Step {step + 1}: Critic Loss: {avg_critic:.4f}, Actor Loss: {avg_actor:.4f}"
+                )
             else:
                 tqdm.write(f"Completed {step + 1}/{num_gradient_steps} gradient steps")
 
         # also checkpoint the model
         if (step + 1) % checkpoint_interval == 0:
-
             # evaluate current policy
             mean_reward, std_reward = evaluate_policy(
-                model, 
-                env, 
+                model,
+                env,
                 n_eval_episodes=params.get("n_eval_episodes", 10),
-                deterministic=True
+                deterministic=True,
             )
 
             mean_rewards.append(mean_reward)
             std_rewards.append(std_reward)
 
-            tqdm.write(f"Evaluation after {step + 1} steps: Mean Reward: {mean_reward:.2f} +/- {std_reward:.2f}")
+            tqdm.write(
+                f"Evaluation after {step + 1} steps: Mean Reward: {mean_reward:.2f} +/- {std_reward:.2f}"
+            )
 
-            path = os.path.join(params["output_dir_specific"], "checkpoints")
-            checkpoint_path = os.path.join(path, f"sac_pretrained_step_{step + 1}.zip")
-            model.save(checkpoint_path)
-            tqdm.write(f"Saved model checkpoint to {checkpoint_path}")
+            if mean_reward >= max(mean_rewards, default=-np.inf):
+                path = os.path.join(params["output_dir_specific"], "checkpoints")
+                checkpoint_path = os.path.join(
+                    path, f"sac_pretrained_step_{step + 1}.zip"
+                )
+                model.save(checkpoint_path)
+                tqdm.write(f"Saved model checkpoint to {checkpoint_path}")
 
-    
     test_log = log(
         f"Completed {num_gradient_steps} gradient steps on replay buffer",
         test_log,
-        True
+        True,
     )
 
     # Save arrays of losses to csv files
     if "output_dir_specific" in params:
         path = params["output_dir_specific"]
-        
+
         # Save losses (downsample by 10x for file size)
         critic_loss_reduced = []
         actor_loss_reduced = []
@@ -601,21 +644,18 @@ def train_on_replay_buffer(model, params, test_log, env):
             os.path.join(path, "actor_losses.csv"), index=False
         )
 
-        pd.DataFrame({
-            "mean_reward": mean_rewards,
-            "std_reward": std_rewards
-        }).to_csv(os.path.join(path, "eval_rewards.csv"), index=True)
-
-        test_log = log(
-            f"Saved loss curves to {path}",
-            test_log,
-            True
+        pd.DataFrame({"mean_reward": mean_rewards, "std_reward": std_rewards}).to_csv(
+            os.path.join(path, "eval_rewards.csv"), index=True
         )
+
+        test_log = log(f"Saved loss curves to {path}", test_log, True)
 
     return test_log, critic_loss_reduced, actor_loss_reduced
 
-def package_ephem_state_into_polar_SART(state_vec, env, current_index, num_vectors, params):
 
+def package_ephem_state_into_polar_SART(
+    state_vec, env, current_index, num_vectors, params
+):
     env.reset()
 
     # Extract current state components (v2.0 format)
@@ -634,18 +674,22 @@ def package_ephem_state_into_polar_SART(state_vec, env, current_index, num_vecto
     alpha_y = state_vec[12]
     u = state_vec[13]
 
-    state_input = np.array([x, y, vx, vy, m, x_target, y_target, vx_target, vy_target, ttg])
+    state_input = np.array(
+        [x, y, vx, vy, m, x_target, y_target, vx_target, vy_target, ttg]
+    )
 
-    #manually set the state of the environment
+    # manually set the state of the environment
     unwrapped_env = env.unwrapped
-    
+
     obs, info = unwrapped_env.set_state(state_input)
-    
+
     # Verify that the state was set correctly
     state_check = unwrapped_env.get_cartesian_state()
     if not np.allclose(state_check, state_input, atol=1e-5):
-        raise ValueError("Environment state does not match expected state after setting.")
-    
+        raise ValueError(
+            "Environment state does not match expected state after setting."
+        )
+
     # Convert alpha_x, alpha_y to flight path angle components
     alpha_vr, alpha_theta = convert_attitude_from_cartesian_to_radial(x, y, alpha_x, alpha_y)
 
@@ -661,8 +705,9 @@ def package_ephem_state_into_polar_SART(state_vec, env, current_index, num_vecto
     return obs, action, reward, next_obs, done
 
 
-def package_ephem_state_into_cart_SART(state_vec, env, current_index, num_vectors, params):
-
+def package_ephem_state_into_cart_SART(
+    state_vec, env, current_index, num_vectors, params
+):
     # Extract current state components (v2.0 format)
     et = state_vec[0]
     x = state_vec[1]
@@ -679,9 +724,11 @@ def package_ephem_state_into_cart_SART(state_vec, env, current_index, num_vector
     alpha_y = state_vec[12]
     u = state_vec[13]
 
-    state_input = np.array([x, y, vx, vy, m, x_target, y_target, vx_target, vy_target, ttg])
+    state_input = np.array(
+        [x, y, vx, vy, m, x_target, y_target, vx_target, vy_target, ttg]
+    )
 
-    #manually set the state of the environment
+    # manually set the state of the environment
     unwrapped_env = env.unwrapped
 
     obs, info = unwrapped_env.set_state(state_input)
@@ -689,7 +736,9 @@ def package_ephem_state_into_cart_SART(state_vec, env, current_index, num_vector
     # Verify that the state was set correctly
     state_check = unwrapped_env.get_cartesian_state()
     if not np.allclose(state_check, state_input, atol=1e-5):
-        raise ValueError("Environment state does not match expected state after setting.")
+        raise ValueError(
+            "Environment state does not match expected state after setting."
+        )
 
     # Action in terms of (u, alpha_cos_fpa, alpha_sin_fpa)
     action = np.array([u, alpha_x, alpha_y], dtype=np.float32)
@@ -704,7 +753,6 @@ def package_ephem_state_into_cart_SART(state_vec, env, current_index, num_vector
 
 
 def rollout_model(env, params, model, test_log):
-
     # reset the env
     obs, info = env.reset(seed=params.get("seed_traj", 42))
     eph = Ephemeris_v2()  # create new ephemeris object
@@ -719,7 +767,6 @@ def rollout_model(env, params, model, test_log):
     truncated = False
 
     while flag_continue:
-
         # step the env
         action, _states = model.predict(obs, deterministic=True)
         unwrapped_env = env.unwrapped
@@ -742,16 +789,31 @@ def rollout_model(env, params, model, test_log):
         vy_target_i = state_cart[8]
         ttg_i = state_cart[9]
 
-        #info of interest
-        pos_r_component = info.get("pos_r_component", None)
-        vel_r_component = info.get("vel_r_component", None)
-        mass_r_component = info.get("mass_r_component", None)
-        throttle_r_component = info.get("throttle_r_component", None)
+        # info of interest
+        pos_reward = info.get("pos_reward", None)
+        vel_reward = info.get("vel_reward", None)
+        mass_reward = info.get("mass_reward", None)
+        throttle_reward = info.get("throttle_reward", None)
         alpha_x = info.get("alpha_x", None)
         alpha_y = info.get("alpha_y", None)
 
         # log data to ephemeris
-        eph.add_data(t_i, x_i, y_i, vx_i, vy_i, m_i, x_target_i, y_target_i, vx_target_i, vy_target_i, ttg_i, alpha_x, alpha_y, throttle )
+        eph.add_data(
+            t_i,
+            x_i,
+            y_i,
+            vx_i,
+            vy_i,
+            m_i,
+            x_target_i,
+            y_target_i,
+            vx_target_i,
+            vy_target_i,
+            ttg_i,
+            alpha_x,
+            alpha_y,
+            throttle,
+        )
 
         # create polar state, create a temp SC object and calc OE
         r_i, theta_i, rdot_i, vtheta_i = cartesian_to_polar(x_i, y_i, vx_i, vy_i)
@@ -765,30 +827,31 @@ def rollout_model(env, params, model, test_log):
         count_step = count_step + 1
 
         # store the results
-        rollout_data.add_step(  info["Elapsed time"]/86400, # elapsed time in days
-                reward, #reward
-                action[0], #throttle
-                alpha_fpa_cos,  # fpa cos
-                alpha_fpa_sin,  # fpa sin
-                obs[0],  # r_nd
-                obs[1],  # eta_cos_nd
-                obs[2],  # eta_sin_nd
-                obs[3],  # v_nd
-                obs[4],  # fpa_cos_nd
-                obs[5],  # fpa_sin_nd
-                obs[6],  # mass_nd
-                obs[7],  # delta target_r_nd
-                obs[8],  # delta target_eta_cos_nd
-                obs[9],  # delta target_eta_sin_nd
-                obs[10],  # delta target_v_nd
-                obs[11],  # delta target_fpa_cos_nd
-                obs[12],  # delta target_fpa_sin_nd
-                obs[13],  # TTG
-                pos_r_component,  # pos_r_component
-                vel_r_component,  # vel_r_component
-                mass_r_component,
-                throttle_r_component,
-                ) 
+        rollout_data.add_step(
+            info["Elapsed time"] / 86400,  # elapsed time in days
+            reward,  # reward
+            action[0],  # throttle
+            alpha_fpa_cos,  # fpa cos
+            alpha_fpa_sin,  # fpa sin
+            obs[0],  # r_nd
+            obs[1],  # eta_cos_nd
+            obs[2],  # eta_sin_nd
+            obs[3],  # v_nd
+            obs[4],  # fpa_cos_nd
+            obs[5],  # fpa_sin_nd
+            obs[6],  # mass_nd
+            obs[7],  # delta target_r_nd
+            obs[8],  # delta target_eta_cos_nd
+            obs[9],  # delta target_eta_sin_nd
+            obs[10],  # delta target_v_nd
+            obs[11],  # delta target_fpa_cos_nd
+            obs[12],  # delta target_fpa_sin_nd
+            obs[13],  # TTG
+            pos_reward,  # pos_reward
+            vel_reward,  # vel_reward
+            mass_reward,
+            throttle_reward,
+        )
 
         if terminated or truncated:
             break
@@ -806,7 +869,7 @@ def rollout_model(env, params, model, test_log):
     test_log = log("terminated: " + str(terminated) + " ", test_log, True)
     test_log = log("truncated: " + str(truncated) + " ", test_log, True)
 
-    #final env info
+    # final env info
     for key, value in info.items():
         if key != "ODE Solution":
             test_log = log(f"{key}: {value}", test_log, True)

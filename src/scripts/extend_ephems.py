@@ -8,43 +8,48 @@ from core.training_data_generation import read_ephems_from_dir
 from tqdm import tqdm
 from constants.constants import Constants
 
-def extend_ephems():
 
+def extend_ephems():
     num_ephems_to_use = 100_000
     ephem_version = 2.0
     extension_scale = 1.5
-    path_ephems = os.path.join("C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\temp\\")
-    path_output = os.path.join("C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\temp_out\\")
+    path_ephems = os.path.join(
+        "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\temp\\"
+    )
+    path_output = os.path.join(
+        "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\temp_out\\"
+    )
 
-    set_ephems, filenames = read_ephems_from_dir(path_ephems, num_ephems_to_use, version=ephem_version, 
-                                      flag_return_filenames=True)
+    set_ephems, filenames = read_ephems_from_dir(
+        path_ephems,
+        num_ephems_to_use,
+        version=ephem_version,
+        flag_return_filenames=True,
+    )
 
-    print("Reading ephemerides from: " + path_ephems )
+    print("Reading ephemerides from: " + path_ephems)
     set_ephems = set_ephems[:num_ephems_to_use]
     num_ephems = len(set_ephems)
     num_states = set_ephems[0].num_vectors * num_ephems
-    print("Number of ephemerides: " + str(num_ephems) )
-    print("Number of total state vectors: " + str(num_states) )
+    print("Number of ephemerides: " + str(num_ephems))
+    print("Number of total state vectors: " + str(num_states))
 
     counter = 0
 
     # collect all states and actions from ephemerides
     for eph in tqdm(set_ephems, desc="Processing ephemerides"):
-
         try:
-
-
             eph_output = Ephemeris_v2()
 
-            #print("\nProcessing ephemeris " + str(counter+1) + " of " + str(num_ephems) )
-            
-            #print("Filename: " + filenames[counter])
+            # print("\nProcessing ephemeris " + str(counter+1) + " of " + str(num_ephems) )
 
-            #update ephem filename
+            # print("Filename: " + filenames[counter])
+
+            # update ephem filename
             ephem_filename = filenames[counter].replace(".txt", "_extended.txt")
-            
+
             counter += 1
-            
+
             # get first state vector
             first_state_vector = eph.get_vector_at_index(0)
 
@@ -86,7 +91,9 @@ def extend_ephems():
             )
 
             t_eval = np.linspace(t_span[0], t_span[1], additional_steps)
-            solution = solve_ivp(env_EOM_TBT_v2, t_span, y0, method="RK45", args=(params,), t_eval=t_eval)
+            solution = solve_ivp(
+                env_EOM_TBT_v2, t_span, y0, method="RK45", args=(params,), t_eval=t_eval
+            )
 
             # add original ephemeris states to output
             for i in range(0, eph.num_vectors):
@@ -106,9 +113,23 @@ def extend_ephems():
                 alpha_x = state_vector[11]
                 alpha_y = state_vector[12]
 
-                eph_output.add_data(et, x, y, vx, vy, mass, target_x, target_y, 
-                                    target_vx, target_vy, ttg, alpha_x, alpha_y, u)
-                
+                eph_output.add_data(
+                    et,
+                    x,
+                    y,
+                    vx,
+                    vy,
+                    mass,
+                    target_x,
+                    target_y,
+                    target_vx,
+                    target_vy,
+                    ttg,
+                    alpha_x,
+                    alpha_y,
+                    u,
+                )
+
             # add extended states to output
             num_new_vectors = solution.y.shape[1]
             for i in range(1, num_new_vectors):
@@ -127,8 +148,22 @@ def extend_ephems():
                 alpha_x = 0.0
                 alpha_y = 0.0
 
-                eph_output.add_data(et, x, y, vx, vy, mass, target_x, target_y, 
-                                    target_vx, target_vy, ttg, alpha_x, alpha_y, u)
+                eph_output.add_data(
+                    et,
+                    x,
+                    y,
+                    vx,
+                    vy,
+                    mass,
+                    target_x,
+                    target_y,
+                    target_vx,
+                    target_vy,
+                    ttg,
+                    alpha_x,
+                    alpha_y,
+                    u,
+                )
 
             # write to file
             pathout = os.path.join(path_output, ephem_filename)
@@ -140,7 +175,7 @@ def extend_ephems():
             # print(" Additional steps: " + str(additional_steps) )
 
         except Exception as e:
-            print(f"Error processing ephemeris {filenames[counter-1]}: {e}")
+            print(f"Error processing ephemeris {filenames[counter - 1]}: {e}")
             continue
 
 

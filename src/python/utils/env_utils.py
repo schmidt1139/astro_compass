@@ -1,8 +1,8 @@
 from envs.TwoBodyRendezvous_Polar_Env import TwoBodyRendezvous_Polar_Env
 from envs.TwoBodyRendezvous_Polar_Env2 import TwoBodyRendezvous_Polar_Env2
 
-def gen_rl_environment(params):
 
+def gen_rl_environment(params):
     if params["env_type"] == "TwoBodyRendezvous_Polar_Env":
         # initialize the environment
         env = TwoBodyRendezvous_Polar_Env(
@@ -85,6 +85,8 @@ def gen_rl_environment(params):
             prop_length_scale=params.get("prop_length_scale", 1.0),
         )
     else:
-        raise NotImplementedError(f"Environment type {params['env_type']} not implemented.")
-    
+        raise NotImplementedError(
+            f"Environment type {params['env_type']} not implemented."
+        )
+
     return env

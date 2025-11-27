@@ -2,6 +2,7 @@ import numpy as np
 from constants.constants import Constants
 from core.exceptions import SpacecraftCollisionException, LowMassException
 
+
 def spacecraft_EOM_radial_2D_EB(t, y, params):
     """
     ode propagation function
@@ -412,12 +413,14 @@ def Hamiltonian_EOM_TBT_v2(t, state, params):
 
     # Derivative calculation preliminaries
     r = np.linalg.norm(r_vec)
-    
+
     # Check if spacecraft is too close to central body (prevents numerical issues)
     r_min = 0.01  # Minimum allowed radius (non-dimensional)
     if r < r_min:
-        raise SpacecraftCollisionException(f"Spacecraft too close to central body: r = {r:.6e}")
-    
+        raise SpacecraftCollisionException(
+            f"Spacecraft too close to central body: r = {r:.6e}"
+        )
+
     r_dot_lam_v = np.dot(r_vec, lam_v_vec)
     lam_v_mag = np.linalg.norm(lam_v_vec)
 
@@ -444,7 +447,7 @@ def Hamiltonian_EOM_TBT_v2(t, state, params):
             u = smoothing_function_tanh(rho, eps)
         elif switch_smoothing_method == 1:
             u = smoothing_function_homotopic(rho, eps, flag_constrain_u)
-    
+
     # Check if spacecraft mass is too low (can cause numerical issues)
     m_min = 0.01  # Minimum allowed mass (non-dimensional) - 1% of initial mass
     if m < m_min:
@@ -457,7 +460,7 @@ def Hamiltonian_EOM_TBT_v2(t, state, params):
 
     if dm > 0.0:
         raise Exception("Positive mass rate detected")
-    
+
     # In Hamiltonian_EOM_TBT_v2
     r = np.linalg.norm(r_vec)
     r_min = 0.001  # Minimum allowed radius (non-dimensional)
@@ -540,8 +543,8 @@ def env_EOM_TBT_v2(t, state, params):
     # unpack the state vector
     x, y, vx, vy, m = state[:5]
 
-    #check non dim components
-    t_star = (149598023000**3 / (Constants.MU_SUN * 10 ** (9)))** 0.5
+    # check non dim components
+    t_star = (149598023000**3 / (Constants.MU_SUN * 10 ** (9))) ** 0.5
     x_nd = x / Constants.SMA_EARTH
     y_nd = y / Constants.SMA_EARTH
     vx_nd = vx / Constants.SMA_EARTH * t_star
@@ -568,8 +571,10 @@ def env_EOM_TBT_v2(t, state, params):
     if a_vec_mag >= 0.000001:
         alpha_vec = alpha_vec / a_vec_mag
     else:
-        if (u > 0):
-            raise Exception("Error: Zero (or-near zero) thrust direction vector detected")
+        if u > 0:
+            raise Exception(
+                "Error: Zero (or-near zero) thrust direction vector detected"
+            )
 
     # Derivative calculation preliminaries
     r = np.linalg.norm(r_vec)

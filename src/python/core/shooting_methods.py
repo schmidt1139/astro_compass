@@ -3,10 +3,13 @@ import warnings
 import time
 from scipy.integrate import solve_ivp
 from scipy.optimize import root
-from core.propagation import (
-    Hamiltonian_EOM_TBT_v2
+from core.propagation import Hamiltonian_EOM_TBT_v2
+from core.exceptions import (
+    FirstGuessException,
+    SpacecraftCollisionException,
+    LowMassException,
+    TimeoutException,
 )
-from core.exceptions import FirstGuessException, SpacecraftCollisionException, LowMassException, TimeoutException
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -14,7 +17,6 @@ if TYPE_CHECKING:
 
 
 class Hamiltonian_Controller_TBR_Shooting:
-
     if TYPE_CHECKING:
         # Declare attributes that exist in the main class
         flag_solved: bool
@@ -43,12 +45,13 @@ class Hamiltonian_Controller_TBR_Shooting:
         def _log_controller_info(self, info: str) -> None: ...
 
     def shooting_iteration(self, lam_guess_shooting, eps):
-
         elapsed_time = time.time() - self.start_time
-        if (self.timeout_per_trajectory is not None) and (elapsed_time > self.timeout_per_trajectory):
+        if (self.timeout_per_trajectory is not None) and (
+            elapsed_time > self.timeout_per_trajectory
+        ):
             raise TimeoutException("Shooting iteration timed out")
-        
-        #print(f"DEBUG [{elapsed_time:.2f}]: {self.shooting_iters} Shooting iteration with guess:", lam_guess_shooting)
+
+        # print(f"DEBUG [{elapsed_time:.2f}]: {self.shooting_iters} Shooting iteration with guess:", lam_guess_shooting)
 
         # construct full state vector at t=0
         arr_full_y0 = np.hstack((self.arr_y0_nd, lam_guess_shooting))
@@ -84,8 +87,11 @@ class Hamiltonian_Controller_TBR_Shooting:
 
         # integrate forward in time - catch step size warning as exception
         with warnings.catch_warnings():
-            warnings.filterwarnings('error', message='Required step size is less than spacing between numbers')
-            
+            warnings.filterwarnings(
+                "error",
+                message="Required step size is less than spacing between numbers",
+            )
+
             try:
                 sol = solve_ivp(
                     Hamiltonian_EOM_TBT_v2,
@@ -99,23 +105,22 @@ class Hamiltonian_Controller_TBR_Shooting:
                 )
             except SpacecraftCollisionException as e:
                 # Spacecraft got too close to central body
-                if (self.flag_report_live):
-                    print("\n" + "="*60)
+                if self.flag_report_live:
+                    print("\n" + "=" * 60)
                     print("INTEGRATION FAILURE - Spacecraft Collision:")
-                    print("="*60)
+                    print("=" * 60)
                     print(f"Error: {str(e)}")
                     print(f"Initial co-state guess: {lam_guess_shooting}")
                     print(f"Initial state [x,y,vx,vy,m]: {arr_full_y0[:5]}")
                     print(f"Initial r: {np.linalg.norm(arr_full_y0[:2]):.6e}")
-                    print("="*60 + "\n")
+                    print("=" * 60 + "\n")
                 raise
             except LowMassException as e:
-                
                 # Spacecraft mass got too low
-                if (self.flag_report_live):
-                    print("\n" + "="*60)
+                if self.flag_report_live:
+                    print("\n" + "=" * 60)
                     print("INTEGRATION FAILURE - Low Mass:")
-                    print("="*60)
+                    print("=" * 60)
                     print(f"Error: {str(e)}")
                 print(f"Initial co-state guess: {lam_guess_shooting}")
                 print(f"Initial state [x,y,vx,vy,m]: {arr_full_y0[:5]}")
@@ -124,47 +129,55 @@ class Hamiltonian_Controller_TBR_Shooting:
                 print("  - Longer transfer time (increase TOF)")
                 print("  - Different initial co-state guess")
                 print("  - Higher initial mass or lower thrust")
-                print("="*60 + "\n")
+                print("=" * 60 + "\n")
                 raise
             except UserWarning as w:
                 # Print diagnostics when step size error occurs
-                if (self.flag_report_live):
-                    print("\n" + "="*60)
+                if self.flag_report_live:
+                    print("\n" + "=" * 60)
                     print("INTEGRATION FAILURE - Step Size Error:")
-                    print("="*60)
+                    print("=" * 60)
                     print(f"Error: {str(w)}")
                     print(f"Initial co-state guess: {lam_guess_shooting}")
                     print(f"Initial state [x,y,vx,vy,m]: {arr_full_y0[:5]}")
                     print(f"Initial r: {np.linalg.norm(arr_full_y0[:2]):.6e}")
-                    print("="*60 + "\n")
-                raise Exception(f"Integration failed in shooting iteration: {str(w)}") from w
+                    print("=" * 60 + "\n")
+                raise Exception(
+                    f"Integration failed in shooting iteration: {str(w)}"
+                ) from w
 
         if sol.status == -1:
             # Print diagnostics when integration fails with status -1
             if sol.y.shape[1] > 0:
                 last_state = sol.y[:, -1]
                 last_time = sol.t[-1]
-                if (self.flag_report_live):
-                    print("\n" + "="*60)
+                if self.flag_report_live:
+                    print("\n" + "=" * 60)
                     print("INTEGRATION FAILURE - Last Integrated State:")
-                    print("="*60)
+                    print("=" * 60)
                     print(f"Message: {sol.message}")
-                    print(f"Last time reached: {last_time:.6e} (target: {self.input_TOF_nd:.6e})")
-                    print(f"Last position [x, y]: [{last_state[0]:.6e}, {last_state[1]:.6e}]")
-                    print(f"Last velocity [vx, vy]: [{last_state[2]:.6e}, {last_state[3]:.6e}]")
+                    print(
+                        f"Last time reached: {last_time:.6e} (target: {self.input_TOF_nd:.6e})"
+                    )
+                    print(
+                        f"Last position [x, y]: [{last_state[0]:.6e}, {last_state[1]:.6e}]"
+                    )
+                    print(
+                        f"Last velocity [vx, vy]: [{last_state[2]:.6e}, {last_state[3]:.6e}]"
+                    )
                     print(f"Last mass: {last_state[4]:.6e}")
                     print(f"Last r: {np.linalg.norm(last_state[:2]):.6e}")
-                    print(f"Last co-states [lam_x, lam_y, lam_vx, lam_vy, lam_m]: {last_state[5:]}")
-                    print("="*60 + "\n")
+                    print(
+                        f"Last co-states [lam_x, lam_y, lam_vx, lam_vy, lam_m]: {last_state[5:]}"
+                    )
+                    print("=" * 60 + "\n")
             raise Exception("Integration failed")
 
         # extract final cartesian state
         x_f_nd_p, y_f_nd_p, vx_f_nd_p, vy_f_nd_p, _ = sol.y[:5, -1]
 
         # extract final co-state
-        _, _, _, _, lam_m_f_nd_p = sol.y[
-            5:10, -1
-        ]
+        _, _, _, _, lam_m_f_nd_p = sol.y[5:10, -1]
 
         # compute residual for rendezvous constraint
         residuals = np.array(
@@ -173,14 +186,14 @@ class Hamiltonian_Controller_TBR_Shooting:
                 y_f_nd_p - y_f_target_nd,  # Final y nd
                 vx_f_nd_p - vx_f_target_nd,  # Final x velocity constraint
                 vy_f_nd_p - vy_f_target_nd,  # Final y velocity constraint
-                lam_m_f_nd_p - lam_m_f  # Final mass co-state should be 0
+                lam_m_f_nd_p - lam_m_f,  # Final mass co-state should be 0
             ]
         )
 
         self.shooting_iters = self.shooting_iters + 1
 
         return residuals
-    
+
     def check_initial_costate_guess(self):
         self._log_controller_info("Checking initial co-state guess")
 
@@ -222,7 +235,7 @@ class Hamiltonian_Controller_TBR_Shooting:
                     method="lm",
                     options={"ftol": self.root_tol, "maxiter": self.root_max_iters},
                 )
-                
+
                 # Calculate actual residual norm and success flag
                 residual_norm = np.linalg.norm(lam_sol.fun)
                 success = lam_sol.success
@@ -231,7 +244,7 @@ class Hamiltonian_Controller_TBR_Shooting:
                 self._log_controller_info(
                     f"Attempt {counter_first_guess} completed - Residual norm: {np.linalg.norm(lam_sol.fun)}"
                 )
-                
+
             except SpacecraftCollisionException as e:
                 # Collision during root finding - mark as failed and continue
                 self._log_controller_info(
@@ -250,8 +263,7 @@ class Hamiltonian_Controller_TBR_Shooting:
                 residual_norm = np.inf
                 iters_taken = 0
 
-            if ( success and residual_norm < self.root_tol ):
-
+            if success and residual_norm < self.root_tol:
                 self._log_controller_info(
                     "Attempt "
                     + str(counter_first_guess)
@@ -266,7 +278,7 @@ class Hamiltonian_Controller_TBR_Shooting:
 
                 self.flag_initial_costate_found = True
                 return lam_guess
-            
+
             else:
                 self._log_controller_info(
                     "Lambda: "

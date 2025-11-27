@@ -31,7 +31,6 @@ class Spacecraft:
         self.vy = vy
 
     def update_state_cartesian(self, x, y, vx, vy, m):
-
         self.x = x
         self.y = y
         self.vx = vx
@@ -59,7 +58,6 @@ class Spacecraft:
         # position and velocity magnitudes
         r_km = (x_rel_km**2 + y_rel_km**2) ** 0.5
         r = r_km * 1000  # convert back to m
-
 
         # spacecraft position, vel, and z vectors
         sc_pos = np.array([x_rel, y_rel, 0.0])
@@ -122,5 +120,4 @@ class Spacecraft:
         return a, e, w, theta
 
     def get_cartesian_state(self):
-
         return self.x, self.y, self.vx, self.vy

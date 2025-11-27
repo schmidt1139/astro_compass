@@ -1,12 +1,17 @@
-import numpy as np
-import gymnasium as gym
 import warnings
 from typing import Optional
-from scipy.integrate import solve_ivp
+
+import gymnasium as gym
+import numpy as np
 from constants.constants import Constants
-from core.spacecraft import Spacecraft
 from core.propagation import env_EOM_TBT_v2
-from utils.state_vector_utils import polar_to_cartesian, calc_cart_from_OE, cartesian_to_polar
+from core.spacecraft import Spacecraft
+from scipy.integrate import solve_ivp
+from utils.state_vector_utils import (
+    calc_cart_from_OE,
+    cartesian_to_polar,
+)
+
 
 class TwoBodyRendezvous_Env(gym.Env):
     def __init__(self, **kwargs):
@@ -27,34 +32,64 @@ class TwoBodyRendezvous_Env(gym.Env):
 
         # list of environment parameters (Sun is the central body)
         self.param_mu = kwargs.get("mu", Constants.MU_SUN_M)  # in m^3/s^2
-        self.C1 = (
-            kwargs.get("max_T", 1.33)
-        )  # Spacecraft max thrust (in N)
+        self.C1 = kwargs.get("max_T", 1.33)  # Spacecraft max thrust (in N)
         self.C2 = kwargs.get("ISP", 3872.0)  # Spacecraft specific impulse (s)
         self.l_star = kwargs.get(
             "l_star", Constants.SMA_EARTH
         )  # characteristic length (m)
         self.t_star = kwargs.get(
-            "t_star", (Constants.SMA_EARTH**3 / (Constants.MU_SUN_M)**0.5)
+            "t_star", (Constants.SMA_EARTH**3 / (Constants.MU_SUN_M) ** 0.5)
         )  # characteristic time (s)
         self.m_star = kwargs.get("m_star", 3366.0)  # characteristic mass (kg)
         self.step_size = kwargs.get("step_size", 86400)  # environment step size (s)
-        self.a_min_init_env_nd = kwargs.get("a_min_init_env_nd", Constants.SMA_VENUS)  # min semi-major axis for env [AU]
-        self.a_max_init_env_nd = kwargs.get("a_max_init_env_nd", Constants.SMA_MARS)  # max semi-major axis for env [AU]
-        self.e_min_init_env = kwargs.get("e_min_init_env", 0.0)  # min eccentricity for env
-        self.e_max_init_env = kwargs.get("e_max_init_env", 0.5)  # max eccentricity for env
-        self.w_min_init_env_rad = kwargs.get("w_min_init_env_deg", 0.0) * np.pi / 180  # min argument of periapsis for env [rad]
-        self.w_max_init_env_rad = kwargs.get("w_max_init_env_deg", 360) * np.pi / 180  # max argument of periapsis for env [rad]
-        self.a_min_final_env_nd = kwargs.get("a_min_final_env_nd", Constants.SMA_VENUS)  # min semi-major axis for env [AU]
-        self.a_max_final_env_nd = kwargs.get("a_max_final_env_nd", Constants.SMA_MARS)  # max semi-major axis for env [AU]
-        self.e_min_final_env = kwargs.get("e_min_final_env", 0.0)  # min eccentricity for env
-        self.e_max_final_env = kwargs.get("e_max_final_env", 0.5)  # max eccentricity for env
-        self.w_min_final_env_rad = kwargs.get("w_min_final_env_deg", 0.0) * np.pi / 180  # min argument of periapsis for env [rad]
-        self.w_max_final_env_rad = kwargs.get("w_max_final_env_deg", 360) * np.pi / 180  # max argument of periapsis for env [rad]
-        self.theta_min_init_env_rad = kwargs.get("theta_min_init_env_deg", 0.0) * np.pi / 180  # min true anomaly for env [rad]
-        self.theta_max_init_env_rad = kwargs.get("theta_max_init_env_deg", 360) * np.pi / 180  # max true anomaly for env [rad]
-        self.theta_min_final_env_rad = kwargs.get("theta_min_final_env_deg", 0.0) * np.pi / 180  # min true anomaly for env [rad]
-        self.theta_max_final_env_rad = kwargs.get("theta_max_final_env_deg", 360) * np.pi / 180  # max true anomaly for env [rad]
+        self.a_min_init_env_nd = kwargs.get(
+            "a_min_init_env_nd", Constants.SMA_VENUS
+        )  # min semi-major axis for env [AU]
+        self.a_max_init_env_nd = kwargs.get(
+            "a_max_init_env_nd", Constants.SMA_MARS
+        )  # max semi-major axis for env [AU]
+        self.e_min_init_env = kwargs.get(
+            "e_min_init_env", 0.0
+        )  # min eccentricity for env
+        self.e_max_init_env = kwargs.get(
+            "e_max_init_env", 0.5
+        )  # max eccentricity for env
+        self.w_min_init_env_rad = (
+            kwargs.get("w_min_init_env_deg", 0.0) * np.pi / 180
+        )  # min argument of periapsis for env [rad]
+        self.w_max_init_env_rad = (
+            kwargs.get("w_max_init_env_deg", 360) * np.pi / 180
+        )  # max argument of periapsis for env [rad]
+        self.a_min_final_env_nd = kwargs.get(
+            "a_min_final_env_nd", Constants.SMA_VENUS
+        )  # min semi-major axis for env [AU]
+        self.a_max_final_env_nd = kwargs.get(
+            "a_max_final_env_nd", Constants.SMA_MARS
+        )  # max semi-major axis for env [AU]
+        self.e_min_final_env = kwargs.get(
+            "e_min_final_env", 0.0
+        )  # min eccentricity for env
+        self.e_max_final_env = kwargs.get(
+            "e_max_final_env", 0.5
+        )  # max eccentricity for env
+        self.w_min_final_env_rad = (
+            kwargs.get("w_min_final_env_deg", 0.0) * np.pi / 180
+        )  # min argument of periapsis for env [rad]
+        self.w_max_final_env_rad = (
+            kwargs.get("w_max_final_env_deg", 360) * np.pi / 180
+        )  # max argument of periapsis for env [rad]
+        self.theta_min_init_env_rad = (
+            kwargs.get("theta_min_init_env_deg", 0.0) * np.pi / 180
+        )  # min true anomaly for env [rad]
+        self.theta_max_init_env_rad = (
+            kwargs.get("theta_max_init_env_deg", 360) * np.pi / 180
+        )  # max true anomaly for env [rad]
+        self.theta_min_final_env_rad = (
+            kwargs.get("theta_min_final_env_deg", 0.0) * np.pi / 180
+        )  # min true anomaly for env [rad]
+        self.theta_max_final_env_rad = (
+            kwargs.get("theta_max_final_env_deg", 360) * np.pi / 180
+        )  # max true anomaly for env [rad]
         # Support both naming conventions for weights
         self.pos_weight = kwargs.get("pos_r_weight", kwargs.get("r_weight", 1.0))
         self.vel_weight = kwargs.get("vel_r_weight", kwargs.get("v_weight", 1.0))
@@ -62,13 +97,27 @@ class TwoBodyRendezvous_Env(gym.Env):
         self.tof_scale = kwargs.get("tof_scale", 1.0)
         self.r_dist_weight = kwargs.get("r_dist_weight", self.pos_weight)
         self.v_dist_weight = kwargs.get("v_dist_weight", self.vel_weight)
-        self.success_threshold_pos = kwargs.get("success_threshold_pos", 0.01)  # 1% of characteristic length
-        self.success_threshold_vel = kwargs.get("success_threshold_vel", 0.01)  # 1% of characteristic velocity
-        self.terminal_bonus = kwargs.get("terminal_bonus", 100.0)  # Large bonus for precise rendezvous
-        self.precision_mult = kwargs.get("precision_mult", 10.0)  # Small bonus for being within success thresholds
-        self.terminal_bonus = kwargs.get("terminal_bonus", 100.0)  # Large bonus for precise rendezvous
-        self.tof_weight = kwargs.get("tof_weight", 1.0)  # Weighting factor for time component of reward
-        self.time_dist_weight = kwargs.get("time_dist_weight", 1.0)  # Weighting factor for time distribution
+        self.success_threshold_pos = kwargs.get(
+            "success_threshold_pos", 0.01
+        )  # 1% of characteristic length
+        self.success_threshold_vel = kwargs.get(
+            "success_threshold_vel", 0.01
+        )  # 1% of characteristic velocity
+        self.terminal_bonus = kwargs.get(
+            "terminal_bonus", 100.0
+        )  # Large bonus for precise rendezvous
+        self.precision_mult = kwargs.get(
+            "precision_mult", 10.0
+        )  # Small bonus for being within success thresholds
+        self.terminal_bonus = kwargs.get(
+            "terminal_bonus", 100.0
+        )  # Large bonus for precise rendezvous
+        self.tof_weight = kwargs.get(
+            "tof_weight", 1.0
+        )  # Weighting factor for time component of reward
+        self.time_dist_weight = kwargs.get(
+            "time_dist_weight", 1.0
+        )  # Weighting factor for time distribution
 
         self.arr_mu = np.array([self.param_mu])  # solar mu [m^3/s^2]
         self.planet_radii = np.array([Constants.RADIUS_SUN_M])  # solar radius [m]
@@ -89,12 +138,12 @@ class TwoBodyRendezvous_Env(gym.Env):
 
         mu = self.param_mu
 
-        #check periods
-        a_nd = self._keplerian_elements[0]/Constants.SMA_EARTH
-        
-        T_nd = 2 * np.pi * ( a_nd**3 / 1.0 ) ** 0.5
+        # check periods
+        a_nd = self._keplerian_elements[0] / Constants.SMA_EARTH
 
-        #calc deltas
+        T_nd = 2 * np.pi * (a_nd**3 / 1.0) ** 0.5
+
+        # calc deltas
         deltas = self.calc_deltas()
         dx, dy, dr, dvx, dvy, dv, r_target, v_target, dr_norm, dv_norm = deltas
 
@@ -103,14 +152,28 @@ class TwoBodyRendezvous_Env(gym.Env):
         vx_target = self._state[7]
         vy_target = self._state[8]
 
-        r_target, theta_target, r_dot_target, v_theta_target = cartesian_to_polar(x_target, y_target, vx_target, vy_target)
+        r_target, theta_target, r_dot_target, v_theta_target = cartesian_to_polar(
+            x_target, y_target, vx_target, vy_target
+        )
 
         # Initialize a spacecraft object with the state of the environment
-        sc_target = Spacecraft(r_target, theta_target, r_dot_target, v_theta_target, 1000.0, self.C1, self.C2)
-        sc_target.update_state_cartesian(x_target, y_target, vx_target, vy_target, 1000.0)
+        sc_target = Spacecraft(
+            r_target,
+            theta_target,
+            r_dot_target,
+            v_theta_target,
+            1000.0,
+            self.C1,
+            self.C2,
+        )
+        sc_target.update_state_cartesian(
+            x_target, y_target, vx_target, vy_target, 1000.0
+        )
 
         # calculate orbital elements
-        a_target, e_target, w_target, theta_target = sc_target.calc_Planar_OE(0.0, 0.0, 0.0, 0.0, mu)
+        a_target, e_target, w_target, theta_target = sc_target.calc_Planar_OE(
+            0.0, 0.0, 0.0, 0.0, mu
+        )
         a_target_nd = a_target / Constants.SMA_EARTH
         T_target_nd = 2 * np.pi * (a_target_nd**3 / 1.0) ** 0.5
 
@@ -118,8 +181,12 @@ class TwoBodyRendezvous_Env(gym.Env):
             print("T_target is NaN")
             print("a_target_nd:", a_target_nd)
             print(f"a_target: {a_target}, mu: {mu}")
-            print(f"x_target: {x_target}, y_target: {y_target}, vx_target: {vx_target}, vy_target: {vy_target}")
-            print(f"r_target: {r_target}, theta_target: {theta_target}, r_dot_target: {r_dot_target}, v_theta_target: {v_theta_target}")
+            print(
+                f"x_target: {x_target}, y_target: {y_target}, vx_target: {vx_target}, vy_target: {vy_target}"
+            )
+            print(
+                f"r_target: {r_target}, theta_target: {theta_target}, r_dot_target: {r_dot_target}, v_theta_target: {v_theta_target}"
+            )
             raise ValueError("T_target is NaN")
 
         return {
@@ -127,7 +194,7 @@ class TwoBodyRendezvous_Env(gym.Env):
             "ODE Solution": ode_solution,
             "delta_state": delta_r,
             "planet_radii": self.planet_radii,
-            "a": self._keplerian_elements[0]/Constants.SMA_EARTH,
+            "a": self._keplerian_elements[0] / Constants.SMA_EARTH,
             "e": self._keplerian_elements[1],
             "w": np.rad2deg(self._keplerian_elements[2]),
             "theta": np.rad2deg(self._keplerian_elements[3]),
@@ -145,12 +212,14 @@ class TwoBodyRendezvous_Env(gym.Env):
             "dv_norm": dv_norm,
             "orbital_period_nd": T_nd,
             "orbital_period_years": T_nd * self.t_star / Constants.YEARS_TO_SEC,
-            "a_target": a_target/Constants.SMA_EARTH,
+            "a_target": a_target / Constants.SMA_EARTH,
             "e_target": e_target,
             "w_target": np.rad2deg(w_target),
             "theta_target": np.rad2deg(theta_target),
             "orbital_period_target_nd": T_target_nd,
-            "orbital_period_target_years": T_target_nd * self.t_star / Constants.YEARS_TO_SEC,
+            "orbital_period_target_years": T_target_nd
+            * self.t_star
+            / Constants.YEARS_TO_SEC,
             "mu": self.param_mu,
             "step_count": self.step_count,
             "TOF": self.TOF,
@@ -162,9 +231,9 @@ class TwoBodyRendezvous_Env(gym.Env):
             "r_weight": self.pos_weight,
             "v_weight": self.vel_weight,
             "mass_weight": self.mass_weight,
-            "pos_r_component": self.pos_r_component,
-            "vel_r_component": self.vel_r_component,
-            "mass_r_component": self.mass_r_component
+            "pos_reward": self.pos_reward,
+            "vel_reward": self.vel_reward,
+            "mass_reward": self.mass_reward,
         }
 
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None):
@@ -179,10 +248,22 @@ class TwoBodyRendezvous_Env(gym.Env):
         mu = self.param_mu
 
         # set ranges for initial state parameters
-        a_range = [self.a_min_init_env_nd, self.a_max_init_env_nd]  # initial radius range (m)
-        e_range = [self.e_min_init_env, self.e_max_init_env]  # initial eccentricity range
-        w_range = [self.w_min_init_env_rad, self.w_max_init_env_rad]  # initial argument of periapsis range (rad)
-        theta_range = [self.theta_min_init_env_rad, self.theta_max_init_env_rad]  # initial true anomaly range (rad)
+        a_range = [
+            self.a_min_init_env_nd,
+            self.a_max_init_env_nd,
+        ]  # initial radius range (m)
+        e_range = [
+            self.e_min_init_env,
+            self.e_max_init_env,
+        ]  # initial eccentricity range
+        w_range = [
+            self.w_min_init_env_rad,
+            self.w_max_init_env_rad,
+        ]  # initial argument of periapsis range (rad)
+        theta_range = [
+            self.theta_min_init_env_rad,
+            self.theta_max_init_env_rad,
+        ]  # initial true anomaly range (rad)
 
         # set the initial spacecraft parameters
         mass = 3366.0  # Assumed spacecraft total mass
@@ -201,16 +282,26 @@ class TwoBodyRendezvous_Env(gym.Env):
         # convert initial state to polar coordinates
         r_0, theta_0, r_dot_0, v_theta_0 = cartesian_to_polar(x_0, y_0, vx_0, vy_0)
 
-        a_range = [self.a_min_final_env_nd, self.a_max_final_env_nd]  # final radius range (m)
-        e_range = [self.e_min_final_env, self.e_max_final_env]  # final eccentricity range
-        w_range = [self.w_min_final_env_rad, self.w_max_final_env_rad]  # final argument of periapsis range (rad)
+        a_range = [
+            self.a_min_final_env_nd,
+            self.a_max_final_env_nd,
+        ]  # final radius range (m)
+        e_range = [
+            self.e_min_final_env,
+            self.e_max_final_env,
+        ]  # final eccentricity range
+        w_range = [
+            self.w_min_final_env_rad,
+            self.w_max_final_env_rad,
+        ]  # final argument of periapsis range (rad)
 
         # randomly vary final state
         a_f = self.np_random.uniform(low=a_range[0], high=a_range[1])
         e_f = self.np_random.uniform(low=e_range[0], high=e_range[1])
         w_f = self.np_random.uniform(low=w_range[0], high=w_range[1])
-        theta_f = self.np_random.uniform(low=self.theta_min_final_env_rad, high=self.theta_max_final_env_rad)
-
+        theta_f = self.np_random.uniform(
+            low=self.theta_min_final_env_rad, high=self.theta_max_final_env_rad
+        )
 
         # convert the final state to polar coordinates and cartesian
         x_f, y_f, vx_f, vy_f = calc_cart_from_OE(a_f, e_f, w_f, theta_f, mu)
@@ -240,20 +331,19 @@ class TwoBodyRendezvous_Env(gym.Env):
         a_f, e_f, w_f, theta_f = sc_final.calc_Planar_OE(x_cb, y_cb, vx_cb, vy_cb, mu)
         a_nd = a / Constants.SMA_EARTH
         a_f_nd = a_f / Constants.SMA_EARTH
-        T_i = 2 * np.pi * ( a_nd**3 / 1.0 ) ** 0.5
-        T_target = 2 * np.pi * ( a_f_nd**3 / 1.0 ) ** 0.5
+        T_i = 2 * np.pi * (a_nd**3 / 1.0) ** 0.5
+        T_target = 2 * np.pi * (a_f_nd**3 / 1.0) ** 0.5
 
-        #determine time of flight
+        # determine time of flight
         TTG_dim = 0.0
         TTG_nd = 0.0
 
-        if (T_target > T_i):
+        if T_target > T_i:
             TTG_nd = T_target
             TTG_dim = T_target * self.t_star
         else:
-            TTG_nd = T_i 
+            TTG_nd = T_i
             TTG_dim = T_i * self.t_star
-
 
         TTG_nd = TTG_nd * self.tof_scale
         TTG_dim = TTG_nd * self.t_star
@@ -280,27 +370,54 @@ class TwoBodyRendezvous_Env(gym.Env):
         vy_target_nd = vy_f / (self.l_star / self.t_star)
 
         # set the initial state of the environment
-        self._state = np.array([x_0, y_0, vx_0, vy_0, mass, x_f, y_f, vx_f, vy_f, TTG_dim], dtype=np.float32)
-        observation = np.array([x_nd, y_nd, vx_nd, vy_nd, mass_nd, x_target_nd, y_target_nd, vx_target_nd, vy_target_nd, TTG_nd], dtype=np.float32)
+        self._state = np.array(
+            [x_0, y_0, vx_0, vy_0, mass, x_f, y_f, vx_f, vy_f, TTG_dim],
+            dtype=np.float32,
+        )
+        observation = np.array(
+            [
+                x_nd,
+                y_nd,
+                vx_nd,
+                vy_nd,
+                mass_nd,
+                x_target_nd,
+                y_target_nd,
+                vx_target_nd,
+                vy_target_nd,
+                TTG_nd,
+            ],
+            dtype=np.float32,
+        )
         self.elapsed_t = 0.0
 
         deltas = self.calc_deltas()
-        dx_nd, dy_nd, dr, dvx_nd, dvy_nd, dv_nd, r_target, v_target, dr_norm, dv_norm = deltas
-        self.pos_residual = ( dx_nd**2 + dy_nd**2 ) ** 0.5
-        self.vel_residual = ( dvx_nd**2 + dvy_nd**2 ) ** 0.5
-        self.pos_r_component = 0.0
-        self.vel_r_component = 0.0
-        self.mass_r_component = 0.0
+        (
+            dx_nd,
+            dy_nd,
+            dr,
+            dvx_nd,
+            dvy_nd,
+            dv_nd,
+            r_target,
+            v_target,
+            dr_norm,
+            dv_norm,
+        ) = deltas
+        self.pos_residual = (dx_nd**2 + dy_nd**2) ** 0.5
+        self.vel_residual = (dvx_nd**2 + dvy_nd**2) ** 0.5
+        self.pos_reward = 0.0
+        self.vel_reward = 0.0
+        self.mass_reward = 0.0
 
         info = self._get_info(
-            None, #placeholder for ODE data - only provided in step()
-            None, #placeholder for delta_r data - only provided in step()
+            None,  # placeholder for ODE data - only provided in step()
+            None,  # placeholder for delta_r data - only provided in step()
         )
 
         return observation, info
-    
-    def calc_deltas(self):
 
+    def calc_deltas(self):
         # unpack state vector
         x = self._state[0]
         y = self._state[1]
@@ -319,23 +436,26 @@ class TwoBodyRendezvous_Env(gym.Env):
         vy_target_norm = vy_target / (self.l_star / self.t_star)
 
         # position difference from target
-        dx = (x - x_target) / self.l_star   # delta x nd
-        dy = (y - y_target) / self.l_star    # delta y nd
-        dr = (dx**2 + dy**2) ** 0.5 # distance to target in nd units
-        r_target = (x_target_norm**2 + y_target_norm**2) ** 0.5 # target radius in nd units
+        dx = (x - x_target) / self.l_star  # delta x nd
+        dy = (y - y_target) / self.l_star  # delta y nd
+        dr = (dx**2 + dy**2) ** 0.5  # distance to target in nd units
+        r_target = (
+            x_target_norm**2 + y_target_norm**2
+        ) ** 0.5  # target radius in nd units
         dr_norm = dr / r_target if r_target != 0 else 0.0
 
         # velocity difference from target
         dvx = (vx - vx_target) / (self.l_star / self.t_star)  # delta vx in nd units
         dvy = (vy - vy_target) / (self.l_star / self.t_star)  # delta vy in nd units
-        dv = (dvx**2 + dvy**2) ** 0.5    # velocity difference to target in nd units
-        v_target = (vx_target_norm**2 + vy_target_norm**2) ** 0.5   # target velocity in nd units
+        dv = (dvx**2 + dvy**2) ** 0.5  # velocity difference to target in nd units
+        v_target = (
+            vx_target_norm**2 + vy_target_norm**2
+        ) ** 0.5  # target velocity in nd units
         dv_norm = dv / v_target if v_target != 0 else 0.0
 
         return dx, dy, dr, dvx, dvy, dv, r_target, v_target, dr_norm, dv_norm
 
     def calc_reward(self):
-
         x = self._state[0] / self.l_star
         y = self._state[1] / self.l_star
         vx = self._state[2] / (self.l_star / self.t_star)
@@ -355,47 +475,73 @@ class TwoBodyRendezvous_Env(gym.Env):
 
         # determine reward based on state input, also check if state is terminal
         deltas = self.calc_deltas()
-        dx_nd, dy_nd, dr, dvx_nd, dvy_nd, dv_nd, r_target, v_target, dr_norm, dv_norm = deltas
-        self.pos_residual = ( dx_nd**2 + dy_nd**2 ) ** 0.5
-        self.vel_residual = ( dvx_nd**2 + dvy_nd**2 ) ** 0.5
+        (
+            dx_nd,
+            dy_nd,
+            dr,
+            dvx_nd,
+            dvy_nd,
+            dv_nd,
+            r_target,
+            v_target,
+            dr_norm,
+            dv_norm,
+        ) = deltas
+        self.pos_residual = (dx_nd**2 + dy_nd**2) ** 0.5
+        self.vel_residual = (dvx_nd**2 + dvy_nd**2) ** 0.5
 
         residual = dx_nd**2 + dy_nd**2 + dvx_nd**2 + dvy_nd**2
 
         # Separate exponentials for position and velocity - provides smoother gradient
-        self.time_component = np.exp(- self.time_dist_weight * TTG_nd**2) * self.tof_weight
-        self.pos_r_component = np.exp(- self.r_dist_weight * self.pos_residual**2) * self.pos_weight
-        self.vel_r_component = np.exp(- self.v_dist_weight * self.vel_residual**2) * self.vel_weight
-        self.mass_r_component = -self.mass_increment / self.m_star * self.mass_weight
+        self.time_component = (
+            np.exp(-self.time_dist_weight * TTG_nd**2) * self.tof_weight
+        )
+        self.pos_reward = (
+            np.exp(-self.r_dist_weight * self.pos_residual**2) * self.pos_weight
+        )
+        self.vel_reward = (
+            np.exp(-self.v_dist_weight * self.vel_residual**2) * self.vel_weight
+        )
+        self.mass_reward = -self.mass_increment / self.m_star * self.mass_weight
 
-        #Step-based shaping reward (always provided for learning)
-        if self.pos_residual < self.success_threshold_pos and self.vel_residual < self.success_threshold_vel:
-            precision_mult = self.precision_mult  # Small bonus for being within success thresholds
-            self.pos_r_component = self.pos_r_component * precision_mult
-            self.vel_r_component = self.vel_r_component * precision_mult
+        # Step-based shaping reward (always provided for learning)
+        if (
+            self.pos_residual < self.success_threshold_pos
+            and self.vel_residual < self.success_threshold_vel
+        ):
+            precision_mult = (
+                self.precision_mult
+            )  # Small bonus for being within success thresholds
+            self.pos_reward = self.pos_reward * precision_mult
+            self.vel_reward = self.vel_reward * precision_mult
 
-        #shaping_reward = self.time_component * ( self.pos_r_component + self.vel_r_component ) + self.mass_r_component
-        self.pos_r_component = self.pos_r_component * self.time_component
-        self.vel_r_component = self.vel_r_component * self.time_component
-        shaping_reward = self.pos_r_component + self.vel_r_component + self.mass_r_component
+        # shaping_reward = self.time_component * ( self.pos_reward + self.vel_reward ) + self.mass_reward
+        self.pos_reward = self.pos_reward * self.time_component
+        self.vel_reward = self.vel_reward * self.time_component
+        shaping_reward = self.pos_reward + self.vel_reward + self.mass_reward
 
         # central body parameters
         cb_rad = self.planet_radii[0] / self.l_star  # central body radius in nd units
 
         terminated = False
 
-        
         if r < cb_rad:
             reward = 0.0
             terminated = True
         elif e >= 1.0:
             reward = 0.0
             terminated = True
-        elif TTG <= 0.0:          
-            if self.pos_residual < self.success_threshold_pos and self.vel_residual < self.success_threshold_vel:
-                terminal_bonus = self.terminal_bonus  # Large bonus for precise rendezvous
+        elif TTG <= 0.0:
+            if (
+                self.pos_residual < self.success_threshold_pos
+                and self.vel_residual < self.success_threshold_vel
+            ):
+                terminal_bonus = (
+                    self.terminal_bonus
+                )  # Large bonus for precise rendezvous
             else:
                 terminal_bonus = 0.0
-            
+
             reward = shaping_reward + terminal_bonus
             terminated = True
         else:
@@ -459,9 +605,14 @@ class TwoBodyRendezvous_Env(gym.Env):
 
         # solve ODE - catch step size warning as exception
         with warnings.catch_warnings():
-            warnings.filterwarnings('error', message='Required step size is less than spacing between numbers')
+            warnings.filterwarnings(
+                "error",
+                message="Required step size is less than spacing between numbers",
+            )
             try:
-                solution = solve_ivp(env_EOM_TBT_v2, t_span, y0, method="RK45", args=(params,))
+                solution = solve_ivp(
+                    env_EOM_TBT_v2, t_span, y0, method="RK45", args=(params,)
+                )
             except UserWarning as w:
                 raise Exception(f"Integration failed in env.step(): {str(w)}") from w
 
@@ -476,7 +627,10 @@ class TwoBodyRendezvous_Env(gym.Env):
 
         # update the state and elapsed time
         self.elapsed_t = self.elapsed_t + self.step_size
-        self._state = np.append(y_final, [self._state[5], self._state[6], self._state[7], self._state[8], TTG]).astype(np.float32)
+        self._state = np.append(
+            y_final,
+            [self._state[5], self._state[6], self._state[7], self._state[8], TTG],
+        ).astype(np.float32)
 
         x_plus = y_final[0]
         y_plus = y_final[1]
@@ -518,7 +672,21 @@ class TwoBodyRendezvous_Env(gym.Env):
         vx_target_nd = self._state[7] / (self.l_star / self.t_star)
         vy_target_nd = self._state[8] / (self.l_star / self.t_star)
         TTG_nd = self._state[9] / self.t_star
-        observation = np.array([x_nd, y_nd, vx_nd, vy_nd, mass_nd, x_target_nd, y_target_nd, vx_target_nd, vy_target_nd, TTG_nd], dtype=np.float32)
+        observation = np.array(
+            [
+                x_nd,
+                y_nd,
+                vx_nd,
+                vy_nd,
+                mass_nd,
+                x_target_nd,
+                y_target_nd,
+                vx_target_nd,
+                vy_target_nd,
+                TTG_nd,
+            ],
+            dtype=np.float32,
+        )
 
         # extract other environment information
         info = self._get_info(solution, delta_r)
@@ -529,9 +697,8 @@ class TwoBodyRendezvous_Env(gym.Env):
             info["episode"] = {"r": float(self.episode_reward)}
 
         return observation, reward, terminated, truncated, info
-    
-    def _convert_state_to_obs(self):
 
+    def _convert_state_to_obs(self):
         x_nd = self._state[0] / self.l_star
         y_nd = self._state[1] / self.l_star
         vx_nd = self._state[2] / (self.l_star / self.t_star)
@@ -543,14 +710,25 @@ class TwoBodyRendezvous_Env(gym.Env):
         vy_target_nd = self._state[8] / (self.l_star / self.t_star)
         TTG_nd = self._state[9] / self.t_star
 
-        observation = np.array([x_nd, y_nd, vx_nd, vy_nd, mass_nd, x_target_nd, 
-                                y_target_nd, vx_target_nd, vy_target_nd, TTG_nd], 
-                                dtype=np.float32)
-        
+        observation = np.array(
+            [
+                x_nd,
+                y_nd,
+                vx_nd,
+                vy_nd,
+                mass_nd,
+                x_target_nd,
+                y_target_nd,
+                vx_target_nd,
+                vy_target_nd,
+                TTG_nd,
+            ],
+            dtype=np.float32,
+        )
+
         return observation
 
     def set_state(self, state):
-
         # unpack the input state vector
         x_in = state[0]
         y_in = state[1]
@@ -566,7 +744,18 @@ class TwoBodyRendezvous_Env(gym.Env):
 
         # set the environment state to the input state vector
         self._state = np.array(
-            [x_in, y_in, vx_in, vy_in, m_in, x_target_in, y_target_in, vx_target_in, vy_target_in, TTG_in],
+            [
+                x_in,
+                y_in,
+                vx_in,
+                vy_in,
+                m_in,
+                x_target_in,
+                y_target_in,
+                vx_target_in,
+                vy_target_in,
+                TTG_in,
+            ],
             dtype=np.float32,
         )
 
@@ -591,7 +780,9 @@ class TwoBodyRendezvous_Env(gym.Env):
 
         # convert initial and final states to polar coordinates
         r_0, theta_0, r_dot_0, v_theta_0 = cartesian_to_polar(x_in, y_in, vx_in, vy_in)
-        r_f, theta_f, r_dot_f, v_theta_f = cartesian_to_polar(x_target_in, y_target_in, vx_target_in, vy_target_in)
+        r_f, theta_f, r_dot_f, v_theta_f = cartesian_to_polar(
+            x_target_in, y_target_in, vx_target_in, vy_target_in
+        )
 
         # Initialize spacecraft objects for initial and final states
         sc_init = Spacecraft(r_0, theta_0, r_dot_0, v_theta_0, m_in, self.C1, self.C2)
@@ -608,14 +799,14 @@ class TwoBodyRendezvous_Env(gym.Env):
         # determine orbital periods
         a_nd = a_init / Constants.SMA_EARTH
         a_f_nd = a_fin / Constants.SMA_EARTH
-        T_i = 2 * np.pi * ( a_nd**3 / 1.0 ) ** 0.5
-        T_target = 2 * np.pi * ( a_f_nd**3 / 1.0 ) ** 0.5
+        T_i = 2 * np.pi * (a_nd**3 / 1.0) ** 0.5
+        T_target = 2 * np.pi * (a_f_nd**3 / 1.0) ** 0.5
 
-        #set mass increment to zero
+        # set mass increment to zero
         self.mass_increment = 0.0
 
-        #determine total time of flight based on initial + target orbit
-        if (T_target > T_i):
+        # determine total time of flight based on initial + target orbit
+        if T_target > T_i:
             self.TOF = T_target * self.t_star * self.tof_scale
             self.TOF_nd = T_target * self.tof_scale
         else:
@@ -625,13 +816,13 @@ class TwoBodyRendezvous_Env(gym.Env):
         self.timesteps_in_TOF = int(self.TOF / self.step_size) + 1
 
         info = self._get_info(
-            None, #placeholder for ODE data - only provided in step()
-            None, #placeholder for delta_r data - only provided in step()
+            None,  # placeholder for ODE data - only provided in step()
+            None,  # placeholder for delta_r data - only provided in step()
         )
 
         observation = self._convert_state_to_obs()
 
         return observation, info
-    
+
     def get_cartesian_state(self):
         return self._state.copy()

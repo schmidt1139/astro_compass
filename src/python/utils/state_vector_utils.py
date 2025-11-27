@@ -19,8 +19,8 @@ def cartesian_to_polar(x, y, vx, vy):
 
     return r, theta, v_r, v_theta
 
-def calc_cart_from_OE( a, e, w, theta, mu_cb):
-    
+
+def calc_cart_from_OE(a, e, w, theta, mu_cb):
     # calculate radius based off of orbital elements
     r = a * (1 - e**2) / (1 + e * np.cos(theta))
 
@@ -83,17 +83,20 @@ def non_dimensionalize(arr_y, g0, mu, T_max, ISP, TOF, l_star, m_star, t_star):
     # return outputs
     return arr_y_nd, g0_nd, mu_nd, T_max_nd, ISP_nd, TOF_nd
 
+
 def convert_fpa_to_velocity_components(v, fpa):
     v_r = v * np.sin(fpa)
     v_theta = v * np.cos(fpa)
 
     return v_r, v_theta
 
+
 def convert_radial_velocity_to_cartesian(v_r, v_theta, theta):
     vx = v_r * np.cos(theta) - v_theta * np.sin(theta)
     vy = v_r * np.sin(theta) + v_theta * np.cos(theta)
 
     return vx, vy
+
 
 def convert_alpha_from_cart_to_fpa(x, y, vx, vy, alpha_x, alpha_y):
     r, theta, v_r, v_theta = cartesian_to_polar(x, y, vx, vy)
@@ -103,17 +106,26 @@ def convert_alpha_from_cart_to_fpa(x, y, vx, vy, alpha_x, alpha_y):
     alpha_theta = -alpha_x * np.sin(theta) + alpha_y * np.cos(theta)
 
     # convert to fpa frame
-    alpha_fpa_cos = (v_r * alpha_r + v_theta * alpha_theta) / np.sqrt(v_r**2 + v_theta**2)
-    alpha_fpa_sin = (v_theta * alpha_r - v_r * alpha_theta) / np.sqrt(v_r**2 + v_theta**2)
+    alpha_fpa_cos = (v_r * alpha_r + v_theta * alpha_theta) / np.sqrt(
+        v_r**2 + v_theta**2
+    )
+    alpha_fpa_sin = (v_theta * alpha_r - v_r * alpha_theta) / np.sqrt(
+        v_r**2 + v_theta**2
+    )
 
     return alpha_fpa_cos, alpha_fpa_sin
+
 
 def convert_alpha_from_fpa_to_cart(x, y, vx, vy, alpha_fpa_cos, alpha_fpa_sin):
     r, theta, v_r, v_theta = cartesian_to_polar(x, y, vx, vy)
 
     # convert to radial/tangential frame
-    alpha_r = (v_r * alpha_fpa_cos - v_theta * alpha_fpa_sin) / np.sqrt(v_r**2 + v_theta**2)
-    alpha_theta = (v_theta * alpha_fpa_cos + v_r * alpha_fpa_sin) / np.sqrt(v_r**2 + v_theta**2)
+    alpha_r = (v_r * alpha_fpa_cos - v_theta * alpha_fpa_sin) / np.sqrt(
+        v_r**2 + v_theta**2
+    )
+    alpha_theta = (v_theta * alpha_fpa_cos + v_r * alpha_fpa_sin) / np.sqrt(
+        v_r**2 + v_theta**2
+    )
 
     # rotate alpha components to cartesian frame
     alpha_x = alpha_r * np.cos(theta) - alpha_theta * np.sin(theta)
@@ -121,8 +133,8 @@ def convert_alpha_from_fpa_to_cart(x, y, vx, vy, alpha_fpa_cos, alpha_fpa_sin):
 
     return alpha_x, alpha_y
 
+
 def convert_attitude_from_radial_to_cartesian(x, y, alpha_radial, alpha_theta):
-    
     theta = np.arctan2(y, x)
 
     # rotate alpha components to cartesian frame
@@ -131,8 +143,8 @@ def convert_attitude_from_radial_to_cartesian(x, y, alpha_radial, alpha_theta):
 
     return alpha_x, alpha_y
 
+
 def convert_attitude_from_cartesian_to_radial(x, y, alpha_x, alpha_y):
-    
     theta = np.arctan2(y, x)
 
     # rotate alpha components to radial frame
