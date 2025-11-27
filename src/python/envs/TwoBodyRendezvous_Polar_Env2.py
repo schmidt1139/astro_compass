@@ -7,7 +7,9 @@ from scipy.integrate import solve_ivp
 from constants.constants import Constants
 from core.spacecraft import Spacecraft
 from core.propagation import env_EOM_TBT_v2
+from utils.rl_utils import create_relative_polar_observation_fast
 from utils.state_vector_utils import convert_alpha_from_fpa_to_cart, convert_radial_velocity_to_cartesian, polar_to_cartesian, calc_cart_from_OE, cartesian_to_polar, convert_fpa_to_velocity_components, convert_attitude_from_radial_to_cartesian
+from utils.rl_utils import compute_reward_fast
 
 class TwoBodyRendezvous_Polar_Env2(gym.Env):
     def __init__(self, **kwargs):
@@ -206,8 +208,6 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
             "sin_eta_f": self.sin_eta_f,
             "fpa_nd": self.fpa_nd,
             "fpa_nd_f": self.fpa_f_nd,
-            "fpa_cos": self.cos_fpa,
-            "fpa_sin": self.sin_fpa,
             "alpha_x": self.alpha_x,
             "alpha_y": self.alpha_y,
             "pos_residual": self.pos_residual,
@@ -458,95 +458,37 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
     
     def create_relative_polar_observation( self, x_nd, y_nd, vx_nd, vy_nd, mass_nd, TTG_nd ):
 
+        params_temp = {}
+        params_temp['l_star'] = self.l_star
+        params_temp['t_star'] = self.t_star
+        params_temp['m_star'] = self.m_star
+
         # convert TTG to dimensional
         TTG_dim = TTG_nd * self.t_star
+
+        current_state_t = self._state[0:5] # current dim state at time t
 
         # get target state at current time
         target_state_t = self.get_target_cartesian_state_at_ttg(TTG_dim)
 
-        # non-dim target state
-        x_target_nd = target_state_t[0] / self.l_star
-        y_target_nd = target_state_t[1] / self.l_star
-        vx_target_nd = target_state_t[2] / (self.l_star / self.t_star)
-        vy_target_nd = target_state_t[3] / (self.l_star / self.t_star)
+        polar_observation, env_data = create_relative_polar_observation_fast(params_temp, current_state_t, target_state_t, TTG_dim)
 
-        # convert to polar coordinates
-        r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0 = cartesian_to_polar(x_nd, y_nd, vx_nd, vy_nd)
-
-        # convert init nd state to polar
-        r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0 = cartesian_to_polar(x_nd, y_nd, vx_nd, vy_nd)
-        r_nd_target, eta_nd_target, v_r_nd_target, v_eta_nd_target = cartesian_to_polar(x_target_nd, y_target_nd, vx_target_nd, vy_target_nd)
-        self.arr_r_polar_nd = [r_nd_0, eta_nd_0]
-        self.arr_v_polar_nd = [v_r_nd_0, v_eta_nd_0]
-        self.arr_rf_polar_nd = [r_nd_target, eta_nd_target]
-        self.arr_vf_polar_nd = [v_r_nd_target, v_eta_nd_target]
-
-        #determine angular momentum
-        h_nd_0 = r_nd_0 * v_eta_nd_0
-        h_nd_target = r_nd_target * v_eta_nd_target
-        self.h_nd_0 = h_nd_0
-        self.h_nd_target = h_nd_target
-
-        #calculate eta trig components
-        self.cos_eta = np.cos(eta_nd_0)
-        self.sin_eta = np.sin(eta_nd_0)
-        self.cos_eta_target = np.cos(eta_nd_target)
-        self.sin_eta_target = np.sin(eta_nd_target)
-
-        # total velocity magnitudes
-        v_comp = ( vx_nd**2 + vy_nd**2 ) ** 0.5
-        v_comp_target = ( vx_target_nd**2 + vy_target_nd**2 ) ** 0.5
-
-        # transpose velocites
-        self.v_t_nd = h_nd_0 / r_nd_0
-        self.v_t_target_nd = h_nd_target / r_nd_target
-
-        # radial velocities
-        self.v_r_nd = ( max(v_comp**2 - self.v_t_nd**2, 1e-6) ) ** 0.5
-        self.v_r_target_nd = ( max(v_comp_target**2 - self.v_t_target_nd**2, 1e-6) ) ** 0.5
-        # flight path angles
-        self.fpa_nd = np.arctan2( self.v_r_nd, self.v_t_nd )
-        self.fpa_target_nd = np.arctan2( self.v_r_target_nd, self.v_t_target_nd )
-
-        # flight path angle trig components
-        self.cos_fpa = np.cos( self.fpa_nd )
-        self.sin_fpa = np.sin( self.fpa_nd )
-        self.cos_fpa_target = np.cos( self.fpa_target_nd )
-        self.sin_fpa_target = np.sin( self.fpa_target_nd )
-
-        #v unit components in radial and transverse directions
-        self.v_r_unit = self.v_r_nd / v_comp if v_comp != 0 else 0.0
-        self.v_t_unit = self.v_t_nd / v_comp if v_comp != 0 else 0.0
-        self.v_r_target_unit = self.v_r_target_nd / v_comp_target if v_comp_target != 0 else 0.0
-        self.v_t_target_unit = self.v_t_target_nd / v_comp_target if v_comp_target != 0 else 0.0
-
-        # construct relative target vector
-        delta_r = r_nd_target - r_nd_0
-        delta_eta_cos = self.cos_eta_target - self.cos_eta
-        delta_eta_sin = self.sin_eta_target - self.sin_eta
-        delta_v = v_comp_target - v_comp
-        delta_v_r = self.v_r_target_unit - self.v_r_unit
-        delta_v_t = self.v_t_target_unit - self.v_t_unit
-
-        #construct polar observation array
-        polar_observation = np.array( [
-            r_nd_0,
-            self.cos_eta,
-            self.sin_eta,
-            v_comp,
-            self.cos_fpa,
-            self.sin_fpa,
-            mass_nd,
-            delta_r,
-            delta_eta_cos,
-            delta_eta_sin,
-            delta_v,
-            delta_v_r,
-            delta_v_t,
-            TTG_nd
-            ],
-            dtype=np.float32
-         )
+        self.arr_r_polar_nd = env_data['arr_r_polar_nd']
+        self.arr_v_polar_nd = env_data['arr_v_polar_nd']
+        self.arr_rf_polar_nd = env_data['arr_rf_polar_nd']
+        self.arr_vf_polar_nd = env_data['arr_vf_polar_nd']
+        self.h_nd_0 = env_data['h_nd_0']
+        self.h_nd_target = env_data['h_nd_target']
+        self.cos_eta = env_data['cos_eta']
+        self.sin_eta = env_data['sin_eta']
+        self.cos_eta_target = env_data['cos_eta_target']
+        self.sin_eta_target = env_data['sin_eta_target']
+        self.fpa_nd = env_data['fpa_nd']
+        self.fpa_target_nd = env_data['fpa_target_nd']
+        self.v_r_unit = env_data['v_r_unit']
+        self.v_t_unit = env_data['v_t_unit']
+        self.v_r_target_unit = env_data['v_r_target_unit']
+        self.v_t_target_unit = env_data['v_t_target_unit']
         
         self.polar_observation = polar_observation
 
@@ -589,6 +531,44 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
 
     def calc_reward(self, u):
 
+        params_temp = {}
+        params_temp['l_star'] = self.l_star
+        params_temp['t_star'] = self.t_star
+        params_temp['m_star'] = self.m_star
+        params_temp['max_T'] = self.C1
+        params_temp['ISP'] = self.C2
+        params_temp['mu'] = self.param_mu
+        params_temp['time_dist_weight'] = self.time_dist_weight
+        params_temp['tof_weight'] = self.tof_weight
+        params_temp['r_dist_weight'] = self.r_dist_weight
+        params_temp['v_dist_weight'] = self.v_dist_weight
+        params_temp['tof_weight'] = self.tof_weight
+        params_temp['pos_r_weight'] = self.pos_weight
+        params_temp['vel_r_weight'] = self.vel_weight
+        params_temp['throttle_r_weight'] = self.throttle_r_weight
+        params_temp['success_threshold_pos'] = self.success_threshold_pos
+        params_temp['success_threshold_vel'] = self.success_threshold_vel
+        params_temp['precision_mult'] = self.precision_mult
+        params_temp['terminal_bonus'] = self.terminal_bonus
+
+        current_state_t = self._state[0:5] # current dim state at time t
+        ttg = self._state[9]
+        target_state_t = self.get_target_cartesian_state_at_ttg(ttg)
+        step_count = self.step_count
+        total_timesteps = self.timesteps_in_prop
+
+        reward, terminated, env_info = compute_reward_fast(params_temp, current_state_t, ttg,
+                                                     target_state_t, u, step_count, total_timesteps)
+        
+        self.pos_residual = env_info['pos_residual']
+        self.vel_residual = env_info['vel_residual']
+        self.time_r_component = env_info['time_r_component']
+        self.pos_r_component = env_info['pos_r_component']
+        self.vel_r_component = env_info['vel_r_component']
+        self.throttle_r_component = env_info['throttle_r_component']
+        self.terminated = env_info['terminated']
+
+        '''
         x_nd = self._state[0] / self.l_star
         y_nd = self._state[1] / self.l_star
         vx_nd = self._state[2] / (self.l_star / self.t_star)
@@ -651,8 +631,6 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         # clip reward to avoid extreme values
         step_reward = np.clip(step_reward, -10, 10)
 
-        # central body parameters
-        cb_rad = self.planet_radii[0] / self.l_star  # central body radius in nd units
 
         terminated = False
 
@@ -686,6 +664,10 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
 
         self.terminated = terminated
 
+        return reward, terminated
+    
+    '''
+        
         return reward, terminated
 
     def _apply_dV_in_VNB_frame(self, dV, X_i, Y_i, VX_i, VY_i):
