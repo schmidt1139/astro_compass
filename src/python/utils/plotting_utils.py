@@ -663,12 +663,29 @@ def plot_SAC_training_TBR_polar(
             arr_terminated
         ] = results
 
+
+    #SAC rollout data
+    elapsed_time_SAC = SACRolloutData_TBR_polar.arr_time[-1]*Constants.DAYS_TO_SEC
+    num_steps_SAC = len(SACRolloutData_TBR_polar.arr_time)
+    average_step_size_SAC = elapsed_time_SAC / num_steps_SAC
+    print(f"SAC rollout total elapsed time: {elapsed_time_SAC/Constants.DAYS_TO_SEC/365.25:.2f} years over {num_steps_SAC} steps.")
+    print(f"Average step size: {average_step_size_SAC} s")
+
+    if ephem_H is not None:
+        elapsed_time_h_ephem = ephem_H.arr_et[-1];
+        num_vectors = ephem_H.num_vectors
+        average_step_size_h = elapsed_time_h_ephem / num_vectors
+        print(f"Hamiltonian ephemeris total elapsed time: {elapsed_time_h_ephem/Constants.DAYS_TO_SEC/365.25:.2f} years over {num_vectors} vectors.")
+        print(f"Average step size: {average_step_size_h} s")
+        reward_reduction_factor = average_step_size_h / average_step_size_SAC
+        arr_r_tot = [r * reward_reduction_factor for r in arr_r_tot]
+        print(f"Applied reward reduction factor of {reward_reduction_factor:.4f} to Hamiltonian ephemeris rewards to account for differing step sizes.")
         
     # plot reward over time
     plt.figure()
     plt.plot(np.array(SACRolloutData_TBR_polar.arr_time)/365.25, SACRolloutData_TBR_polar.arr_reward_tot, label="Reward")
     if ephem_H is not None:
-        plt.plot(np.array(arr_elapsed_time)/365.25, arr_r_tot, label="Hamiltonian Ephem Reward", linestyle="--", color="red")
+        plt.plot(np.array(arr_elapsed_time)/365.25, arr_r_tot, label="Hamiltonian Ephem Total Reward", linestyle="--", color="red")
     plt.xlabel("Time [years]")
     plt.ylabel("Reward")
     plt.title("SAC Training Reward over Time")
