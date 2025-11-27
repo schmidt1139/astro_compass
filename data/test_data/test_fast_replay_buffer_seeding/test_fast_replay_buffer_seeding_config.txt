@@ -1,0 +1,64 @@
+path_ephems: data\test_data\test_fast_replay_buffer_seeding\input_ephems
+num_ephems_to_use: 1_000
+ephem_version: 3.0
+cores: 4
+input_buffer_size: 4_000_000
+ephem_step_size: 15
+
+# Env Related
+
+env_type: TwoBodyRendezvous_Polar_Env2
+mu: 1.3e+20
+max_T: 1.33
+ISP: 3872.0
+l_star: 149598023000
+m_star: 3366.0
+t_star: 5074778.662111725
+g0: 9.80665
+env_step_size: 1_209_600.0
+a_min_init_env_nd: 149598023000.0
+a_max_init_env_nd: 149598023000.0
+e_min_init_env: 0.0001
+e_max_init_env: 0.0001
+w_min_init_env_deg: 0.0
+w_max_init_env_deg: 0.0
+theta_min_init_env_deg: 0.0
+theta_max_init_env_deg: 2.0
+a_min_final_env_nd: 232495000000.0
+a_max_final_env_nd: 232495000000.0
+e_min_final_env: 0.0001
+e_max_final_env: 0.0001
+w_min_final_env_deg: 0.0
+w_max_final_env_deg: 0.0
+theta_min_final_env_deg: 180.0
+theta_max_final_env_deg: 182.0
+max_episode_steps: 5_000
+pos_r_weight: 1.0
+vel_r_weight: 0.0
+throttle_r_weight: 0.0
+tof_weight: 1.0
+tof_scale: 1.0
+time_dist_weight: 0.0
+success_threshold_pos: 0.01
+success_threshold_vel: 0.01
+terminal_bonus: 0.0
+precision_mult: 1.0
+prop_length_scale: 1.5
+r_dist_weight: 1.0
+v_dist_weight: 1.0
+
+# Env-Reward Related
+
+pos_r_weight: 1.0
+vel_r_weight: 0.0
+throttle_r_weight: 0.0
+tof_weight: 1.0
+tof_scale: 1.0
+time_dist_weight: 0.0
+success_threshold_pos: 0.01
+success_threshold_vel: 0.01
+terminal_bonus: 0.0
+precision_mult: 1.0
+prop_length_scale: 1.5
+r_dist_weight: 1.0
+v_dist_weight: 1.0
