@@ -94,3 +94,8 @@ def compare_log_files_with_tolerance(path_output, path_truth, rtol=1e-5, atol=1e
         if flag_report_live:
             print(f"Error comparing log files: {e}")
         return False
+    
+
+def binary_compare(file1, file2):
+    with open(file1, 'rb') as f1, open(file2, 'rb') as f2:
+        return f1.read() == f2.read()
