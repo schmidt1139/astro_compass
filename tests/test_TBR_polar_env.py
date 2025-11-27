@@ -209,3 +209,5 @@ def test_TBR_polar_env(flag_report_live: bool = False):
 
     return flag_test_pass
 
+if __name__ == "__main__":
+    test_TBR_polar_env(flag_report_live=True)
