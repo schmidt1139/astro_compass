@@ -6,6 +6,7 @@ from datetime import datetime
 from core.hamiltonian_control import Hamiltonian_Controller_TBT
 from core.ephemeris import Ephemeris
 from core.ephemeris_v2 import Ephemeris_v2
+from core.ephemeris_v3 import Ephemeris_v3
 from multiprocessing import cpu_count
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
@@ -90,8 +91,12 @@ def generate_nn_training_data_parallel(env, args):
 def _read_single_ephem(path, version):
     if version == 1.0:
         eph = Ephemeris()
-    else:
+    elif version == 2.0:
         eph = Ephemeris_v2()
+    elif version == 3.0:
+        eph = Ephemeris_v3()
+    else:
+        raise ValueError("Unsupported ephemeris version: " + str(version))
     eph.read_from_file(path)
     return eph
 
@@ -105,7 +110,7 @@ def read_ephems_from_dir(directory, num_ephems_to_use=None, version=1.0,
     filenames = filenames[:end_i]
     paths = [os.path.join(directory, file) for file in filenames]
 
-    num_workers = params.get("num_vec_envs", 1) if params is not None else 1
+    num_workers = params.get("cores", 1) if params is not None else 1
 
     list_ephems = []
     with ProcessPoolExecutor(max_workers=num_workers) as executor:
