@@ -115,7 +115,7 @@ def SAC_training_TBR(seed_in=42):
     #load model if specified, otherwise create new
     if params["load_model_checkpoint"]:
         test_log = log("Loading SAC model from: " + params["path_SAC_model_load"], test_log, True)
-        model = SB3_SAC.load(params["path_SAC_model_load"], env=env, device="cpu", seed=seed_in,
+        model = SB3_SAC.load(params["path_SAC_model_load"], env=env, device=params.get("eval_device", "cpu"), seed=seed_in,
                              tensorboard_log=path_output)  # Use path_output so SB3 creates SAC_1/ subdirectory
     else:
         # Implement custom NN architectures
