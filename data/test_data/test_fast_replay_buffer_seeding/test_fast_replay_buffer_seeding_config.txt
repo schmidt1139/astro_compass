@@ -1,4 +1,4 @@
-path_ephems: data\test_data\test_fast_replay_buffer_seeding\input_ephems
+path_ephems: data/test_data/test_fast_replay_buffer_seeding/input_ephems
 num_ephems_to_use: 1_000
 ephem_version: 3.0
 cores: 4

@@ -52,7 +52,8 @@ r_dist_weight = 0.2
 v_dist_weight = 0.2 
 
 [environment.vectorization]
-num_vec_envs = 64
+num_vec_envs = 4
+cores = 4
 
 [training]
 pre_train_networks = true
@@ -61,7 +62,7 @@ save_final_replay_buffer = true
 read_replay_buffer = true
 load_model_checkpoint = false
 eval_freq = 500
-training_steps = 1_000_000
+training_steps = 10_000
 pretrain_gradient_steps = 5000
 n_eval_episodes = 3
 print_freq = 2000
@@ -89,7 +90,7 @@ tb_log_name = "SAC_TBR_training"
 output_dir = "~/Documents/astro_compass/data/output/SAC_Training"
 path_training_data = "~/Documents/astro_compass/data/pre-training-data/training-TBR-overfit"
 path_replay_buffer = "~/Documents/astro_compass/data/pre-training-data/replay_buffers/tbr_overfit/replay_buffer.pkl"
-path_SAC_model_load = "~/Documents/astro_compass/data/neural_networks/sac_tbr_polar_model.zip"
+path_SAC_model_load = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\SAC_Training\\SAC_training_TBR_polar20251127_202634\\best_model.zip"
 
 
 [general]
