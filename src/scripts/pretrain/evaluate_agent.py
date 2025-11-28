@@ -4,7 +4,7 @@ import random
 import utils
 from core.ephemeris_v2 import Ephemeris_v2 as Ephemeris
 from core.process_single_trajectory import process_single_trajectory
-from plotting import plot_SAC_training_TBR_polar
+from utils.plotting_utils import plot_SAC_training_TBR_polar
 from pretrain_utils import generate_env, generate_paths
 from stable_baselines3 import SAC as SB3_SAC
 from stable_baselines3.common.callbacks import CallbackList, EvalCallback

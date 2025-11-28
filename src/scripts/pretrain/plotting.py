@@ -536,14 +536,14 @@ def _plot_tbr_polar_nd_state(SACRolloutData_TBR_polar, path_output):
     )
     plt.plot(
         arr_time_years,
-        SACRolloutData_TBR_polar.arr_cos_fpa_f,
-        label="fpa_cos_target",
+        SACRolloutData_TBR_polar.arr_v_r_f_unit,
+        label="v_r_target",
         linestyle="--",
     )
     plt.plot(
         arr_time_years,
-        SACRolloutData_TBR_polar.arr_sin_fpa_f,
-        label="fpa_sin_target",
+        SACRolloutData_TBR_polar.arr_v_t_f_unit,
+        label="v_t_target",
         linestyle="--",
     )
     plt.xlabel("Time [years]")
@@ -579,14 +579,14 @@ def _plot_tbr_polar_nd_state(SACRolloutData_TBR_polar, path_output):
     )
     plt.plot(
         arr_time_years,
-        SACRolloutData_TBR_polar.arr_cos_fpa,
-        label="fpa_cos_target",
+        SACRolloutData_TBR_polar.arr_v_r_unit,
+        label="v_r_target",
         linestyle="--",
     )
     plt.plot(
         arr_time_years,
-        SACRolloutData_TBR_polar.arr_sin_fpa,
-        label="fpa_sin_target",
+        SACRolloutData_TBR_polar.arr_v_t_unit,
+        label="v_t_target",
         linestyle="--",
     )
     plt.xlabel("Time [years]")

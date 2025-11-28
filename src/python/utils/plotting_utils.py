@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from constants.constants import Constants
 from utils.h_rl_fusion import calc_rewards_from_H_ephem
-from utils.state_vector_utils import convert_alpha_from_cart_to_fpa
+from utils.state_vector_utils import convert_attitude_from_cartesian_to_radial
 
 
 def format_plots():
@@ -183,16 +183,16 @@ class SACRolloutData_TBR_polar:
         self.arr_cos_theta = []
         self.arr_sin_theta = []
         self.arr_v = []
-        self.arr_cos_fpa = []
-        self.arr_sin_fpa = []
+        self.arr_v_r_unit = []
+        self.arr_v_t_unit = []
         self.arr_mass = []
 
         self.arr_rad_f = []
         self.arr_cos_theta_f = []
         self.arr_sin_theta_f = []
         self.arr_v_f = []
-        self.arr_cos_fpa_f = []
-        self.arr_sin_fpa_f = []
+        self.arr_v_r_f_unit = []
+        self.arr_v_t_f_unit = []
         self.arr_ttg = []
 
         self.arr_pos_reward = []
@@ -212,24 +212,22 @@ class SACRolloutData_TBR_polar:
         cos_theta,
         sin_theta,
         v,
-        cos_fpa,
-        sin_fpa,
+        v_r_unit,
+        v_t_unit,
         m,
         rad_f,
         cos_theta_f,
         sin_theta_f,
         v_f,
-        cos_fpa_f,
-        sin_fpa_f,
+        v_r_f_unit,
+        v_t_f_unit,
         ttg,
         pos_reward,
         vel_reward,
         mass_reward,
         throttle_reward,
     ):
-        alpha_fpa = np.sqrt(alpha_r**2 + alpha_theta**2)
-        alpha_r /= alpha_fpa
-        alpha_theta /= alpha_fpa
+
 
         self.arr_time.append(time)  # convert to days
         self.arr_reward.append(reward)
@@ -240,15 +238,15 @@ class SACRolloutData_TBR_polar:
         self.arr_cos_theta.append(cos_theta)
         self.arr_sin_theta.append(sin_theta)
         self.arr_v.append(v)
-        self.arr_cos_fpa.append(cos_fpa)
-        self.arr_sin_fpa.append(sin_fpa)
+        self.arr_v_r_unit.append(v_r_unit)
+        self.arr_v_t_unit.append(v_t_unit)
         self.arr_mass.append(m)
         self.arr_rad_f.append(rad_f)
         self.arr_cos_theta_f.append(cos_theta_f)
         self.arr_sin_theta_f.append(sin_theta_f)
         self.arr_v_f.append(v_f)
-        self.arr_cos_fpa_f.append(cos_fpa_f)
-        self.arr_sin_fpa_f.append(sin_fpa_f)
+        self.arr_v_r_f_unit.append(v_r_f_unit)
+        self.arr_v_t_f_unit.append(v_t_f_unit)
         self.arr_ttg.append(ttg)
         self.arr_pos_reward.append(pos_reward)
         self.arr_vel_reward.append(vel_reward)
@@ -262,6 +260,7 @@ class SACRolloutData_TBR_polar:
 def plot_SAC_training(
     SACRolloutData, arr_episode_numbers, arr_episode_rs, path_output, eph, eph_h=None
 ):
+
     # plot reward over time
     plt.figure()
     plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_reward_tot, label="Reward")
@@ -399,6 +398,19 @@ def plot_SAC_training_TBR(
         arr_u_H = ephem_H.arr_u
         arr_alpha_x_H = ephem_H.arr_alpha_x
         arr_alpha_y_H = ephem_H.arr_alpha_y
+        arr_alpha_r_h = []
+        arr_alpha_theta_h = []
+
+        # convert attitude to radial/tangential
+        for i in range(len(ephem_H.arr_time)):
+            state_vec = ephem_H.get_state_vector_at_index(i)
+            x = ephem_H.arr_x[i]
+            y = ephem_H.arr_y[i]
+            alpha_x = ephem_H.arr_alpha_x[i]
+            alpha_y = ephem_H.arr_alpha_y[i]
+            alpha_r, alpha_theta = convert_attitude_from_cartesian_to_radial(x, y, alpha_x, alpha_y)
+            arr_alpha_r_h.append(alpha_r)
+            arr_alpha_theta_h.append(alpha_theta)
 
     # plot reward over time
     plt.figure()
@@ -579,20 +591,20 @@ def plot_SAC_training_TBR(
     # plot attitude over time
     plt.figure()
     arr_time_years = np.array(SACRolloutData_TBR.arr_time) / 365.25
-    plt.plot(arr_time_years, SACRolloutData_TBR.arr_alpha_x, label="alpha_x")
-    plt.plot(arr_time_years, SACRolloutData_TBR.arr_alpha_y, label="alpha_y")
+    plt.plot(arr_time_years, SACRolloutData_TBR.arr_alpha_r, label="alpha_r")
+    plt.plot(arr_time_years, SACRolloutData_TBR.arr_alpha_theta, label="alpha_theta")
     if ephem_H is not None:
         plt.plot(
             np.array(arr_time_H) / 365.25,
-            arr_alpha_x_H,
-            label="Hamiltonian Ephem alpha_x",
+            arr_alpha_r_h,
+            label="Hamiltonian Ephem alpha_r",
             linestyle="--",
             color="red",
         )
         plt.plot(
             np.array(arr_time_H) / 365.25,
-            arr_alpha_y_H,
-            label="Hamiltonian Ephem alpha_y",
+            arr_alpha_theta_h,
+            label="Hamiltonian Ephem alpha_theta",
             linestyle="--",
             color="blue",
         )
@@ -810,6 +822,19 @@ def plot_SAC_training_TBR_polar(
             arr_terminated,
         ] = results
 
+        arr_alpha_r_h = []
+        arr_alpha_theta_h = []
+
+        # convert attitude to radial/tangential
+        for i in range(len(ephem_H.arr_et)):
+            x = ephem_H.arr_x[i]
+            y = ephem_H.arr_y[i]
+            alpha_x = ephem_H.arr_alpha_x[i]
+            alpha_y = ephem_H.arr_alpha_y[i]
+            alpha_r, alpha_theta = convert_attitude_from_cartesian_to_radial(x, y, alpha_x, alpha_y)
+            arr_alpha_r_h.append(alpha_r)
+            arr_alpha_theta_h.append(alpha_theta)
+
 
     #SAC rollout data
     elapsed_time_SAC = SACRolloutData_TBR_polar.arr_time[-1]*Constants.DAYS_TO_SEC
@@ -1020,33 +1045,19 @@ def plot_SAC_training_TBR_polar(
     )
 
     if ephem_H is not None:
-        arr_alpha_fpa_cos_H = []
-        arr_alpha_fpa_sin_H = []
-        for i in range(len(ephem_H.arr_alpha_x)):
-            x_i = ephem_H.arr_x[i]
-            y_i = ephem_H.arr_y[i]
-            vx_i = ephem_H.arr_vx[i]
-            vy_i = ephem_H.arr_vy[i]
-            alpha_x = ephem_H.arr_alpha_x[i]
-            alpha_y = ephem_H.arr_alpha_y[i]
 
-            alpha_fpa_cos, alpha_fpa_sin = convert_alpha_from_cart_to_fpa(
-                x_i, y_i, vx_i, vy_i, alpha_x, alpha_y
-            )
-            arr_alpha_fpa_cos_H.append(alpha_fpa_cos)
-            arr_alpha_fpa_sin_H.append(alpha_fpa_sin)
 
         plt.plot(
             np.array(arr_elapsed_time) / 365.25,
-            arr_alpha_fpa_cos_H,
-            label="Hamiltonian Ephem alpha_fpa_cos",
+            arr_alpha_r_h,
+            label="Hamiltonian Ephem alpha_r",
             linestyle="--",
             color="red",
         )
         plt.plot(
             np.array(arr_elapsed_time) / 365.25,
-            arr_alpha_fpa_sin_H,
-            label="Hamiltonian Ephem alpha_fpa_sin",
+            arr_alpha_theta_h,
+            label="Hamiltonian Ephem alpha_theta",
             linestyle="--",
             color="blue",
         )
@@ -1090,14 +1101,14 @@ def plot_SAC_training_TBR_polar(
     )
     plt.plot(
         arr_time_years,
-        SACRolloutData_TBR_polar.arr_cos_fpa_f,
-        label="fpa_cos_target",
+        SACRolloutData_TBR_polar.arr_v_r_f_unit,
+        label="v_r_unit_target",
         linestyle="--",
     )
     plt.plot(
         arr_time_years,
-        SACRolloutData_TBR_polar.arr_sin_fpa_f,
-        label="fpa_sin_target",
+        SACRolloutData_TBR_polar.arr_v_t_f_unit,
+        label="v_t_unit_target",
         linestyle="--",
     )
     plt.xlabel("Time [years]")
@@ -1125,14 +1136,14 @@ def plot_SAC_training_TBR_polar(
     )
     plt.plot(
         arr_time_years,
-        SACRolloutData_TBR_polar.arr_cos_fpa,
-        label="fpa_cos_target",
+        SACRolloutData_TBR_polar.arr_v_r_f_unit,
+        label="v_r_unit_target",
         linestyle="--",
     )
     plt.plot(
         arr_time_years,
-        SACRolloutData_TBR_polar.arr_sin_fpa,
-        label="fpa_sin_target",
+        SACRolloutData_TBR_polar.arr_v_t_f_unit,
+        label="v_t_unit_target",
         linestyle="--",
     )
     plt.xlabel("Time [years]")
