@@ -92,7 +92,7 @@ if __name__ == "__main__":
     config_toml = "SAC_training_TBR_polar__JM_config.toml"
     training_data = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\training_TBR_overfit\\ephems"
 
-    config_toml = "SAC_training_TBR_polar__JM_config.toml"
+    config_toml = "gen_buffer_config.toml"
     path_config = os.path.join(PROJECT_ROOT, "data", "config", config_toml)
     params = read_toml_config_file(path_config)
 
