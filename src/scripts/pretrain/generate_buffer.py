@@ -22,21 +22,18 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(utils.__file__)) + "/../.."
 def main(params, training_data, seed_in=42):
     random.seed(seed_in)
 
-    # initialize the training and evaluation environments
-    env, eval_env, pre_train_env, single_env = generate_env(params, seed_in)
-
     # paths
     path_output, path_SAC_model, path_plots = generate_paths(params)
 
-    # reset the environment
-    single_env.reset()
+    # generate the environment
+    env = gen_rl_environment(params)
 
     # Create the SAC model with TensorBoard logging
     buffer_size = params.get("buffer_size", 1000000)  # Default 1M transitions
 
     model = SB3_SAC(
         "MlpPolicy",
-        single_env,
+        env,
         learning_rate=params["learning_rate"],
         verbose=1,
         device=params.get("eval_device", "cpu"),
@@ -65,10 +62,6 @@ def main(params, training_data, seed_in=42):
                                                   version=params["ephem_version"], 
                                                   flag_return_filenames=True,
                                                   params=params )
-    
-
-    # generate the environment
-    env = gen_rl_environment(params)
 
     import torch.nn as nn
     policy_kwargs = dict(

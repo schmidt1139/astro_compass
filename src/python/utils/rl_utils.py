@@ -1141,6 +1141,8 @@ def compute_reward_fast(params, current_state_t, TTG, target_state_t, u, step_co
     TTG_nd = TTG / params["t_star"]
     r_nd = (x_nd**2 + y_nd**2) ** 0.5
 
+    mass = current_state_t[4] / params["m_star"]
+
     # extract orbital elements
     r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0 = cartesian_to_polar(current_state_t[0], current_state_t[1], current_state_t[2], current_state_t[3])
     sc = Spacecraft(
@@ -1149,78 +1151,69 @@ def compute_reward_fast(params, current_state_t, TTG, target_state_t, u, step_co
     arr_OE = sc.calc_Planar_OE(0.0, 0.0, 0.0, 0.0, params["mu"])
     e = arr_OE[1]
 
-    # compute reward components
+    # extract the current target state
+    x_target_nd_i = target_state_t[0] / params["l_star"]
+    y_target_nd_i = target_state_t[1] / params["l_star"]
+    vx_target_nd_i = target_state_t[2] / (params["l_star"] / params["t_star"])
+    vy_target_nd_i = target_state_t[3] / (params["l_star"] / params["t_star"])
+
     # calculate the current distance to target
-    d_r_nd = np.sqrt( (x_nd - x_target_nd)**2 + ( y_nd - y_target_nd)**2 )
-    d_v_nd = np.sqrt( (vx_nd - vx_target_nd)**2 + ( vy_nd - vy_target_nd)**2 )
+    # MUST DO, otherwise you can get two big bumps rather than one bump.
+    d_r_nd = np.sqrt((x_nd - x_target_nd_i) ** 2 + (y_nd - y_target_nd_i) ** 2)
+    d_v_nd = np.sqrt((vx_nd - vx_target_nd_i) ** 2 + (vy_nd - vy_target_nd_i) ** 2)
 
-    # time component
-    time_r_component = np.clip( (1 - (TTG_nd) * params["time_dist_weight"]) * params["tof_weight"], 0.1, 1.0 )
+    # these rewards get bigger (max 1) the closer you get to the target
+    pos_reward = np.exp(-params["r_dist_weight"] * d_r_nd**2)
+    vel_reward = np.exp(-params["v_dist_weight"] * d_v_nd**2)
 
-    pos_r_component = np.exp(- params["r_dist_weight"] * d_r_nd**2) * params["pos_r_weight"]
-    vel_r_component = np.exp(- params["v_dist_weight"] * d_v_nd**2) * params["vel_r_weight"]
+    # These values will be negative, approaching zero as you get closer to the target
+    pos_reward = (-1 + pos_reward) * params["pos_r_weight"]
+    vel_reward = (-1 + vel_reward) * params["vel_r_weight"]
 
-    throttle_r_component = - u * params["throttle_r_weight"]
+    # This value will always be negative
+    throttle_reward = -u * params["throttle_r_weight"]
 
-    #Step-based shaping reward (always provided for learning)
-    if d_r_nd < params["success_threshold_pos"] and d_v_nd < params["success_threshold_vel"]:
-        precision_mult = params["precision_mult"]  # Small bonus for being within success thresholds
-        pos_r_component = pos_r_component * precision_mult
-        vel_r_component = vel_r_component * precision_mult
-
-    #shaping_reward = self.time_component * ( self.pos_r_component + self.vel_r_component ) + self.mass_r_component
-    pos_r_component = pos_r_component * time_r_component
-    vel_r_component = vel_r_component * time_r_component
-    step_reward = pos_r_component + vel_r_component + throttle_r_component
-
-    # clip reward to avoid extreme values
-    step_reward = np.clip(step_reward, -10, 10)
+    reward = pos_reward + vel_reward + throttle_reward
 
     terminated = False
+
+    # terminal rewards
+    exceeded_min = r_nd < 0.1  # too close to sun
+    exceeded_max = r_nd > 5.0  # too far from sun
+    # episode_timeout = self.step_count >= self.max_episode_steps
+    episode_timeout = TTG_nd <= 0.0  # out of time
+    fuel_exceeded = mass <= 0.01  # out of fuel
+    eccentricity_exceeded = e >= 2.0
+
+    # Failure Conditions
+    terminated = False
     truncated = False
-
-     # Terminal conditions
-
-    solar_prox = -1.0
-    ecc_penalty = -1.0
-
-    if r_nd < 0.1:
-        terminal_bonus = 0.0
-        reward = solar_prox + step_reward + terminal_bonus
+    if exceeded_min or exceeded_max:
+        reward -= 10.0
         terminated = True
-    elif (e >= 1.0 ):
-        terminal_bonus = 0.0
-        reward = ecc_penalty + step_reward + terminal_bonus
-        if (r_nd > 5.0):
-            terminated = True
-        else:
-            terminated = False
-    else:
-        # During trajectory: only shaping reward
-        reward = step_reward
 
+    # if eccentricity_exceeded:
+    #     reward -= 100.0
+    #     terminated = True
 
-    # final check for max timesteps
-    if step_count >= timesteps_in_prop:    
+    if fuel_exceeded:
+        reward -= 10.0
+        terminated = True
 
-        if d_r_nd < params["success_threshold_pos"] and d_v_nd < params["success_threshold_vel"]:
-            terminal_bonus = params["terminal_bonus"]  # Large bonus for precise rendezvous
-        else:
-            terminal_bonus = 0.0
-
-        reward = step_reward + terminal_bonus
+    if episode_timeout:
+        # Nothing good or bad assigned to this
         truncated = True
 
     #pack additional env info
     env_info = {
         "pos_residual": d_r_nd,
         "vel_residual": d_v_nd,
-        "time_r_component": time_r_component,
-        "throttle_r_component": throttle_r_component,
-        "pos_r_component": pos_r_component,
-        "vel_r_component": vel_r_component,
-        "terminated": terminated
+        "time_r_component": 1.0,
+        "throttle_r_component": throttle_reward,
+        "pos_r_component": pos_reward,
+        "vel_r_component": vel_reward,
+        "terminated": terminated,
+        "truncated": truncated
     }
-
 
     return reward, terminated, truncated, env_info
