@@ -328,6 +328,12 @@ def pre_train(test_log, model, params, env):
             test_log,
             True,
         )
+    elif ephem_version == 3.0 and env.observation_space.shape[0] == 22:
+        test_log = log(
+            "Environment observation space matches expected shape for ephemeris version 3.0",
+            test_log,
+            True,
+        )
     else:
         raise ValueError(
             f"Environment observation space shape {env.observation_space.shape} does not match expected shape for ephemeris version {ephem_version}"
@@ -611,6 +617,7 @@ def train_on_replay_buffer(model, params, test_log, env):
             tqdm.write(
                 f"Evaluation after {step + 1} steps: Mean Reward: {mean_reward:.2f} +/- {std_reward:.2f}"
             )
+
 
             if mean_reward >= max(mean_rewards, default=-np.inf):
                 path = os.path.join(params["output_dir_specific"], "checkpoints")
