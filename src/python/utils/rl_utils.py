@@ -6,6 +6,7 @@ from StateVectorUtilities import cartesian_to_polar
 from core.ephemeris_v2 import Ephemeris_v2
 import torch
 import torch.nn as nn
+import numpy as np
 from core.ephemeris_v2 import Ephemeris_v2
 from core.training_data_generation import read_ephems_from_dir
 from Spacecraft import Spacecraft
@@ -959,7 +960,10 @@ def extract_experiences_from_ephem(eph, params):
         u = action[0]
 
         # compute the reward
-        reward, done, _ = compute_reward_fast(params, current_state, ttg, target_state, u)
+        reward, terminated, truncated, _ = compute_reward_fast(params, current_state, ttg, target_state, u)
+        
+        # check if terminal
+        done = terminated or truncated
 
         # next observation
         next_t = t + params["env_step_size"]
@@ -1043,25 +1047,41 @@ def create_relative_polar_observation_fast(params, current_state_t, target_state
     delta_v_r = v_r_target_unit - v_r_unit
     delta_v_t = v_t_target_unit - v_t_unit
 
-    #construct polar observation array
-    polar_observation = np.array( [
-        r_nd_0,
-        cos_eta,
-        sin_eta,
-        v_comp,
-        v_r_unit,
-        v_t_unit,
-        mass_current_nd,
-        delta_r,
-        delta_eta_cos,
-        delta_eta_sin,
-        delta_v,
-        delta_v_r,
-        delta_v_t,
-        TTG_nd
-        ],
-        dtype=np.float32
-        )
+    
+    polar_observation = np.array(
+            [
+                # Spherical Position SC
+                r_nd_0,
+                cos_eta,
+                sin_eta,
+                 # Spherical Position Planet
+                r_nd_target,
+                cos_eta_target,
+                sin_eta_target,
+                 # Cartesian Position SC
+                x_current_nd,
+                y_current_nd,
+                vx_current_nd,
+                vy_current_nd,
+                 # Cartesian Position Planet
+                x_target_nd,
+                y_target_nd,
+                vx_target_nd,
+                vy_target_nd,
+                 # Differences Cartesian
+                x_target_nd - x_current_nd,
+                y_target_nd - y_current_nd,
+                vx_target_nd - vx_current_nd,
+                vy_target_nd - vy_current_nd,
+                # Differences Magnitudes
+                r_nd_target - r_nd_0,
+                v_comp_target - v_comp,
+                # Time to Go
+                TTG_nd,
+                mass_current_nd
+             ],
+             dtype=np.float32,
+    )
     
     env_data = {
         "arr_r_polar_nd": [r_nd_0, eta_nd_0], 
@@ -1079,7 +1099,9 @@ def create_relative_polar_observation_fast(params, current_state_t, target_state
         "v_r_unit": v_r_unit,
         "v_t_unit": v_t_unit,
         "v_r_target_unit": v_r_target_unit,
-        "v_t_target_unit": v_t_target_unit
+        "v_t_target_unit": v_t_target_unit,
+        "v_current_nd": v_comp,
+        "v_target_nd": v_comp_target
     }
     
     return polar_observation, env_data
@@ -1136,6 +1158,9 @@ def compute_reward_fast(params, current_state_t, TTG, target_state_t, u, step_co
     step_reward = np.clip(step_reward, -10, 10)
 
     terminated = False
+    truncated = False
+
+     # Terminal conditions
 
     solar_prox = -1.0
     ecc_penalty = -1.0
@@ -1165,7 +1190,7 @@ def compute_reward_fast(params, current_state_t, TTG, target_state_t, u, step_co
             terminal_bonus = 0.0
 
         reward = step_reward + terminal_bonus
-        terminated = True
+        truncated = True
 
     #pack additional env info
     env_info = {
@@ -1179,4 +1204,4 @@ def compute_reward_fast(params, current_state_t, TTG, target_state_t, u, step_co
     }
 
 
-    return reward, terminated, env_info
+    return reward, terminated, truncated, env_info
