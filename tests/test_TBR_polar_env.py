@@ -46,19 +46,28 @@ def test_TBR_polar_env(flag_report_live: bool = False):
 
         test_log = log("Initial observation vector\n", test_log, flag_report_live)
         test_log = log("r_nd: " + str(obs[0]), test_log, flag_report_live)
-        test_log = log("eta_cos_nd: " + str(obs[1]), test_log, flag_report_live)
-        test_log = log("eta_sin_nd: " + str(obs[2]), test_log, flag_report_live)
-        test_log = log("v_nd: " + str(obs[3]), test_log, flag_report_live)
-        test_log = log("fpa_cos_nd: " + str(obs[4]), test_log, flag_report_live)
-        test_log = log("fpa_sin_nd: " + str(obs[5]), test_log, flag_report_live)
-        test_log = log("mass_nd: " + str(obs[6]), test_log, flag_report_live)
-        test_log = log("target_r_nd: " + str(obs[7]), test_log, flag_report_live)
-        test_log = log("target_eta_cos_nd: " + str(obs[8]), test_log, flag_report_live)
-        test_log = log("target_eta_sin_nd: " + str(obs[9]), test_log, flag_report_live)
-        test_log = log("target_v_nd: " + str(obs[10]), test_log, flag_report_live)
-        test_log = log("target_fpa_cos_nd: " + str(obs[11]), test_log, flag_report_live)
-        test_log = log("target_fpa_sin_nd: " + str(obs[12]), test_log, flag_report_live)
-        test_log = log("TTG: " + str(obs[13]), test_log, flag_report_live)
+        test_log = log("cos_eta: " + str(obs[1]), test_log, flag_report_live)
+        test_log = log("sin_eta: " + str(obs[2]), test_log, flag_report_live)
+        test_log = log("r_nd_target: " + str(obs[3]), test_log, flag_report_live)
+        test_log = log("cos_eta_target: " + str(obs[4]), test_log, flag_report_live)
+        test_log = log("sin_eta_target: " + str(obs[5]), test_log, flag_report_live)
+        test_log = log("x_current_nd: " + str(obs[6]), test_log, flag_report_live)
+        test_log = log("y_current_nd: " + str(obs[7]), test_log, flag_report_live)
+        test_log = log("vx_current_nd: " + str(obs[8]), test_log, flag_report_live)
+        test_log = log("vy_current_nd: " + str(obs[9]), test_log, flag_report_live)
+        test_log = log("x_target_nd: " + str(obs[10]), test_log, flag_report_live)
+        test_log = log("y_target_nd: " + str(obs[11]), test_log, flag_report_live)
+        test_log = log("vx_target_nd: " + str(obs[12]), test_log, flag_report_live)
+        test_log = log("vy_target_nd: " + str(obs[13]), test_log, flag_report_live)
+        test_log = log("x_diff_nd: " + str(obs[14]), test_log, flag_report_live)
+        test_log = log("y_diff_nd: " + str(obs[15]), test_log, flag_report_live)
+        test_log = log("vx_diff_nd: " + str(obs[16]), test_log, flag_report_live)
+        test_log = log("vy_diff_nd: " + str(obs[17]), test_log, flag_report_live)
+        test_log = log("r_nd_diff: " + str(obs[18]), test_log, flag_report_live)
+        test_log = log("v_comp_diff: " + str(obs[19]), test_log, flag_report_live)
+        test_log = log("TTG_nd: " + str(obs[20]), test_log, flag_report_live)
+        test_log = log("mass_current_nd: " + str(obs[21]), test_log, flag_report_live)
+        test_log = log("\n", test_log, flag_report_live)
 
         for item in info:
             test_log = log(f"{item}: {info[item]}", test_log, flag_report_live)
@@ -99,6 +108,15 @@ def test_TBR_polar_env(flag_report_live: bool = False):
             vel_reward = info["vel_reward"]
             mass_reward = info["mass_reward"]
             throttle_reward = info["throttle_reward"]
+            v_current_nd = info["v_current_nd"]
+            v_target_nd = info["v_target_nd"]
+            v_r_unit = info["v_r_unit"]
+            v_t_unit = info["v_t_unit"]
+            delta_cos_eta = obs[4] - obs[1]
+            delta_sin_eta = obs[5] - obs[2]
+            delta_target_v_nd = v_target_nd - v_current_nd
+            d_v_r_unit = info["v_r_target_unit"] - info["v_r_unit"]
+            d_v_t_unit = info["v_t_target_unit"] - info["v_t_unit"]
 
             eph.add_data(
                 info["Elapsed time"],
@@ -117,31 +135,57 @@ def test_TBR_polar_env(flag_report_live: bool = False):
                 u=action[0],
             )
 
+            '''
+            time, #1
+            reward, #2
+            throttle, #3
+            alpha_r, #4
+            alpha_theta, #5
+            rad, #6
+            cos_theta, #7
+            sin_theta, #8
+            v, #9
+            cos_fpa, #10
+            sin_fpa, #11
+            m, #12
+            d_rad_f, #13
+            d_cos_theta_f, #14
+            d_sin_theta_f, #15
+            d_v_f, #16
+            d_v_r_unit, #17
+            d_v_t_unit, #18
+            ttg, #19
+            pos_reward, #20
+            vel_reward, #21
+            mass_reward, #22
+            throttle_reward, #23
+            '''
+
             # store the results
             rollout_data.add_step(
-                info["Elapsed time"] / 86400,  # elapsed time in days
-                reward,  # reward
-                action[0],  # throttle
-                action[1],  # fpa cos
-                action[2],  # fpa sin
-                obs[0],  # r_nd
-                obs[1],  # eta_cos_nd
-                obs[2],  # eta_sin_nd
-                obs[3],  # v_nd
-                obs[4],  # fpa_cos_nd
-                obs[5],  # fpa_sin_nd
-                obs[6],  # mass_nd
-                obs[7],  # delta target_r_nd
-                obs[8],  # delta target_eta_cos_nd
-                obs[9],  # delta target_eta_sin_nd
-                obs[10],  # delta target_v_nd
-                obs[11],  # delta target_fpa_cos_nd
-                obs[12],  # delta target_fpa_sin_nd
-                obs[13],  # TTG
-                pos_reward,  # pos_reward
-                vel_reward,  # vel_reward
-                mass_reward,
-                throttle_reward,
+                info["Elapsed time"] / 86400,  # elapsed time in days #1
+                reward,  # reward #2
+                action[0],  # throttle #3
+                action[1],  # alpha_r #4
+                action[2],  # alpha_theta #5
+                obs[0],  # r_nd #6
+                obs[1],  # eta_cos_nd #7
+                obs[2],  # eta_sin_nd #8
+                v_current_nd,  # v_nd #9
+                v_r_unit,  # v_r_unit #10
+                v_t_unit,  # v_t_unit #11
+                obs[21],  # mass_nd #12
+                obs[18],  # delta target_r_nd #13
+                delta_cos_eta,  # delta target_eta_cos_nd #14
+                delta_sin_eta,  # delta target_eta_sin_nd #15
+                delta_target_v_nd,  # delta target_v_nd #16
+                d_v_r_unit,  # delta v_r_unit #17
+                d_v_t_unit,  # delta v_t_unit #18
+                obs[20],  # TTG_nd #19
+                pos_reward,  # position reward #20
+                vel_reward,  # velocity reward #21
+                mass_reward,  # mass reward #22
+                throttle_reward,  # throttle reward #23
             )
 
             steps += 1
@@ -204,23 +248,6 @@ def test_TBR_polar_env(flag_report_live: bool = False):
     else:
         test_log = log("Log file matches truth log file.", test_log, flag_report_live)
 
-    """
-    # load truth data for comparison
-    eph_truth = Ephemeris_v2()
-    eph_truth.read_from_file(os.path.join("data", "test_data", "test_TBR", "test_traj_ephemeris_") + str(count_traj) + "_TBR_env_truth.txt")
-
-    # re-ingest ephemeris data for comparison
-    eph_comp = Ephemeris_v2()
-    eph_comp.read_from_file(os.path.join("data", "test_data", "test_TBR", "test_traj_ephemeris_") + str(count_traj) + "_TBR_env.txt")
-
-    eph_comp.compare_trajectories(eph_truth, position_tol=1e3, velocity_tol=1e-1, verbose=flag_report_live)
-
-    if flag_test_pass:
-        test_log = log("Test PASSED: All trajectories match truth data within tolerance.", test_log, flag_report_live)
-    else:
-        test_log = log("Test FAILED: Discrepancies found between trajectories and truth data.", test_log, flag_report_live)
-
-    """
 
     return flag_test_pass
 
