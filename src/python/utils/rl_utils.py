@@ -754,6 +754,7 @@ def package_ephem_state_into_cart_SART(
 
 
 def rollout_model(env, params, model, test_log):
+
     # reset the env
     obs, info = env.reset(seed=params.get("seed_traj", 42))
     eph = Ephemeris_v2()  # create new ephemeris object
@@ -768,6 +769,7 @@ def rollout_model(env, params, model, test_log):
     truncated = False
 
     while flag_continue:
+
         # step the env
         action, _states = model.predict(obs, deterministic=True)
         unwrapped_env = env.unwrapped
@@ -775,6 +777,7 @@ def rollout_model(env, params, model, test_log):
         throttle = action[0]
         alpha_fpa_cos = action[1]
         alpha_fpa_sin = action[2]
+
 
         # dim state
         t_i = info["Elapsed time"]
@@ -823,38 +826,54 @@ def rollout_model(env, params, model, test_log):
         )
         arr_OE = SC.calc_Planar_OE(0.0, 0.0, 0.0, 0.0, params["mu"])
 
-        obs, reward, terminated, truncated, info = env.step(action)
+        obs, reward, done, truncated, info = env.step(action)
+        state_cart = env.get_cartesian_state()
+
+        # get relevant information
+        pos_reward = info["pos_reward"]
+        vel_reward = info["vel_reward"]
+        mass_reward = info["mass_reward"]
+        throttle_reward = info["throttle_reward"]
+        v_current_nd = info["v_current_nd"]
+        v_target_nd = info["v_target_nd"]
+        v_r_unit = info["v_r_unit"]
+        v_t_unit = info["v_t_unit"]
+        delta_cos_eta = obs[4] - obs[1]
+        delta_sin_eta = obs[5] - obs[2]
+        delta_target_v_nd = v_target_nd - v_current_nd
+        d_v_r_unit = info["v_r_target_unit"] - info["v_r_unit"]
+        d_v_t_unit = info["v_t_target_unit"] - info["v_t_unit"]
 
         count_step = count_step + 1
 
         # store the results
         rollout_data.add_step(
-            info["Elapsed time"] / 86400,  # elapsed time in days
-            reward,  # reward
-            action[0],  # throttle
-            alpha_fpa_cos,  # fpa cos
-            alpha_fpa_sin,  # fpa sin
-            obs[0],  # r_nd
-            obs[1],  # eta_cos_nd
-            obs[2],  # eta_sin_nd
-            obs[3],  # v_nd
-            obs[4],  # fpa_cos_nd
-            obs[5],  # fpa_sin_nd
-            obs[6],  # mass_nd
-            obs[7],  # delta target_r_nd
-            obs[8],  # delta target_eta_cos_nd
-            obs[9],  # delta target_eta_sin_nd
-            obs[10],  # delta target_v_nd
-            obs[11],  # delta target_fpa_cos_nd
-            obs[12],  # delta target_fpa_sin_nd
-            obs[13],  # TTG
-            pos_reward,  # pos_reward
-            vel_reward,  # vel_reward
-            mass_reward,
-            throttle_reward,
+            info["Elapsed time"] / 86400,  # elapsed time in days #1
+            reward,  # reward #2
+            action[0],  # throttle #3
+            action[1],  # alpha_r #4
+            action[2],  # alpha_theta #5
+            obs[0],  # r_nd #6
+            obs[1],  # eta_cos_nd #7
+            obs[2],  # eta_sin_nd #8
+            v_current_nd,  # v_nd #9
+            v_r_unit,  # v_r_unit #10
+            v_t_unit,  # v_t_unit #11
+            obs[21],  # mass_nd #12
+            obs[18],  # delta target_r_nd #13
+            delta_cos_eta,  # delta target_eta_cos_nd #14
+            delta_sin_eta,  # delta target_eta_sin_nd #15
+            delta_target_v_nd,  # delta target_v_nd #16
+            d_v_r_unit,  # delta v_r_unit #17
+            d_v_t_unit,  # delta v_t_unit #18
+            obs[20],  # TTG_nd #19
+            pos_reward,  # position reward #20
+            vel_reward,  # velocity reward #21
+            mass_reward,  # mass reward #22
+            throttle_reward,  # throttle reward #23
         )
 
-        if terminated or truncated:
+        if done or truncated:
             break
 
     test_log = log("Test trajectory complete", test_log, True)
