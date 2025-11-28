@@ -1,5 +1,6 @@
 import os
 import random
+import shutil
 
 from core.training_data_generation import read_ephems_from_dir
 import torch
@@ -88,6 +89,13 @@ def main(params, training_data, seed_in=42):
     
     test_log = log(f"\nSaved replay buffer to: {path_replay_buffer}", test_log, True)
 
+    # copy the config file
+    path_config_src = os.path.join(
+        PROJECT_ROOT, "data", "config", params["config_toml"]
+    )
+    path_config_dst = os.path.join(path_output, params["config_toml"])
+    shutil.copyfile(path_config_src, path_config_dst)
+
 if __name__ == "__main__":
     config_toml = "SAC_training_TBR_polar__JM_config.toml"
 
@@ -95,4 +103,5 @@ if __name__ == "__main__":
     path_config = os.path.join(PROJECT_ROOT, "data", "config", config_toml)
     params = read_toml_config_file(path_config)
     training_data = params["path_training_data"]
+    params["config_toml"] = config_toml
     main(params, training_data)

@@ -1,5 +1,6 @@
 import os
 import random
+import shutil
 
 import matplotlib.pyplot as plt
 import torch
@@ -76,21 +77,37 @@ def main(params, seed_in=42):
         delattr(model, "_logger")
 
     plt.figure()
-    plt.semilogy(arr_actor_loss_pt, label="Actor Loss")
+    if max(arr_actor_loss_pt) > 0:
+        plt.semilogy(arr_actor_loss_pt, label="Actor Loss")
+    else:
+        plt.plot(arr_actor_loss_pt, label="Actor Loss")
     plt.legend()
+    plt.savefig(os.path.join(path_plots, "pretrain_actor_loss.png"), dpi=300)
 
     plt.figure()
-    plt.semilogy(arr_critic_loss_pt, label="Critic Loss")
+    if max(arr_critic_loss_pt) > 0:
+        plt.semilogy(arr_critic_loss_pt, label="Critic Loss")
+    else:
+        plt.plot(arr_critic_loss_pt, label="Critic Loss")
     plt.legend()
+    plt.savefig(os.path.join(path_plots, "pretrain_critic_loss.png"), dpi=300)
 
     # Save the model
     model.save(path_SAC_model)
+
+    # copy the config file
+    path_config_src = os.path.join(
+        PROJECT_ROOT, "data", "config", params["config_toml"]
+    )
+    path_config_dst = os.path.join(path_output, params["config_toml"])
+    shutil.copyfile(path_config_src, path_config_dst)
 
     plt.show()
 
 
 if __name__ == "__main__":
-    config_toml = "SAC_training_TBR_polar__JM_config.toml"
+    config_toml = "pre_train_config.toml"
     path_config = os.path.join(PROJECT_ROOT, "data", "config", config_toml)
     params = read_toml_config_file(path_config)
-    main(config_toml)
+    params["config_toml"] = config_toml
+    main(params)

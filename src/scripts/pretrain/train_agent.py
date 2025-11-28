@@ -1,5 +1,6 @@
 import os
 import random
+import shutil
 
 import torch
 import utils
@@ -108,6 +109,16 @@ def main(params, seed_in=42):
     # Save the model
     model.save(path_SAC_model)
 
+    # copy the config file
+    path_config_src = os.path.join(
+        PROJECT_ROOT, "data", "config", params["config_toml"]
+    )
+    path_config_dst = os.path.join(path_output, params["config_toml"])
+    shutil.copyfile(path_config_src, path_config_dst)
+
+    print("Model saved to: ", path_SAC_model)
+    print("Output saved to: ", path_output )
+
 
 if __name__ == "__main__":
     config_toml = "train_agent_config.toml"
@@ -116,5 +127,6 @@ if __name__ == "__main__":
 
     params["read_replay_buffer"] = False
     params["load_model_checkpoint"] = False
+    params["config_toml"] = config_toml
 
     main(params)

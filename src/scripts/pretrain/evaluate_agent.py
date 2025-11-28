@@ -137,5 +137,6 @@ if __name__ == "__main__":
     config_toml = "evaluate_agent_config.toml"
     path_config = os.path.join(PROJECT_ROOT, "data", "config", config_toml)
     params = read_toml_config_file(path_config)
+    params["config_toml"] = config_toml
 
     main(params)
