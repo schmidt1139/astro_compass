@@ -1,5 +1,19 @@
 # SAC TBR polar pretraining configuration
 
+[paths]
+tb_log_name = "SAC_TBR_training"
+output_dir = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\agent_eval"
+path_training_data = "~/Documents/astro_compass/data/pre-training-data/training-TBR-overfit"
+path_replay_buffer = "~/Documents/astro_compass/data/pre-training-data/replay_buffers/tbr_overfit/replay_buffer.pkl"
+path_SAC_model_load = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\runs_for_record\\curiosity\\overfit_10million\\SAC_training_TBR_polar20251128_001406\\best_model.zip"
+
+[eval]
+num_rollouts = 100
+
+[environment.vectorization]
+num_vec_envs = 2
+cores = 2
+
 [environment]
 env_type = "TwoBodyRendezvous_Polar_Env2"
 mu = 1.3e20
@@ -51,10 +65,6 @@ prop_length_scale = 1.5
 r_dist_weight = 0.2 
 v_dist_weight = 0.2 
 
-[environment.vectorization]
-num_vec_envs = 4
-cores = 4
-
 [training]
 pre_train_networks = true
 save_pre_training_only_replay_buffer = true
@@ -84,14 +94,6 @@ max_grad_norm = 0.5
 nn_arch_type = "custom"
 net_arch = [256, 256]
 eval_device = "cuda"
-
-[paths]
-tb_log_name = "SAC_TBR_training"
-output_dir = "~/Documents/astro_compass/data/output/SAC_Training"
-path_training_data = "~/Documents/astro_compass/data/pre-training-data/training-TBR-overfit"
-path_replay_buffer = "~/Documents/astro_compass/data/pre-training-data/replay_buffers/tbr_overfit/replay_buffer.pkl"
-path_SAC_model_load = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\SAC_Training\\SAC_training_TBR_polar20251127_202634\\best_model.zip"
-
 
 [general]
 ephem_version = 2.0
