@@ -2,6 +2,7 @@ import os
 import random
 import numpy as np
 import utils
+import torch
 from tqdm import tqdm
 from core.ephemeris_v2 import Ephemeris_v2 as Ephemeris
 from core.process_single_trajectory import process_single_trajectory
@@ -26,6 +27,15 @@ from utils.eval_utils import mc_evaluate_agent, plot_log_mc_results
 PROJECT_ROOT = os.path.dirname(os.path.dirname(utils.__file__)) + "/../.."
 
 def main(params, seed_in=42):
+
+    os.environ["OMP_NUM_THREADS"] = "1"
+    os.environ["OPENBLAS_NUM_THREADS"] = "1"
+    os.environ["MKL_NUM_THREADS"] = "1"
+    os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
+    os.environ["NUMEXPR_NUM_THREADS"] = "1"
+    torch.set_num_threads(1)
+    torch.set_num_interop_threads(1)
+
     random.seed(seed_in)
 
     # initialize the training and evaluation environments
