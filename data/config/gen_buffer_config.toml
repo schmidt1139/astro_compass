@@ -87,8 +87,8 @@ eval_device = "cuda"
 
 [paths]
 tb_log_name = "SAC_TBR_training"
-output_dir = "~/Documents/astro_compass/data/output/SAC_Training"
-path_training_data = "~/Documents/astro_compass/data/pre-training-data/training-TBR-overfit"
+output_dir = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\buffer_generation\\"
+path_training_data = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\training_TBR_overfit\\ephems\\"
 path_replay_buffer = "~/Documents/astro_compass/data/pre-training-data/replay_buffers/tbr_overfit/replay_buffer.pkl"
 path_SAC_model_load = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\SAC_Training\\SAC_training_TBR_polar20251127_202634\\best_model.zip"
 
