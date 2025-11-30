@@ -762,6 +762,8 @@ def package_ephem_state_into_cart_SART(
 
 def rollout_model(env, params, model, test_log):
 
+    flag_report_live = params.get("flag_report_live", False)
+
     # reset the env
     obs, info = env.reset(seed=params.get("seed_traj", 42))
     eph = Ephemeris_v2()  # create new ephemeris object
@@ -807,6 +809,8 @@ def rollout_model(env, params, model, test_log):
         throttle_reward = info.get("throttle_reward", None)
         alpha_x = info.get("alpha_x", None)
         alpha_y = info.get("alpha_y", None)
+        position_res = info.get("pos_residual", None)
+        velocity_res = info.get("vel_residual", None)
 
         # log data to ephemeris
         eph.add_data(
@@ -835,6 +839,8 @@ def rollout_model(env, params, model, test_log):
 
         obs, reward, done, truncated, info = env.step(action)
         state_cart = env.get_cartesian_state()
+
+        
 
         # get relevant information
         pos_reward = info["pos_reward"]
@@ -878,29 +884,29 @@ def rollout_model(env, params, model, test_log):
             vel_reward,  # velocity reward #21
             mass_reward,  # mass reward #22
             throttle_reward,  # throttle reward #23
+            position_res,
+            velocity_res,
         )
 
         if done or truncated:
             break
 
-    test_log = log("Test trajectory complete", test_log, True)
-    test_log = log("Steps taken: " + str(count_step), test_log, True)
-    test_log = log("Total reward: " + str(sum_reward), test_log, True)
-    test_log = log("Final x: " + str(obs[0]) + " ", test_log, True)
-    test_log = log("Final y: " + str(obs[1]) + " ", test_log, True)
-    test_log = log("Final vx: " + str(obs[2]) + " ", test_log, True)
-    test_log = log("Final vy: " + str(obs[3]) + " ", test_log, True)
-    test_log = log("Final m: " + str(obs[4]) + " ", test_log, True)
-    test_log = log("Final sma: " + str(obs[6]) + " ", test_log, True)
-    test_log = log("Final ecc: " + str(arr_OE[1]) + " ", test_log, True)
-    test_log = log("terminated: " + str(terminated) + " ", test_log, True)
-    test_log = log("truncated: " + str(truncated) + " ", test_log, True)
-
+    test_log = log("Test trajectory complete", test_log, flag_report_live)
+    test_log = log("Steps taken: " + str(count_step), test_log, flag_report_live)
+    test_log = log("Total reward: " + str(sum_reward), test_log, flag_report_live)
+    test_log = log("Final x: " + str(obs[0]) + " ", test_log, flag_report_live)
+    test_log = log("Final y: " + str(obs[1]) + " ", test_log, flag_report_live)
+    test_log = log("Final vx: " + str(obs[2]) + " ", test_log, flag_report_live)
+    test_log = log("Final vy: " + str(obs[3]) + " ", test_log, flag_report_live)
+    test_log = log("Final m: " + str(obs[4]) + " ", test_log, flag_report_live)
+    test_log = log("Final sma: " + str(obs[6]) + " ", test_log, flag_report_live)
+    test_log = log("Final ecc: " + str(arr_OE[1]) + " ", test_log, flag_report_live)
+    test_log = log("terminated: " + str(terminated) + " ", test_log, flag_report_live)
+    test_log = log("truncated: " + str(truncated) + " ", test_log, flag_report_live)
     # final env info
     for key, value in info.items():
         if key != "ODE Solution":
-            test_log = log(f"{key}: {value}", test_log, True)
-
+            test_log = log(f"{key}: {value}", test_log, flag_report_live)
     return test_log, eph, rollout_data
 
 
@@ -1077,34 +1083,34 @@ def create_relative_polar_observation_fast(params, current_state_t, target_state
     polar_observation = np.array(
             [
                 # Spherical Position SC
-                r_nd_0,
-                cos_eta,
-                sin_eta,
+                r_nd_0, #0
+                cos_eta, #1
+                sin_eta, #2
                  # Spherical Position Planet
-                r_nd_target,
-                cos_eta_target,
-                sin_eta_target,
+                r_nd_target, #3
+                cos_eta_target, #4
+                sin_eta_target, #5
                  # Cartesian Position SC
-                x_current_nd,
-                y_current_nd,
-                vx_current_nd,
-                vy_current_nd,
+                x_current_nd, #6
+                y_current_nd, #7
+                vx_current_nd, #8
+                vy_current_nd, #9
                  # Cartesian Position Planet
-                x_target_nd,
-                y_target_nd,
-                vx_target_nd,
-                vy_target_nd,
+                x_target_nd, #10
+                y_target_nd, #11
+                vx_target_nd, #12
+                vy_target_nd, #13
                  # Differences Cartesian
-                x_target_nd - x_current_nd,
-                y_target_nd - y_current_nd,
-                vx_target_nd - vx_current_nd,
-                vy_target_nd - vy_current_nd,
+                x_target_nd - x_current_nd, #14
+                y_target_nd - y_current_nd, #15
+                vx_target_nd - vx_current_nd, #16
+                vy_target_nd - vy_current_nd, #17
                 # Differences Magnitudes
-                r_nd_target - r_nd_0,
-                v_comp_target - v_comp,
+                r_nd_target - r_nd_0, #18
+                v_comp_target - v_comp, #19
                 # Time to Go
-                TTG_nd,
-                mass_current_nd
+                TTG_nd, #20
+                mass_current_nd #21
              ],
              dtype=np.float32,
     )
