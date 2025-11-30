@@ -7,6 +7,7 @@ import utils
 from pretrain_utils import generate_env, generate_paths
 from stable_baselines3 import SAC as SB3_SAC
 from stable_baselines3.common.callbacks import CallbackList, EvalCallback
+from utils.callbacks import ReplayBufferCheckpointCallback
 from utils.log_utils import read_toml_config_file
 from utils.rl_utils import (
     RewardLoggerCallback,
@@ -87,6 +88,13 @@ def main(params, seed_in=42):
         render=False,
     )
     callback_list = CallbackList([eval_callback, callback])
+    save_freq_adj = int( params["n_freq_checkpoint_replay_buffer"] / params["num_vec_envs"] )
+    if params.get("flag_checkpoint_replay_buffer", False):
+        replay_buffer_callback = ReplayBufferCheckpointCallback(
+            save_freq=save_freq_adj,
+            save_path=path_output
+        )
+        callback_list = CallbackList([eval_callback, callback, replay_buffer_callback])
 
     # Train the agent
     model.learn(
@@ -108,6 +116,12 @@ def main(params, seed_in=42):
 
     # Save the model
     model.save(path_SAC_model)
+
+    # optionally save the replay buffer
+    if params.get("save_final_replay_buffer", False):
+        path_replay_buffer = os.path.join(path_output, "replay_buffer.pkl")
+        model.save_replay_buffer(path_replay_buffer)
+        print("Replay buffer saved to: ", path_replay_buffer)
 
     # copy the config file
     path_config_src = os.path.join(
