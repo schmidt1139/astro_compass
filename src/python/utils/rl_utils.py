@@ -1183,6 +1183,11 @@ def compute_reward_fast(params, current_state_t, TTG, target_state_t, u, step_co
     pos_reward = (-1 + pos_reward) * params["pos_r_weight"]
     vel_reward = (-1 + vel_reward) * params["vel_r_weight"]
 
+    # ttg weighting
+    time_weight = np.exp(-params["time_dist_weight"] * TTG_nd**2 )
+    pos_reward *= time_weight
+    vel_reward *= time_weight
+
     # This value will always be negative
     throttle_reward = -u * params["throttle_r_weight"]
 
