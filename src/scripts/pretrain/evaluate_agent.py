@@ -1,7 +1,8 @@
 import os
 import random
-
+import numpy as np
 import utils
+from tqdm import tqdm
 from core.ephemeris_v2 import Ephemeris_v2 as Ephemeris
 from core.process_single_trajectory import process_single_trajectory
 from utils.plotting_utils import plot_SAC_training_TBR_polar
@@ -19,10 +20,10 @@ from utils.rl_utils import (
     RewardLoggerCallback,
     rollout_model,
 )
+from utils.eval_utils import mc_evaluate_agent, plot_log_mc_results
 
 # HACK
 PROJECT_ROOT = os.path.dirname(os.path.dirname(utils.__file__)) + "/../.."
-
 
 def main(params, seed_in=42):
     random.seed(seed_in)
@@ -32,6 +33,7 @@ def main(params, seed_in=42):
 
     # paths
     path_output, path_SAC_model, path_plots = generate_paths(params)
+    params["path_plots"] = path_plots
 
     # reset the environment
     env.reset()
@@ -39,7 +41,7 @@ def main(params, seed_in=42):
     model = SB3_SAC.load(
         params["path_SAC_model_load"],
         env=env,
-        device="cpu",
+        device=params.get("eval_device", "cpu"),
         seed=seed_in,
         tensorboard_log=path_output,
     )  # Use path_output so SB3 creates SAC_1/ subdirectory
@@ -63,15 +65,9 @@ def main(params, seed_in=42):
         n_eval_episodes=params["n_eval_episodes"],  # episodes per evaluation
         deterministic=True,
         render=False,
+        verbose=0,
     )
     callback_list = CallbackList([eval_callback, callback])
-
-    # After training:
-    arr_episode_numbers = list(range(1, len(callback.episode_rewards) + 1))
-    arr_episode_rs = callback.episode_rewards
-    print("Episodes:", len(callback.episode_rewards))
-    print("Timesteps:", model.num_timesteps)
-    test_log = log("Training complete", test_log, True)
 
     # optionally generate hamiltonian trajectory
     if params.get("flag_gen_H_traj", False):
@@ -101,7 +97,15 @@ def main(params, seed_in=42):
 
     test_log, eph, rollout_data = rollout_model(rollout_env, params, model, test_log)
 
+    # Monte Carlo evaluation
+    mc_results = mc_evaluate_agent(params)
+
+    plot_log_mc_results(mc_results, test_log, params)
+
+    arr_episode_numbers, arr_episode_rs, arr_position_res, arr_velocity_res, arr_m = mc_results
+
     # render training plots
+    test_log = log("Rendering training plots...", test_log, True)
     plot_SAC_training_TBR_polar(
         rollout_data,
         path_plots,
