@@ -201,6 +201,9 @@ class SACRolloutData_TBR_polar:
         self.arr_throttle_reward = []
         self.sum_reward = 0.0
 
+        self.arr_position_res = []
+        self.arr_velocity_res = []
+
     def add_step(
         self,
         time,
@@ -226,6 +229,8 @@ class SACRolloutData_TBR_polar:
         vel_reward,
         mass_reward,
         throttle_reward,
+        position_res,
+        velocity_res,
     ):
 
 
@@ -255,6 +260,8 @@ class SACRolloutData_TBR_polar:
 
         self.sum_reward += reward
         self.arr_reward_tot.append(self.sum_reward)
+        self.arr_position_res.append(position_res)
+        self.arr_velocity_res.append(velocity_res)
 
 
 def plot_SAC_training(
