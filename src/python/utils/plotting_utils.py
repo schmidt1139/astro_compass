@@ -552,17 +552,8 @@ def plot_SAC_training_TBR(
             linestyle="--",
             color="orange",
         )
-    percentile_95_H = np.percentile(arr_reward_H, 95)
-    percentile_95_SAC = np.percentile(SACRolloutData_TBR.arr_reward, 95)
-    max_percentile = max(percentile_95_SAC, percentile_95_H)
-    if ephem_H is not None:
-        percentile_95_H = np.percentile(arr_reward_H, 95)
-        percentile_5_H = np.percentile(arr_reward_H, 5)
-        max_percentile = max(percentile_95_SAC, percentile_95_H)
-        min_percentile = min(percentile_5_SAC, percentile_5_H)
-    else:
-        max_percentile = percentile_95_SAC
-        min_percentile = percentile_5_SAC
+
+
     # plt.ylim(min_percentile, 1.1*max_percentile)
     plt.xlabel("Time [years]")
     plt.ylabel("Reward Contribution")
@@ -906,16 +897,6 @@ def plot_SAC_training_TBR_polar(
     # plot reward over time per step
     try:
         plt.figure()
-        percentile_95_SAC = np.percentile(SACRolloutData_TBR_polar.arr_reward, 99)
-        percentile_5_SAC = np.percentile(SACRolloutData_TBR_polar.arr_reward, 1)
-        # if ephem_H is not None:
-        #     percentile_95_H = np.percentile(arr_rewards_H, 99)
-        #     percentile_5_H = np.percentile(arr_rewards_H, 1)
-        #     max_percentile = max(percentile_95_SAC, percentile_95_H)
-        #     min_percentile = min(percentile_5_SAC, percentile_5_H)
-        # else:
-        #     max_percentile = percentile_95_SAC
-        #     min_percentile = percentile_5_SAC
 
         plt.plot(
             np.array(SACRolloutData_TBR_polar.arr_time) / 365.25,
@@ -990,21 +971,6 @@ def plot_SAC_training_TBR_polar(
                 linestyle="--",
                 color="orange",
             )
-            # percentile_95_H = np.percentile(arr_rewards_H, 99)
-            # percentile_95_SAC = np.percentile(SACRolloutData_TBR_polar.arr_reward, 99)
-            # max_percentile = max(percentile_95_SAC, percentile_95_H)
-        # else:
-        # max_percentile = percentile_95_SAC
-        # min_percentile = percentile_5_SAC
-
-        # if ephem_H is not None:
-        #     percentile_95_H = np.percentile(arr_rewards_H, 99)
-        #     percentile_5_H = np.percentile(arr_rewards_H, 1)
-        #     max_percentile = max(percentile_95_SAC, percentile_95_H)
-        #     min_percentile = min(percentile_5_SAC, percentile_5_H)
-        # else:
-        #     max_percentile = percentile_95_SAC
-        #     min_percentile = percentile_5_SAC
 
         # plt.ylim(min_percentile, 1.1*max_percentile)
         plt.xlabel("Time [years]")

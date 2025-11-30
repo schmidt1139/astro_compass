@@ -112,7 +112,7 @@ def main(params, seed_in=42):
 
     plot_log_mc_results(mc_results, test_log, params)
 
-    arr_episode_numbers, arr_episode_rs, arr_position_res, arr_velocity_res, arr_m, list_pos_residuals = mc_results
+    arr_episode_numbers, arr_episode_rs, arr_position_res, arr_velocity_res, arr_m, list_pos_residuals, list_vel_residuals = mc_results
 
     # render training plots
     test_log = log("Rendering training plots...", test_log, True)

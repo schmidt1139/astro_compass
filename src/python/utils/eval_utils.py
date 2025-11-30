@@ -41,6 +41,7 @@ def mc_evaluate_agent(params):
     arr_velocity_res = []
     arr_m = []
     list_pos_residuals = []
+    list_vel_residuals = []
 
     with ProcessPoolExecutor(max_workers=num_workers) as executor:
         futures = [executor.submit(run_single_rollout, s, params) for s in seeds]
@@ -61,13 +62,13 @@ def mc_evaluate_agent(params):
         arr_velocity_res.append(rollout_data.arr_velocity_res[-1])
         arr_m.append(rollout_data.arr_mass[-1])
         list_pos_residuals.append(rollout_data.arr_position_res)
+        list_vel_residuals.append(rollout_data.arr_velocity_res)
 
-    return arr_episode_numbers, arr_episode_rs, arr_position_res, arr_velocity_res, arr_m, list_pos_residuals
+    return arr_episode_numbers, arr_episode_rs, arr_position_res, arr_velocity_res, arr_m, list_pos_residuals, list_vel_residuals
 
 def plot_log_mc_results(mc_results, test_log, params):
 
-    arr_episode_numbers, arr_episode_rs, arr_position_res, arr_velocity_res, arr_m, list_pos_residuals = mc_results
-
+    arr_episode_numbers, arr_episode_rs, arr_position_res, arr_velocity_res, arr_m, list_pos_residuals, list_vel_residuals = mc_results
     mean_r = sum(arr_episode_rs) / len(arr_episode_rs)
     percentile_95_r = np.percentile(arr_episode_rs, 95)
     percentile_5_r = np.percentile(arr_episode_rs, 5)
@@ -159,6 +160,19 @@ def plot_log_mc_results(mc_results, test_log, params):
     plt.grid(True)
     plt_path = params["path_plots"]
     plt.savefig(f"{plt_path}/mc_position_residuals_over_time.png")
+    plt.close()
+
+    #plot velocity residuals over time for all episodes
+    plt.figure(figsize=(10, 6))
+    for i, vel_residuals in enumerate(list_vel_residuals):
+        plt.plot(vel_residuals, alpha=0.5)
+        
+    plt.title('Velocity Residuals Over Time for ' + str(len(list_vel_residuals)) + ' Episodes')
+    plt.xlabel('Time Step')
+    plt.ylabel('Velocity Residual (nd)')
+    plt.grid(True)
+    plt_path = params["path_plots"]
+    plt.savefig(f"{plt_path}/mc_velocity_residuals_over_time.png")
     plt.close()
 
     return test_log

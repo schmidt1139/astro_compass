@@ -698,10 +698,10 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         
         self.pos_residual = env_info['pos_residual']
         self.vel_residual = env_info['vel_residual']
-        self.time_r_component = env_info['time_r_component']
-        self.pos_r_component = env_info['pos_r_component']
-        self.vel_r_component = env_info['vel_r_component']
-        self.throttle_r_component = env_info['throttle_r_component']
+        self.time_reward = env_info['time_r_component']
+        self.pos_reward = env_info['pos_r_component']
+        self.vel_reward = env_info['vel_r_component']
+        self.throttle_reward = env_info['throttle_r_component']
         self.terminated = env_info['terminated']
 
         '''
@@ -942,6 +942,8 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
 
         # determine reward and terminated status
         reward, terminated, truncated = self.calc_reward(u)
+
+
 
         # accumulate reward
         self.episode_reward += reward

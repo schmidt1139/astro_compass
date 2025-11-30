@@ -1226,7 +1226,7 @@ def compute_reward_fast(params, current_state_t, TTG, target_state_t, u, step_co
     env_info = {
         "pos_residual": d_r_nd,
         "vel_residual": d_v_nd,
-        "time_r_component": 1.0,
+        "time_r_component": time_weight,
         "throttle_r_component": throttle_reward,
         "pos_r_component": pos_reward,
         "vel_r_component": vel_reward,
