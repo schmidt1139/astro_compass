@@ -562,11 +562,13 @@ def train_on_replay_buffer(model, params, test_log, env):
     # Optionally log progress
     log_interval = params.get("pt_log_interval", 1000)
     checkpoint_interval = params.get("checkpoint_freq", 10_000)
+    gradient_batch_size = params.get("gradient_batch_size", 100)
 
     # Train the networks by sampling from replay buffer
-    for step in tqdm(range(num_gradient_steps), desc="Pre-training"):
-        # This performs one gradient update on actor and critic networks
-        model.train(gradient_steps=1)
+    for step in tqdm(range(0, num_gradient_steps, gradient_batch_size), desc="Pre-training batches"):
+        # This performs multiple gradient updates on actor and critic networks at once
+        steps_to_train = min(gradient_batch_size, num_gradient_steps - step)
+        model.train(gradient_steps=steps_to_train)
 
         # Try to get losses from the model's internal tracking
         # Note: SAC stores these internally but they may not be accessible immediately
@@ -590,7 +592,7 @@ def train_on_replay_buffer(model, params, test_log, env):
             # Logger not set up or accessible, skip logging
             pass
 
-        if (step + 1) % log_interval == 0:
+        if (step) % log_interval == 0:
             if critic_losses and actor_losses:
                 avg_critic = np.mean(critic_losses[-log_interval:])
                 avg_actor = np.mean(actor_losses[-log_interval:])
@@ -598,10 +600,10 @@ def train_on_replay_buffer(model, params, test_log, env):
                     f"Step {step + 1}: Critic Loss: {avg_critic:.4f}, Actor Loss: {avg_actor:.4f}"
                 )
             else:
-                tqdm.write(f"Completed {step + 1}/{num_gradient_steps} gradient steps")
+                tqdm.write(f"Completed {step}/{num_gradient_steps} gradient steps")
 
         # also checkpoint the model
-        if (step + 1) % checkpoint_interval == 0:
+        if (step) % checkpoint_interval == 0:
             # evaluate current policy
             mean_reward, std_reward = evaluate_policy(
                 model,
@@ -614,7 +616,7 @@ def train_on_replay_buffer(model, params, test_log, env):
             std_rewards.append(std_reward)
 
             tqdm.write(
-                f"Evaluation after {step + 1} steps: Mean Reward: {mean_reward:.2f} +/- {std_reward:.2f}"
+                f"Evaluation after {step} steps: Mean Reward: {mean_reward:.2f} +/- {std_reward:.2f}"
             )
 
 
@@ -1212,9 +1214,10 @@ def compute_reward_fast(params, current_state_t, TTG, target_state_t, u, step_co
         reward -= 10.0
         terminated = True
 
-    if eccentricity_exceeded:
-         reward -= 100.0
-         terminated = True
+    if (params.get("flag_hyperbolic_termination", False)):
+        if eccentricity_exceeded:
+            reward -= 100.0
+            terminated = True
 
     if fuel_exceeded:
         reward -= 10.0

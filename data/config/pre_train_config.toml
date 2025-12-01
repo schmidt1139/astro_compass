@@ -1,5 +1,12 @@
 # SAC TBR polar pretraining configuration
 
+[paths]
+tb_log_name = "SAC_TBR_training"
+output_dir = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\pre_training"
+path_training_data = ""
+path_replay_buffer = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\buffer_generation\\SAC_training_TBR_polar20251201_151736\\replay_buffer.pkl"
+path_SAC_model_load = ""
+
 [environment]
 env_type = "TwoBodyRendezvous_Polar_Env2"
 mu = 1.3e20
@@ -50,6 +57,7 @@ prop_length_scale = 1.5
 # ensure that there's always some signal
 r_dist_weight = 0.2 
 v_dist_weight = 0.2 
+flag_hyperbolic_termination = true
 
 [environment.vectorization]
 num_vec_envs = 4
@@ -63,16 +71,16 @@ read_replay_buffer = true
 load_model_checkpoint = false
 eval_freq = 500
 training_steps = 10_000
-pretrain_gradient_steps = 5000
+pretrain_gradient_steps = 100_000
 n_eval_episodes = 3
 print_freq = 2000
 buffer_size = 200_000
 num_ephems_to_use = 1000
-batch_size = 256
-pt_log_interval = 2000
+batch_size = 1_000
+pt_log_interval = 10_000
 t_log_interval = 2000
 loss_report_rate = 10
-checkpoint_freq = 1000
+checkpoint_freq = 10_000
 
 [model]
 learning_rate = 0.0003
@@ -84,13 +92,6 @@ max_grad_norm = 0.5
 nn_arch_type = "custom"
 net_arch = [256, 256]
 eval_device = "cuda"
-
-[paths]
-tb_log_name = "SAC_TBR_training"
-output_dir = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\pre_training"
-path_training_data = "~/Documents/astro_compass/data/pre-training-data/training-TBR-overfit"
-path_replay_buffer = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\buffer_generation\\SAC_training_TBR_polar20251128_144703\\replay_buffer.pkl"
-path_SAC_model_load = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\SAC_Training\\SAC_training_TBR_polar20251127_202634\\best_model.zip"
 
 
 [general]
