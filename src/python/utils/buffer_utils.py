@@ -42,6 +42,7 @@ def plot_episodes(episodes, params, path_plots):
     list_arr_action_u = []
     list_arr_action_ar = []
     list_arr_action_at = []
+    list_arr_rewards = []
 
     for episode in episodes:
 
@@ -55,6 +56,8 @@ def plot_episodes(episodes, params, path_plots):
         arr_y = []
         arr_x_target = []
         arr_y_target = []
+        arr_rewards = []
+        r_tot = 0.0
 
         for i in range(len(obs)):
             #x, and y
@@ -63,10 +66,13 @@ def plot_episodes(episodes, params, path_plots):
             y = obs[i][7]
             x_target = next_obs[i][10]
             y_target = next_obs[i][11]
+            r_tot += rewards[i]
+
             arr_x.append(x)
             arr_y.append(y)
             arr_x_target.append(x_target)
             arr_y_target.append(y_target)
+            arr_rewards.append(rewards[i])
 
         #store action components
         arr_action_u_raw = []
@@ -94,6 +100,7 @@ def plot_episodes(episodes, params, path_plots):
         list_arr_action_u.append(arr_action_u)
         list_arr_action_ar.append(arr_action_ar)
         list_arr_action_at.append(arr_action_at)
+        list_arr_rewards.append(arr_rewards)
 
         
 
@@ -134,6 +141,18 @@ def plot_episodes(episodes, params, path_plots):
     plt.grid(True)
     plt.savefig(f"{path_plots}/attitude_over_time.png", dpi=300)
     plt.close()
+
+    #plot rewards
+    plt.figure()
+    for i in range(len(list_arr_rewards)):
+        plt.plot(list_arr_rewards[i], color='blue')
+    plt.xlabel('Time Step')
+    plt.ylabel('Reward')
+    plt.title('Rewards over Time')
+    plt.grid(True)
+    plt.savefig(f"{path_plots}/rewards_over_time.png", dpi=300)
+    plt.close()
+
 
 def rescale_actions(actions, low, high):
     """Rescale actions from [-1, 1] to [low, high]"""

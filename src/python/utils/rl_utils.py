@@ -1015,6 +1015,10 @@ def extract_experiences_from_ephem(eph, params):
         next_obs_batch.append(next_obs)
         done_batch.append(done)
 
+    #update the last done to be terminal
+    if len(done_batch) > 0:
+        done_batch[-1] = True
+
     # After the loop, before buffer import:
     obs_batch = np.stack(obs_batch)           # shape (N, obs_dim)
     action_batch = np.stack(action_batch)     # shape (N, action_dim)
