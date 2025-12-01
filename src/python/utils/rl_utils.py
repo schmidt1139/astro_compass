@@ -1,7 +1,6 @@
 import os
 from turtle import done
-from Constants import Constants
-from Spacecraft import Spacecraft
+from core.spacecraft import Spacecraft
 from StateVectorUtilities import cartesian_to_polar
 from core.ephemeris_v2 import Ephemeris_v2
 import torch
@@ -9,11 +8,11 @@ import torch.nn as nn
 import numpy as np
 from core.ephemeris_v2 import Ephemeris_v2
 from core.training_data_generation import read_ephems_from_dir
-from Spacecraft import Spacecraft
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.evaluation import evaluate_policy
 from StateVectorUtilities import cartesian_to_polar
 from tqdm import tqdm
+from constants.constants import Constants
 from utils.log_utils import log
 from utils.plotting_utils import SACRolloutData_TBR_polar
 from utils.state_vector_utils import convert_alpha_from_cart_to_fpa, convert_attitude_from_cartesian_to_radial
@@ -1157,11 +1156,14 @@ def compute_reward_fast(params, current_state_t, TTG, target_state_t, u, step_co
     mass = current_state_t[4] / params["m_star"]
 
     # extract orbital elements
-    r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0 = cartesian_to_polar(current_state_t[0], current_state_t[1], current_state_t[2], current_state_t[3])
+    r_0, eta_0, v_r_0, v_eta_0 = cartesian_to_polar(current_state_t[0], current_state_t[1], current_state_t[2], current_state_t[3])
+
+
     sc = Spacecraft(
-        r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0, current_state_t[4], params["max_T"], params["ISP"]
+        r_0, eta_0, v_r_0, v_eta_0, current_state_t[4], params["max_T"], params["ISP"]
     )
-    arr_OE = sc.calc_Planar_OE(0.0, 0.0, 0.0, 0.0, params["mu"])
+    sc.update_state_cartesian(current_state_t[0], current_state_t[1], current_state_t[2], current_state_t[3], current_state_t[4])
+    arr_OE = sc.calc_Planar_OE(0.0, 0.0, 0.0, 0.0, Constants.MU_SUN_M)
     e = arr_OE[1]
 
     # extract the current target state
@@ -1201,7 +1203,7 @@ def compute_reward_fast(params, current_state_t, TTG, target_state_t, u, step_co
     # episode_timeout = self.step_count >= self.max_episode_steps
     episode_timeout = TTG_nd <= 0.0  # out of time
     fuel_exceeded = mass <= 0.01  # out of fuel
-    eccentricity_exceeded = e >= 2.0
+    eccentricity_exceeded = e >= 1.0
 
     # Failure Conditions
     terminated = False
@@ -1210,9 +1212,9 @@ def compute_reward_fast(params, current_state_t, TTG, target_state_t, u, step_co
         reward -= 10.0
         terminated = True
 
-    # if eccentricity_exceeded:
-    #     reward -= 100.0
-    #     terminated = True
+    if eccentricity_exceeded:
+         reward -= 100.0
+         terminated = True
 
     if fuel_exceeded:
         reward -= 10.0

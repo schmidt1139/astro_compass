@@ -69,12 +69,12 @@ def plot_episodes(episodes, params, path_plots):
             arr_y_target.append(y_target)
 
         #store action components
-        arr_action_u = []
+        arr_action_u_raw = []
         arr_action_ar = []
         arr_action_at = []
 
         for i in range(len(actions)):
-            arr_action_u.append(actions[i][0])
+            arr_action_u_raw.append(actions[i][0])
 
             a_unit = (actions[i][1]**2 + actions[i][2]**2)**0.5
             a_r = actions[i][1] / a_unit if a_unit != 0 else 0
@@ -82,6 +82,10 @@ def plot_episodes(episodes, params, path_plots):
 
             arr_action_ar.append(a_r)
             arr_action_at.append(a_t)
+
+        #scale the throttle actions from [-1, 1] to [0, 1]
+        rescaled_actions = rescale_actions(np.array(arr_action_u_raw), np.array([0.0]), np.array([1.0]))
+        arr_action_u = rescaled_actions.flatten().tolist()
 
         list_arr_x.append(arr_x)
         list_arr_y.append(arr_y)
@@ -95,7 +99,7 @@ def plot_episodes(episodes, params, path_plots):
 
     #plot x and y trajectories
     #plot velocity residuals over time for all episodes
-    plt.figure(figsize=(10, 6))
+    plt.figure()
     for i in range(len(list_arr_x)):
         plt.plot(list_arr_x[i], list_arr_y[i], color='blue')
         plt.plot(list_arr_x_target[i], list_arr_y_target[i], color='red')
@@ -105,29 +109,37 @@ def plot_episodes(episodes, params, path_plots):
     plt.ylabel('Y Position')
     plt.title('Trajectory vs Target Trajectory')
     plt.grid(True)
-    plt.savefig(f"{path_plots}/trajectory_vs_target.png")
+    plt.savefig(f"{path_plots}/trajectory_vs_target.png", dpi=300)
     plt.close()
 
     #plot throttle
-    plt.figure(figsize=(10, 6))
+    plt.figure()
     for i in range(len(list_arr_action_u)):
-        plt.plot(list_arr_action_u[i], label=f'Throttle {i+1}', color='blue')
+        plt.plot(list_arr_action_u[i], color='blue')
     plt.xlabel('Time Step')
     plt.ylabel('Throttle')
     plt.title('Throttle over Time')
     plt.grid(True)
-    plt.savefig(f"{path_plots}/throttle_over_time.png")
+    plt.savefig(f"{path_plots}/throttle_over_time.png", dpi=300)
     plt.close()
 
     #plot attitude
-    plt.figure(figsize=(10, 6))
+    plt.figure()
     for i in range(len(list_arr_action_ar)):
         plt.plot(list_arr_action_ar[i], color='blue')
         plt.plot(list_arr_action_at[i], color='orange')
     plt.xlabel('Time Step')
     plt.ylabel('Attitude')
     plt.title('Attitude over Time')
-    plt.legend()
     plt.grid(True)
-    plt.savefig(f"{path_plots}/attitude_over_time.png")
+    plt.savefig(f"{path_plots}/attitude_over_time.png", dpi=300)
     plt.close()
+
+def rescale_actions(actions, low, high):
+    """Rescale actions from [-1, 1] to [low, high]"""
+    return low + (actions + 1.0) / 2.0 * (high - low)
+
+    # When extracting from buffer:
+    low = np.array([0.0, -1.0, -1.0])
+    high = np.array([1.0, 1.0, 1.0])
+    rescaled_actions = rescale_actions(buffer_actions, low, high)
