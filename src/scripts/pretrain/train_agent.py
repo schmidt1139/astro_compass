@@ -38,7 +38,7 @@ def main(params, seed_in=42):
         model = SB3_SAC.load(
             params["path_SAC_model_load"],
             env=env,
-            device="cpu",
+            device=params.get("eval_device", "cpu"),
             seed=seed_in,
             tensorboard_log=path_output,
         )  # Use path_output so SB3 creates SAC_1/ subdirectory
