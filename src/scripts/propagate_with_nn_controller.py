@@ -24,7 +24,6 @@ plt.style.use("data/support_files/dark_scientific.mplstyle")
 
 
 def prop_with_nn_controller(env, seed_in):
-
     test_log = []
     test_log = log(
         "Test Environment Step with Neural Network Thrust Action", test_log, True
@@ -86,7 +85,6 @@ def prop_with_nn_controller(env, seed_in):
     state_i = [x_i, y_i, vx_i, vy_i, m_i]
 
     while t_i <= params["TOF"]:
-
         # get action from NN
         action = query_NN_at_state(nn_controller, state_i, params)
         u_i = action[0]

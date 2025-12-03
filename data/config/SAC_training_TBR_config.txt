@@ -1,3 +1,8 @@
+# Parameters
+
+# Environment-related 
+
+env_type: TwoBodyRendezvous_Env
 mu: 1.3e+20
 max_T: 1.33
 ISP: 3872.0
@@ -20,32 +25,59 @@ e_max_final_env: 0.0001
 w_min_final_env_deg: 0.0
 w_max_final_env_deg: 0.0
 max_episode_steps: 5_000
-training_steps: 1_000_000
-tb_log_name: SAC_TBR_training
-eval_freq: 20_000
-n_eval_episodes: 32
-output_dir: C:\Users\micha\MSI_Data\Masters_Thesis\z_script_output\SAC_Training
-tensorboard_log_dir: C:/RL/logs/sb3
-print_freq: 1_000
-pre_train_networks: False
-buffer_size: 4_000_000
-path_training_data: C:\Users\micha\MSI_Data\Masters_Thesis\z_script_output\training_TBR_circular_20251110\training_TBR_circular\ephems
-num_ephems_to_use: 10_000
-ephem_version: 2.0
-ephem_step_size: 10
 pos_r_weight: 0.9
 vel_r_weight: 0.1
 mass_r_weight: 10.0
 tof_weight: 1.0
 tof_scale: 1.0
-pretrain_gradient_steps: 100_000
+r_dist_weight: 1.0
+v_dist_weight: 1.0
+time_dist_weight: 0.25
+success_threshold_pos: 0.01
+success_threshold_vel: 0.01
+terminal_bonus: 0.0
+precision_mult: 1.0
+
+# Training
+
+pre_train_networks: True
+save_replay_buffer: True
+read_replay_buffer: False
+load_model_checkpoint: False
+training_steps: 2_000
+eval_freq: 1_000
+n_eval_episodes: 32
+print_freq: 1_000
+buffer_size: 4_000_000
+num_ephems_to_use: 100
+pretrain_gradient_steps: 2_000
 batch_size: 256
 pt_log_interval: 1_000
 t_log_interval: 1_000
 loss_report_rate: 10
-save_replay_buffer: False
-read_replay_buffer: False
-path_replay_buffer: C:\Users\micha\MSI_Data\Masters_Thesis\z_script_output\replay_buffers\tbt_circular\replay_buffer.pkl
+checkpoint_freq: 1_000
+
+# Neural Nets
+
+learning_rate: 0.0001
+tau: 0.005
+train_freq: 1
+gradient_steps: 1
+max_grad_norm: 0.5
+nn_arch_type: custom
+
+# Paths/Filenames
+
+tb_log_name: SAC_TBR_training
+output_dir: C:\Users\micha\MSI_Data\Masters_Thesis\z_script_output\SAC_Training
+path_training_data: C:\Users\micha\MSI_Data\Masters_Thesis\z_script_output\training_TBR_circular_20251110\training_TBR_circular\ephems
+path_replay_buffer: C:\Users\micha\MSI_Data\Masters_Thesis\z_script_output\replay_buffers\tbr_circular\
+path_SAC_model_load: C:\Users\micha\MSI_Data\Masters_Thesis\z_script_output\SAC_Training\SAC_training_20251118_161446\best_model.zip
+
+# General
+
+ephem_version: 2.0
+ephem_step_size: 10
 flag_gen_H_traj: True
 seed_traj: 48
 flag_report_live: True
@@ -55,19 +87,3 @@ root_max_iters: 10_000
 timeout_per_trajectory: 600
 gamma: 0.5
 flag_debug_h_targeter: False
-r_dist_weight: 1.0
-v_dist_weight: 1.0
-time_dist_weight: 0.25
-checkpoint_freq: 100_000
-success_threshold_pos: 0.01
-success_threshold_vel: 0.01
-terminal_bonus: 0.0
-precision_mult: 1.0
-load_model_checkpoint: False
-path_SAC_model_load: C:\Users\micha\MSI_Data\Masters_Thesis\z_script_output\SAC_Training\SAC_training_20251118_161446\best_model.zip
-learning_rate: 0.0001
-tau: 0.005
-train_freq: 1
-gradient_steps: 1
-max_grad_norm: 0.5
-nn_arch_type: custom

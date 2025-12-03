@@ -26,7 +26,9 @@ class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
 
         # list of environment parameters (Sun is the central body)
         self.arr_mu = np.array([Constants.MU_SUN])  # solar mu [km^3/s^2]
-        self.planet_radii = np.array([Constants.RADIUS_SUN_M/1000])  # solar radius [km]
+        self.planet_radii = np.array(
+            [Constants.RADIUS_SUN_M / 1000]
+        )  # solar radius [km]
         self.elapsed_t = 0.0
         self.step_size = 3600.0
 

@@ -10,7 +10,6 @@ from torch.utils.data import TensorDataset, random_split
 def evaluate_neural_network(
     NN_TBT, val_loader, criterion, params, dir_plots, ephem_compare
 ):
-
     # evalualte the nn
     NN_TBT.eval()
     num_samples = 0
@@ -30,10 +29,8 @@ def evaluate_neural_network(
             avg_loss = 0
 
     if (params["flag_plot"]) and num_samples > 0:
-
         # check which data sets should be plotted
         if params["control_data_set"] == "all":
-
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.scatter(outputs[:, 0], val_targets[:, 0], label="Training Targets")
             ax.scatter(outputs[:, 0], outputs[:, 0], label="NN Values")
@@ -66,7 +63,6 @@ def evaluate_neural_network(
             fig.savefig(os.path.join(dir_plots, "nn_val_compare_alpha_y.jpg"))
 
         elif params["control_data_set"] == "u":
-
             if params["loss"] == "BCEWithLogitsLoss":
                 probs = torch.sigmoid(outputs[:, 0])
                 throttle_sample = (probs > 0.5).float()
@@ -83,7 +79,6 @@ def evaluate_neural_network(
             fig.savefig(os.path.join(dir_plots, "nn_val_compare_u.jpg"))
 
         elif params["control_data_set"] == "alpha":
-
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.scatter(
                 outputs[:, 0], val_targets[:, 0], label=r"Training Targets $\alpha_x$"
@@ -121,13 +116,11 @@ def evaluate_neural_network(
 
 
 def compare_NN_with_ephem(NN_TBT, sample_ephem_compare, dir_plots, params):
-
     arr_u_nn = []
     arr_ax_nn = []
     arr_ay_nn = []
 
     for i, t in enumerate(sample_ephem_compare.arr_et):
-
         vector = sample_ephem_compare.get_vector_at_index(i)
 
         arr_control = query_NN_at_state(NN_TBT, vector, params)
@@ -198,7 +191,6 @@ def compare_NN_with_ephem(NN_TBT, sample_ephem_compare, dir_plots, params):
 
 
 def query_NN_at_state(NN_TBT, vector, params):
-
     # unpack components of interest
     x = vector[0]
     y = vector[1]
@@ -244,7 +236,6 @@ def query_NN_at_state(NN_TBT, vector, params):
 
 
 def pre_process_training_data(set_ephems, params):
-
     # training data collections
     matrix_training = []
     ref_matrix_training = []
@@ -320,9 +311,9 @@ def pre_process_training_data(set_ephems, params):
     ref_matrix_training = torch.vstack(ref_matrix_training)
 
     # check the data arrays are the same shape
-    assert (
-        matrix_training.shape[0] == ref_matrix_training.shape[0]
-    ), "Mismatch in number of samples"
+    assert matrix_training.shape[0] == ref_matrix_training.shape[0], (
+        "Mismatch in number of samples"
+    )
 
     # create combined dataset
     dataset = TensorDataset(matrix_training, ref_matrix_training)
@@ -342,7 +333,6 @@ def pre_process_training_data(set_ephems, params):
 
 
 def training_epoch(NN_TBT, train_loader, val_loader, criterion, optimizer):
-
     train_loss = 0
     num_pts = 0
     iters = 0

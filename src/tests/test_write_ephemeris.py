@@ -42,8 +42,8 @@ def test_write_ephemeris(env, filename_eph):
     H_controller = Hamiltonian_Controller_TBT(
         env, init_observation, init_info, input_TOF
     )
-    
-    #reduce smoothing for faster convergence
+
+    # reduce smoothing for faster convergence
     H_controller.max_k = 2
 
     # compute solution

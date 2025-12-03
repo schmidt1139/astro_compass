@@ -6,6 +6,7 @@ from datetime import datetime
 from core.hamiltonian_control import Hamiltonian_Controller_TBT
 from core.ephemeris import Ephemeris
 from core.ephemeris_v2 import Ephemeris_v2
+from core.ephemeris_v3 import Ephemeris_v3
 from multiprocessing import cpu_count
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
@@ -87,31 +88,42 @@ def generate_nn_training_data_parallel(env, args):
             )
 
 
-def read_ephems_from_dir(directory, num_ephems_to_use=None, version=1.0):
+def _read_single_ephem(path, version):
+    if version == 1.0:
+        eph = Ephemeris()
+    elif version == 2.0:
+        eph = Ephemeris_v2()
+    elif version == 3.0:
+        eph = Ephemeris_v3()
+    else:
+        raise ValueError("Unsupported ephemeris version: " + str(version))
+    eph.read_from_file(path)
+    return eph
 
+
+def read_ephems_from_dir(
+    directory,
+    num_ephems_to_use=None,
+    version=1.0,
+    flag_return_filenames=False,
+    params=None,
+):
     filenames = os.listdir(directory)
-    list_ephems = []
-    counter = 0
-
     end_i = len(filenames)
     if num_ephems_to_use is not None:
         end_i = min(num_ephems_to_use, len(filenames))
+    filenames = filenames[:end_i]
+    paths = [os.path.join(directory, file) for file in filenames]
 
-    for i in tqdm(range(end_i)):
+    num_workers = params.get("cores", 1) if params is not None else 1
 
-        file = filenames[i]
+    list_ephems = []
+    with ProcessPoolExecutor(max_workers=num_workers) as executor:
+        futures = [executor.submit(_read_single_ephem, path, version) for path in paths]
+        for f in tqdm(as_completed(futures), total=len(futures)):
+            list_ephems.append(f.result())
 
-        path = os.path.join(directory, file)
-
-        if version == 1.0:
-            eph = Ephemeris()
-        else:
-            eph = Ephemeris_v2()
-
-        eph.read_from_file(path)
-
-        list_ephems.append(eph)
-
-        counter += 1
-
-    return list_ephems
+    if flag_return_filenames:
+        return list_ephems, filenames
+    else:
+        return list_ephems
