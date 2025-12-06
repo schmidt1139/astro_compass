@@ -213,7 +213,6 @@ class Ephemeris_v2:
         ax.set_title("Spacecraft Mass over Time")
         ax.set_xlabel("Elapsed time [s]")
         ax.set_ylabel("Mass [kg]")
-        fig.tight_layout()
         ax.legend(loc="lower right")
         if flag_show:
             plot.show()
@@ -225,7 +224,6 @@ class Ephemeris_v2:
         ax.set_title("Spacecraft Thrust Direction Unit Vector")
         ax.set_xlabel("Elapsed time [s]")
         ax.set_ylabel("Unit Vector Component Magnitude")
-        fig.tight_layout()
         ax.legend(loc="lower right")
         if flag_show:
             plot.show()
@@ -236,7 +234,6 @@ class Ephemeris_v2:
         ax.set_title("Spacecraft Throttle")
         ax.set_xlabel("Elapsed time [s]")
         ax.set_ylabel("Throttle")
-        fig.tight_layout()
         ax.legend(loc="lower right")
         if flag_show:
             plot.show()
