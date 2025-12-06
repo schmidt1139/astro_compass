@@ -16,7 +16,48 @@ from utils.state_vector_utils import (
 
 
 class TwoBodyRendezvous_Polar_Env(gym.Env):
-    def __init__(self, **kwargs):
+    def __init__( # fmt: skip
+        self,
+        mu: float = Constants.MU_SUN_M,
+        max_T: float = 1.33,
+        ISP: float = 3872.0,
+        l_star: float = Constants.SMA_EARTH,
+        t_star: float | None = None,
+        m_star: float = 3366.0,
+        step_size: float = 86400.0,
+        a_min_init_env_nd: float = Constants.SMA_VENUS,
+        a_max_init_env_nd: float = Constants.SMA_MARS,
+        e_min_init_env: float = 0.0,
+        e_max_init_env: float = 0.5,
+        w_min_init_env_deg: float = 0.0,
+        w_max_init_env_deg: float = 360.0,
+        theta_min_init_env_deg: float = 0.0,
+        theta_max_init_env_deg: float = 360.0,
+        a_min_final_env_nd: float = Constants.SMA_VENUS,
+        a_max_final_env_nd: float = Constants.SMA_MARS,
+        e_min_final_env: float = 0.0,
+        e_max_final_env: float = 0.5,
+        w_min_final_env_deg: float = 0.0,
+        w_max_final_env_deg: float = 360.0,
+        theta_min_final_env_deg: float = 0.0,
+        theta_max_final_env_deg: float = 360.0,
+        pos_r_weight: float = 1.0,
+        vel_r_weight: float = 1.0,
+        mass_r_weight: float = 1.0,
+        r_weight: float | None = None,
+        v_weight: float | None = None,
+        mass_weight: float | None = None,
+        tof_scale: float = 1.0,
+        r_dist_weight: float | None = None,
+        v_dist_weight: float | None = None,
+        success_threshold_pos: float = 0.01,
+        success_threshold_vel: float = 0.01,
+        terminal_bonus: float = 100.0,
+        precision_mult: float = 10.0,
+        tof_weight: float = 1.0,
+        time_dist_weight: float = 1.0,
+        **kwargs
+    ):  # fmt: skip
         # define limits of the state parameters
         low_array = np.full(
             14, -np.inf, dtype=np.float32
@@ -33,93 +74,60 @@ class TwoBodyRendezvous_Polar_Env(gym.Env):
         self._keplerian_elements = np.array([0, 0, 0, 0, 0, 0], dtype=np.float32)
 
         # list of environment parameters (Sun is the central body)
-        self.param_mu = kwargs.get("mu", Constants.MU_SUN_M)  # in m^3/s^2
-        self.C1 = kwargs.get("max_T", 1.33)  # Spacecraft max thrust (in N)
-        self.C2 = kwargs.get("ISP", 3872.0)  # Spacecraft specific impulse (s)
-        self.l_star = kwargs.get(
-            "l_star", Constants.SMA_EARTH
-        )  # characteristic length (m)
-        self.t_star = kwargs.get(
-            "t_star", (Constants.SMA_EARTH**3 / (Constants.MU_SUN_M) ** 0.5)
-        )  # characteristic time (s)
-        self.m_star = kwargs.get("m_star", 3366.0)  # characteristic mass (kg)
-        self.step_size = kwargs.get("step_size", 86400)  # environment step size (s)
-        self.a_min_init_env_nd = kwargs.get(
-            "a_min_init_env_nd", Constants.SMA_VENUS
-        )  # min semi-major axis for env [AU]
-        self.a_max_init_env_nd = kwargs.get(
-            "a_max_init_env_nd", Constants.SMA_MARS
-        )  # max semi-major axis for env [AU]
-        self.e_min_init_env = kwargs.get(
-            "e_min_init_env", 0.0
-        )  # min eccentricity for env
-        self.e_max_init_env = kwargs.get(
-            "e_max_init_env", 0.5
-        )  # max eccentricity for env
-        self.w_min_init_env_rad = (
-            kwargs.get("w_min_init_env_deg", 0.0) * np.pi / 180
-        )  # min argument of periapsis for env [rad]
-        self.w_max_init_env_rad = (
-            kwargs.get("w_max_init_env_deg", 360) * np.pi / 180
-        )  # max argument of periapsis for env [rad]
-        self.theta_min_init_env_rad = (
-            kwargs.get("theta_min_init_env_deg", 0.0) * np.pi / 180
-        )  # min true anomaly for env [rad]
-        self.theta_max_init_env_rad = (
-            kwargs.get("theta_max_init_env_deg", 360) * np.pi / 180
-        )  # max true anomaly for env [rad]
-        self.a_min_final_env_nd = kwargs.get(
-            "a_min_final_env_nd", Constants.SMA_VENUS
-        )  # min semi-major axis for env [AU]
-        self.a_max_final_env_nd = kwargs.get(
-            "a_max_final_env_nd", Constants.SMA_MARS
-        )  # max semi-major axis for env [AU]
-        self.e_min_final_env = kwargs.get(
-            "e_min_final_env", 0.0
-        )  # min eccentricity for env
-        self.e_max_final_env = kwargs.get(
-            "e_max_final_env", 0.5
-        )  # max eccentricity for env
-        self.w_min_final_env_rad = (
-            kwargs.get("w_min_final_env_deg", 0.0) * np.pi / 180
-        )  # min argument of periapsis for env [rad]
-        self.w_max_final_env_rad = (
-            kwargs.get("w_max_final_env_deg", 360) * np.pi / 180
-        )  # max argument of periapsis for env [rad]
-        self.theta_min_final_env_rad = (
-            kwargs.get("theta_min_final_env_deg", 0.0) * np.pi / 180
-        )  # min true anomaly for env [rad]
-        self.theta_max_final_env_rad = (
-            kwargs.get("theta_max_final_env_deg", 360) * np.pi / 180
-        )  # max true anomaly for env [rad]
-        # Support both naming conventions for weights
-        self.pos_weight = kwargs.get("pos_r_weight", kwargs.get("r_weight", 1.0))
-        self.vel_weight = kwargs.get("vel_r_weight", kwargs.get("v_weight", 1.0))
-        self.mass_weight = kwargs.get("mass_r_weight", kwargs.get("mass_weight", 1.0))
-        self.tof_scale = kwargs.get("tof_scale", 1.0)
-        self.r_dist_weight = kwargs.get("r_dist_weight", self.pos_weight)
-        self.v_dist_weight = kwargs.get("v_dist_weight", self.vel_weight)
-        self.success_threshold_pos = kwargs.get(
-            "success_threshold_pos", 0.01
-        )  # 1% of characteristic length
-        self.success_threshold_vel = kwargs.get(
-            "success_threshold_vel", 0.01
-        )  # 1% of characteristic velocity
-        self.terminal_bonus = kwargs.get(
-            "terminal_bonus", 100.0
-        )  # Large bonus for precise rendezvous
-        self.precision_mult = kwargs.get(
-            "precision_mult", 10.0
-        )  # Small bonus for being within success thresholds
-        self.terminal_bonus = kwargs.get(
-            "terminal_bonus", 100.0
-        )  # Large bonus for precise rendezvous
-        self.tof_weight = kwargs.get(
-            "tof_weight", 1.0
-        )  # Weighting factor for time component of reward
-        self.time_dist_weight = kwargs.get(
-            "time_dist_weight", 1.0
-        )  # Weighting factor for time distribution
+        self.param_mu = mu  # in m^3/s^2
+        self.C1 = max_T  # Spacecraft max thrust (in N)
+        self.C2 = ISP  # Spacecraft specific impulse (s)
+        self.l_star = l_star  # characteristic length (m)
+        if t_star is None:
+            self.t_star = Constants.SMA_EARTH**3 / (Constants.MU_SUN_M) ** 0.5
+        else:
+            self.t_star = t_star  # characteristic time (s)
+        self.m_star = m_star  # characteristic mass (kg)
+
+        self.step_size = step_size  # environment step size (s)
+        self.a_min_init_env_nd = a_min_init_env_nd  # min semi-major axis for env [AU]
+        self.a_max_init_env_nd = a_max_init_env_nd  # max semi-major axis for env [AU]
+        self.e_min_init_env = e_min_init_env  # min eccentricity for env
+        self.e_max_init_env = e_max_init_env  # max eccentricity for env
+        self.w_min_init_env_rad = w_min_init_env_deg * np.pi / 180  # [rad]
+        self.w_max_init_env_rad = w_max_init_env_deg * np.pi / 180  # [rad]
+        self.theta_min_init_env_rad = theta_min_init_env_deg * np.pi / 180  # [rad]
+        self.theta_max_init_env_rad = theta_max_init_env_deg * np.pi / 180  # [rad]
+        self.a_min_final_env_nd = a_min_final_env_nd  # min semi-major axis for env [AU]
+        self.a_max_final_env_nd = a_max_final_env_nd  # max semi-major axis for env [AU]
+        self.e_min_final_env = e_min_final_env  # min eccentricity for env
+        self.e_max_final_env = e_max_final_env  # max eccentricity for env
+        self.w_min_final_env_rad = w_min_final_env_deg * np.pi / 180  # [rad]
+        self.w_max_final_env_rad = w_max_final_env_deg * np.pi / 180  # [rad]
+        self.theta_min_final_env_rad = theta_min_final_env_deg * np.pi / 180  # [rad]
+        self.theta_max_final_env_rad = theta_max_final_env_deg * np.pi / 180  # [rad]
+
+        # Support both naming conventions for weights (explicit args take precedence)
+        self.pos_weight = pos_r_weight if r_weight is None else r_weight
+        self.vel_weight = vel_r_weight if v_weight is None else v_weight
+        self.mass_weight = mass_r_weight if mass_weight is None else mass_weight
+        self.tof_scale = tof_scale
+        self.r_dist_weight = (
+            r_dist_weight if r_dist_weight is not None else self.pos_weight
+        )
+        self.v_dist_weight = (
+            v_dist_weight if v_dist_weight is not None else self.vel_weight
+        )
+        self.success_threshold_pos = (
+            success_threshold_pos  # 1% of characteristic length
+        )
+        self.success_threshold_vel = (
+            success_threshold_vel  # 1% of characteristic velocity
+        )
+        self.terminal_bonus = terminal_bonus  # Large bonus for precise rendezvous
+        self.precision_mult = (
+            precision_mult  # Small bonus for being within success thresholds
+        )
+        self.tof_weight = tof_weight  # Weighting factor for time component of reward
+        self.time_dist_weight = (
+            time_dist_weight  # Weighting factor for time distribution
+        )
+
         self.arr_r_polar_nd = np.array(
             [0.0, 0.0], dtype=np.float32
         )  # placeholder for polar position [r, theta]
