@@ -8,7 +8,7 @@ from constants.constants import Constants
 from core.propagation import env_EOM_TBT_v2
 from core.spacecraft import Spacecraft
 from utils.rl_utils import create_relative_polar_observation_fast, create_relative_polar_observation_fast
-from utils.state_vector_utils import convert_alpha_from_fpa_to_cart, convert_radial_velocity_to_cartesian, polar_to_cartesian, calc_cart_from_OE, cartesian_to_polar, convert_fpa_to_velocity_components, convert_attitude_from_radial_to_cartesian
+from utils.state_vector_utils import calc_cart_from_OE, cartesian_to_polar, convert_attitude_from_radial_to_cartesian
 from utils.rl_utils import compute_reward_fast
 
 class TwoBodyRendezvous_Polar_Env2(gym.Env):
