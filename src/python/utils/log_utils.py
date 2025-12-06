@@ -124,21 +124,9 @@ def read_toml_config_file(path_config):
     import tomli as toml
 
     with open(path_config, "rb") as f:
-        data = toml.load(f)
+        params = toml.load(f)
 
     params = {}
-
-    def _flatten(prefix, obj):
-        if isinstance(obj, dict):
-            for k, v in obj.items():
-                _flatten(k if prefix is None else f"{prefix}.{k}", v)
-        else:
-            # For now, use just the final key (no dotted prefix) to keep
-            # compatibility with existing flat-parameter usage.
-            key = prefix.split(".")[-1] if isinstance(prefix, str) else prefix
-            params[key] = obj
-
-    _flatten(None, data)
 
     # Expand common path-like entries
     for key in (
