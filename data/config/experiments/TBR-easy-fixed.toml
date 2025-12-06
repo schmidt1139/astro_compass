@@ -1,0 +1,25 @@
+# take the base config file for TBR simple and extend
+# SAC TBR polar pretraining configuration
+
+
+
+[environment.initial]
+a_min_init_env_nd = 149598023000.0
+a_max_init_env_nd = 149598023000.0
+e_min_init_env = 0.0001
+e_max_init_env = 0.0001
+w_min_init_env_deg = 0.0
+w_max_init_env_deg = 0.0
+theta_min_init_env_deg = 0.0
+theta_max_init_env_deg = 2.0
+
+[environment.final]
+a_min_final_env_nd = 232495000000.0
+a_max_final_env_nd = 232495000000.0
+e_min_final_env = 0.0001
+e_max_final_env = 0.0001
+w_min_final_env_deg = 0.0
+w_max_final_env_deg = 0.0
+theta_min_final_env_deg = 180.0
+theta_max_final_env_deg = 182.0
+

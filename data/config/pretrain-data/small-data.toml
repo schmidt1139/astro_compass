@@ -1,0 +1,7 @@
+[model.pretraining]
+pre_train_networks = true
+save_pre_training_only_replay_buffer = true
+read_replay_buffer = true
+training_steps = 10_000
+num_ephems_to_use = 100
+batch_size = 256
