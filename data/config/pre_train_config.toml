@@ -2,9 +2,12 @@
 
 [paths]
 tb_log_name = "SAC_TBR_training"
-output_dir = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\pre_training"
-path_training_data = ""
-path_replay_buffer = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\buffer_generation\\SAC_training_TBR_polar20251201_151736\\replay_buffer.pkl"
+output_dir = "data/output"
+# Optional: where to locate pre-generated training data (relative to repo root)
+path_training_data = "data/pre-training-data/training-TBR-circular"
+# Optional: replay buffer to warm-start; leave blank if not used
+path_replay_buffer = "data/output/replay_buffer.pkl"
+# Optional: model checkpoint to resume from; leave blank if not used
 path_SAC_model_load = ""
 
 [environment]

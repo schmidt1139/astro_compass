@@ -5,6 +5,7 @@ import gymnasium as gym
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import SubprocVecEnv
 from utils.env_utils import gen_rl_environment
+from utils.path_utils import PROJECT_ROOT
 
 
 def generate_env(params, seed_in):
@@ -50,12 +51,12 @@ def generate_env(params, seed_in):
 
 def generate_paths(params):
     time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
-    path_nns = os.path.normpath(os.path.join(os.getcwd(), "data", "neural_networks"))
+    path_nns = os.path.normpath(os.path.join(PROJECT_ROOT, "data", "neural_networks"))
 
     # Handle both absolute and relative paths for output_dir
     output_base = params["output_dir"]
     if not os.path.isabs(output_base):
-        output_base = os.path.join(os.getcwd(), output_base)
+        output_base = os.path.join(PROJECT_ROOT, output_base)
     path_output = os.path.normpath(
         os.path.join(output_base, "SAC_training_TBR_polar" + time_tag),
     )
