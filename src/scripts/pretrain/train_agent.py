@@ -1,13 +1,11 @@
 import os
 import random
-import shutil
 
 import torch
 from stable_baselines3 import SAC as SB3_SAC
 from stable_baselines3.common.callbacks import CallbackList, EvalCallback
 from utils.callbacks import ReplayBufferCheckpointCallback
-from utils.log_utils import read_toml_config_file
-from utils.path_utils import PROJECT_ROOT
+from utils.config_utils import load_config, write_config_sources
 from utils.pretrain_utils import generate_env, generate_paths
 from utils.rl_utils import (
     RewardLoggerCallback,
@@ -17,7 +15,7 @@ from utils.rl_utils import (
 print("GPU available: ", torch.cuda.is_available())
 
 
-def main(params, seed_in=42):
+def main(params, seed_in=42, config_meta=None):
     random.seed(seed_in)
 
     # initialize the training and evaluation environments
@@ -122,24 +120,26 @@ def main(params, seed_in=42):
         model.save_replay_buffer(path_replay_buffer)
         print("Replay buffer saved to: ", path_replay_buffer)
 
-    # copy the config file
-    path_config_src = os.path.join(
-        PROJECT_ROOT, "data", "config", params["config_toml"]
-    )
-    path_config_dst = os.path.join(path_output, params["config_toml"])
-    shutil.copyfile(path_config_src, path_config_dst)
+    if config_meta:
+        from pathlib import Path
+
+        write_config_sources(config_meta, Path(path_output))
 
     print("Model saved to: ", path_SAC_model)
     print("Output saved to: ", path_output)
 
 
 if __name__ == "__main__":
-    config_toml = "train_agent_config.toml"
-    path_config = os.path.join(PROJECT_ROOT, "data", "config", config_toml)
-    params = read_toml_config_file(path_config)
+    base_files = [
+        "common.toml",
+        "envs.toml",
+        "models.toml",
+        "training.toml",
+    ]
+    experiment_file = "experiments/train_default.toml"
+    params, meta = load_config(base_files=base_files, experiment_file=experiment_file)
 
     params["read_replay_buffer"] = False
     params["load_model_checkpoint"] = False
-    params["config_toml"] = config_toml
 
-    main(params)
+    main(params, seed_in=0, config_meta=meta)

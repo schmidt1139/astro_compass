@@ -4,8 +4,8 @@ import shutil
 import tempfile
 from pathlib import Path
 
+from utils.config_utils import load_config
 from utils.env_utils import gen_rl_environment
-from utils.log_utils import read_toml_config_file
 from utils.path_utils import PROJECT_ROOT, ensure_repo_paths_on_sys_path
 
 
@@ -39,8 +39,9 @@ def test_evaluate_agent_smoke():
     os.chdir(PROJECT_ROOT)
     tmp_model_dir = None
     try:
-        config_path = PROJECT_ROOT / "data" / "config" / "evaluate_agent_config.toml"
-        params = read_toml_config_file(str(config_path))
+        base_files = ["common.toml", "envs.toml", "models.toml", "training.toml"]
+        experiment_file = "experiments/eval_default.toml"
+        params, meta = load_config(base_files, experiment_file)
 
         params.update(
             {
@@ -71,7 +72,7 @@ def test_evaluate_agent_smoke():
             str(PROJECT_ROOT / "src" / "scripts" / "pretrain" / "evaluate_agent.py")
         )
         main_fn = mod["main"]
-        main_fn(params, seed_in=0)
+        main_fn(params, seed_in=0, config_meta=meta)
 
         saved_config = tmp_output / params["config_toml"]
         assert saved_config.exists(), "Config copy missing in output"

@@ -1,20 +1,19 @@
 import os
 import random
-import shutil
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 from stable_baselines3 import SAC as SB3_SAC
-from utils.log_utils import read_toml_config_file
-from utils.path_utils import PROJECT_ROOT
+from utils.config_utils import load_config, write_config_sources
 from utils.pretrain_utils import generate_env, generate_paths
 from utils.rl_utils import pre_train
 
 print("GPU available: ", torch.cuda.is_available())
 
 
-def main(params, seed_in=42):
+def main(params, seed_in=42, config_meta=None):
     random.seed(seed_in)
 
     # initialize the training and evaluation environments
@@ -93,19 +92,19 @@ def main(params, seed_in=42):
     model.save(path_SAC_model)
     model.save(params["path_SAC_model_save"])
 
-    # copy the config file
-    path_config_src = os.path.join(
-        PROJECT_ROOT, "data", "config", params["config_toml"]
-    )
-    path_config_dst = os.path.join(path_output, params["config_toml"])
-    shutil.copyfile(path_config_src, path_config_dst)
+    if config_meta:
+        write_config_sources(config_meta, Path(path_output))
 
     plt.show()
 
 
 if __name__ == "__main__":
-    config_toml = "pre_train_config.toml"
-    path_config = os.path.join(PROJECT_ROOT, "data", "config", config_toml)
-    params = read_toml_config_file(path_config)
-    params["config_toml"] = config_toml
-    main(params)
+    base_files = [
+        "common.toml",
+        "envs.toml",
+        "models.toml",
+        "pretraining.toml",
+    ]
+    experiment_file = "experiments/pretrain_default.toml"
+    params, meta = load_config(base_files=base_files, experiment_file=experiment_file)
+    main(params, seed_in=0, config_meta=meta)

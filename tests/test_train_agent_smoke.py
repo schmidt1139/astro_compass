@@ -4,7 +4,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from utils.log_utils import read_toml_config_file
+from utils.config_utils import load_config
 from utils.path_utils import PROJECT_ROOT, ensure_repo_paths_on_sys_path
 
 
@@ -16,9 +16,9 @@ def test_train_agent_smoke():
     prev_cwd = os.getcwd()
     os.chdir(PROJECT_ROOT)
     try:
-        # Load base config and override for a fast smoke run.
-        config_path = PROJECT_ROOT / "data" / "config" / "train_agent_config.toml"
-        params = read_toml_config_file(str(config_path))
+        base_files = ["common.toml", "envs.toml", "models.toml", "training.toml"]
+        experiment_file = "experiments/train_default.toml"
+        params, meta = load_config(base_files, experiment_file)
 
         # Minimal compute footprint
         params.update(
@@ -55,7 +55,7 @@ def test_train_agent_smoke():
         )
         train_main = mod["main"]
 
-        train_main(params, seed_in=0)
+        train_main(params, seed_in=0, config_meta=meta)
 
         # Verify outputs were written
         assert tmp_output.exists(), "Output directory was not created"

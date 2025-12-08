@@ -1,13 +1,12 @@
-import os
 import random
-import shutil
+from pathlib import Path
 
 import torch
 from core.training_data_generation import read_ephems_from_dir
 from stable_baselines3 import SAC as SB3_SAC
+from utils.config_utils import load_config, write_config_sources
 from utils.env_utils import gen_rl_environment
-from utils.log_utils import log, read_toml_config_file
-from utils.path_utils import PROJECT_ROOT
+from utils.log_utils import log
 from utils.pretrain_utils import generate_paths
 from utils.rl_utils import (
     import_training_into_replay_buffer_v3,
@@ -16,7 +15,7 @@ from utils.rl_utils import (
 print("GPU available: ", torch.cuda.is_available())
 
 
-def main(params, training_data, seed_in=42):
+def main(params, seed_in=42, config_meta=None):
     random.seed(seed_in)
 
     # paths
@@ -47,15 +46,13 @@ def main(params, training_data, seed_in=42):
 
     # loads data into model replay buffer
     test_log = []
-    path_training_data = os.path.join(
-        PROJECT_ROOT, "data", "pre-training-data", training_data
-    )
+    training_data_path = params["path_training_data"]
 
     # read the ephems from directory
     params["ephem_version"] = 3.0  # ephem version to read
     params["cores"] = params.get("cores", 4)  # number of cores to use for reading
     set_ephems, filenames = read_ephems_from_dir(
-        training_data,
+        training_data_path,
         params["num_ephems_to_use"],
         version=params["ephem_version"],
         flag_return_filenames=True,
@@ -92,18 +89,18 @@ def main(params, training_data, seed_in=42):
 
     test_log = log(f"\nSaved replay buffer to: {path_replay_buffer}", test_log, True)
 
-    # copy the config file
-    path_config_src = os.path.join(
-        PROJECT_ROOT, "data", "config", params["config_toml"]
-    )
-    path_config_dst = os.path.join(path_output, params["config_toml"])
-    shutil.copyfile(path_config_src, path_config_dst)
+    # persist config provenance for traceability
+    if config_meta:
+        write_config_sources(config_meta, Path(path_output))
 
 
 if __name__ == "__main__":
-    config_toml = "gen_buffer_config.toml"
-    path_config = os.path.join(PROJECT_ROOT, "data", "config", config_toml)
-    params = read_toml_config_file(path_config)
-    training_data = params["path_training_data"]
-    params["config_toml"] = config_toml
-    main(params, training_data)
+    base_files = [
+        "common.toml",
+        "envs.toml",
+        "models.toml",
+        "pretraining.toml",
+    ]
+    experiment_file = "experiments/generate_buffer_default.toml"
+    params, meta = load_config(base_files=base_files, experiment_file=experiment_file)
+    main(params, seed_in=0, config_meta=meta)

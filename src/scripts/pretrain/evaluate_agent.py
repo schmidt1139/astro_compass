@@ -1,5 +1,6 @@
 import os
 import random
+from pathlib import Path
 
 # disable cuda
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -8,15 +9,14 @@ from core.ephemeris_v2 import Ephemeris_v2 as Ephemeris
 from core.process_single_trajectory import process_single_trajectory
 from stable_baselines3 import SAC as SB3_SAC
 from stable_baselines3.common.callbacks import CallbackList, EvalCallback
+from utils.config_utils import load_config, write_config_sources
 from utils.env_utils import gen_rl_environment
 from utils.eval_utils import mc_evaluate_agent, plot_log_mc_results
 from utils.log_utils import (
     log,
-    read_toml_config_file,
     write_config_file,
     write_log_to_file,
 )
-from utils.path_utils import PROJECT_ROOT
 from utils.plotting_utils import plot_SAC_training_TBR_polar
 from utils.pretrain_utils import generate_env, generate_paths
 from utils.rl_utils import (
@@ -25,7 +25,7 @@ from utils.rl_utils import (
 )
 
 
-def main(params, seed_in=42):
+def main(params, seed_in=42, config_meta=None):
     os.environ["OMP_NUM_THREADS"] = "1"
     os.environ["OPENBLAS_NUM_THREADS"] = "1"
     os.environ["MKL_NUM_THREADS"] = "1"
@@ -148,13 +148,20 @@ def main(params, seed_in=42):
     # write config to output dir
     write_config_file(params, os.path.join(path_output, "SAC_Training_Config.txt"))
 
+    if config_meta:
+        write_config_sources(config_meta, Path(path_output))
+
     print("\n\n\n")
 
 
 if __name__ == "__main__":
-    config_toml = "evaluate_agent_config.toml"
-    path_config = os.path.join(PROJECT_ROOT, "data", "config", config_toml)
-    params = read_toml_config_file(path_config)
-    params["config_toml"] = config_toml
+    base_files = [
+        "common.toml",
+        "envs.toml",
+        "models.toml",
+        "training.toml",
+    ]
+    experiment_file = "experiments/eval_default.toml"
+    params, meta = load_config(base_files=base_files, experiment_file=experiment_file)
 
-    main(params)
+    main(params, seed_in=0, config_meta=meta)
