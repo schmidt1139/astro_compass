@@ -1,9 +1,10 @@
-import numpy as np
-import matplotlib.pyplot as plot
 import os
 import time
-from constants.constants import Constants
 from datetime import datetime, timezone
+
+import matplotlib.pyplot as plot
+import numpy as np
+from constants.constants import Constants
 from utils.plotting_utils import plot_overlay_ballistic_orbit
 
 
@@ -404,6 +405,32 @@ class Ephemeris_v2:
         )
 
         return vector
+
+    def get_interpolated_vector_at_time(self, next_t):
+        """Return a linearly interpolated state vector at the requested time.
+
+        If the requested time precedes the first stored epoch, the first vector
+        is returned; otherwise interpolate between the surrounding samples.
+        """
+
+        if self.num_vectors == 0:
+            raise ValueError("Ephemeris is empty; cannot interpolate.")
+
+        # find the first index with time >= next_t
+        next_indices = np.where(self.arr_et >= next_t)[0]
+        next_index = next_indices[0] if len(next_indices) > 0 else self.num_vectors - 1
+
+        if next_index == 0:
+            return self.get_vector_at_index(0)
+
+        t1 = self.arr_et[next_index - 1]
+        t2 = self.arr_et[next_index]
+        ratio = 0.0 if t2 == t1 else (next_t - t1) / (t2 - t1)
+
+        vec1 = self.get_vector_at_index(next_index - 1)
+        vec2 = self.get_vector_at_index(next_index)
+
+        return vec1 + ratio * (vec2 - vec1)
 
     def overlay_ref_orbit(self, ephem, label, color_in="lime", arr_x=None, arr_y=None):
         # Overlay a reference Keplerian orbit on the existing XY plot

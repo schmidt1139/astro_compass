@@ -94,6 +94,12 @@ def _flatten_config_params(params_or_config):
         }
     )
 
+    # Allow top-level overrides (used by tests/smoke runs) to win over nested defaults
+    for key, value in cfg.items():
+        if key in {"environment", "general", "training", "model", "paths", "eval"}:
+            continue
+        flat[key] = value
+
     return flat
 
 
@@ -707,7 +713,11 @@ def train_on_replay_buffer(model, params, test_log, env):
             )
 
             if mean_reward >= max(mean_rewards, default=-np.inf):
-                path = os.path.join(params["output_dir_specific"], "checkpoints")
+                base_output = params.get(
+                    "output_dir_specific", params.get("output_dir", ".")
+                )
+                path = os.path.join(base_output, "checkpoints")
+                os.makedirs(path, exist_ok=True)
                 checkpoint_path = os.path.join(
                     path, f"sac_pretrained_step_{step + 1}.zip"
                 )
@@ -720,17 +730,17 @@ def train_on_replay_buffer(model, params, test_log, env):
         True,
     )
 
-    # Save arrays of losses to csv files
+    # Downsample losses for logging/return
+    critic_loss_reduced = []
+    actor_loss_reduced = []
+    downsample_len = min(len(critic_losses), len(actor_losses))
+    for i in range(0, downsample_len, 10):
+        critic_loss_reduced.append(critic_losses[i])
+        actor_loss_reduced.append(actor_losses[i])
+
+    # Save arrays of losses to csv files when a specific output dir is provided
     if "output_dir_specific" in params:
         path = params["output_dir_specific"]
-
-        # Save losses (downsample by 10x for file size)
-        critic_loss_reduced = []
-        actor_loss_reduced = []
-        for i in range(len(critic_losses)):
-            if i % 10 == 0:
-                critic_loss_reduced.append(critic_losses[i])
-                actor_loss_reduced.append(actor_losses[i])
 
         pd.DataFrame(critic_loss_reduced, columns=["critic_loss"]).to_csv(
             os.path.join(path, "critic_losses.csv"), index=False

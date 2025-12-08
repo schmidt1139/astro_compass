@@ -2,6 +2,7 @@ import os
 import random
 
 import torch
+from stable_baselines3 import SAC as SB3_SAC
 from stable_baselines3.common.callbacks import CallbackList, EvalCallback
 from utils.callbacks import ReplayBufferCheckpointCallback
 from utils.config_utils import load_config, write_config_sources
@@ -28,8 +29,6 @@ def main(config, seed_in=42, config_meta=None):
     env.reset()
 
     if training_cfg.get("load_model_checkpoint", False):
-        from stable_baselines3 import SAC as SB3_SAC
-
         model = SB3_SAC.load(
             paths_cfg["path_SAC_model_load"],
             env=env,
