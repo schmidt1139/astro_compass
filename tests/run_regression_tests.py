@@ -36,7 +36,8 @@ from test_datagen_Hamiltonian_TBR_controller_parallel import test_datagen_Hamilt
 from test_datagen_Hamiltonian_TBR_controller_parallel_hard import test_datagen_Hamiltonian_TBR_parallel_hard
 from test_TBR_polar_env import test_TBR_polar_env
 from test_fast_replay_buffer_seeding import test_fast_replay_buffer_seeding
-
+from test_kep_element_conversion import test_kep_element_conversion
+from test_TBT_env import test_TBT_env
 
 def run_regression_tests(flag_report_live=False):
 
@@ -44,6 +45,22 @@ def run_regression_tests(flag_report_live=False):
 
     arr_test_pass_bools = []
     arr_test_names = []
+
+    test_name = "test_TBT_env"
+    arr_test_names.append(test_name)
+    test_num = len(arr_test_names)
+    print(f"\n\nRunning Test {test_num}: {test_name}")
+    flag_test_pass = test_TBT_env(flag_report_live)
+    print(f"\n\n{test_name} passed:  ", flag_test_pass)
+    arr_test_pass_bools.append(flag_test_pass)
+
+    test_name = "test_kep_element_conversion"
+    arr_test_names.append(test_name)
+    test_num = len(arr_test_names)
+    print(f"\n\nRunning Test {test_num}: {test_name}")
+    flag_test_pass = test_kep_element_conversion(flag_report_live)
+    print(f"\n\n{test_name} passed:  ", flag_test_pass)
+    arr_test_pass_bools.append(flag_test_pass)
 
     test_name = "test_fast_replay_buffer_seeding"
     arr_test_names.append(test_name)

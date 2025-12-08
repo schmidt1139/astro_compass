@@ -12,10 +12,10 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
     def __init__(self, **kwargs):
         # define limits of the state parameters
         low_array = np.full(
-            8, -np.inf, dtype=np.float32
+            10, -np.inf, dtype=np.float32
         )  # lower bounds for state space
         high_array = np.full(
-            8, np.inf, dtype=np.float32
+            10, np.inf, dtype=np.float32
         )  # upper-bounds for state space
 
         # define the state space (in this case the observation is the state) 5x5
@@ -95,6 +95,10 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         self.w_min_final_env_rad = np.deg2rad(self.w_min_final_env_deg)
         self.w_max_final_env_rad = np.deg2rad(self.w_max_final_env_deg)
 
+    def seed(self, seed_in: Optional[int] = None):
+        # set the random seed for the environment
+        self.seed = seed_in
+
     def _get_info(self, ode_solution, delta_r):
         # to-do: add orbital elements as optional and append to output dictionary
 
@@ -156,9 +160,11 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
             "orbital_period_sec": self.T_i,
             "orbital_period_days": self.orbital_period_days,
             "orbital_period_years": self.orbital_period_yrs,
+            "orbital_period_nd": self.T_i / self.t_star,
             "target_period_sec": self.T_target,
             "target_period_days": self.target_period_days,
             "target_period_years": self.target_period_yrs,
+            "orbital_period_target_nd": self.T_target / self.t_star,
             "state_r_nd": self.r_0 / self.l_star,
             "state_eta_deg": np.rad2deg(self.eta_0),
             "state_r_dot_nd": self.r_dot_0 * self.t_star / self.l_star,
@@ -295,6 +301,8 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
             "r_dist_weight": self.r_dist_weight,
             "v_dist_weight": self.v_dist_weight,
             "e": e,
+            "max_T": self.max_T,
+            "ISP": self.ISP,
         }
         reward, truncated, terminated, env_info = compute_reward_fast_TBT(self._state, params_temp, u, self.TTG)
 
@@ -416,7 +424,7 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
 
         return observation, reward, terminated, truncated, info
 
-    def set_state(self, state):
+    def set_state(self, state, ttg=None):
 
         if len(state) != 8:
             raise ValueError("Input state vector must have length 8.")
@@ -432,6 +440,13 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         a_target_in = state[5]
         e_target_in = state[6]
         w_target_in = state[7]
+
+        #time to go
+        if ttg is None:
+            TTG_in = self.TTG
+        else:
+            TTG_in = ttg
+        self.TTG = TTG_in
 
         # update the env
         self.update_env(x_in, y_in, vx_in, vy_in, m_in, a_target_in, e_target_in, w_target_in)
@@ -474,14 +489,25 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
 
         # check that the argument of latitude matches
         aol_check = np.atan2( y_0, x_0 )
+        if aol_check < 0:
+            aol_check = aol_check + 2 * np.pi
 
-        aol_check = aol_check % (2 * np.pi)
-        aol_0 = aol_0 % (2 * np.pi)
-
-        if abs(aol_check - aol_0) > 1e-3:
-            print("aol_check (deg): ", np.rad2deg(aol_check))
-            print("aol_0 (deg): ", np.rad2deg(aol_0))
-            raise ValueError("Argument of latitude mismatch in environment update.")
+        if (e_0 < 1.0):
+            # Normalize both angles to [0, 2π)
+            aol_0_norm = aol_0 % (2 * np.pi)
+            aol_check_norm = aol_check % (2 * np.pi)
+            
+            # Compute the minimum angular difference accounting for wraparound
+            angle_diff = abs(aol_check_norm - aol_0_norm)
+            if angle_diff > np.pi:
+                angle_diff = 2 * np.pi - angle_diff
+            
+            # Check orbital element consistency
+            if angle_diff > 0.05:  # ~2.9 degrees tolerance - accounts for numerical precision near wraparound
+                print(f"ERROR: w_0={np.rad2deg(w_0):.2f}°, theta_0={np.rad2deg(theta_0):.2f}°")
+                print(f"ERROR: aol_check={np.rad2deg(aol_check_norm):.2f}°, aol_0={np.rad2deg(aol_0_norm):.2f}°")
+                print(f"ERROR: Elapsed time: {self.elapsed_t}s")
+                raise ValueError(f"Argument of latitude mismatch: aol_check={np.rad2deg(aol_check_norm):.2f}°, aol_0={np.rad2deg(aol_0_norm):.2f}°, diff={np.rad2deg(angle_diff):.2f}°")
         
         # compute polar coordinates
         r_0, eta_0, r_dot_0, v_eta_0 = cartesian_to_polar(x_0, y_0, vx_0, vy_0)
@@ -545,6 +571,14 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         self.eta_f = eta_f
         self.r_dot_f = r_dot_f
         self.v_eta_f = v_eta_f
+        self.x_nd = x_0 / self.l_star
+        self.y_nd = y_0 / self.l_star
+        self.vx_nd = vx_0 / self.l_star * self.t_star
+        self.vy_nd = vy_0 / self.l_star * self.t_star
+        self.x_nd_target = x_f / self.l_star
+        self.y_nd_target = y_f / self.l_star
+        self.vx_nd_target = vx_f / self.l_star * self.t_star
+        self.vy_nd_target = vy_f / self.l_star * self.t_star
 
         # calculate the initial orbital elements
         self._keplerian_elements[0] = a_0

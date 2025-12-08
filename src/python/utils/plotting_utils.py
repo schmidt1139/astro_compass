@@ -1244,7 +1244,7 @@ def plot_SAC_training_TBR_polar(
 
 
 def plot_overlay_ballistic_orbit(
-    x, y, vx, vy, env, fig, params, eph, label_in, color_in="lime"
+    x, y, vx, vy, env, fig, params, eph, label_in, color_in="lime", time_to_prop=None
 ):
     # check env type
     if params.get("env_type", "TwoBodyRendezvous_Env") == "TwoBodyRendezvous_Polar_Env":
@@ -1261,7 +1261,7 @@ def plot_overlay_ballistic_orbit(
         == "TwoBody_Orb2Orb_Transfer_Env_target"
     ):
         flag_use_obs = False
-        state_in = [x, y, vx, vy, 1000.0, Constants.SMA_EARTH, 0.001, 0.0]
+        state_in = [x, y, vx, vy, 1000.0, Constants.SMA_EARTH*10, 0.001, 0.0]
     else:
         flag_use_obs = True
         state_in = [x, y, vx, vy, 1000.0, x, y, vx, vy, Constants.YEARS_TO_SEC * 10.0]
@@ -1269,9 +1269,10 @@ def plot_overlay_ballistic_orbit(
     obs, info = env.reset()
 
     unwrapped_env = env.unwrapped
-    obs, info = unwrapped_env.set_state(state_in)
+    obs, info = unwrapped_env.set_state(state_in, ttg=np.inf)
 
     T = info["orbital_period_years"] * Constants.YEARS_TO_SEC
+    step_size = info["step_size_s"]
 
     time = 0.0
     flag_done = False
@@ -1280,7 +1281,8 @@ def plot_overlay_ballistic_orbit(
     max_steps = 10000  # Safety limit to prevent infinite loop
     step_count = 0
 
-    while not flag_done and step_count < max_steps:
+    while not flag_done:
+
         obs, reward, done, truncated, info = env.step([0.0, 0.0, 0.0])
 
         if flag_use_obs:
@@ -1294,16 +1296,23 @@ def plot_overlay_ballistic_orbit(
             x_i = obs[0]
             y_i = obs[1]
 
-        if info["Elapsed time"] >= T or done or truncated:
-            flag_done = True
-
         arr_x.append(x_i)
         arr_y.append(y_i)
         step_count += 1
+        
+        # Check termination conditions
+        if done or truncated:
+            flag_done = True
+        if time_to_prop is not None and time >= time_to_prop:
+            flag_done = True
+        if time >= T:
+            flag_done = True
+
+        time += step_size
 
     fig = eph.overlay_ref_orbit(
         ephem=None, label=label_in, color_in=color_in, arr_x=arr_x, arr_y=arr_y
-    )
+    )    
 
     return fig
 

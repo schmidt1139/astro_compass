@@ -2,21 +2,21 @@
 
 [paths]
 tb_log_name = "SAC_TBR_training"
-output_dir = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\SAC_Training"
+output_dir = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\Dec08\\train"
 path_training_data = ""
-path_replay_buffer = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\buffer_generation\\SAC_training_TBR_polar20251128_144703\\replay_buffer.pkl"
-path_SAC_model_load = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\SAC_Training\\SAC_training_TBR_polar20251127_202634\\best_model.zip"
+path_replay_buffer = ""
+path_SAC_model_load = ""
 
 [training]
-pre_train_networks = true
+pre_train_networks = false
 save_pre_training_only_replay_buffer = true
 save_final_replay_buffer = true
-read_replay_buffer = true
+read_replay_buffer = false
 load_model_checkpoint = false
-eval_freq = 500
-training_steps = 1_600
+eval_freq = 1_000
+training_steps = 100_000
 pretrain_gradient_steps = 5000
-n_eval_episodes = 3
+n_eval_episodes = 32
 print_freq = 2000
 buffer_size = 200_000
 num_ephems_to_use = 1000
@@ -25,13 +25,13 @@ pt_log_interval = 2000
 t_log_interval = 2000
 loss_report_rate = 10
 checkpoint_freq = 1000
-flag_checkpoint_replay_buffer = true
-n_freq_checkpoint_replay_buffer = 100
+flag_checkpoint_replay_buffer = false
+n_freq_checkpoint_replay_buffer = 1_000_000
 
 [environment]
-env_type = "TwoBodyRendezvous_Polar_Env2"
+env_type = "TwoBody_Orb2Orb_Transfer_Env_target"
 mu = 1.3e20
-max_T = 1.33
+max_T = 0.00133
 ISP = 3872.0
 l_star = 149598023000.0
 m_star = 3366.0
@@ -47,7 +47,7 @@ e_max_init_env = 0.0001
 w_min_init_env_deg = 0.0
 w_max_init_env_deg = 0.0
 theta_min_init_env_deg = 0.0
-theta_max_init_env_deg = 2.0
+theta_max_init_env_deg = 360.0
 
 [environment.final]
 a_min_final_env_nd = 232495000000.0
@@ -56,8 +56,8 @@ e_min_final_env = 0.0001
 e_max_final_env = 0.0001
 w_min_final_env_deg = 0.0
 w_max_final_env_deg = 0.0
-theta_min_final_env_deg = 180.0
-theta_max_final_env_deg = 182.0
+theta_min_final_env_deg = 0.0
+theta_max_final_env_deg = 360.0
 
 [environment.episode]
 max_episode_steps = 5000

@@ -333,6 +333,12 @@ def pre_train(test_log, model, params, env):
             test_log,
             True,
         )
+    elif ephem_version == 3.0 and (env.observation_space.shape[0] == 10):
+        test_log = log(
+            "Environment observation space matches expected shape for ephemeris version 3.0",
+            test_log,
+            True,
+        )
     else:
         raise ValueError(
             f"Environment observation space shape {env.observation_space.shape} does not match expected shape for ephemeris version {ephem_version}"
@@ -982,7 +988,13 @@ def extract_experiences_from_ephem(eph, params):
         u = state_vec[13]
 
         # compute polar observation
-        obs, _ = create_relative_polar_observation_fast(params, current_state, target_state, ttg)
+        if env_type == "TwoBodyRendezvous_Polar_Env2" or env_type == "TwoBodyRendezvous_Polar_Env":
+            obs, _ = create_relative_polar_observation_fast(params, current_state, target_state, ttg)
+        elif env_type == "TwoBody_Orb2Orb_Transfer_Env_target":
+            state = np.concatenate((current_state, target_state))
+            obs, _ = compute_obs_fast_TBT(state, params, ttg)
+        else:
+            raise NotImplementedError("Check env type")
 
         # polar action
         # Convert alpha_x, alpha_y to polar form
@@ -993,7 +1005,14 @@ def extract_experiences_from_ephem(eph, params):
         u = action[0]
 
         # compute the reward
-        reward, terminated, truncated, _ = compute_reward_fast(params, current_state, ttg, target_state, u)
+        # compute polar observation
+        if env_type == "TwoBodyRendezvous_Polar_Env2" or env_type == "TwoBodyRendezvous_Polar_Env":
+            reward, terminated, truncated, _ = compute_reward_fast(params, current_state, ttg, target_state, u)
+        elif env_type == "TwoBody_Orb2Orb_Transfer_Env_target":
+            state = np.concatenate((current_state, target_state))
+            reward, terminated, truncated, _ = compute_reward_fast_TBT(state, params, u, ttg)
+        else:
+            raise NotImplementedError("Check env type")
         
         # check if terminal
         done = terminated or truncated
@@ -1007,7 +1026,15 @@ def extract_experiences_from_ephem(eph, params):
             next_current_state = next_state_vec[1:6]
             next_target_state = next_state_vec[6:10]
             next_ttg = next_state_vec[10]
-            next_obs, _ = create_relative_polar_observation_fast(params, next_current_state, next_target_state, next_ttg)
+
+            # compute polar observation
+            if env_type == "TwoBodyRendezvous_Polar_Env2" or env_type == "TwoBodyRendezvous_Polar_Env":
+                next_obs, _ = create_relative_polar_observation_fast(params, next_current_state, next_target_state, next_ttg)
+            elif env_type == "TwoBody_Orb2Orb_Transfer_Env_target":
+                state = np.concatenate((next_current_state, next_target_state))
+                next_obs, _ = compute_obs_fast_TBT(state, params, next_ttg)
+            else:
+                raise NotImplementedError("Check env type")
 
         obs_batch.append(obs)
         action_batch.append(action)
@@ -1313,7 +1340,12 @@ def compute_reward_fast_TBT(state, params, u, TTG):
     vx_target_nd = state[7] / (params["l_star"] / params["t_star"])
     vy_target_nd = state[8] / (params["l_star"] / params["t_star"])
 
-    e = params["e"]
+    sc = Spacecraft(
+        0.0, 0.0, 0.0, 0.0, state[4], params["max_T"], params["ISP"]
+    )
+    sc.update_state_cartesian(state[0], state[1], state[2], state[3], state[4])
+    arr_OE = sc.calc_Planar_OE(0.0, 0.0, 0.0, 0.0, Constants.MU_SUN_M)
+    e = arr_OE[1]
 
     # calculate the reward components
     r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0 = cartesian_to_polar(x_nd, y_nd, vx_nd, vy_nd)

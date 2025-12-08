@@ -2,33 +2,43 @@ Test Two-Body Rendezvous Polar Env
 Initial observation vector
 
 r_nd: 0.9999
-eta_cos_nd: 1.0
-eta_sin_nd: 0.0
-v_nd: 1.0001
-fpa_cos_nd: 0.0009999
-fpa_sin_nd: 1.0
-mass_nd: 1.0
-target_r_nd: 0.47913384
-target_eta_cos_nd: -1.9774307
-target_eta_sin_nd: 0.21125624
-target_v_nd: -0.1757626
-target_fpa_cos_nd: 0.007860361
-target_fpa_sin_nd: -3.927946e-05
-TTG: 12.173389
+cos_eta: 1.0
+sin_eta: 0.0
+r_nd_target: 1.4790338
+cos_eta_target: -0.9774307
+sin_eta_target: 0.21125624
+x_current_nd: 0.9999
+y_current_nd: 0.0
+vx_current_nd: 0.0
+vy_current_nd: 1.0001
+x_target_nd: -1.4456531
+y_target_nd: 0.3124551
+vx_target_nd: -0.18127152
+vy_target_nd: -0.8041597
+x_diff_nd: -2.445553
+y_diff_nd: 0.3124551
+vx_diff_nd: -0.18127152
+vy_diff_nd: -1.8042598
+r_nd_diff: 0.47913384
+v_comp_diff: -0.1757626
+TTG_nd: 12.173389
+mass_current_nd: 1.0
+
+
 Elapsed time: 0.0
 ODE Solution: None
 delta_state: None
 planet_radii: [6.957e+08]
 a: 1.0
 e: 9.999999747378752e-05
-w: 90.0
+w: 3.508705478938445e-11
 theta: 360.0
 max_thrust: 1.33
 ISP: 3872.0
 dx: 2.5541868209838867
 dy: -1.9034524390698637e-16
 dr: 2.5541868209838867
-dvx: -1.2115970858054088e-17
+dvx: 9.823516221851971e-17
 dvy: 1.802170753479004
 dv: 1.802170753479004
 r_target: 232518254592.0
@@ -39,7 +49,7 @@ orbital_period_nd: 6.2831854820251465
 orbital_period_years: 1.0103992223739624
 a_target: 1.554131675847413
 e_target: 9.990924937608447e-05
-w_target: 89.99999999996488
+w_target: 2.511261292928476e-18
 theta_target: 180.0
 orbital_period_target_nd: 12.173391426117968
 orbital_period_target_years: 1.957603463343134
@@ -54,14 +64,14 @@ tof_scale: 1.0
 r_weight: 1.0
 v_weight: 1.0
 throttle_r_weight: 1.0
-pos_r_component: 0.0
-vel_r_component: 0.0
-mass_r_component: 0.0
-throttle_r_component: 0.0
-time_r_component: 0.0
+pos_reward: 0.0
+vel_reward: 0.0
+mass_reward: 0.0
+throttle_reward: 0.0
+time_reward: 0.0
 r_nd: 0.9998999834060669
 eta_nd: 0.0
-v_r_nd: -6.123846376579129e-17
+v_r_nd: 0.0
 v_eta_nd: 1.000100016593933
 r_nd_f: 1.4790338277816772
 eta_nd_f: 2.9287326335906982
@@ -86,6 +96,8 @@ v_r_unit: 0.000999900046736002
 v_t_unit: 1.0
 v_r_target_unit: 0.008860261179506779
 v_t_target_unit: 0.999960720539093
+v_current_nd: 1.000100016593933
+v_target_nd: 0.8243374228477478
 
 
 
@@ -95,14 +107,14 @@ Final observation vector
 x_nd: 2.4364784
 y_nd: 0.7669248
 vx_nd: 0.6417369
-vy_nd: 0.6843683
-mass_nd: 0.3377937
+vy_nd: 1.554287
+mass_nd: -0.9999625
 
-x_target_nd: 0.94122016
-y_target_nd: 0.6781226
-vx_target_nd: -0.8821914
-vy_target_nd: -1.7668873
-TTG: -0.6503949
+x_target_nd: -0.008657975
+y_target_nd: 1.8685957
+vx_target_nd: 1.5635782
+vy_target_nd: -0.23607539
+TTG: 0.6423616
 
 Elapsed time: 61862400.0
 ODE Solution:   message: The solver successfully reached the end of the integration interval.
@@ -126,7 +138,7 @@ delta_state: [-5.9857306e+08  1.6373350e+09 -6.2725098e+01 -2.9140625e+01
 planet_radii: [6.957e+08]
 a: 2.836904525756836
 e: 0.3629794716835022
-w: 41.648399353027344
+w: 311.6484069824219
 theta: 88.27305603027344
 max_thrust: 1.33
 ISP: 3872.0
@@ -144,7 +156,7 @@ orbital_period_nd: 30.022506713867188
 orbital_period_years: 4.827919960021973
 a_target: 1.554131675847413
 e_target: 9.990924937608447e-05
-w_target: 89.99999999996488
+w_target: 2.511261292928476e-18
 theta_target: 180.0
 orbital_period_target_nd: 12.173391426117968
 orbital_period_target_years: 1.957603463343134
@@ -159,11 +171,11 @@ tof_scale: 1.0
 r_weight: 1.0
 v_weight: 1.0
 throttle_r_weight: 1.0
-pos_reward: 6.789172743992822e-07
-vel_reward: 0.11702632158994675
+pos_reward: -0.9997178316116333
+vel_reward: -0.8827251195907593
 mass_reward: 0.0
 throttle_reward: -0.5
-time_reward: 1.0
+time_reward: 0.9997184872627258
 r_nd: 2.43647837638855
 eta_nd: 0.6967609524726868
 v_r_nd: 0.23117510974407196
@@ -186,12 +198,14 @@ target_x_current: -232509538304.0
 target_y_current: -2013121920.0
 target_vx_current: 204.72830200195312
 target_vy_current: -23643.140625
-terminated: True
+terminated: False
 v_r_unit: 0.3377937078475952
 v_t_unit: 0.9412201642990112
 v_r_target_unit: 0.0012467728229239583
 v_t_target_unit: 0.9999999403953552
-episode: {'r': -1058.4677734375}
+v_current_nd: 0.6843683123588562
+v_target_nd: 0.8020707964897156
+episode: {'r': -458.3915100097656}
 
 
 

@@ -117,6 +117,8 @@ def test_TBR_polar_env(flag_report_live: bool = False):
             delta_target_v_nd = v_target_nd - v_current_nd
             d_v_r_unit = info["v_r_target_unit"] - info["v_r_unit"]
             d_v_t_unit = info["v_t_target_unit"] - info["v_t_unit"]
+            pos_residual = info["pos_residual"]
+            vel_residual = info["vel_residual"]
 
             eph.add_data(
                 info["Elapsed time"],
@@ -186,6 +188,8 @@ def test_TBR_polar_env(flag_report_live: bool = False):
                 vel_reward,  # velocity reward #21
                 mass_reward,  # mass reward #22
                 throttle_reward,  # throttle reward #23
+                pos_residual,  # position residual #24
+                vel_residual,  # velocity residual #25
             )
 
             steps += 1

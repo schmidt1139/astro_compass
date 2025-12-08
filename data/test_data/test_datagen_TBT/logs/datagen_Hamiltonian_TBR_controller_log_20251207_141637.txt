@@ -1,0 +1,10 @@
+Two-Body Transfer Hamiltonian Controller
+Starting at 20251207_141637
+Queuing trajectory 1 with seed 75120128 and tof scale 1.0 and scenario 0
+Total trajectories attempted: 1
+Total trajectories solved: 0
+Total elapsed wall time: 0.07 minutes
+Total time x cores: 0.07 minutes
+Trajectories per core: 1.00
+Average time per requested trajectory: 4.30 seconds
+Average time per requested trajectory per core: 4.30 seconds

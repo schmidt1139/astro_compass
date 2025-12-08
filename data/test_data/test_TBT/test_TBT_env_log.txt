@@ -1,0 +1,66 @@
+Test Two-Body Transfer Env
+Environment type: TwoBody_Orb2Orb_Transfer_Env_target
+
+Initial observation vector
+
+r_nd_0: 0.5025449
+cos_theta_0: 0.34202015
+sin_theta_0: 0.9396926
+v_r_nd_0: 0.10025585
+v_eta_nd_0: 1.7232796
+mass_nd_0: 1.0
+r_nd_target: 0.84279096
+v_r_nd_target: 0.2976891
+v_eta_nd_target: 1.2810162
+
+state_x_nd: 0.17188048860793914
+state_y_nd: 0.47223776129514
+state_vx_nd: -1.5850635751324986
+state_vy_nd: 0.6836059782295116
+state_a_nd: 1.0
+state_e_nd: 0.5
+state_w_deg: 60.0
+state_theta_deg: 9.999999046325684
+state_aol_deg: 70.0
+target_a_nd: 1.5541315078735352
+target_e_nd: 0.5
+target_w_deg: 30.0
+target_theta_deg: 39.999996185302734
+target_aol_deg: 70.0
+eta_check_deg: 70.0
+orbital_period_years: 1.010399229566535
+target_period_years: 1.9576031325838086
+
+
+Env steps: 716
+Environment type: TwoBody_Orb2Orb_Transfer_Env_target
+
+Final observation vector
+
+r_nd_0: 2.0978014
+cos_theta_0: -0.5216768
+sin_theta_0: -0.8531432
+v_r_nd_0: 0.09719112
+v_eta_nd_0: 0.55913335
+mass_nd_0: 0.83906126
+r_nd_target: 2.078377
+v_r_nd_target: -0.22137485
+v_eta_nd_target: 0.5194577
+
+state_x_nd: -1.0943740606307983
+state_y_nd: -1.7897251844406128
+state_vx_nd: 0.426318496465683
+state_vy_nd: -0.3746047914028168
+state_a_nd: 1.5840257406234741
+state_e_nd: 0.36255350708961487
+state_w_deg: 76.88206481933594
+state_theta_deg: 161.6731414794922
+state_aol_deg: 238.5552124334557
+target_a_nd: 1.5541315078735352
+target_e_nd: 0.5
+target_w_deg: 30.0
+target_theta_deg: 208.55519104003906
+target_aol_deg: 238.5552124334557
+eta_check_deg: 238.55520629882812
+orbital_period_years: 2.0143568896520883
+target_period_years: 1.9576031325838086

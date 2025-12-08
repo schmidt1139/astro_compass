@@ -239,7 +239,7 @@ class Hamiltonian_Controller_TBT:
                     lam_guess,
                     args=(eps,),
                     method="lm",
-                    options={"ftol": self.root_tol, "maxiter": self.root_max_iters},
+                    options={"ftol": self.root_tol ** 2, "maxiter": self.root_max_iters},
                 )
             elif self.root_method != "hybr":
                 lam_sol = root(

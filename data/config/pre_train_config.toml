@@ -2,15 +2,15 @@
 
 [paths]
 tb_log_name = "SAC_TBR_training"
-output_dir = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\pre_training"
+output_dir = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\Dec08\\pre_train"
 path_training_data = ""
-path_replay_buffer = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\buffer_generation\\SAC_training_TBR_polar20251201_151736\\replay_buffer.pkl"
+path_replay_buffer = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\Dec08\\SAC_training_TBR_polar20251208_013349\\replay_buffer.pkl"
 path_SAC_model_load = ""
 
 [environment]
-env_type = "TwoBodyRendezvous_Polar_Env2"
+env_type = "TwoBody_Orb2Orb_Transfer_Env_target"
 mu = 1.3e20
-max_T = 1.33
+max_T = 0.00133
 ISP = 3872.0
 l_star = 149598023000.0
 m_star = 3366.0
@@ -69,18 +69,18 @@ save_pre_training_only_replay_buffer = true
 save_final_replay_buffer = true
 read_replay_buffer = true
 load_model_checkpoint = false
-eval_freq = 500
+eval_freq = 1_000
 training_steps = 10_000
-pretrain_gradient_steps = 100_000
+pretrain_gradient_steps = 10_000
 n_eval_episodes = 3
 print_freq = 2000
 buffer_size = 200_000
 num_ephems_to_use = 1000
-batch_size = 1_000
-pt_log_interval = 10_000
-t_log_interval = 2000
+batch_size = 10
+pt_log_interval = 1000
+t_log_interval = 1000
 loss_report_rate = 10
-checkpoint_freq = 10_000
+checkpoint_freq = 1000
 
 [model]
 learning_rate = 0.0003

@@ -1,0 +1,26 @@
+
+Trajectory Generation Summary:
+
+------------------------------
+
+  TOF scale 1.0: 1 trajectories
+
+  Scenario 0: 1 trajectories
+
+------------------------------
+
+
+Trajectory generation success rates:
+
+  TOF scale 1.0: 0 solved out of 1 trajectories
+
+  Scenario 0: 0 solved out of 1 trajectories
+
+Trajectories per core: 1.00
+Total trajectories attempted: 1
+Total trajectories solved: 0
+Total elapsed wall time: 0.07 minutes
+Total time x cores: 0.07 minutes
+Trajectories per core: 1.00
+Average time per requested trajectory: 4.43 seconds
+Average time per requested trajectory per core: 4.43 seconds

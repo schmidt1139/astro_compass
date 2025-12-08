@@ -254,3 +254,4 @@ def compute_mean_anomaly_from_eccentric_anomaly(E, e):
     M = E - e * np.sin(E)
 
     return M
+

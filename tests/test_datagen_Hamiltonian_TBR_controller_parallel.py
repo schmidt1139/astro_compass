@@ -66,6 +66,9 @@ def test_datagen_Hamiltonian_TBR_parallel(flag_report_live):
 
     test_log, flag_all_match = compare_trajectories(sa_output_ephems, 
                                                     sa_truth_ephems, test_log, 2, flag_report_live)
+    if len(sa_output_ephems) == 0:
+        test_log = log("No output ephemeris files were generated.", test_log, flag_report_live)
+        flag_all_match = False
     if flag_all_match:
         test_log = log("All trajectories match truth data!", test_log, flag_report_live)
     else:

@@ -1,0 +1,167 @@
+Two-Body Transfer Hamiltonian Controller
+Environment type: TwoBody_Orb2Orb_Transfer_Env_target
+
+Final observation vector
+
+r_nd_0: 0.5025449
+cos_theta_0: 0.34202015
+sin_theta_0: 0.9396926
+v_r_nd_0: 0.10025585
+v_eta_nd_0: 1.7232796
+mass_nd_0: 1.0
+r_nd_target: 0.84279096
+v_r_nd_target: 0.2976891
+v_eta_nd_target: 1.2810162
+
+Elapsed time: 0.0
+step_size_s: 86400
+step_size_days: 1.0
+step_size_yrs: 0.0027378507871321013
+mu: 130000000000.0
+ODE Solution: None
+delta_state: None
+planet_radii: [6.957e+08]
+a: 149598027776.0
+e: 0.5
+w: 1.0471975803375244
+theta: 0.1745329201221466
+aol: 1.2217304763960306
+state_x_nd: 0.17188048860793914
+state_y_nd: 0.47223776129514
+state_vx_nd: -1.5850635751324986
+state_vy_nd: 0.6836059782295116
+state_a_nd: 1.0
+state_e_nd: 0.5
+state_w_deg: 60.0
+state_theta_deg: 9.999999046325684
+state_aol_deg: 70.0
+target_a_nd: 1.5541315078735352
+target_e_nd: 0.5
+target_w_deg: 30.0
+target_theta_deg: 39.999996185302734
+target_aol_deg: 70.0
+eta_check_deg: 70.0
+orbital_period_sec: 31885774.726968884
+orbital_period_days: 369.0483185991769
+orbital_period_years: 1.010399229566535
+orbital_period_nd: 6.28318530717959
+target_period_sec: 61777256.616826795
+target_period_days: 715.0145441762361
+target_period_years: 1.9576031325838086
+orbital_period_target_nd: 12.17338936928531
+state_r_nd: 0.5025449288940737
+state_eta_deg: 70.0
+state_r_dot_nd: 0.1002558221202902
+state_v_eta_nd: 1.7232795596808805
+max_thrust: 0.00133
+ISP: 3872.0
+dm_nd: 0.0
+reward_distance_component: 0.0
+reward_mass_component: 0.0
+state_eccentric_anomaly_deg: 5.783287525177002
+state_mean_anomaly_deg: 2.8965513706207275
+
+Using TOF: 1.9576031325838086 years
+Elapsed time: 0.0
+step_size_s: 86400
+step_size_days: 1.0
+step_size_yrs: 0.0027378507871321013
+mu: 130000000000.0
+ODE Solution: None
+delta_state: None
+planet_radii: [6.957e+08]
+a: 149598027776.0
+e: 0.5
+w: 1.0471975803375244
+theta: 0.1745329201221466
+aol: 1.2217304763960306
+state_x_nd: 0.17188048860793914
+state_y_nd: 0.47223776129514
+state_vx_nd: -1.5850635751324986
+state_vy_nd: 0.6836059782295116
+state_a_nd: 1.0
+state_e_nd: 0.5
+state_w_deg: 60.0
+state_theta_deg: 9.999999046325684
+state_aol_deg: 70.0
+target_a_nd: 1.5541315078735352
+target_e_nd: 0.5
+target_w_deg: 30.0
+target_theta_deg: 39.999996185302734
+target_aol_deg: 70.0
+eta_check_deg: 70.0
+orbital_period_sec: 31885774.726968884
+orbital_period_days: 369.0483185991769
+orbital_period_years: 1.010399229566535
+orbital_period_nd: 6.28318530717959
+target_period_sec: 61777256.616826795
+target_period_days: 715.0145441762361
+target_period_years: 1.9576031325838086
+orbital_period_target_nd: 12.17338936928531
+state_r_nd: 0.5025449288940737
+state_eta_deg: 70.0
+state_r_dot_nd: 0.1002558221202902
+state_v_eta_nd: 1.7232795596808805
+max_thrust: 0.00133
+ISP: 3872.0
+dm_nd: 0.0
+reward_distance_component: 0.0
+reward_mass_component: 0.0
+state_eccentric_anomaly_deg: 5.783287525177002
+state_mean_anomaly_deg: 2.8965513706207275
+
+Using TOF: 1.9576031325838086 years
+
+
+Parameter Start:
+  env_type: TwoBody_Orb2Orb_Transfer_Env_target
+  mu: 1.3e+20
+  max_T: 0.00133
+  ISP: 3872.0
+  l_star: 149598023000
+  m_star: 3366.0
+  t_star: 5074778.662111725
+  g0: 9.80665
+  env_step_size: 86400
+  tof_scales: [1.0]
+  tof_weights: [1.0]
+  kep_scenario_weights: [1.0]
+  a_min_init_env_nd: 149598023000.0
+  a_max_init_env_nd: 149598023000.0
+  e_min_init_env: 0.5
+  e_max_init_env: 0.5
+  w_min_init_env_deg: 60.0
+  w_max_init_env_deg: 60.0
+  theta_min_init_env_deg: 10.0
+  theta_max_init_env_deg: 10.0
+  a_min_final_env_nd: 232495000000.0
+  a_max_final_env_nd: 232495000000.0
+  e_min_final_env: 0.5
+  e_max_final_env: 0.5
+  w_min_final_env_deg: 30.0
+  w_max_final_env_deg: 30.0
+  seed_env_init: 48
+  data_path: C:\Users\micha\MSI_Data\Masters_Thesis\astro_compass\data\test_data\test_datagen_TBT
+  num_trajs: 1
+  randomize_seeds: True
+  randomize_tofs: True
+  randomize_limits: True
+  flag_report_live: True
+  num_cores: 1
+  timeout_per_trajectory: 600
+  flag_debug_h_targeter: True
+  gamma: 0.5
+  report_logs: True
+  root_tol: 0.001
+  eps_threshold: 0.1
+  flag_plot_traj: True
+  init_costate_guesses: 128
+  root_max_iters: 20000
+  traj_num: 0
+  seed_traj: 75120128
+  tof_scale: 1.0
+  tof_index: 0
+  scenario_index: 0
+Parameter End.
+
+

@@ -7,6 +7,7 @@ from core.ephemeris_v3 import Ephemeris_v3
 from utils.env_utils import gen_rl_environment
 from utils.state_vector_utils import convert_attitude_from_radial_to_cartesian
 from utils.plotting_utils import plot_overlay_ballistic_orbit
+import matplotlib.pyplot as plot
 
 def test_TBT_env(flag_report_live: bool = False):
 
@@ -82,6 +83,8 @@ def test_TBT_env(flag_report_live: bool = False):
     vx_target_init = state[7]
     vy_target_init = state[8]
 
+    arr_reward = []
+
     eph = Ephemeris_v3()
 
     while flag_continue:
@@ -91,6 +94,8 @@ def test_TBT_env(flag_report_live: bool = False):
 
         #step the environment
         obs, reward, done, truncated, info = env.step(action)
+
+        arr_reward.append(reward)
 
         # extract the cartesian
         state = env.get_cartesian_state()
@@ -164,6 +169,14 @@ def test_TBT_env(flag_report_live: bool = False):
     )
     fig_orb = eph.adjust_plot_limits()
     fig_orb.savefig(os.path.join(data_path, "test_TBT_env_xy_plot.png"), dpi=300)
+
+    # plot rewards
+    fig_reward = plot.figure()
+    plot.plot(arr_reward, label="Reward per Step")  
+    plot.legend()
+    plot.xlabel("Step")
+    plot.ylabel("Reward")
+    fig_reward.savefig(os.path.join(data_path, "test_TBT_env_reward_plot.png"), dpi=300)
 
     eph.write_to_file(os.path.join(data_path, "test_TBT_env_ephemeris.txt"))
 

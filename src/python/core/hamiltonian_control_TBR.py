@@ -151,7 +151,7 @@ class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):
         self.root_tol = 1.0e-3
         self.root_tol_max = 1.0e-3
         self.flag_constrain_u = True
-        self.root_method = "lm"  # Choose from "hybr", "lm", "broyden1"
+        self.root_method = "hybr"  # Choose from "hybr", "lm", "broyden1"
         self.root_max_iters = 400
         self.smoothing_method = 0  # Choose from 0 (tanh), 1 (homotopic)
         self.flag_stop_targeting = False

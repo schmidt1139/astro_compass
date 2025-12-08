@@ -6,12 +6,8 @@ import matplotlib.pyplot as plot
 import time
 import numpy as np
 from multiprocessing import Pool, cpu_count
-from functools import partial
 
-from constants.constants import Constants
 from utils.log_utils import log
-from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
-from constants.constants import Constants
 from utils.test_utils import compare_trajectories
 from core.gen_Hamiltonian_trajectory import gen_Hamiltonian_trajectory
 from utils.log_utils import write_log_to_file, write_config_file, read_config_file

@@ -179,8 +179,6 @@ class Ephemeris_v3:
 
     def plot_all_ephemeris_data(self, flag_show=True):
 
-        plot.style.use("data/support_files/dark_scientific.mplstyle")
-
         figs = []
 
         fig, ax = plot.subplots()
@@ -216,7 +214,6 @@ class Ephemeris_v3:
         if flag_show:
             plot.show()
         figs.append(fig)
-
 
 
         return figs
@@ -490,24 +487,54 @@ class Ephemeris_v3:
             # Normalize path to handle platform differences and invalid characters
             file_path = os.path.normpath(os.path.join(directory_path, f"{file_tag}_{plot_title}.png"))
             fig.savefig(file_path, dpi=300)
+        
+        x_init = self.arr_x[0]
+        y_init = self.arr_y[0]
+        vx_init = self.arr_vx[0]
+        vy_init = self.arr_vy[0]
 
+        x_target_init = self.arr_x_target[0]
+        y_target_init = self.arr_y_target[0]
+        vx_target_init = self.arr_vx_target[0]
+        vy_target_init = self.arr_vy_target[0]
+
+        '''
+        fig_orb = self.plot_xy(color_in="#7e03a8")
 
         
-        fig_xy = self.plot_xy()
-        x, y, vx, vy = self.arr_x[0], self.arr_y[0], self.arr_vx[0], self.arr_vy[0]
-        fig_xy = plot_overlay_ballistic_orbit(x, y, vx, vy, env, fig_xy, params, 
-                                              self,"Initial Orbit", color_in="lime")
-        x, y, vx, vy = self.arr_x[-1], self.arr_y[-1], self.arr_vx[-1], self.arr_vy[-1]
-        fig_xy = plot_overlay_ballistic_orbit(x, y, vx, vy, env, fig_xy, params, 
-                                              self, "Final Orbit", color_in="red")
-        x, y = self.arr_x_target[-1], self.arr_y_target[-1]
-        fig_xy = self.add_target_icon(x, y)
-        fig_xy = self.adjust_plot_limits()
+        fig_orb = plot_overlay_ballistic_orbit(
+            x_init,
+            y_init,
+            vx_init,
+            vy_init,
+            env,
+            fig_orb,
+            params,
+            self,
+            label_in="Initial Orbit",
+            color_in="#0d0887",
+        )
 
-        plot_title = fig_xy.axes[0].get_title().replace(" ", "_").lower()
+        fig_orb = plot_overlay_ballistic_orbit(
+            x_target_init,
+            y_target_init,
+            vx_target_init,
+            vy_target_init,
+            env,
+            fig_orb,
+            params,
+            self,
+            label_in="Target Orbit",
+            color_in="#cc4778",
+        )
+
+        fig_orb = self.adjust_plot_limits()
+
+        plot_title = fig_orb.axes[0].get_title().replace(" ", "_").lower()
         # Normalize path to handle platform differences and invalid characters
         file_path = os.path.normpath(os.path.join(directory_path, f"{file_tag}_{plot_title}.png"))
-        fig_xy.savefig(file_path, dpi=300)
+        fig_orb.savefig(file_path, dpi=300)
+        '''
 
 
     def convert_from_v2(self, ephem_v2):
