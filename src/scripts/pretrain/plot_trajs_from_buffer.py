@@ -1,21 +1,18 @@
-
 import os
+
 import torch
 import torch.nn as nn
-import utils
-from utils.log_utils import read_toml_config_file
-from utils.env_utils import gen_rl_environment
+from pretrain_utils import generate_paths
 from stable_baselines3 import SAC as SB3_SAC
-from pretrain_utils import generate_env, generate_paths
 from utils.buffer_utils import extract_episodes_from_buffer, plot_episodes
+from utils.env_utils import gen_rl_environment
+from utils.log_utils import read_toml_config_file
+from utils.path_utils import PROJECT_ROOT
 
-
-# HACK
-PROJECT_ROOT = os.path.dirname(os.path.dirname(utils.__file__)) + "/../.."
 print("GPU available: ", torch.cuda.is_available())
 
-def main(params):
 
+def main(params):
     print("Plot Trajectories from Replay Buffer Script")
     print("")
 
@@ -25,7 +22,6 @@ def main(params):
 
     # paths
     path_output, path_SAC_model, path_plots = generate_paths(params)
-
 
     if params.get("nn_arch_type", "default") == "custom":
         policy_kwargs = dict(

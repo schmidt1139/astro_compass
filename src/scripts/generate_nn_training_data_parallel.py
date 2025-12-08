@@ -1,13 +1,11 @@
-import sys
 import os
-import gymnasium as gym
-from gymnasium import envs
-from gymnasium.envs.registration import register
+import sys
 
-# Add project root to Python path
-project_root = os.path.dirname(os.path.abspath(__file__))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
+from utils.path_utils import ensure_repo_paths_on_sys_path, get_python_src
+
+# Ensure local package imports work when running as a script
+if str(get_python_src()) not in sys.path:
+    ensure_repo_paths_on_sys_path()
 
 from core.training_data_generation import generate_nn_training_data_parallel
 from envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env

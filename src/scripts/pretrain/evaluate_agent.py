@@ -1,33 +1,29 @@
 import os
 import random
-import numpy as np
-import utils
+
 import torch
-from tqdm import tqdm
 from core.ephemeris_v2 import Ephemeris_v2 as Ephemeris
 from core.process_single_trajectory import process_single_trajectory
-from utils.plotting_utils import plot_SAC_training_TBR_polar
 from pretrain_utils import generate_env, generate_paths
 from stable_baselines3 import SAC as SB3_SAC
 from stable_baselines3.common.callbacks import CallbackList, EvalCallback
 from utils.env_utils import gen_rl_environment
+from utils.eval_utils import mc_evaluate_agent, plot_log_mc_results
 from utils.log_utils import (
     log,
     read_toml_config_file,
     write_config_file,
     write_log_to_file,
 )
+from utils.path_utils import PROJECT_ROOT
+from utils.plotting_utils import plot_SAC_training_TBR_polar
 from utils.rl_utils import (
     RewardLoggerCallback,
     rollout_model,
 )
-from utils.eval_utils import mc_evaluate_agent, plot_log_mc_results
 
-# HACK
-PROJECT_ROOT = os.path.dirname(os.path.dirname(utils.__file__)) + "/../.."
 
 def main(params, seed_in=42):
-
     os.environ["OMP_NUM_THREADS"] = "1"
     os.environ["OPENBLAS_NUM_THREADS"] = "1"
     os.environ["MKL_NUM_THREADS"] = "1"
@@ -112,7 +108,15 @@ def main(params, seed_in=42):
 
     plot_log_mc_results(mc_results, test_log, params)
 
-    arr_episode_numbers, arr_episode_rs, arr_position_res, arr_velocity_res, arr_m, list_pos_residuals, list_vel_residuals = mc_results
+    (
+        arr_episode_numbers,
+        arr_episode_rs,
+        arr_position_res,
+        arr_velocity_res,
+        arr_m,
+        list_pos_residuals,
+        list_vel_residuals,
+    ) = mc_results
 
     # render training plots
     test_log = log("Rendering training plots...", test_log, True)

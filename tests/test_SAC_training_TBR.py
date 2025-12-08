@@ -1,35 +1,28 @@
-import gymnasium as gym
-import sys
 import os
-import matplotlib.pyplot as plt
 import random
+
+import gymnasium as gym
+import matplotlib.pyplot as plt
 import numpy as np
-
-from gymnasium import envs
-from gymnasium.envs.registration import register
-from stable_baselines3.common.callbacks import BaseCallback
-from stable_baselines3.common.callbacks import EvalCallback, CallbackList
 from stable_baselines3 import SAC
+from stable_baselines3.common.callbacks import BaseCallback, CallbackList, EvalCallback
 from stable_baselines3.common.monitor import Monitor
+from utils.path_utils import PROJECT_ROOT, ensure_repo_paths_on_sys_path
 
-# Adding python src code directory
-# Get the project root directory (parent of tests/)
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-os.chdir(project_root)
+# Ensure repository paths are on sys.path for direct test execution
+ensure_repo_paths_on_sys_path()
+os.chdir(PROJECT_ROOT)
 print("Now working in:", os.getcwd())
 
-sys.path.append(os.path.join(project_root, "src", "python"))
-sys.path.append(os.path.join(project_root, "src", "scripts"))
-
 from constants.constants import Constants
-from utils.log_utils import log
-from utils.test_utils import compare_log_files_with_tolerance
 from core.ephemeris import Ephemeris
 from core.spacecraft import Spacecraft
-from utils.state_vector_utils import cartesian_to_polar
-from utils.rl_utils import log_training_perf
 from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
-from utils.plotting_utils import plot_SAC_training, SACRolloutData
+from utils.log_utils import log
+from utils.plotting_utils import plot_SAC_training
+from utils.rl_utils import log_training_perf
+from utils.state_vector_utils import cartesian_to_polar
+from utils.test_utils import compare_log_files_with_tolerance
 
 
 class RewardLoggerCallback(BaseCallback):
@@ -58,11 +51,11 @@ class RewardLoggerCallback(BaseCallback):
 
 
 def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
-
     # set random seeds for reproducibility
     random.seed(seed_in)
     np.random.seed(seed_in)
     import torch
+
     torch.manual_seed(seed_in)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed_in)
@@ -136,7 +129,6 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
     test_log = log("Environment has been reset", test_log, flag_report_live)
     test_log = log("Seed: " + str(seed_in), test_log, flag_report_live)
 
-
     # Create the SAC model
     model = SAC("MlpPolicy", env, verbose=1, device="cpu", seed=seed_in)
 
@@ -198,9 +190,7 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
     obs, info = eval_env.reset(seed=42)
     eph = Ephemeris()  # create new ephemeris object
 
-
     while flag_continue:
-
         # step the env
         action, _states = model.predict(obs, deterministic=True)
         throttle = action[0]
@@ -275,7 +265,7 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
     test_log = log("terminated: " + str(terminated) + " ", test_log, flag_report_live)
     test_log = log("truncated: " + str(truncated) + " ", test_log, flag_report_live)
 
-        # plot the results
+    # plot the results
     plot_SAC_training(
         rollout_data1,
         arr_epsisode_numbers,
@@ -285,8 +275,6 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
     )
 
     env.close()
-
-
 
     # save ephemeris to file
     eph.write_to_file(
@@ -306,11 +294,14 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
             f.write(line + "\n")
 
     # Compare log files with numerical tolerance for cross-platform compatibility
-    are_same = compare_log_files_with_tolerance(path_output_log, path_output_log_truth, flag_report_live=flag_report_live)
+    are_same = compare_log_files_with_tolerance(
+        path_output_log, path_output_log_truth, flag_report_live=flag_report_live
+    )
 
     if flag_report_live:
         print("Log files match truth (with numerical tolerance):", are_same)
 
     return are_same
+
 
 test_SAC_training_TBR()

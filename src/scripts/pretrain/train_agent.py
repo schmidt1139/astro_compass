@@ -3,20 +3,18 @@ import random
 import shutil
 
 import torch
-import utils
 from pretrain_utils import generate_env, generate_paths
 from stable_baselines3 import SAC as SB3_SAC
 from stable_baselines3.common.callbacks import CallbackList, EvalCallback
 from utils.callbacks import ReplayBufferCheckpointCallback
 from utils.log_utils import read_toml_config_file
+from utils.path_utils import PROJECT_ROOT
 from utils.rl_utils import (
     RewardLoggerCallback,
     log_training_perf,
 )
 
 print("GPU available: ", torch.cuda.is_available())
-# HACK
-PROJECT_ROOT = os.path.dirname(os.path.dirname(utils.__file__)) + "/../.."
 
 
 def main(params, seed_in=42):
@@ -88,11 +86,12 @@ def main(params, seed_in=42):
         render=False,
     )
     callback_list = CallbackList([eval_callback, callback])
-    save_freq_adj = int( params["n_freq_checkpoint_replay_buffer"] / params["num_vec_envs"] )
+    save_freq_adj = int(
+        params["n_freq_checkpoint_replay_buffer"] / params["num_vec_envs"]
+    )
     if params.get("flag_checkpoint_replay_buffer", False):
         replay_buffer_callback = ReplayBufferCheckpointCallback(
-            save_freq=save_freq_adj,
-            save_path=path_output
+            save_freq=save_freq_adj, save_path=path_output
         )
         callback_list = CallbackList([eval_callback, callback, replay_buffer_callback])
 
@@ -131,7 +130,7 @@ def main(params, seed_in=42):
     shutil.copyfile(path_config_src, path_config_dst)
 
     print("Model saved to: ", path_SAC_model)
-    print("Output saved to: ", path_output )
+    print("Output saved to: ", path_output)
 
 
 if __name__ == "__main__":
