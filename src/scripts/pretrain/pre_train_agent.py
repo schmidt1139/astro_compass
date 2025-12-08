@@ -4,58 +4,42 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import torch
-import torch.nn as nn
-from stable_baselines3 import SAC as SB3_SAC
 from utils.config_utils import load_config, write_config_sources
+from utils.model_utils import build_sac
 from utils.pretrain_utils import generate_env, generate_paths
 from utils.rl_utils import pre_train
 
 print("GPU available: ", torch.cuda.is_available())
 
 
-def main(params, seed_in=42, config_meta=None):
+def main(config, seed_in=42, config_meta=None):
     random.seed(seed_in)
 
+    paths_cfg = config["paths"]
+    model_cfg = config["model"]
+    training_cfg = config["training"]
+
     # initialize the training and evaluation environments
-    env, eval_env, pre_train_env, single_env = generate_env(params, seed_in)
+    env, eval_env, pre_train_env, single_env = generate_env(config, seed_in)
 
     # paths
-    path_output, path_SAC_model, path_plots = generate_paths(params)
+    path_output, path_SAC_model, path_plots = generate_paths(paths_cfg)
+    paths_cfg["path_plots"] = path_plots
 
     # reset the environment
     env.reset()
 
     # Create the SAC model with TensorBoard logging
-    buffer_size = params.get("buffer_size", 1000000)  # Default 1M transitions
-
-    # Implement custom NN architectures
-    if params.get("nn_arch_type", "default") == "custom":
-        policy_kwargs = dict(
-            net_arch=params["net_arch"],  # four hidden layers with 32 units each
-            activation_fn=nn.LeakyReLU,  # LeakyReLU activation function
-        )
-    else:
-        # use default architecture
-        policy_kwargs = dict(
-            optimizer_kwargs=dict(eps=1e-5),  # More stable Adam optimizer
-        )
-
-    model = SB3_SAC(
-        "MlpPolicy",
-        env,
-        learning_rate=params["learning_rate"],
-        verbose=1,
-        device=params.get("eval_device", "cpu"),
+    model = build_sac(
+        env=env,
+        model_cfg=model_cfg,
+        training_cfg=training_cfg,
         seed=seed_in,
-        tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
-        buffer_size=buffer_size,
-        tau=params.get("tau", 0.005),
-        train_freq=params.get("train_freq", 1),
-        gradient_steps=params.get("gradient_steps", 1),
-        policy_kwargs=policy_kwargs,
+        tensorboard_log=path_output,
     )
 
-    model.load_replay_buffer(params["path_replay_buffer"])
+    if training_cfg.get("read_replay_buffer", True):
+        model.load_replay_buffer(paths_cfg["path_replay_buffer"])
 
     # pre-train networks if specified
     test_log = []
@@ -63,7 +47,7 @@ def main(params, seed_in=42, config_meta=None):
     test_log, arr_actor_loss_pt, arr_critic_loss_pt = pre_train(
         test_log,
         model,
-        params,
+        config,
         pre_train_env,
     )
     # Remove the minimal logger from pre-training so model.learn() can set up TensorBoard properly
@@ -90,7 +74,7 @@ def main(params, seed_in=42, config_meta=None):
 
     # Save the model
     model.save(path_SAC_model)
-    model.save(params["path_SAC_model_save"])
+    model.save(paths_cfg["path_SAC_model_save"])
 
     if config_meta:
         write_config_sources(config_meta, Path(path_output))
@@ -106,5 +90,5 @@ if __name__ == "__main__":
         "pretraining.toml",
     ]
     experiment_file = "experiments/pretrain_default.toml"
-    params, meta = load_config(base_files=base_files, experiment_file=experiment_file)
-    main(params, seed_in=0, config_meta=meta)
+    config, meta = load_config(base_files=base_files, experiment_file=experiment_file)
+    main(config, seed_in=0, config_meta=meta)

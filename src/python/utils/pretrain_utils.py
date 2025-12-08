@@ -8,53 +8,49 @@ from utils.env_utils import gen_rl_environment
 from utils.path_utils import PROJECT_ROOT
 
 
-def generate_env(params, seed_in):
-    def single_env_make_env(params, seed):
-        env = gen_rl_environment(params)
+def generate_env(config, seed_in):
+    env_cfg = config["environment"]
+    episode_cfg = env_cfg.get("episode", {})
+    max_steps = episode_cfg.get("max_episode_steps", 5000)
+    vec_cfg = env_cfg.get("vectorization", {})
+    num_envs = vec_cfg.get("num_vec_envs", 1)
+
+    def single_env_make_env(seed):
+        env = gen_rl_environment(config)
         env.seed(seed)
-        env = gym.wrappers.TimeLimit(
-            env,
-            max_episode_steps=params["max_episode_steps"],
-        )
+        env = gym.wrappers.TimeLimit(env, max_episode_steps=max_steps)
         env = Monitor(env)
         return env
 
-    def make_env(params, seed):
+    def make_env(seed):
         def _init():
-            return single_env_make_env(params, seed)
+            return single_env_make_env(seed)
 
         return _init
 
-    single_env = single_env_make_env(params, seed_in)
-
-    num_envs = params.get("num_vec_envs", 1)
-    env = SubprocVecEnv([make_env(params, i) for i in range(num_envs)])
+    single_env = single_env_make_env(seed_in)
+    env = SubprocVecEnv([make_env(i) for i in range(num_envs)])
 
     # establish eval environment
-    eval_env = gen_rl_environment(params)
-    pre_train_env = gen_rl_environment(params)
+    eval_env = gen_rl_environment(config)
+    pre_train_env = gen_rl_environment(config)
     pre_train_env.seed(seed_in)
     pre_train_env.reset()
-    pre_train_env = gym.wrappers.TimeLimit(
-        pre_train_env,
-        max_episode_steps=params["max_episode_steps"],
-    )
+    pre_train_env = gym.wrappers.TimeLimit(pre_train_env, max_episode_steps=max_steps)
     pre_train_env = Monitor(pre_train_env)
 
-    eval_env = gym.wrappers.TimeLimit(
-        eval_env, max_episode_steps=params["max_episode_steps"]
-    )
+    eval_env = gym.wrappers.TimeLimit(eval_env, max_episode_steps=max_steps)
     eval_env = Monitor(eval_env)
 
     return env, eval_env, pre_train_env, single_env
 
 
-def generate_paths(params):
+def generate_paths(paths_cfg):
     time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
     path_nns = os.path.normpath(os.path.join(PROJECT_ROOT, "data", "neural_networks"))
 
     # Handle both absolute and relative paths for output_dir
-    output_base = params["output_dir"]
+    output_base = paths_cfg["output_dir"]
     if not os.path.isabs(output_base):
         output_base = os.path.join(PROJECT_ROOT, output_base)
     path_output = os.path.normpath(
@@ -63,7 +59,7 @@ def generate_paths(params):
 
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbr_polar_model"))
     os.makedirs(path_output, exist_ok=True)
-    params["output_dir_specific"] = path_output
+    paths_cfg["output_dir_specific"] = path_output
 
     # make a subdir for checkpoints
     path_checkpoints = os.path.normpath(os.path.join(path_output, "checkpoints"))

@@ -8,7 +8,6 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 from core.ephemeris_v2 import Ephemeris_v2 as Ephemeris
 from core.process_single_trajectory import process_single_trajectory
 from stable_baselines3 import SAC as SB3_SAC
-from stable_baselines3.common.callbacks import CallbackList, EvalCallback
 from utils.config_utils import load_config, write_config_sources
 from utils.env_utils import gen_rl_environment
 from utils.eval_utils import mc_evaluate_agent, plot_log_mc_results
@@ -19,13 +18,10 @@ from utils.log_utils import (
 )
 from utils.plotting_utils import plot_SAC_training_TBR_polar
 from utils.pretrain_utils import generate_env, generate_paths
-from utils.rl_utils import (
-    RewardLoggerCallback,
-    rollout_model,
-)
+from utils.rl_utils import _flatten_config_params, rollout_model
 
 
-def main(params, seed_in=42, config_meta=None):
+def main(config, seed_in=42, config_meta=None):
     os.environ["OMP_NUM_THREADS"] = "1"
     os.environ["OPENBLAS_NUM_THREADS"] = "1"
     os.environ["MKL_NUM_THREADS"] = "1"
@@ -34,23 +30,27 @@ def main(params, seed_in=42, config_meta=None):
 
     random.seed(seed_in)
 
-    # initialize the training and evaluation environments
-    env, eval_env, pre_train_env, single_env = generate_env(params, seed_in)
+    paths_cfg = config["paths"]
+    model_cfg = config["model"]
+    general_cfg = config.get("general", {})
 
-    # paths
-    path_output, path_SAC_model, path_plots = generate_paths(params)
-    params["path_plots"] = path_plots
+    env, _, _, _ = generate_env(config, seed_in)
+
+    path_output, path_SAC_model, path_plots = generate_paths(paths_cfg)
+    paths_cfg["path_plots"] = path_plots
+    flat_params = _flatten_config_params(config)
+    flat_params["path_plots"] = path_plots
 
     # reset the environment
     env.reset()
 
     model = SB3_SAC.load(
-        params["path_SAC_model_load"],
+        paths_cfg["path_SAC_model_load"],
         env=env,
-        device=params.get("eval_device", "cpu"),
+        device=model_cfg.get("eval_device", "cpu"),
         seed=seed_in,
         tensorboard_log=path_output,
-    )  # Use path_output so SB3 creates SAC_1/ subdirectory
+    )
 
     # report number of trainable parameters
     test_log = []
@@ -61,31 +61,19 @@ def main(params, seed_in=42, config_meta=None):
         True,
     )
 
-    callback = RewardLoggerCallback(print_freq=params["print_freq"])
-    # Eval callback: saves best model by mean reward on eval_env
-    eval_callback = EvalCallback(
-        eval_env,
-        best_model_save_path=path_output,
-        log_path=path_output,
-        eval_freq=params["eval_freq"],  # adjust frequency
-        n_eval_episodes=params["n_eval_episodes"],  # episodes per evaluation
-        deterministic=True,
-        render=False,
-        verbose=0,
-    )
-    callback_list = CallbackList([eval_callback, callback])
-
     # optionally generate hamiltonian trajectory
-    if params.get("flag_gen_H_traj", False):
+    ephem_H = None
+
+    if general_cfg.get("flag_gen_H_traj", False):
         test_log = log(
             "Generating Hamiltonian trajectory for comparison...",
             test_log,
             True,
         )
-        params["data_path"] = path_output
-        params["scenario_index"] = 0
-        params["flag_plot_traj"] = False
-        results = process_single_trajectory(params)
+        flat_params["data_path"] = path_output
+        flat_params["scenario_index"] = 0
+        flat_params["flag_plot_traj"] = False
+        results = process_single_trajectory(flat_params)
         ephem_path = results[1]
         ephem_H = Ephemeris()
         try:
@@ -96,17 +84,17 @@ def main(params, seed_in=42, config_meta=None):
                 test_log,
                 True,
             )
-            params["flag_gen_H_traj"] = False
+            general_cfg["flag_gen_H_traj"] = False
 
-    rollout_env = gen_rl_environment(params)
+    rollout_env = gen_rl_environment(config)
     rollout_env.seed(seed_in)
 
-    test_log, eph, rollout_data = rollout_model(rollout_env, params, model, test_log)
+    test_log, eph, rollout_data = rollout_model(rollout_env, config, model, test_log)
 
     # Monte Carlo evaluation
-    mc_results = mc_evaluate_agent(params)
+    mc_results = mc_evaluate_agent(config)
 
-    plot_log_mc_results(mc_results, test_log, params)
+    plot_log_mc_results(mc_results, test_log, config)
 
     (
         arr_episode_numbers,
@@ -124,11 +112,11 @@ def main(params, seed_in=42, config_meta=None):
         rollout_data,
         path_plots,
         eph,
-        params,
+        flat_params,
         rollout_env,
         arr_episode_numbers=arr_episode_numbers,
         arr_episode_rs=arr_episode_rs,
-        ephem_H=ephem_H if params.get("flag_gen_H_traj", False) else None,
+        ephem_H=ephem_H if general_cfg.get("flag_gen_H_traj", False) else None,
     )
 
     env.close()
@@ -146,7 +134,7 @@ def main(params, seed_in=42, config_meta=None):
     write_log_to_file(os.path.join(path_output, "SAC_Training_Log.txt"), test_log)
 
     # write config to output dir
-    write_config_file(params, os.path.join(path_output, "SAC_Training_Config.txt"))
+    write_config_file(flat_params, os.path.join(path_output, "SAC_Training_Config.txt"))
 
     if config_meta:
         write_config_sources(config_meta, Path(path_output))
@@ -162,6 +150,6 @@ if __name__ == "__main__":
         "training.toml",
     ]
     experiment_file = "experiments/eval_default.toml"
-    params, meta = load_config(base_files=base_files, experiment_file=experiment_file)
+    config, meta = load_config(base_files=base_files, experiment_file=experiment_file)
 
-    main(params, seed_in=0, config_meta=meta)
+    main(config, seed_in=0, config_meta=meta)

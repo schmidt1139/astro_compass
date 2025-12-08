@@ -1,22 +1,101 @@
 import os
-from turtle import done
-from core.spacecraft import Spacecraft
-from StateVectorUtilities import cartesian_to_polar
-from core.ephemeris_v2 import Ephemeris_v2
+from concurrent.futures import ProcessPoolExecutor, as_completed
+
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
+from constants.constants import Constants
 from core.ephemeris_v2 import Ephemeris_v2
+from core.spacecraft import Spacecraft
 from core.training_data_generation import read_ephems_from_dir
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.evaluation import evaluate_policy
 from StateVectorUtilities import cartesian_to_polar
 from tqdm import tqdm
-from constants.constants import Constants
 from utils.log_utils import log
 from utils.plotting_utils import SACRolloutData_TBR_polar
-from utils.state_vector_utils import convert_alpha_from_cart_to_fpa, convert_attitude_from_cartesian_to_radial
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from utils.state_vector_utils import convert_attitude_from_cartesian_to_radial
+
+
+def _flatten_config_params(params_or_config):
+    """Normalize nested config dicts into the flat structure expected by legacy helpers."""
+
+    if params_or_config is None:
+        return {}
+
+    if "environment" not in params_or_config:
+        return params_or_config
+
+    cfg = params_or_config
+    env_cfg = cfg["environment"]
+    reward_cfg = env_cfg.get("reward", {})
+    general_cfg = cfg.get("general", {})
+    training_cfg = cfg.get("training", {})
+    model_cfg = cfg.get("model", {})
+    paths_cfg = cfg.get("paths", {})
+    eval_cfg = cfg.get("eval", {})
+    vec_cfg = env_cfg.get("vectorization", {})
+
+    flat = {}
+    flat.update(reward_cfg)
+    flat.update(training_cfg)
+    flat.update(general_cfg)
+    flat.update(eval_cfg)
+
+    flat.update(
+        {
+            "env_type": env_cfg["env_type"],
+            "mu": env_cfg["mu"],
+            "max_T": env_cfg["max_T"],
+            "ISP": env_cfg["ISP"],
+            "l_star": env_cfg["l_star"],
+            "m_star": env_cfg["m_star"],
+            "t_star": env_cfg["t_star"],
+            "g0": env_cfg.get("g0", 9.80665),
+            "env_step_size": env_cfg["env_step_size"],
+            "num_vec_envs": vec_cfg.get("num_vec_envs", 1),
+            "cores": general_cfg.get("cores", vec_cfg.get("cores", 1)),
+        }
+    )
+
+    flat.update(
+        {
+            "path_training_data": paths_cfg.get("path_training_data"),
+            "path_replay_buffer": paths_cfg.get("path_replay_buffer"),
+            "path_SAC_model_load": paths_cfg.get("path_SAC_model_load"),
+            "path_SAC_model_save": paths_cfg.get("path_SAC_model_save"),
+            "path_plots": paths_cfg.get("path_plots"),
+            "output_dir": paths_cfg.get(
+                "output_dir_specific", paths_cfg.get("output_dir")
+            ),
+            "tb_log_name": paths_cfg.get(
+                "tb_log_name", training_cfg.get("tb_log_name")
+            ),
+        }
+    )
+
+    flat.update(
+        {
+            "learning_rate": model_cfg.get("learning_rate"),
+            "tau": model_cfg.get("tau"),
+            "train_freq": training_cfg.get(
+                "train_freq", model_cfg.get("train_freq", 1)
+            ),
+            "train_freq_unit": training_cfg.get(
+                "train_freq_unit", model_cfg.get("train_freq_unit", "step")
+            ),
+            "gradient_steps": training_cfg.get(
+                "gradient_steps", model_cfg.get("gradient_steps", 1)
+            ),
+            "learning_starts": model_cfg.get("learning_starts", 50000),
+            "nn_arch_type": model_cfg.get("nn_arch_type", "default"),
+            "net_arch": model_cfg.get("net_arch", [256, 256]),
+            "eval_device": model_cfg.get("eval_device", "cpu"),
+        }
+    )
+
+    return flat
+
 
 def log_training_perf(
     test_log, callback, eval_callback, model, training_steps, flag_verbose
@@ -280,6 +359,8 @@ class RewardLoggerCallback(BaseCallback):
 
 
 def pre_train(test_log, model, params, env):
+    params = _flatten_config_params(params)
+
     test_log = log("Pre-training networks...", test_log, True)
     test_log = log(
         "Replay buffer type: " + str(type(model.replay_buffer)), test_log, True
@@ -369,7 +450,9 @@ def pre_train(test_log, model, params, env):
             )
 
     else:
-        test_log = log("Buffer read in from: " + params["path_replay_buffer"], test_log, True)
+        test_log = log(
+            "Buffer read in from: " + params["path_replay_buffer"], test_log, True
+        )
 
     test_log = log(
         "Updated experience buffer size: " + str(model.replay_buffer.size()),
@@ -487,7 +570,9 @@ def import_training_into_replay_buffer_v2(
 
     # optionally save the updated replay buffer to disk when complete
     if params.get("save_pre_training_only_replay_buffer", False):
-        path_replay_buffer = os.path.join(params["output_dir_specific"], "replay_buffer_pre_training_only.pkl")
+        path_replay_buffer = os.path.join(
+            params["output_dir_specific"], "replay_buffer_pre_training_only.pkl"
+        )
         model.save_replay_buffer(path_replay_buffer)
         test_log = log(f"Replay buffer saved to {path_replay_buffer}", test_log, True)
 
@@ -565,7 +650,9 @@ def train_on_replay_buffer(model, params, test_log, env):
     gradient_batch_size = params.get("gradient_batch_size", 100)
 
     # Train the networks by sampling from replay buffer
-    for step in tqdm(range(0, num_gradient_steps, gradient_batch_size), desc="Pre-training batches"):
+    for step in tqdm(
+        range(0, num_gradient_steps, gradient_batch_size), desc="Pre-training batches"
+    ):
         # This performs multiple gradient updates on actor and critic networks at once
         steps_to_train = min(gradient_batch_size, num_gradient_steps - step)
         model.train(gradient_steps=steps_to_train)
@@ -618,7 +705,6 @@ def train_on_replay_buffer(model, params, test_log, env):
             tqdm.write(
                 f"Evaluation after {step} steps: Mean Reward: {mean_reward:.2f} +/- {std_reward:.2f}"
             )
-
 
             if mean_reward >= max(mean_rewards, default=-np.inf):
                 path = os.path.join(params["output_dir_specific"], "checkpoints")
@@ -700,7 +786,9 @@ def package_ephem_state_into_polar_SART(
         )
 
     # Convert alpha_x, alpha_y to flight path angle components
-    alpha_vr, alpha_theta = convert_attitude_from_cartesian_to_radial(x, y, alpha_x, alpha_y)
+    alpha_vr, alpha_theta = convert_attitude_from_cartesian_to_radial(
+        x, y, alpha_x, alpha_y
+    )
 
     # Action in terms of (u, alpha_cos_fpa, alpha_sin_fpa)
     action = np.array([u, alpha_vr, alpha_theta], dtype=np.float32)
@@ -762,6 +850,7 @@ def package_ephem_state_into_cart_SART(
 
 
 def rollout_model(env, params, model, test_log):
+    params = _flatten_config_params(params)
 
     flag_report_live = params.get("flag_report_live", False)
 
@@ -779,7 +868,6 @@ def rollout_model(env, params, model, test_log):
     truncated = False
 
     while flag_continue:
-
         # step the env
         action, _states = model.predict(obs, deterministic=True)
         unwrapped_env = env.unwrapped
@@ -787,7 +875,6 @@ def rollout_model(env, params, model, test_log):
         throttle = action[0]
         alpha_fpa_cos = action[1]
         alpha_fpa_sin = action[2]
-
 
         # dim state
         t_i = info["Elapsed time"]
@@ -840,8 +927,6 @@ def rollout_model(env, params, model, test_log):
 
         obs, reward, done, truncated, info = env.step(action)
         state_cart = env.get_cartesian_state()
-
-        
 
         # get relevant information
         pos_reward = info["pos_reward"]
@@ -911,9 +996,49 @@ def rollout_model(env, params, model, test_log):
     return test_log, eph, rollout_data
 
 
-def import_training_into_replay_buffer_v3(
-    set_ephems, test_log, model, env, params
-):
+def _normalize_replay_buffer_params(params_or_config):
+    """
+    Convert nested config dicts into the flat parameter structure expected by the
+    replay buffer import helpers. If params are already flat, pass through.
+    """
+
+    if params_or_config is None:
+        return {}
+
+    if "environment" not in params_or_config:
+        return params_or_config
+
+    config = params_or_config
+    env_cfg = config["environment"]
+    reward_cfg = env_cfg.get("reward", {})
+    general_cfg = config.get("general", {})
+    training_cfg = config.get("training", {})
+    vector_cfg = env_cfg.get("vectorization", {})
+
+    params = {
+        "env_type": env_cfg["env_type"],
+        "l_star": env_cfg["l_star"],
+        "m_star": env_cfg["m_star"],
+        "t_star": env_cfg["t_star"],
+        "max_T": env_cfg["max_T"],
+        "ISP": env_cfg["ISP"],
+        "env_step_size": env_cfg["env_step_size"],
+        "ephem_step_size": general_cfg.get(
+            "ephem_step_size", env_cfg.get("env_step_size", 1)
+        ),
+        "cores": general_cfg.get("cores", vector_cfg.get("cores", 1)),
+        "flag_hyperbolic_termination": reward_cfg.get(
+            "flag_hyperbolic_termination", False
+        ),
+    }
+
+    params.update(reward_cfg)
+    params.update(training_cfg)
+
+    return params
+
+
+def import_training_into_replay_buffer_v3(set_ephems, test_log, model, env, params):
     """
     Import training data from ephemeris v3.0 files into the replay buffer.
     Handles 10-dimensional observation space (x, y, vx, vy, m, x_t, y_t, vx_t, vy_t, ttg).
@@ -923,20 +1048,26 @@ def import_training_into_replay_buffer_v3(
     Assumes ephemeris v3.0 format, which contains a moving target with full state info.
     """
     from tqdm import tqdm
-    
+
+    params = _normalize_replay_buffer_params(params)
+
     test_log = log("Importing training data (v3.0) into replay buffer", test_log, True)
 
     cores = params.get("cores", 1)
 
-    
     batches = []
     with ProcessPoolExecutor(max_workers=cores) as executor:
-        futures = [executor.submit(extract_experiences_from_ephem, eph, params) for eph in set_ephems]
+        futures = [
+            executor.submit(extract_experiences_from_ephem, eph, params)
+            for eph in set_ephems
+        ]
         for f in tqdm(as_completed(futures), total=len(futures)):
             batches.append(f.result())
 
     # Now add all experiences to replay buffer in batches
-    for obs_batch, action_batch, reward_batch, next_obs_batch, done_batch in tqdm(batches, total=len(batches), desc="Adding experiences to replay buffer"):
+    for obs_batch, action_batch, reward_batch, next_obs_batch, done_batch in tqdm(
+        batches, total=len(batches), desc="Adding experiences to replay buffer"
+    ):
         batch_size = obs_batch.shape[0]
         for i in range(batch_size):
             add_experience_to_replay_buffer(
@@ -945,17 +1076,18 @@ def import_training_into_replay_buffer_v3(
                 action_batch[i],
                 reward_batch[i],
                 next_obs_batch[i],
-                done_batch[i]
+                done_batch[i],
             )
 
-    #report updated buffer size
-    test_log = log( 
-        f"Updated experience buffer size: " + str(model.replay_buffer.size()), test_log, True
+    # report updated buffer size
+    test_log = log(
+        "Updated experience buffer size: " + str(model.replay_buffer.size()),
+        test_log,
+        True,
     )  # current number of transitions
 
 
 def extract_experiences_from_ephem(eph, params):
-
     # Step through ephem and gather observations, actions, rewards, next_obs, dones
     obs_batch = []
     action_batch = []
@@ -965,36 +1097,43 @@ def extract_experiences_from_ephem(eph, params):
 
     num_steps_per_SART = params["ephem_step_size"]
 
-
     # Only add every num_steps_per_SART-th vector
-    for i in range(0, eph.num_vectors - 1, num_steps_per_SART):  # -1 to ensure we have next_obs
+    for i in range(
+        0, eph.num_vectors - 1, num_steps_per_SART
+    ):  # -1 to ensure we have next_obs
         state_vec = eph.get_vector_at_index(i)
 
         env_type = params["env_type"]
 
         # unpack state
         t = state_vec[0]
-        current_state = state_vec[1:6] # x, y, vx, vy, m
-        target_state = state_vec[6:10] # x_t, y_t, vx, vy
+        current_state = state_vec[1:6]  # x, y, vx, vy, m
+        target_state = state_vec[6:10]  # x_t, y_t, vx, vy
         ttg = state_vec[10]
         alpha_x = state_vec[11]
         alpha_y = state_vec[12]
         u = state_vec[13]
 
         # compute polar observation
-        obs, _ = create_relative_polar_observation_fast(params, current_state, target_state, ttg)
+        obs, _ = create_relative_polar_observation_fast(
+            params, current_state, target_state, ttg
+        )
 
         # polar action
         # Convert alpha_x, alpha_y to polar form
         x = current_state[0]
         y = current_state[1]
-        alpha_vr, alpha_theta = convert_attitude_from_cartesian_to_radial(x, y, alpha_x, alpha_y)
+        alpha_vr, alpha_theta = convert_attitude_from_cartesian_to_radial(
+            x, y, alpha_x, alpha_y
+        )
         action = np.array([u, alpha_vr, alpha_theta], dtype=np.float32)
         u = action[0]
 
         # compute the reward
-        reward, terminated, truncated, _ = compute_reward_fast(params, current_state, ttg, target_state, u)
-        
+        reward, terminated, truncated, _ = compute_reward_fast(
+            params, current_state, ttg, target_state, u
+        )
+
         # check if terminal
         done = terminated or truncated
 
@@ -1007,7 +1146,9 @@ def extract_experiences_from_ephem(eph, params):
             next_current_state = next_state_vec[1:6]
             next_target_state = next_state_vec[6:10]
             next_ttg = next_state_vec[10]
-            next_obs, _ = create_relative_polar_observation_fast(params, next_current_state, next_target_state, next_ttg)
+            next_obs, _ = create_relative_polar_observation_fast(
+                params, next_current_state, next_target_state, next_ttg
+            )
 
         obs_batch.append(obs)
         action_batch.append(action)
@@ -1015,25 +1156,27 @@ def extract_experiences_from_ephem(eph, params):
         next_obs_batch.append(next_obs)
         done_batch.append(done)
 
-    #update the last done to be terminal
+    # update the last done to be terminal
     if len(done_batch) > 0:
         done_batch[-1] = True
 
     # After the loop, before buffer import:
-    obs_batch = np.stack(obs_batch)           # shape (N, obs_dim)
-    action_batch = np.stack(action_batch)     # shape (N, action_dim)
-    reward_batch = np.array(reward_batch).reshape(-1, 1)   # shape (N, 1)
-    next_obs_batch = np.stack(next_obs_batch) # shape (N, obs_dim)
-    done_batch = np.array(done_batch).reshape(-1, 1)       # shape (N, 1)
+    obs_batch = np.stack(obs_batch)  # shape (N, obs_dim)
+    action_batch = np.stack(action_batch)  # shape (N, action_dim)
+    reward_batch = np.array(reward_batch).reshape(-1, 1)  # shape (N, 1)
+    next_obs_batch = np.stack(next_obs_batch)  # shape (N, obs_dim)
+    done_batch = np.array(done_batch).reshape(-1, 1)  # shape (N, 1)
 
     return obs_batch, action_batch, reward_batch, next_obs_batch, done_batch
 
-def create_relative_polar_observation_fast(params, current_state_t, target_state_t, TTG):
 
+def create_relative_polar_observation_fast(
+    params, current_state_t, target_state_t, TTG
+):
     l_star = params["l_star"]
     t_star = params["t_star"]
     m_star = params["m_star"]
-    
+
     x_current_nd = current_state_t[0] / l_star
     y_current_nd = current_state_t[1] / l_star
     vx_current_nd = current_state_t[2] / (l_star / t_star)
@@ -1046,30 +1189,34 @@ def create_relative_polar_observation_fast(params, current_state_t, target_state
     vy_target_nd = target_state_t[3] / (l_star / t_star)
 
     TTG_nd = TTG / t_star
-    
-    # convert to polar coordinates
-    r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0 = cartesian_to_polar(x_current_nd, y_current_nd, vx_current_nd, vy_current_nd)
 
-    r_nd_target, eta_nd_target, v_r_nd_target, v_eta_nd_target = cartesian_to_polar(x_target_nd, y_target_nd, vx_target_nd, vy_target_nd)
+    # convert to polar coordinates
+    r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0 = cartesian_to_polar(
+        x_current_nd, y_current_nd, vx_current_nd, vy_current_nd
+    )
+
+    r_nd_target, eta_nd_target, v_r_nd_target, v_eta_nd_target = cartesian_to_polar(
+        x_target_nd, y_target_nd, vx_target_nd, vy_target_nd
+    )
 
     cos_eta = np.cos(eta_nd_0)
     sin_eta = np.sin(eta_nd_0)
     cos_eta_target = np.cos(eta_nd_target)
     sin_eta_target = np.sin(eta_nd_target)
 
-    #determine angular momentum
+    # determine angular momentum
     h_nd_0 = r_nd_0 * v_eta_nd_0
     h_nd_target = r_nd_target * v_eta_nd_target
     # total velocity magnitudes
-    v_comp = ( vx_current_nd**2 + vy_current_nd**2 ) ** 0.5
-    v_comp_target = ( vx_target_nd**2 + vy_target_nd**2 ) ** 0.5
+    v_comp = (vx_current_nd**2 + vy_current_nd**2) ** 0.5
+    v_comp_target = (vx_target_nd**2 + vy_target_nd**2) ** 0.5
 
     # transpose velocites
     v_t_nd = h_nd_0 / r_nd_0
     v_t_target_nd = h_nd_target / r_nd_target
 
-    v_r_nd = ( max(v_comp**2 - v_t_nd**2, 1e-6) ) ** 0.5
-    v_r_target_nd = ( max(v_comp_target**2 - v_t_target_nd**2, 1e-6) ) ** 0.5
+    v_r_nd = (max(v_comp**2 - v_t_nd**2, 1e-6)) ** 0.5
+    v_r_target_nd = (max(v_comp_target**2 - v_t_target_nd**2, 1e-6)) ** 0.5
 
     v_r_unit = v_r_nd / v_comp if v_comp != 0 else 0.0
     v_t_unit = v_t_nd / v_comp if v_comp != 0 else 0.0
@@ -1084,44 +1231,43 @@ def create_relative_polar_observation_fast(params, current_state_t, target_state
     delta_v_r = v_r_target_unit - v_r_unit
     delta_v_t = v_t_target_unit - v_t_unit
 
-    
     polar_observation = np.array(
-            [
-                # Spherical Position SC
-                r_nd_0, #0
-                cos_eta, #1
-                sin_eta, #2
-                 # Spherical Position Planet
-                r_nd_target, #3
-                cos_eta_target, #4
-                sin_eta_target, #5
-                 # Cartesian Position SC
-                x_current_nd, #6
-                y_current_nd, #7
-                vx_current_nd, #8
-                vy_current_nd, #9
-                 # Cartesian Position Planet
-                x_target_nd, #10
-                y_target_nd, #11
-                vx_target_nd, #12
-                vy_target_nd, #13
-                 # Differences Cartesian
-                x_target_nd - x_current_nd, #14
-                y_target_nd - y_current_nd, #15
-                vx_target_nd - vx_current_nd, #16
-                vy_target_nd - vy_current_nd, #17
-                # Differences Magnitudes
-                r_nd_target - r_nd_0, #18
-                v_comp_target - v_comp, #19
-                # Time to Go
-                TTG_nd, #20
-                mass_current_nd #21
-             ],
-             dtype=np.float32,
+        [
+            # Spherical Position SC
+            r_nd_0,  # 0
+            cos_eta,  # 1
+            sin_eta,  # 2
+            # Spherical Position Planet
+            r_nd_target,  # 3
+            cos_eta_target,  # 4
+            sin_eta_target,  # 5
+            # Cartesian Position SC
+            x_current_nd,  # 6
+            y_current_nd,  # 7
+            vx_current_nd,  # 8
+            vy_current_nd,  # 9
+            # Cartesian Position Planet
+            x_target_nd,  # 10
+            y_target_nd,  # 11
+            vx_target_nd,  # 12
+            vy_target_nd,  # 13
+            # Differences Cartesian
+            x_target_nd - x_current_nd,  # 14
+            y_target_nd - y_current_nd,  # 15
+            vx_target_nd - vx_current_nd,  # 16
+            vy_target_nd - vy_current_nd,  # 17
+            # Differences Magnitudes
+            r_nd_target - r_nd_0,  # 18
+            v_comp_target - v_comp,  # 19
+            # Time to Go
+            TTG_nd,  # 20
+            mass_current_nd,  # 21
+        ],
+        dtype=np.float32,
     )
-    
+
     env_data = {
-        "arr_r_polar_nd": [r_nd_0, eta_nd_0], 
+        "arr_r_polar_nd": [r_nd_0, eta_nd_0],
         "arr_v_polar_nd": [v_r_nd_0, v_eta_nd_0],
         "arr_rf_polar_nd": [r_nd_target, eta_nd_target],
         "arr_vf_polar_nd": [v_r_nd_target, v_eta_nd_target],
@@ -1138,18 +1284,17 @@ def create_relative_polar_observation_fast(params, current_state_t, target_state
         "v_r_target_unit": v_r_target_unit,
         "v_t_target_unit": v_t_target_unit,
         "v_current_nd": v_comp,
-        "v_target_nd": v_comp_target
+        "v_target_nd": v_comp_target,
     }
-    
+
     return polar_observation, env_data
 
 
 def compute_obs_fast_TBT(state, params, ttg):
-
     l_star = params["l_star"]
     t_star = params["t_star"]
     m_star = params["m_star"]
-    
+
     x_current_nd = state[0] / l_star
     y_current_nd = state[1] / l_star
     vx_current_nd = state[2] / (l_star / t_star)
@@ -1161,33 +1306,37 @@ def compute_obs_fast_TBT(state, params, ttg):
     vx_target_nd = state[7] / (l_star / t_star)
     vy_target_nd = state[8] / (l_star / t_star)
 
-    r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0 = cartesian_to_polar(x_current_nd, y_current_nd, vx_current_nd, vy_current_nd)
-    r_nd_target, eta_nd_target, v_r_nd_target, v_eta_nd_target = cartesian_to_polar(x_target_nd, y_target_nd, vx_target_nd, vy_target_nd)
-    
+    r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0 = cartesian_to_polar(
+        x_current_nd, y_current_nd, vx_current_nd, vy_current_nd
+    )
+    r_nd_target, eta_nd_target, v_r_nd_target, v_eta_nd_target = cartesian_to_polar(
+        x_target_nd, y_target_nd, vx_target_nd, vy_target_nd
+    )
+
     cos_eta = np.cos(eta_nd_0)
     sin_eta = np.sin(eta_nd_0)
 
     ttg_nd = ttg / t_star
 
     polar_observation = np.array(
-            [ 
-                # Spherical Position SC
-                r_nd_0, #0
-                cos_eta, #1
-                sin_eta, #2
-                v_r_nd_0, #3
-                v_eta_nd_0, #4
-                mass_current_nd, #5
-                r_nd_target, #6
-                v_r_nd_target, #7
-                v_eta_nd_target, #8
-                ttg_nd #9
-             ],
-             dtype=np.float32,
+        [
+            # Spherical Position SC
+            r_nd_0,  # 0
+            cos_eta,  # 1
+            sin_eta,  # 2
+            v_r_nd_0,  # 3
+            v_eta_nd_0,  # 4
+            mass_current_nd,  # 5
+            r_nd_target,  # 6
+            v_r_nd_target,  # 7
+            v_eta_nd_target,  # 8
+            ttg_nd,  # 9
+        ],
+        dtype=np.float32,
     )
 
     env_data = {
-        "arr_r_polar_nd": [r_nd_0, eta_nd_0], 
+        "arr_r_polar_nd": [r_nd_0, eta_nd_0],
         "arr_v_polar_nd": [v_r_nd_0, v_eta_nd_0],
         "arr_rf_polar_nd": [r_nd_target, eta_nd_target],
         "arr_vf_polar_nd": [v_r_nd_target, v_eta_nd_target],
@@ -1197,8 +1346,16 @@ def compute_obs_fast_TBT(state, params, ttg):
 
     return polar_observation, env_data
 
-def compute_reward_fast(params, current_state_t, TTG, target_state_t, u, step_count=0, timesteps_in_prop=1000):
 
+def compute_reward_fast(
+    params,
+    current_state_t,
+    TTG,
+    target_state_t,
+    u,
+    step_count=0,
+    timesteps_in_prop=1000,
+):
     # non-dimensionalize states
     x_nd = current_state_t[0] / params["l_star"]
     y_nd = current_state_t[1] / params["l_star"]
@@ -1215,13 +1372,20 @@ def compute_reward_fast(params, current_state_t, TTG, target_state_t, u, step_co
     mass = current_state_t[4] / params["m_star"]
 
     # extract orbital elements
-    r_0, eta_0, v_r_0, v_eta_0 = cartesian_to_polar(current_state_t[0], current_state_t[1], current_state_t[2], current_state_t[3])
-
+    r_0, eta_0, v_r_0, v_eta_0 = cartesian_to_polar(
+        current_state_t[0], current_state_t[1], current_state_t[2], current_state_t[3]
+    )
 
     sc = Spacecraft(
         r_0, eta_0, v_r_0, v_eta_0, current_state_t[4], params["max_T"], params["ISP"]
     )
-    sc.update_state_cartesian(current_state_t[0], current_state_t[1], current_state_t[2], current_state_t[3], current_state_t[4])
+    sc.update_state_cartesian(
+        current_state_t[0],
+        current_state_t[1],
+        current_state_t[2],
+        current_state_t[3],
+        current_state_t[4],
+    )
     arr_OE = sc.calc_Planar_OE(0.0, 0.0, 0.0, 0.0, Constants.MU_SUN_M)
     e = arr_OE[1]
 
@@ -1245,7 +1409,7 @@ def compute_reward_fast(params, current_state_t, TTG, target_state_t, u, step_co
     vel_reward = (-1 + vel_reward) * params["vel_r_weight"]
 
     # ttg weighting
-    time_weight = np.exp(-params["time_dist_weight"] * TTG_nd**2 )
+    time_weight = np.exp(-params["time_dist_weight"] * TTG_nd**2)
     pos_reward *= time_weight
     vel_reward *= time_weight
 
@@ -1271,7 +1435,7 @@ def compute_reward_fast(params, current_state_t, TTG, target_state_t, u, step_co
         reward -= 10.0
         terminated = True
 
-    if (params.get("flag_hyperbolic_termination", False)):
+    if params.get("flag_hyperbolic_termination", False):
         if eccentricity_exceeded:
             reward -= 100.0
             terminated = True
@@ -1284,7 +1448,7 @@ def compute_reward_fast(params, current_state_t, TTG, target_state_t, u, step_co
         # Nothing good or bad assigned to this
         truncated = True
 
-    #pack additional env info
+    # pack additional env info
     env_info = {
         "pos_residual": d_r_nd,
         "vel_residual": d_v_nd,
@@ -1293,14 +1457,13 @@ def compute_reward_fast(params, current_state_t, TTG, target_state_t, u, step_co
         "pos_r_component": pos_reward,
         "vel_r_component": vel_reward,
         "terminated": terminated,
-        "truncated": truncated
+        "truncated": truncated,
     }
 
     return reward, terminated, truncated, env_info
 
 
 def compute_reward_fast_TBT(state, params, u, TTG):
-
     # non-dimensionalize states
     x_nd = state[0] / params["l_star"]
     y_nd = state[1] / params["l_star"]
@@ -1316,19 +1479,23 @@ def compute_reward_fast_TBT(state, params, u, TTG):
     e = params["e"]
 
     # calculate the reward components
-    r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0 = cartesian_to_polar(x_nd, y_nd, vx_nd, vy_nd)
-    r_nd_target, eta_nd_target, v_r_nd_target, v_eta_nd_target = cartesian_to_polar(x_target_nd, y_target_nd, vx_target_nd, vy_target_nd)
+    r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0 = cartesian_to_polar(
+        x_nd, y_nd, vx_nd, vy_nd
+    )
+    r_nd_target, eta_nd_target, v_r_nd_target, v_eta_nd_target = cartesian_to_polar(
+        x_target_nd, y_target_nd, vx_target_nd, vy_target_nd
+    )
 
     episode_timeout = TTG <= 0.0
 
     terminated = False
     truncated = False
 
-    if ( r_nd_0 < 0.01 ):
+    if r_nd_0 < 0.01:
         reward = 0.0
         terminated = True
         truncated = False
-    elif ( e >= 1.0 ):
+    elif e >= 1.0:
         reward = 0.0
         terminated = True
         truncated = False
