@@ -1,0 +1,24 @@
+# Training defaults for SAC agent
+
+[training]
+pre_train_networks = true
+save_pre_training_only_replay_buffer = true
+save_final_replay_buffer = true
+read_replay_buffer = true
+load_model_checkpoint = false
+eval_freq = 500
+training_steps = 1600
+pretrain_gradient_steps = 5000
+n_eval_episodes = 3
+print_freq = 2000
+buffer_size = 200000
+num_ephems_to_use = 1000
+batch_size = 256
+pt_log_interval = 2000
+t_log_interval = 2000
+loss_report_rate = 10
+checkpoint_freq = 1000
+flag_checkpoint_replay_buffer = true
+n_freq_checkpoint_replay_buffer = 100
+train_freq = 1
+train_freq_unit = "step"

@@ -1,0 +1,13 @@
+# Model defaults
+
+[model]
+learning_rate = 0.0003
+tau = 0.005
+train_freq = 1
+train_freq_unit = "step"
+gradient_steps = 1
+max_grad_norm = 0.5
+nn_arch_type = "custom"
+net_arch = [256, 256]
+eval_device = "cuda"
+learning_starts = 50000

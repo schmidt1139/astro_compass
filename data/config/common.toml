@@ -1,0 +1,25 @@
+# Shared defaults used by all Astro Compass pipelines
+
+[paths]
+tb_log_name = "SAC_TBR_training"
+output_dir = "data/output"
+path_training_data = "data/pre-training-data/training-TBR-circular"
+path_replay_buffer = "data/output/replay_buffer.pkl"
+path_SAC_model_load = ""
+path_SAC_model_save = "data/output/sac_model_final.zip"
+
+[general]
+ephem_version = 2.0
+ephem_step_size = 70
+flag_gen_H_traj = false
+seed_traj = 48
+flag_report_live = true
+eps_threshold = 0.1
+init_costate_guesses = 32
+root_max_iters = 10000
+timeout_per_trajectory = 600
+gamma = 0.5
+flag_debug_h_targeter = false
+
+[eval]
+num_rollouts = 100

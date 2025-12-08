@@ -1,0 +1,20 @@
+# Default experiment for training the SAC agent
+
+[overwrite.paths]
+path_training_data = "data/pre-training-data/training-TBR-circular"
+path_replay_buffer = "data/output/replay_buffer.pkl"
+path_SAC_model_load = "data/output/best_model.zip"
+
+[overwrite.training]
+training_steps = 1600
+pretrain_gradient_steps = 5000
+batch_size = 256
+buffer_size = 200000
+read_replay_buffer = false
+load_model_checkpoint = false
+save_final_replay_buffer = false
+flag_checkpoint_replay_buffer = true
+n_freq_checkpoint_replay_buffer = 100
+
+[overwrite.general]
+ephem_version = 2.0

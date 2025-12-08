@@ -1,0 +1,20 @@
+# Default experiment for evaluation runs
+
+[overwrite.paths]
+path_training_data = "data/pre-training-data/training-TBR-overfit"
+path_replay_buffer = "data/output/replay_buffer.pkl"
+path_SAC_model_load = "data/output/sac_model_final.zip"
+
+[overwrite.training]
+training_steps = 10000
+pretrain_gradient_steps = 5000
+batch_size = 256
+buffer_size = 200000
+read_replay_buffer = true
+load_model_checkpoint = true
+save_final_replay_buffer = false
+flag_checkpoint_replay_buffer = false
+
+[overwrite.general]
+ephem_version = 2.0
+flag_gen_H_traj = true

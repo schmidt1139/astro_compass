@@ -1,0 +1,17 @@
+# Pretraining-focused defaults (heavier pretrain gradients, buffers)
+
+[training]
+training_steps = 10000
+pretrain_gradient_steps = 100000
+batch_size = 1000
+pt_log_interval = 10000
+t_log_interval = 2000
+checkpoint_freq = 10000
+buffer_size = 200000
+num_ephems_to_use = 1000
+read_replay_buffer = true
+save_final_replay_buffer = true
+save_pre_training_only_replay_buffer = true
+
+[general]
+ephem_version = 3.0
