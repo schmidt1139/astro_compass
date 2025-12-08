@@ -1,17 +1,37 @@
 import os
 import sys
 
-# CRITICAL: Set thread limits BEFORE any other imports to prevent resource exhaustion on shared systems
+import matplotlib
+from test_datagen_Hamiltonian_TBR_controller_parallel import (
+    test_datagen_Hamiltonian_TBR_parallel,
+)
+from test_datagen_Hamiltonian_TBR_controller_parallel_hard import (
+    test_datagen_Hamiltonian_TBR_parallel_hard,
+)
+from test_env_step_no_action import test_env_step_no_action
+from test_env_step_with_action import test_env_step_with_action
+from test_env_step_with_nn_action import test_env_step_with_nn_action
+from test_evaluate_agent_smoke import test_evaluate_agent_smoke
+from test_fast_replay_buffer_seeding import test_fast_replay_buffer_seeding
+from test_generate_buffer_smoke import test_generate_buffer_smoke
+from test_Hamiltonian_TBR_controller import test_Hamiltonian_TBR_Controller
+from test_Hamiltonians import test_Hamiltonians
+from test_pre_train_agent_smoke import test_pre_train_agent_smoke
+from test_SAC_training import test_SAC_training
+from test_seeded_SAC_training import test_seeded_SAC_training
+from test_TBR_env import test_TBR_env
+from test_TBR_polar_env import test_TBR_polar_env
+from test_train_agent_smoke import test_train_agent_smoke
+from utils.path_utils import PROJECT_ROOT, ensure_repo_paths_on_sys_path
+
+# CRITICAL: Set thread limits BEFORE heavy compute
 os.environ["OMP_NUM_THREADS"] = "4"
 os.environ["MKL_NUM_THREADS"] = "4"
 os.environ["OPENBLAS_NUM_THREADS"] = "4"
 os.environ["NUMEXPR_NUM_THREADS"] = "4"
 os.environ["PYTHONUNBUFFERED"] = "1"  # Unbuffered output for real-time console feedback
 
-import matplotlib
-
 matplotlib.use("Agg")  # Use non-interactive backend to avoid Tkinter threading issues
-from utils.path_utils import PROJECT_ROOT, ensure_repo_paths_on_sys_path
 
 # Ensure repository paths are available to imports and set working directory
 ensure_repo_paths_on_sys_path()
@@ -22,24 +42,6 @@ print(f"Working directory set to: {os.getcwd()}")
 # Add the tests directory to the path so we can import test modules
 if tests_dir not in sys.path:
     sys.path.insert(0, tests_dir)
-
-# Import test functions WITHOUT the 'tests.' prefix
-from test_datagen_Hamiltonian_TBR_controller_parallel import (
-    test_datagen_Hamiltonian_TBR_parallel,
-)
-from test_datagen_Hamiltonian_TBR_controller_parallel_hard import (
-    test_datagen_Hamiltonian_TBR_parallel_hard,
-)
-from test_env_step_no_action import test_env_step_no_action
-from test_env_step_with_action import test_env_step_with_action
-from test_env_step_with_nn_action import test_env_step_with_nn_action
-from test_fast_replay_buffer_seeding import test_fast_replay_buffer_seeding
-from test_Hamiltonian_TBR_controller import test_Hamiltonian_TBR_Controller
-from test_Hamiltonians import test_Hamiltonians
-from test_SAC_training import test_SAC_training
-from test_seeded_SAC_training import test_seeded_SAC_training
-from test_TBR_env import test_TBR_env
-from test_TBR_polar_env import test_TBR_polar_env
 
 
 def run_regression_tests(flag_report_live=False):
@@ -124,6 +126,38 @@ def run_regression_tests(flag_report_live=False):
     test_num = len(arr_test_names)
     print(f"\n\nRunning Test {test_num}: {test_name}")
     flag_test_pass = test_seeded_SAC_training(flag_report_live)
+    print(f"\n\n{test_name} passed:  ", flag_test_pass)
+    arr_test_pass_bools.append(flag_test_pass)
+
+    test_name = "test_generate_buffer_smoke"
+    arr_test_names.append(test_name)
+    test_num = len(arr_test_names)
+    print(f"\n\nRunning Test {test_num}: {test_name}")
+    flag_test_pass = test_generate_buffer_smoke()
+    print(f"\n\n{test_name} passed:  ", flag_test_pass)
+    arr_test_pass_bools.append(flag_test_pass)
+
+    test_name = "test_pre_train_agent_smoke"
+    arr_test_names.append(test_name)
+    test_num = len(arr_test_names)
+    print(f"\n\nRunning Test {test_num}: {test_name}")
+    flag_test_pass = test_pre_train_agent_smoke()
+    print(f"\n\n{test_name} passed:  ", flag_test_pass)
+    arr_test_pass_bools.append(flag_test_pass)
+
+    test_name = "test_train_agent_smoke"
+    arr_test_names.append(test_name)
+    test_num = len(arr_test_names)
+    print(f"\n\nRunning Test {test_num}: {test_name}")
+    flag_test_pass = test_train_agent_smoke()
+    print(f"\n\n{test_name} passed:  ", flag_test_pass)
+    arr_test_pass_bools.append(flag_test_pass)
+
+    test_name = "test_evaluate_agent_smoke"
+    arr_test_names.append(test_name)
+    test_num = len(arr_test_names)
+    print(f"\n\nRunning Test {test_num}: {test_name}")
+    flag_test_pass = test_evaluate_agent_smoke()
     print(f"\n\n{test_name} passed:  ", flag_test_pass)
     arr_test_pass_bools.append(flag_test_pass)
 
