@@ -89,7 +89,7 @@ eval_device = "cuda"
 tb_log_name = "SAC_TBR_training"
 output_dir = "data/output"
 # Directory containing ephemerides to import (relative to repo root)
-path_training_data = "data/pre-training-data/training-TBR-overfit/ephems"
+path_training_data = "data/pre-training-data/training-TBR-overfit"
 # Output replay buffer path (relative to repo root)
 path_replay_buffer = "data/output/replay_buffer.pkl"
 # Optional: model checkpoint to resume from; leave blank if not used

@@ -82,7 +82,7 @@ def main(params, training_data, seed_in=42):
 
     import_training_into_replay_buffer_v3(set_ephems, test_log, model, env, params)
 
-    path_replay_buffer = os.path.join(path_output, "replay_buffer.pkl")
+    path_replay_buffer = params["path_replay_buffer"]
     model.save_replay_buffer(path_replay_buffer)
 
     test_log = log("Buffer capacity: " + str(buffer_size), test_log, True)
@@ -101,8 +101,6 @@ def main(params, training_data, seed_in=42):
 
 
 if __name__ == "__main__":
-    config_toml = "SAC_training_TBR_polar__JM_config.toml"
-
     config_toml = "gen_buffer_config.toml"
     path_config = os.path.join(PROJECT_ROOT, "data", "config", config_toml)
     params = read_toml_config_file(path_config)

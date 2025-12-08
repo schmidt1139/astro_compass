@@ -90,6 +90,7 @@ def main(params, seed_in=42):
 
     # Save the model
     model.save(path_SAC_model)
+    model.save(params["path_SAC_model_save"])
 
     # copy the config file
     path_config_src = os.path.join(
