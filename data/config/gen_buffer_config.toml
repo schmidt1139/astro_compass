@@ -87,10 +87,13 @@ eval_device = "cuda"
 
 [paths]
 tb_log_name = "SAC_TBR_training"
-output_dir = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\buffer_generation\\"
-path_training_data = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\training_TBR_overfit\\ephems\\"
-path_replay_buffer = "~/Documents/astro_compass/data/pre-training-data/replay_buffers/tbr_overfit/replay_buffer.pkl"
-path_SAC_model_load = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\SAC_Training\\SAC_training_TBR_polar20251127_202634\\best_model.zip"
+output_dir = "data/output"
+# Directory containing ephemerides to import (relative to repo root)
+path_training_data = "data/pre-training-data/training-TBR-overfit/ephems"
+# Output replay buffer path (relative to repo root)
+path_replay_buffer = "data/output/replay_buffer.pkl"
+# Optional: model checkpoint to resume from; leave blank if not used
+path_SAC_model_load = ""
 
 
 [general]
