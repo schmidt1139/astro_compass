@@ -135,7 +135,7 @@ def test_TBR_polar_env(flag_report_live: bool = False):
                 u=action[0],
             )
 
-            '''
+            """
             time, #1
             reward, #2
             throttle, #3
@@ -159,7 +159,7 @@ def test_TBR_polar_env(flag_report_live: bool = False):
             vel_reward, #21
             mass_reward, #22
             throttle_reward, #23
-            '''
+            """
 
             # store the results
             rollout_data.add_step(
@@ -248,8 +248,8 @@ def test_TBR_polar_env(flag_report_live: bool = False):
     else:
         test_log = log("Log file matches truth log file.", test_log, flag_report_live)
 
-
     return flag_test_pass
+
 
 if __name__ == "__main__":
     test_TBR_polar_env(flag_report_live=True)

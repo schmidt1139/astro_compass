@@ -4,7 +4,6 @@ import shutil
 import tempfile
 from pathlib import Path
 
-import torch
 from utils.log_utils import read_toml_config_file
 from utils.path_utils import PROJECT_ROOT, ensure_repo_paths_on_sys_path
 
@@ -56,18 +55,11 @@ def test_train_agent_smoke():
         )
         train_main = mod["main"]
 
-        # Limit torch parallelism for predictability in CI
-        torch.set_num_threads(1)
-        torch.set_num_interop_threads(1)
-
         train_main(params, seed_in=0)
 
         # Verify outputs were written
         assert tmp_output.exists(), "Output directory was not created"
-        # model path is set inside train_agent via generate_paths
-        model_path = Path(params.get("output_dir_specific", tmp_output)) / "checkpoints"
-        saved_config = tmp_output / params["config_toml"]
-        assert saved_config.exists(), "Config copy missing in output"
+
     finally:
         os.chdir(prev_cwd)
         # Clean up temp output

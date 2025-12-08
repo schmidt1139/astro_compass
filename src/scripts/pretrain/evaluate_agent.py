@@ -4,7 +4,6 @@ import random
 # disable cuda
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-import torch
 from core.ephemeris_v2 import Ephemeris_v2 as Ephemeris
 from core.process_single_trajectory import process_single_trajectory
 from stable_baselines3 import SAC as SB3_SAC
@@ -32,8 +31,6 @@ def main(params, seed_in=42):
     os.environ["MKL_NUM_THREADS"] = "1"
     os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
     os.environ["NUMEXPR_NUM_THREADS"] = "1"
-    torch.set_num_threads(1)
-    torch.set_num_interop_threads(1)
 
     random.seed(seed_in)
 
