@@ -1,6 +1,9 @@
 import os
 import random
 
+# disable cuda
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
 import torch
 from core.ephemeris_v2 import Ephemeris_v2 as Ephemeris
 from core.process_single_trajectory import process_single_trajectory
