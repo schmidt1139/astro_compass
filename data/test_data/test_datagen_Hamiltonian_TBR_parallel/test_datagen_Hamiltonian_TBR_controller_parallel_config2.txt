@@ -10,7 +10,7 @@ seed_env_init: 1138347471
 num_trajs: 8
 tof_scales: [1.0]
 tof_weights: [1.0]
-data_path: data\test_data\test_datagen_Hamiltonian_TBR_parallel\
+data_path: data/test_data/test_datagen_Hamiltonian_TBR_parallel/
 eps_threshold: 0.0001
 flag_plot_traj: False
 init_costate_guesses: 4
