@@ -21,6 +21,8 @@ print("GPU available: ", torch.cuda.is_available())
 def main(params, seed_in=42):
     random.seed(seed_in)
 
+    plt.style.use("data/support_files/light_paper.mplstyle")
+
     # initialize the training and evaluation environments
     env, eval_env, pre_train_env, single_env = generate_env(params, seed_in)
 
@@ -76,20 +78,25 @@ def main(params, seed_in=42):
     if hasattr(model, "_logger"):
         delattr(model, "_logger")
 
+    arr_iters = list(range(len(arr_actor_loss_pt)))
+    arr_iters = [x * params["batch_size"] for x in arr_iters]
+
     plt.figure()
     if max(arr_actor_loss_pt) > 0:
-        plt.semilogy(arr_actor_loss_pt, label="Actor Loss")
+        plt.semilogy(arr_iters, arr_actor_loss_pt, label="Actor Loss")
     else:
-        plt.plot(arr_actor_loss_pt, label="Actor Loss")
-    plt.legend()
+        plt.plot(arr_iters, arr_actor_loss_pt, label="Actor Loss")
+    plt.xlabel("Pre-training Steps")
+    plt.ylabel("Actor Loss")
     plt.savefig(os.path.join(path_plots, "pretrain_actor_loss.png"), dpi=300)
 
     plt.figure()
     if max(arr_critic_loss_pt) > 0:
-        plt.semilogy(arr_critic_loss_pt, label="Critic Loss")
+        plt.semilogy(arr_iters, arr_critic_loss_pt, label="Critic Loss")
     else:
-        plt.plot(arr_critic_loss_pt, label="Critic Loss")
-    plt.legend()
+        plt.plot(arr_iters, arr_critic_loss_pt, label="Critic Loss")
+    plt.xlabel("Pre-training Steps")
+    plt.ylabel("Critic Loss")
     plt.savefig(os.path.join(path_plots, "pretrain_critic_loss.png"), dpi=300)
 
     # Save the model

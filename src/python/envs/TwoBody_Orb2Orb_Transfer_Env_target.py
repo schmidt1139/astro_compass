@@ -68,6 +68,12 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         self.reward_distance = 0.0
         self.reward_mass = 0.0
         self.dm_nd = 0.0
+        self.position_res = np.nan
+        self.velocity_res = np.nan
+        self.terminated = False
+        self.truncated = False
+        self.alpha_x = 1.0
+        self.alpha_y = 0.0
 
         # define the action space
         # The action space consists of three variables:
@@ -128,6 +134,7 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         #compute mean anomaly
         self.mean_anomaly = compute_mean_anomaly_from_eccentric_anomaly(self.eccentric_anomaly, self._keplerian_elements[1])
 
+
         return {
             "Elapsed time": self.elapsed_t,
             "step_size_s": self.step_size,
@@ -177,6 +184,12 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
             "reward_mass_component": self.reward_mass,
             "state_eccentric_anomaly_deg": np.rad2deg(self.eccentric_anomaly),
             "state_mean_anomaly_deg": np.rad2deg(self.mean_anomaly),
+            "position_res": self.position_res,
+            "velocity_res": self.velocity_res,
+            "terminated": self.terminated,
+            "truncated": self.truncated,
+            "alpha_x": self.alpha_x,
+            "alpha_y": self.alpha_y,
         }
 
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None):
@@ -306,6 +319,9 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         }
         reward, truncated, terminated, env_info = compute_reward_fast_TBT(self._state, params_temp, u, self.TTG)
 
+        for key in env_info:
+            setattr(self, key, env_info[key])
+
         return reward, terminated, truncated
 
     def step(self, action):
@@ -334,6 +350,9 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         alpha_x, alpha_y = convert_attitude_from_radial_to_cartesian(
             x, y, alpha_r, alpha_theta
         )
+
+        self.alpha_x = alpha_x
+        self.alpha_y = alpha_y
 
         # save non-dim mass
         mass_nd_0 = mass / self.m_star
@@ -471,6 +490,9 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
 
     def get_cartesian_state(self):
         return self._state.copy()
+    
+    def get_time_to_go(self):
+        return self.TTG
 
     def update_env(self, x_0, y_0, vx_0, vy_0, mass_0, a_target, e_target, w_target):
 

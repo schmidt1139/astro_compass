@@ -2,8 +2,8 @@
 
 [paths]
 tb_log_name = "SAC_TBR_training"
-output_dir = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\Dec08\\"
-path_training_data = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\Dec06\\ephems"
+output_dir = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\Dec08\\buffer_gen"
+path_training_data = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\Dec08\\datagen\\ephems"
 path_replay_buffer = ""
 path_SAC_model_load = ""
 
@@ -20,23 +20,23 @@ env_step_size = 1209600
 
 [environment.initial]
 a_min_init_env_nd = 149598023000.0
-a_max_init_env_nd = 149598023000.0
+a_max_init_env_nd = 232495000000.0
 e_min_init_env = 0.0001
 e_max_init_env = 0.0001
 w_min_init_env_deg = 0.0
 w_max_init_env_deg = 0.0
 theta_min_init_env_deg = 0.0
-theta_max_init_env_deg = 2.0
+theta_max_init_env_deg = 360.0
 
 [environment.final]
-a_min_final_env_nd = 232495000000.0
+a_min_final_env_nd = 149598023000.0
 a_max_final_env_nd = 232495000000.0
 e_min_final_env = 0.0001
 e_max_final_env = 0.0001
 w_min_final_env_deg = 0.0
 w_max_final_env_deg = 0.0
-theta_min_final_env_deg = 180.0
-theta_max_final_env_deg = 182.0
+theta_min_final_env_deg = 0.0
+theta_max_final_env_deg = 360.0
 
 [environment.episode]
 max_episode_steps = 5000
@@ -73,8 +73,8 @@ training_steps = 10_000
 pretrain_gradient_steps = 5000
 n_eval_episodes = 3
 print_freq = 2000
-buffer_size = 200_000
-num_ephems_to_use = 1000
+buffer_size = 1_000_000
+num_ephems_to_use = 10_000
 batch_size = 256
 pt_log_interval = 2000
 t_log_interval = 2000
@@ -94,7 +94,7 @@ eval_device = "cuda"
 
 
 [general]
-ephem_version = 2.0
+ephem_version = 3.0
 ephem_step_size = 1
 flag_gen_H_traj = true
 seed_traj = 48

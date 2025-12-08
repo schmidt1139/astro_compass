@@ -263,7 +263,6 @@ class SACRolloutData_TBR_polar:
         self.arr_position_res.append(position_res)
         self.arr_velocity_res.append(velocity_res)
 
-
 def plot_SAC_training(
     SACRolloutData, arr_episode_numbers, arr_episode_rs, path_output, eph, eph_h=None
 ):
@@ -1361,3 +1360,102 @@ def plot_rendezvous_traj(eph, env, params):
     fig_orb = eph.adjust_plot_limits()
 
     return fig_orb
+
+
+class SACRolloutData_TBT_polar:
+    def __init__(self):
+        self.arr_time = []
+        self.arr_reward_tot = []
+        self.arr_reward = []
+        self.arr_position_res = []
+        self.arr_velocity_res = []
+        self.arr_mass = []
+        self.arr_ttg = []
+        self.arr_throttle = []
+        self.sum_reward = 0.0
+
+    def add_step(
+        self,
+        time,
+        reward,
+        position_res,
+        velocity_res,
+        m,
+        ttg,
+        u,
+        ):
+        self.arr_time.append(time)  # convert to days
+        self.arr_reward.append(reward)
+        self.sum_reward += reward
+        self.arr_reward_tot.append(self.sum_reward)
+        self.arr_position_res.append(position_res)
+        self.arr_velocity_res.append(velocity_res)
+        self.arr_mass.append(m)
+        self.arr_ttg.append(ttg)
+        self.arr_throttle.append(u)
+
+def plot_SAC_TBT_training(
+    SACRolloutData, 
+    arr_episode_numbers, 
+    arr_episode_rs, 
+    path_output, 
+    eph, 
+    eph_h=None,
+    params=None,
+    env=None,
+):
+
+    # plot reward over time
+    plt.figure()
+    plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_reward_tot, label="Reward")
+    plt.xlabel("Time [days]")
+    plt.ylabel("Reward")
+    plt.title("SAC Training Reward over Time")
+    plt.legend()
+    plt.grid(True, alpha=0.3)  # Force grid on with some transparency
+    plt.savefig(os.path.join(path_output, "SAC_Training_Reward.png"), dpi=300)
+
+    # generate and save figures
+    fig_orb = eph.plot_xy(color_in="#7e03a8")
+    if eph_h is not None:
+        fig_orb = eph.overlay_ref_orbit(
+            ephem=eph_h, label="Hamiltonian Trajectory", color_in="#f89540"
+        )
+
+    x_init = eph.arr_x[0]
+    y_init = eph.arr_y[0]
+    vx_init = eph.arr_vx[0]
+    vy_init = eph.arr_vy[0]
+    x_target_init = eph.arr_x_target[0]
+    y_target_init = eph.arr_y_target[0]
+    vx_target_init = eph.arr_vx_target[0]
+    vy_target_init = eph.arr_vy_target[0]
+
+    fig_orb = plot_overlay_ballistic_orbit(
+        x_init,
+        y_init,
+        vx_init,
+        vy_init,
+        env,
+        fig_orb,
+        params,
+        eph,
+        label_in="Initial Orbit",
+        color_in="#0d0887",
+    )
+    fig_orb = plot_overlay_ballistic_orbit(
+        x_target_init,
+        y_target_init,
+        vx_target_init,
+        vy_target_init,
+        env,
+        fig_orb,
+        params,
+        eph,
+        label_in="Target Orbit",
+        color_in="#cc4778",
+    )
+    fig_orb = eph.adjust_plot_limits()
+
+    fig_orb.savefig(os.path.join(path_output, "SAC_Test_Traj.png"), dpi=300)
+

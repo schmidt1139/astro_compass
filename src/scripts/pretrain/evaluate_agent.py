@@ -6,7 +6,7 @@ import torch
 from tqdm import tqdm
 from core.ephemeris_v2 import Ephemeris_v2 as Ephemeris
 from core.process_single_trajectory import process_single_trajectory
-from utils.plotting_utils import plot_SAC_training_TBR_polar
+from utils.plotting_utils import plot_SAC_TBT_training, plot_SAC_training_TBR_polar
 from pretrain_utils import generate_env, generate_paths
 from stable_baselines3 import SAC as SB3_SAC
 from stable_baselines3.common.callbacks import CallbackList, EvalCallback
@@ -19,9 +19,10 @@ from utils.log_utils import (
 )
 from utils.rl_utils import (
     RewardLoggerCallback,
-    rollout_model,
+    rollout_model_TBT,
 )
 from utils.eval_utils import mc_evaluate_agent, plot_log_mc_results
+import matplotlib.pyplot as plt
 
 # HACK
 PROJECT_ROOT = os.path.dirname(os.path.dirname(utils.__file__)) + "/../.."
@@ -35,6 +36,8 @@ def main(params, seed_in=42):
     os.environ["NUMEXPR_NUM_THREADS"] = "1"
     torch.set_num_threads(1)
     torch.set_num_interop_threads(1)
+
+    import matplotlib.pyplot as plt
 
     random.seed(seed_in)
 
@@ -105,27 +108,28 @@ def main(params, seed_in=42):
     rollout_env = gen_rl_environment(params)
     rollout_env.seed(seed_in)
 
-    test_log, eph, rollout_data = rollout_model(rollout_env, params, model, test_log)
+    test_log, eph, rollout_data = rollout_model_TBT(rollout_env, params, model, test_log)
 
     # Monte Carlo evaluation
     mc_results = mc_evaluate_agent(params)
 
     plot_log_mc_results(mc_results, test_log, params)
 
-    arr_episode_numbers, arr_episode_rs, arr_position_res, arr_velocity_res, arr_m, list_pos_residuals, list_vel_residuals = mc_results
+    arr_episode_numbers, arr_episode_rs, arr_position_res, arr_velocity_res, arr_m, list_pos_residuals, list_vel_residuals, list_rewards = mc_results
 
     # render training plots
     test_log = log("Rendering training plots...", test_log, True)
-    plot_SAC_training_TBR_polar(
+    plot_SAC_TBT_training(
         rollout_data,
+        arr_episode_numbers,
+        arr_episode_rs,
         path_plots,
         eph,
+        ephem_H if params.get("flag_gen_H_traj", False) else None,
         params,
         rollout_env,
-        arr_episode_numbers=arr_episode_numbers,
-        arr_episode_rs=arr_episode_rs,
-        ephem_H=ephem_H if params.get("flag_gen_H_traj", False) else None,
     )
+
 
     env.close()
 

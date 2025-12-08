@@ -4,7 +4,7 @@
 tb_log_name = "SAC_TBR_training"
 output_dir = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\Dec08\\pre_train"
 path_training_data = ""
-path_replay_buffer = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\Dec08\\SAC_training_TBR_polar20251208_013349\\replay_buffer.pkl"
+path_replay_buffer = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\Dec08\\buffer_gen\\SAC_training_TBR_polar20251208_142627\\replay_buffer.pkl"
 path_SAC_model_load = ""
 
 [environment]
@@ -20,23 +20,23 @@ env_step_size = 1209600
 
 [environment.initial]
 a_min_init_env_nd = 149598023000.0
-a_max_init_env_nd = 149598023000.0
+a_max_init_env_nd = 232495000000.0
 e_min_init_env = 0.0001
 e_max_init_env = 0.0001
 w_min_init_env_deg = 0.0
 w_max_init_env_deg = 0.0
 theta_min_init_env_deg = 0.0
-theta_max_init_env_deg = 2.0
+theta_max_init_env_deg = 360.0
 
 [environment.final]
-a_min_final_env_nd = 232495000000.0
+a_min_final_env_nd = 149598023000.0
 a_max_final_env_nd = 232495000000.0
 e_min_final_env = 0.0001
 e_max_final_env = 0.0001
 w_min_final_env_deg = 0.0
 w_max_final_env_deg = 0.0
-theta_min_final_env_deg = 180.0
-theta_max_final_env_deg = 182.0
+theta_min_final_env_deg = 0.0
+theta_max_final_env_deg = 360.0
 
 [environment.episode]
 max_episode_steps = 5000
@@ -71,16 +71,16 @@ read_replay_buffer = true
 load_model_checkpoint = false
 eval_freq = 1_000
 training_steps = 10_000
-pretrain_gradient_steps = 10_000
-n_eval_episodes = 3
+pretrain_gradient_steps = 100_000
+n_eval_episodes = 100
 print_freq = 2000
-buffer_size = 200_000
+buffer_size = 1_000_000
 num_ephems_to_use = 1000
 batch_size = 10
-pt_log_interval = 1000
+pt_log_interval = 100
 t_log_interval = 1000
-loss_report_rate = 10
-checkpoint_freq = 1000
+loss_report_rate = 1
+checkpoint_freq = 1_000
 
 [model]
 learning_rate = 0.0003

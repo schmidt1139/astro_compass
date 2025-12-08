@@ -1,5 +1,6 @@
 import os
 from turtle import done
+from core.ephemeris_v3 import Ephemeris_v3
 from core.spacecraft import Spacecraft
 from StateVectorUtilities import cartesian_to_polar
 from core.ephemeris_v2 import Ephemeris_v2
@@ -14,7 +15,7 @@ from StateVectorUtilities import cartesian_to_polar
 from tqdm import tqdm
 from constants.constants import Constants
 from utils.log_utils import log
-from utils.plotting_utils import SACRolloutData_TBR_polar
+from utils.plotting_utils import SACRolloutData_TBR_polar, SACRolloutData_TBT_polar
 from utils.state_vector_utils import convert_alpha_from_cart_to_fpa, convert_attitude_from_cartesian_to_radial
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
@@ -916,6 +917,125 @@ def rollout_model(env, params, model, test_log):
             test_log = log(f"{key}: {value}", test_log, flag_report_live)
     return test_log, eph, rollout_data
 
+def rollout_model_TBT(env, params, model, test_log):
+
+    flag_report_live = params.get("flag_report_live", False)
+
+    # reset the env
+    obs, info = env.reset(seed=params.get("seed_traj", 42))
+    eph = Ephemeris_v3()  # create new ephemeris object
+
+    sum_reward = 0.0
+
+    rollout_data = SACRolloutData_TBT_polar()
+
+    count_step = 0
+    flag_continue = True
+    terminated = False
+    truncated = False
+
+    while flag_continue:
+
+        # step the env
+        action, _states = model.predict(obs, deterministic=True)
+        unwrapped_env = env.unwrapped
+        state_cart = unwrapped_env.get_cartesian_state()
+        throttle = action[0]
+
+
+
+        # dim state
+        t_i = info["Elapsed time"]
+        t_i_days = t_i / (3600 * 24)
+        x_i = state_cart[0]
+        y_i = state_cart[1]
+        vx_i = state_cart[2]
+        vy_i = state_cart[3]
+        m_i = state_cart[4]
+        x_target_i = state_cart[5]
+        y_target_i = state_cart[6]
+        vx_target_i = state_cart[7]
+        vy_target_i = state_cart[8]
+
+        ttg_i = unwrapped_env.get_time_to_go()
+
+
+        # info of interest
+        pos_reward = info.get("pos_reward", None)
+        vel_reward = info.get("vel_reward", None)
+        mass_reward = info.get("mass_reward", None)
+        throttle_reward = info.get("throttle_reward", None)
+        alpha_x = info.get("alpha_x", None)
+        alpha_y = info.get("alpha_y", None)
+        position_res = info["position_res"]
+        velocity_res = info["velocity_res"]
+        terminated = info["terminated"]
+        truncated = info["truncated"]
+
+        # log data to ephemeris
+        eph.add_data(
+            t_i,
+            x_i,
+            y_i,
+            vx_i,
+            vy_i,
+            m_i,
+            x_target_i,
+            y_target_i,
+            vx_target_i,
+            vy_target_i,
+            ttg_i,
+            alpha_x,
+            alpha_y,
+            throttle,
+        )
+
+        # create polar state, create a temp SC object and calc OE
+        r_i, theta_i, rdot_i, vtheta_i = cartesian_to_polar(x_i, y_i, vx_i, vy_i)
+        SC = Spacecraft(
+            r_i, theta_i, rdot_i, vtheta_i, m_i, params["max_T"], params["ISP"]
+        )
+        arr_OE = SC.calc_Planar_OE(0.0, 0.0, 0.0, 0.0, params["mu"])
+
+        obs, reward, done, truncated, info = env.step(action)
+        state_cart = env.get_cartesian_state()
+        ttg_0 = ttg_i
+        ttg_i = unwrapped_env.get_time_to_go()
+        count_step = count_step + 1
+
+        # store the results
+        rollout_data.add_step(
+            info["Elapsed time"] / 86400,  # elapsed time in days #1
+            reward,  # reward #2
+            position_res,
+            velocity_res,
+            m_i,
+            ttg_0,
+            action[0],  # throttle #7
+        )
+
+        if done or truncated:
+            break
+
+    test_log = log("Test trajectory complete", test_log, flag_report_live)
+    test_log = log("Steps taken: " + str(count_step), test_log, flag_report_live)
+    test_log = log("Total reward: " + str(sum_reward), test_log, flag_report_live)
+    test_log = log("Final x: " + str(obs[0]) + " ", test_log, flag_report_live)
+    test_log = log("Final y: " + str(obs[1]) + " ", test_log, flag_report_live)
+    test_log = log("Final vx: " + str(obs[2]) + " ", test_log, flag_report_live)
+    test_log = log("Final vy: " + str(obs[3]) + " ", test_log, flag_report_live)
+    test_log = log("Final m: " + str(obs[4]) + " ", test_log, flag_report_live)
+    test_log = log("Final sma: " + str(obs[6]) + " ", test_log, flag_report_live)
+    test_log = log("Final ecc: " + str(arr_OE[1]) + " ", test_log, flag_report_live)
+    test_log = log("terminated: " + str(terminated) + " ", test_log, flag_report_live)
+    test_log = log("truncated: " + str(truncated) + " ", test_log, flag_report_live)
+    
+    # final env info
+    for key, value in info.items():
+        if key != "ODE Solution":
+            test_log = log(f"{key}: {value}", test_log, flag_report_live)
+
+    return test_log, eph, rollout_data
 
 def import_training_into_replay_buffer_v3(
     set_ephems, test_log, model, env, params
@@ -1356,6 +1476,10 @@ def compute_reward_fast_TBT(state, params, u, TTG):
     terminated = False
     truncated = False
 
+    # calculate distance to target
+    d_r_nd = np.sqrt((x_nd - x_target_nd) ** 2 + (y_nd - y_target_nd) ** 2)
+    d_v_nd = np.sqrt((vx_nd - vx_target_nd) ** 2 + (vy_nd - vy_target_nd) ** 2)
+
     if ( r_nd_0 < 0.01 ):
         reward = 0.0
         terminated = True
@@ -1365,9 +1489,6 @@ def compute_reward_fast_TBT(state, params, u, TTG):
         terminated = True
         truncated = False
     else:
-        # calculate distance to target
-        d_r_nd = np.sqrt((x_nd - x_target_nd) ** 2 + (y_nd - y_target_nd) ** 2)
-        d_v_nd = np.sqrt((vx_nd - vx_target_nd) ** 2 + (vy_nd - vy_target_nd) ** 2)
 
         # position reward
         pos_reward = np.exp(-params["r_dist_weight"] * d_r_nd**2)
@@ -1386,6 +1507,12 @@ def compute_reward_fast_TBT(state, params, u, TTG):
         # Nothing good or bad assigned to this
         truncated = True
 
-    env_info = {}
+    env_info = {
+            "position_res": d_r_nd,
+            "velocity_res": d_v_nd,
+            "mass": m_nd,
+            "terminated": terminated,
+            "truncated": truncated
+    }
 
     return reward, terminated, truncated, env_info
