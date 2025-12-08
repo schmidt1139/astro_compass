@@ -2,12 +2,12 @@ import os
 
 import torch
 import torch.nn as nn
-from pretrain_utils import generate_paths
 from stable_baselines3 import SAC as SB3_SAC
 from utils.buffer_utils import extract_episodes_from_buffer, plot_episodes
 from utils.env_utils import gen_rl_environment
 from utils.log_utils import read_toml_config_file
 from utils.path_utils import PROJECT_ROOT
+from utils.pretrain_utils import generate_paths
 
 print("GPU available: ", torch.cuda.is_available())
 

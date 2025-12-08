@@ -5,10 +5,10 @@ import shutil
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
-from pretrain_utils import generate_env, generate_paths
 from stable_baselines3 import SAC as SB3_SAC
 from utils.log_utils import read_toml_config_file
 from utils.path_utils import PROJECT_ROOT
+from utils.pretrain_utils import generate_env, generate_paths
 from utils.rl_utils import pre_train
 
 print("GPU available: ", torch.cuda.is_available())
@@ -73,20 +73,21 @@ def main(params, seed_in=42):
         delattr(model, "_logger")
 
     plt.figure()
-    if max(arr_actor_loss_pt) > 0:
-        plt.semilogy(arr_actor_loss_pt, label="Actor Loss")
-    else:
-        plt.plot(arr_actor_loss_pt, label="Actor Loss")
-    plt.legend()
-    plt.savefig(os.path.join(path_plots, "pretrain_actor_loss.png"), dpi=300)
+    if len(arr_actor_loss_pt) > 0:
+        if max(arr_actor_loss_pt) > 0:
+            plt.semilogy(arr_actor_loss_pt, label="Actor Loss")
+        else:
+            plt.plot(arr_actor_loss_pt, label="Actor Loss")
+        plt.legend()
+        plt.savefig(os.path.join(path_plots, "pretrain_actor_loss.png"), dpi=300)
 
-    plt.figure()
-    if max(arr_critic_loss_pt) > 0:
-        plt.semilogy(arr_critic_loss_pt, label="Critic Loss")
-    else:
-        plt.plot(arr_critic_loss_pt, label="Critic Loss")
-    plt.legend()
-    plt.savefig(os.path.join(path_plots, "pretrain_critic_loss.png"), dpi=300)
+        plt.figure()
+        if max(arr_critic_loss_pt) > 0:
+            plt.semilogy(arr_critic_loss_pt, label="Critic Loss")
+        else:
+            plt.plot(arr_critic_loss_pt, label="Critic Loss")
+        plt.legend()
+        plt.savefig(os.path.join(path_plots, "pretrain_critic_loss.png"), dpi=300)
 
     # Save the model
     model.save(path_SAC_model)
