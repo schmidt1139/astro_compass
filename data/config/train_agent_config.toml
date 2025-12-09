@@ -5,15 +5,15 @@ tb_log_name = "SAC_TBR_training"
 output_dir = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\Dec08\\train"
 path_training_data = ""
 path_replay_buffer = ""
-path_SAC_model_load = ""
+path_SAC_model_load = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\Dec08\\curiosity\\Dec08\\mcs_local\\pre_train\\SAC_training_TBR_polar20251208_151503\\checkpoints\\sac_pretrained_step_79001.zip"
 
 [training]
 pre_train_networks = false
 save_pre_training_only_replay_buffer = true
 save_final_replay_buffer = true
 read_replay_buffer = false
-load_model_checkpoint = false
-eval_freq = 10_000
+load_model_checkpoint = true
+eval_freq = 200
 training_steps = 100_000
 pretrain_gradient_steps = 5000
 n_eval_episodes = 100

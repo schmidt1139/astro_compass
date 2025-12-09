@@ -139,8 +139,6 @@ if __name__ == "__main__":
     path_config = os.path.join(PROJECT_ROOT, "data", "config", config_toml)
     params = read_toml_config_file(path_config)
 
-    params["read_replay_buffer"] = False
-    params["load_model_checkpoint"] = False
     params["config_toml"] = config_toml
 
     main(params)
