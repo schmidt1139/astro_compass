@@ -1,11 +1,13 @@
 import os
-import time
 import signal
+import time
+
 import matplotlib.pyplot as plot
-from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
-from core.gen_Hamiltonian_trajectory import gen_Hamiltonian_trajectory
-from utils.log_utils import write_log_to_file, log, log_parameters
 from core.exceptions import TimeoutException, timeout_handler
+from core.gen_Hamiltonian_trajectory import gen_Hamiltonian_trajectory
+from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
+
+from astro_compass.utils.log_utils import log_parameters, write_log_to_file
 
 
 def process_single_trajectory(params):

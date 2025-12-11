@@ -2,10 +2,11 @@ import os
 
 import matplotlib.pyplot as plt
 from core.training_data_generation import read_ephems_from_dir
-from utils.env_utils import gen_rl_environment
-from utils.h_rl_fusion import calc_rewards_from_H_ephem
-from utils.log_utils import read_config_file
-from utils.plotting_utils import plot_rendezvous_traj
+
+from astro_compass.utils.env_utils import gen_rl_environment
+from astro_compass.utils.h_rl_fusion import calc_rewards_from_H_ephem
+from astro_compass.utils.log_utils import read_config_file
+from astro_compass.utils.plotting_utils import plot_rendezvous_traj
 
 
 def plot_H_ephem_rewards():

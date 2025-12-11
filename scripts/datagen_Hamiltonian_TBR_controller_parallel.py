@@ -1,17 +1,15 @@
 import os
+
 import matplotlib
 
 matplotlib.use("Agg")  # Use non-interactive backend for headless environments
-import matplotlib.pyplot as plot
-import time
 import cProfile
 import pstats
+import time
 
-from multiprocessing import Pool, cpu_count
-
-from utils.log_utils import log
-from utils.log_utils import write_log_to_file, read_config_file
 from core.datagen import run_parallel_trajectory_generation
+
+from astro_compass.utils.log_utils import log, read_config_file, write_log_to_file
 
 
 def datagen_Hamiltonian_TBR_controller_parallel():

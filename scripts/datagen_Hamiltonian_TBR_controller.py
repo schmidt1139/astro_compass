@@ -1,18 +1,21 @@
 import os
+
 import matplotlib
 
 matplotlib.use("Agg")  # Use non-interactive backend for headless environments
-import matplotlib.pyplot as plot
 import time
-import numpy as np
 
-from constants.constants import Constants
-from utils.log_utils import log
-from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
-from constants.constants import Constants
-from utils.test_utils import compare_trajectories
+import matplotlib.pyplot as plot
+import numpy as np
 from core.gen_Hamiltonian_trajectory import gen_Hamiltonian_trajectory
-from utils.log_utils import write_log_to_file, write_config_file, read_config_file
+from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
+
+from astro_compass.utils.log_utils import (
+    log,
+    read_config_file,
+    write_config_file,
+    write_log_to_file,
+)
 
 
 def datagen_Hamiltonian_TBR_controller():

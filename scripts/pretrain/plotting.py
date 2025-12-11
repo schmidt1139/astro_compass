@@ -5,8 +5,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from constants.constants import Constants
-from utils.h_rl_fusion import calc_rewards_from_H_ephem
-from utils.state_vector_utils import convert_alpha_from_cart_to_fpa
+
+from astro_compass.utils.h_rl_fusion import calc_rewards_from_H_ephem
+from astro_compass.utils.state_vector_utils import convert_alpha_from_cart_to_fpa
 
 
 def format_plots():

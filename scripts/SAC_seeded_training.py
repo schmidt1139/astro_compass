@@ -1,29 +1,30 @@
-import gymnasium as gym
 import os
+import random
+from datetime import datetime
+
+import gymnasium as gym
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
-import matplotlib.pyplot as plt
-import random
-
-from datetime import datetime
-from gymnasium import envs
-from gymnasium.envs.registration import register
-from stable_baselines3.common.callbacks import EvalCallback, CallbackList
-from stable_baselines3 import SAC
-from stable_baselines3.common.monitor import Monitor
 
 # Update ALL imports to use the new package structure (remove 'python.' prefix):
 from constants.constants import Constants
-from utils.log_utils import log, log_parameters
 from core.ephemeris import Ephemeris
 from core.spacecraft import Spacecraft
-from utils.state_vector_utils import cartesian_to_polar
-from utils.plotting_utils import plot_SAC_training, SACRolloutData
-from utils.rl_utils import (
-    log_training_perf,
-    import_training_into_replay_buffer,
+from gymnasium import envs
+from gymnasium.envs.registration import register
+from stable_baselines3 import SAC
+from stable_baselines3.common.callbacks import CallbackList, EvalCallback
+from stable_baselines3.common.monitor import Monitor
+
+from astro_compass.utils.log_utils import log, log_parameters
+from astro_compass.utils.plotting_utils import SACRolloutData, plot_SAC_training
+from astro_compass.utils.rl_utils import (
     RewardLoggerCallback,
+    import_training_into_replay_buffer,
+    log_training_perf,
 )
+from astro_compass.utils.state_vector_utils import cartesian_to_polar
 
 # register the environment if it isn't registered
 if "TwoBody_Orb2Orb_Transfer_Env_nd_obs5-v0" not in envs.registry.keys():

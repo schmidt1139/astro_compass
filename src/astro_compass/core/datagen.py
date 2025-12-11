@@ -1,15 +1,16 @@
 import os
+
 import matplotlib
 
 matplotlib.use("Agg")  # Use non-interactive backend for headless environments
-import matplotlib.pyplot as plot
 import time
-import numpy as np
 from multiprocessing import Pool, cpu_count
 
-from utils.log_utils import log
-from utils.log_utils import write_config_file
+import matplotlib.pyplot as plot
+import numpy as np
 from core.process_single_trajectory import process_single_trajectory
+
+from astro_compass.utils.log_utils import log, write_config_file
 
 
 def record_pass_stats(arr_pass_count, tof_index, scenario_index):
@@ -240,7 +241,7 @@ def run_parallel_trajectory_generation(params):
 
     # summarize counts
     sa_summary = []
-    sa_summary.append(f"\nTrajectory Generation Summary:\n")
+    sa_summary.append("\nTrajectory Generation Summary:\n")
     sa_summary.append("------------------------------\n")
     print("Trajectory generation summary:")
     for i, count in enumerate(counts_tof_scale):
@@ -254,7 +255,7 @@ def run_parallel_trajectory_generation(params):
     sa_summary.append("------------------------------\n")
     # summarize success rates
     print("Trajectory generation success rates:")
-    sa_summary.append(f"\nTrajectory generation success rates:\n")
+    sa_summary.append("\nTrajectory generation success rates:\n")
     for i, count in enumerate(counts_tof_scale):
         print(
             f"  TOF scale {params['tof_scales'][i]}: {arr_pass_count_stats[i, :].sum()} solved out of {count} trajectories"

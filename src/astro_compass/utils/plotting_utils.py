@@ -5,8 +5,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from constants.constants import Constants
-from utils.h_rl_fusion import calc_rewards_from_H_ephem
-from utils.state_vector_utils import convert_attitude_from_cartesian_to_radial
+
+from astro_compass.utils.h_rl_fusion import calc_rewards_from_H_ephem
+from astro_compass.utils.state_vector_utils import (
+    convert_attitude_from_cartesian_to_radial,
+)
 
 
 def format_plots():
@@ -232,8 +235,6 @@ class SACRolloutData_TBR_polar:
         position_res,
         velocity_res,
     ):
-
-
         self.arr_time.append(time)  # convert to days
         self.arr_reward.append(reward)
         self.arr_throttle.append(throttle)
@@ -267,7 +268,6 @@ class SACRolloutData_TBR_polar:
 def plot_SAC_training(
     SACRolloutData, arr_episode_numbers, arr_episode_rs, path_output, eph, eph_h=None
 ):
-
     # plot reward over time
     plt.figure()
     plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_reward_tot, label="Reward")
@@ -415,7 +415,9 @@ def plot_SAC_training_TBR(
             y = ephem_H.arr_y[i]
             alpha_x = ephem_H.arr_alpha_x[i]
             alpha_y = ephem_H.arr_alpha_y[i]
-            alpha_r, alpha_theta = convert_attitude_from_cartesian_to_radial(x, y, alpha_x, alpha_y)
+            alpha_r, alpha_theta = convert_attitude_from_cartesian_to_radial(
+                x, y, alpha_x, alpha_y
+            )
             arr_alpha_r_h.append(alpha_r)
             arr_alpha_theta_h.append(alpha_theta)
 
@@ -552,7 +554,6 @@ def plot_SAC_training_TBR(
             linestyle="--",
             color="orange",
         )
-
 
     # plt.ylim(min_percentile, 1.1*max_percentile)
     plt.xlabel("Time [years]")
@@ -829,28 +830,35 @@ def plot_SAC_training_TBR_polar(
             y = ephem_H.arr_y[i]
             alpha_x = ephem_H.arr_alpha_x[i]
             alpha_y = ephem_H.arr_alpha_y[i]
-            alpha_r, alpha_theta = convert_attitude_from_cartesian_to_radial(x, y, alpha_x, alpha_y)
+            alpha_r, alpha_theta = convert_attitude_from_cartesian_to_radial(
+                x, y, alpha_x, alpha_y
+            )
             arr_alpha_r_h.append(alpha_r)
             arr_alpha_theta_h.append(alpha_theta)
 
-
-    #SAC rollout data
-    elapsed_time_SAC = SACRolloutData_TBR_polar.arr_time[-1]*Constants.DAYS_TO_SEC
+    # SAC rollout data
+    elapsed_time_SAC = SACRolloutData_TBR_polar.arr_time[-1] * Constants.DAYS_TO_SEC
     num_steps_SAC = len(SACRolloutData_TBR_polar.arr_time)
     average_step_size_SAC = elapsed_time_SAC / num_steps_SAC
-    print(f"SAC rollout total elapsed time: {elapsed_time_SAC/Constants.DAYS_TO_SEC/365.25:.2f} years over {num_steps_SAC} steps.")
+    print(
+        f"SAC rollout total elapsed time: {elapsed_time_SAC / Constants.DAYS_TO_SEC / 365.25:.2f} years over {num_steps_SAC} steps."
+    )
     print(f"Average step size: {average_step_size_SAC} s")
 
     if ephem_H is not None:
-        elapsed_time_h_ephem = ephem_H.arr_et[-1];
+        elapsed_time_h_ephem = ephem_H.arr_et[-1]
         num_vectors = ephem_H.num_vectors
         average_step_size_h = elapsed_time_h_ephem / num_vectors
-        print(f"Hamiltonian ephemeris total elapsed time: {elapsed_time_h_ephem/Constants.DAYS_TO_SEC/365.25:.2f} years over {num_vectors} vectors.")
+        print(
+            f"Hamiltonian ephemeris total elapsed time: {elapsed_time_h_ephem / Constants.DAYS_TO_SEC / 365.25:.2f} years over {num_vectors} vectors."
+        )
         print(f"Average step size: {average_step_size_h} s")
         reward_reduction_factor = average_step_size_h / average_step_size_SAC
         arr_r_tot = [r * reward_reduction_factor for r in arr_r_tot]
-        print(f"Applied reward reduction factor of {reward_reduction_factor:.4f} to Hamiltonian ephemeris rewards to account for differing step sizes.")
-        
+        print(
+            f"Applied reward reduction factor of {reward_reduction_factor:.4f} to Hamiltonian ephemeris rewards to account for differing step sizes."
+        )
+
     # plot reward over time
     plt.figure()
     plt.plot(
@@ -859,7 +867,13 @@ def plot_SAC_training_TBR_polar(
         label="Reward",
     )
     if ephem_H is not None:
-        plt.plot(np.array(arr_elapsed_time)/365.25, arr_r_tot, label="Hamiltonian Ephem Total Reward", linestyle="--", color="red")
+        plt.plot(
+            np.array(arr_elapsed_time) / 365.25,
+            arr_r_tot,
+            label="Hamiltonian Ephem Total Reward",
+            linestyle="--",
+            color="red",
+        )
     plt.xlabel("Time [years]")
     plt.ylabel("Reward")
     plt.title("SAC Training Reward over Time")
@@ -1018,8 +1032,6 @@ def plot_SAC_training_TBR_polar(
     )
 
     if ephem_H is not None:
-
-
         plt.plot(
             np.array(arr_elapsed_time) / 365.25,
             arr_alpha_r_h,

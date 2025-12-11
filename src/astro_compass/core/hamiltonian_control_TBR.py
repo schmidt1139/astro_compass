@@ -1,22 +1,21 @@
-import numpy as np
-import warnings
 import time
-from scipy.optimize import root
-from scipy.integrate import solve_ivp
+import warnings
 
-from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
+import numpy as np
+from constants.constants import Constants
 from core.propagation import (
     Hamiltonian_EOM_TBT_v2,
-    smoothing_function_tanh,
     smoothing_function_homotopic,
+    smoothing_function_tanh,
 )
-from utils.state_vector_utils import (
-    non_dimensionalize,
-    cartesian_to_polar,
-)
-from constants.constants import Constants
-from core.exceptions import FirstGuessException
 from core.shooting_methods import Hamiltonian_Controller_TBR_Shooting
+from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
+from scipy.integrate import solve_ivp
+from scipy.optimize import root
+
+from astro_compass.utils.state_vector_utils import (
+    non_dimensionalize,
+)
 
 
 class Hamiltonian_Controller_TBR(Hamiltonian_Controller_TBR_Shooting):

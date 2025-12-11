@@ -1,11 +1,13 @@
-import numpy as np
-import gymnasium as gym
 from typing import Optional
-from scipy.integrate import solve_ivp
+
+import gymnasium as gym
+import numpy as np
 from constants.constants import Constants
-from core.spacecraft import Spacecraft
 from core.propagation import env_EOM_TBT_v2
-from utils.state_vector_utils import polar_to_cartesian
+from core.spacecraft import Spacecraft
+from scipy.integrate import solve_ivp
+
+from astro_compass.utils.state_vector_utils import polar_to_cartesian
 
 
 class TwoBody_Orb2Orb_Transfer_Env(gym.Env):

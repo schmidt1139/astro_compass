@@ -1,33 +1,33 @@
-import gymnasium as gym
-import sys
 import os
+import random
+
+import gymnasium as gym
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torch.nn as nn
-import matplotlib.pyplot as plt
-import random
-import numpy as np
-
-from gymnasium import envs
-from gymnasium.envs.registration import register
-from stable_baselines3.common.callbacks import EvalCallback, CallbackList
-from stable_baselines3 import SAC
-from stable_baselines3.common.monitor import Monitor
 from constants.constants import Constants
-from utils.log_utils import log, log_parameters
-from utils.test_utils import compare_log_files_with_tolerance
 from core.ephemeris import Ephemeris
 from core.spacecraft import Spacecraft
-from utils.state_vector_utils import cartesian_to_polar
-from utils.plotting_utils import plot_SAC_training, SACRolloutData
-from utils.rl_utils import (
-    log_training_perf,
-    import_training_into_replay_buffer,
-    RewardLoggerCallback,
+from envs.TwoBody_Orb2Orb_Transfer_Env_nd_obs5 import (
+    TwoBody_Orb2Orb_Transfer_Env_nd_obs5,
 )
-from envs.TwoBody_Orb2Orb_Transfer_Env_nd_obs5 import TwoBody_Orb2Orb_Transfer_Env_nd_obs5
+from stable_baselines3 import SAC
+from stable_baselines3.common.callbacks import CallbackList, EvalCallback
+from stable_baselines3.common.monitor import Monitor
+
+from astro_compass.utils.log_utils import log, log_parameters
+from astro_compass.utils.plotting_utils import SACRolloutData, plot_SAC_training
+from astro_compass.utils.rl_utils import (
+    RewardLoggerCallback,
+    import_training_into_replay_buffer,
+    log_training_perf,
+)
+from astro_compass.utils.state_vector_utils import cartesian_to_polar
+from astro_compass.utils.test_utils import compare_log_files_with_tolerance
+
 
 def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
-
     test_log = []
     test_log = log("SAC Training Script", test_log, flag_report_live)
 
@@ -72,10 +72,11 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
         t_star=params["t_star"],  # characteristic time in s
         g0=params["g0"],  # gravitational acceleration at Earth surface in m/s^2
         step_size=params["env_step_size"],  # environment step size in seconds
-                                                 )
+    )
 
     # initialize the evaluation environment
-    eval_env = TwoBody_Orb2Orb_Transfer_Env_nd_obs5(mu=params["mu"],
+    eval_env = TwoBody_Orb2Orb_Transfer_Env_nd_obs5(
+        mu=params["mu"],
         max_T=params["max_T"],
         ISP=params["ISP"],
         TOF=params["TOF"],
@@ -100,7 +101,9 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
     # time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
     path_nns = os.path.normpath(os.path.join(os.getcwd(), "data", "neural_networks"))
     path_training_data = os.path.normpath(
-        os.path.join(os.getcwd(), "data", "test_data", "test_seeded_SAC_training", "input")
+        os.path.join(
+            os.getcwd(), "data", "test_data", "test_seeded_SAC_training", "input"
+        )
     )
     path_output = os.path.normpath(
         os.path.join(os.getcwd(), "data", "test_data", "test_seeded_SAC_training")
@@ -251,7 +254,6 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
     truncated = False
 
     while flag_continue:
-
         # step the env
         action, _states = model.predict(obs, deterministic=True)
         throttle = action[0]
@@ -300,7 +302,7 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
             0.0,
             1.0,
             0.0,
-            0.0
+            0.0,
         )
 
         if terminated or truncated:
@@ -347,7 +349,9 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
             f.write(line + "\n")
 
     # Compare log files with numerical tolerance for cross-platform compatibility
-    are_same = compare_log_files_with_tolerance(path_output_log, path_output_log_truth, flag_report_live=flag_report_live)
+    are_same = compare_log_files_with_tolerance(
+        path_output_log, path_output_log_truth, flag_report_live=flag_report_live
+    )
 
     if flag_report_live:
         print("Log files match truth (with numerical tolerance):", are_same)

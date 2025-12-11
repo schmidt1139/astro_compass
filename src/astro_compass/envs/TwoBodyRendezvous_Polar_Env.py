@@ -7,7 +7,8 @@ from constants.constants import Constants
 from core.propagation import env_EOM_TBT_v2
 from core.spacecraft import Spacecraft
 from scipy.integrate import solve_ivp
-from utils.state_vector_utils import (
+
+from astro_compass.utils.state_vector_utils import (
     calc_cart_from_OE,
     cartesian_to_polar,
     convert_fpa_to_velocity_components,

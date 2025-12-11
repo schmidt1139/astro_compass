@@ -1,8 +1,10 @@
+import re
+
+import numpy as np
 from core.ephemeris import Ephemeris
 from core.ephemeris_v2 import Ephemeris_v2
-from utils.log_utils import log
-import numpy as np
-import re
+
+from astro_compass.utils.log_utils import log
 
 
 def compare_trajectories(
@@ -28,7 +30,7 @@ def compare_trajectories(
         else:
             raise ValueError("Invalid version specified for ephemeris comparison.")
 
-        test_log = log(f"Comparing trajectory files", test_log, flag_report_live)
+        test_log = log("Comparing trajectory files", test_log, flag_report_live)
         test_log = log(f"Output: {ephem_file}", test_log, flag_report_live)
         test_log = log(f"Truth: {sa_truth_ephems[index]}", test_log, flag_report_live)
 
@@ -110,8 +112,8 @@ def compare_log_files_with_tolerance(
         if flag_report_live:
             print(f"Error comparing log files: {e}")
         return False
-    
+
 
 def binary_compare(file1, file2):
-    with open(file1, 'rb') as f1, open(file2, 'rb') as f2:
+    with open(file1, "rb") as f1, open(file2, "rb") as f2:
         return f1.read() == f2.read()

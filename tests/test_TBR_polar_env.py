@@ -2,15 +2,16 @@ import os
 
 from core.ephemeris_v2 import Ephemeris_v2
 from matplotlib import pyplot as plt
-from utils.env_utils import gen_rl_environment
-from utils.log_utils import (
+
+from astro_compass.utils.env_utils import gen_rl_environment
+from astro_compass.utils.log_utils import (
     compare_logs,
     log,
     read_config_file,
     read_log_from_file,
     write_log_to_file,
 )
-from utils.plotting_utils import (
+from astro_compass.utils.plotting_utils import (
     SACRolloutData_TBR_polar,
     plot_rendezvous_traj,
     plot_SAC_training_TBR_polar,
@@ -135,7 +136,7 @@ def test_TBR_polar_env(flag_report_live: bool = False):
                 u=action[0],
             )
 
-            '''
+            """
             time, #1
             reward, #2
             throttle, #3
@@ -159,7 +160,7 @@ def test_TBR_polar_env(flag_report_live: bool = False):
             vel_reward, #21
             mass_reward, #22
             throttle_reward, #23
-            '''
+            """
 
             # store the results
             rollout_data.add_step(
@@ -248,8 +249,8 @@ def test_TBR_polar_env(flag_report_live: bool = False):
     else:
         test_log = log("Log file matches truth log file.", test_log, flag_report_live)
 
-
     return flag_test_pass
+
 
 if __name__ == "__main__":
     test_TBR_polar_env(flag_report_live=True)

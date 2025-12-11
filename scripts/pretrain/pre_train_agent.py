@@ -8,8 +8,9 @@ import torch.nn as nn
 import utils
 from pretrain_utils import generate_env, generate_paths
 from stable_baselines3 import SAC as SB3_SAC
-from utils.log_utils import read_toml_config_file
-from utils.rl_utils import (
+
+from astro_compass.utils.log_utils import read_toml_config_file
+from astro_compass.utils.rl_utils import (
     pre_train,
 )
 

@@ -1,25 +1,20 @@
-import numpy as np
-import gymnasium as gym
-import matplotlib.pyplot as plot
-import sys
 import os
 
-from gymnasium import envs
-from gymnasium.envs.registration import register
-from sympy import true
+import matplotlib.pyplot as plot
+import numpy as np
 
 # # Adding python src code directory
 # current_dir = os.path.dirname(__file__)
 # python_src_dir = os.path.abspath(os.path.join(current_dir, "..", "python"))
 # sys.path.append(python_src_dir)
-
 from core.ephemeris import Ephemeris
 from core.hamiltonian_control import Hamiltonian_Controller_TBT
-from utils.log_utils import log
 from envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 
-def test_Hamiltonians(flag_report_live=False):
+from astro_compass.utils.log_utils import log
 
+
+def test_Hamiltonians(flag_report_live=False):
     env = TwoBody_Orb2Orb_Transfer_Env()  # Create directly instead of gym.make()
 
     test_log = []
@@ -111,14 +106,20 @@ def test_Hamiltonians(flag_report_live=False):
     )
     # print(sol)
 
-    eph_out.write_to_file(os.path.join("data", "test_data", "test_hamiltonians", "test_H_ephem.txt"))
+    eph_out.write_to_file(
+        os.path.join("data", "test_data", "test_hamiltonians", "test_H_ephem.txt")
+    )
     eph1 = Ephemeris()
-    eph1.read_from_file(os.path.join("data", "test_data", "test_hamiltonians", "test_H_ephem.txt"))
+    eph1.read_from_file(
+        os.path.join("data", "test_data", "test_hamiltonians", "test_H_ephem.txt")
+    )
     test_log = log("Wrote test ephem", test_log, flag_report_live)
 
     # compare to truth file
     eph2 = Ephemeris()
-    eph2.read_from_file(os.path.join("data", "test_data", "test_hamiltonians", "test_H_ephem_truth.txt"))
+    eph2.read_from_file(
+        os.path.join("data", "test_data", "test_hamiltonians", "test_H_ephem_truth.txt")
+    )
     test_log = log("Read truth ephem", test_log, flag_report_live)
 
     # step through and compare each vector
@@ -127,12 +128,18 @@ def test_Hamiltonians(flag_report_live=False):
     flag_pass = True
     if num_vectors_test != num_vectors_truth:
         test_log = log("Test FAILED - vec num mismatch", test_log, flag_report_live)
-        test_log = log("Vectors in eph_out: " + str(num_vectors_test), test_log, flag_report_live)
-        test_log = log("Vectors in eph2: " + str(num_vectors_truth), test_log, flag_report_live)
+        test_log = log(
+            "Vectors in eph_out: " + str(num_vectors_test), test_log, flag_report_live
+        )
+        test_log = log(
+            "Vectors in eph2: " + str(num_vectors_truth), test_log, flag_report_live
+        )
         flag_pass = False
 
     else:
-        flag_pass = eph1.compare_trajectories(eph2, position_tol=1_000_000.0, velocity_tol=1.0)
+        flag_pass = eph1.compare_trajectories(
+            eph2, position_tol=1_000_000.0, velocity_tol=1.0
+        )
 
     # if we made it here, the two ephemerides are the same
     if flag_pass:
@@ -141,4 +148,3 @@ def test_Hamiltonians(flag_report_live=False):
         test_log = log("Test FAILED", test_log, flag_report_live)
 
     return flag_pass
-    

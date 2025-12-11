@@ -1,15 +1,15 @@
-import gymnasium as gym
-from gymnasium import envs
-from gymnasium.envs.registration import register
-import sys
 import os
-import matplotlib.pyplot as plt
+import sys
 import time
 
+import gymnasium as gym
+import matplotlib.pyplot as plt
 from core.epehemeris import Ephemeris
-from utils.state_vector_utils import polar_to_cartesian
 from core.hamiltonian_control import Hamiltonian_Controller_TBT
+from gymnasium import envs
+from gymnasium.envs.registration import register
 
+from astro_compass.utils.state_vector_utils import polar_to_cartesian
 
 # register the environment if it isn't registered
 if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
@@ -176,35 +176,14 @@ def test_random_env_rest(env):
         print("Solution for initial co-states: ", h_sol)
         print("Final smoothing parameter used in solution generation: ", eps)
         seed_env = seed_env + 1
-        print("Elapsed time: ", delta_time )
-        print("flag_solved: ", flag_solved )
+        print("Elapsed time: ", delta_time)
+        print("flag_solved: ", flag_solved)
         print("")
 
     end_time = time.time()
     total_time = end_time - start_time
     time_per_traj = total_time / count
-    
-    print("------------------------------------------------------------------")
-    print("")
-    print("Summary")
-    print("")
-    print("Postive mass rate count: ", count_pos_mass_rate )
-    print("Traj count: ", count )
-    print("Targeter converged count: ", count_solved )
-    print("Total elapsed time: ", total_time)
-    print("Average time per traj: ", time_per_traj)
-    print("")
-    
-    #report test summary to a file
-    file_path = os.path.join("..", "..", "data", "test_data", "test_random_TBT_transfer_report.csv")
-    
-    with open(file_path, "w") as f:
-        for line in sa_report:
-            f.write(line + "\n")
-        
-    f.close()
-        
-    
+
     print("------------------------------------------------------------------")
     print("")
     print("Summary")
@@ -217,7 +196,31 @@ def test_random_env_rest(env):
     print("")
 
     # report test summary to a file
-    file_path = os.path.join("..", "..", "data", "test_data", "test_random_TBT_transfer_report.csv")
+    file_path = os.path.join(
+        "..", "..", "data", "test_data", "test_random_TBT_transfer_report.csv"
+    )
+
+    with open(file_path, "w") as f:
+        for line in sa_report:
+            f.write(line + "\n")
+
+    f.close()
+
+    print("------------------------------------------------------------------")
+    print("")
+    print("Summary")
+    print("")
+    print("Postive mass rate count: ", count_pos_mass_rate)
+    print("Traj count: ", count)
+    print("Targeter converged count: ", count_solved)
+    print("Total elapsed time: ", total_time)
+    print("Average time per traj: ", time_per_traj)
+    print("")
+
+    # report test summary to a file
+    file_path = os.path.join(
+        "..", "..", "data", "test_data", "test_random_TBT_transfer_report.csv"
+    )
 
     with open(file_path, "w") as f:
         for line in sa_report:

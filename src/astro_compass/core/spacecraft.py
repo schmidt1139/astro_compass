@@ -1,5 +1,9 @@
 import numpy as np
-from utils.state_vector_utils import polar_to_cartesian, cartesian_to_polar
+
+from astro_compass.utils.state_vector_utils import (
+    cartesian_to_polar,
+    polar_to_cartesian,
+)
 
 
 class Spacecraft:

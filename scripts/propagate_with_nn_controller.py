@@ -1,20 +1,17 @@
-import gymnasium as gym
-import sys
 import os
-import torch
-import matplotlib.pyplot as plt
 
-from gymnasium import envs
-from gymnasium.envs.registration import register
+import matplotlib.pyplot as plt
+import torch
 
 print("Now working in:", os.getcwd())
 
-from utils.nn_utils import query_NN_at_state
 from constants.constants import Constants
-from core.neural_network_controllers import NN_TBT_Controller
-from utils.log_utils import log
 from core.ephemeris import Ephemeris
+from core.neural_network_controllers import NN_TBT_Controller
 from envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
+
+from astro_compass.utils.log_utils import log
+from astro_compass.utils.nn_utils import query_NN_at_state
 
 # initialize the environment
 env = TwoBody_Orb2Orb_Transfer_Env()

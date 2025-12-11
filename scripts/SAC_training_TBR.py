@@ -13,13 +13,23 @@ from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from stable_baselines3 import SAC as SB3_SAC
 from stable_baselines3.common.callbacks import CallbackList, EvalCallback
 from stable_baselines3.common.monitor import Monitor
-from utils.log_utils import log, read_config_file, write_config_file, write_log_to_file
-from utils.plotting_utils import (
+
+from astro_compass.utils.log_utils import (
+    log,
+    read_config_file,
+    write_config_file,
+    write_log_to_file,
+)
+from astro_compass.utils.plotting_utils import (
     SACRolloutData_TBR,
     plot_SAC_training_TBR,
 )
-from utils.rl_utils import RewardLoggerCallback, log_training_perf, pre_train
-from utils.state_vector_utils import cartesian_to_polar
+from astro_compass.utils.rl_utils import (
+    RewardLoggerCallback,
+    log_training_perf,
+    pre_train,
+)
+from astro_compass.utils.state_vector_utils import cartesian_to_polar
 
 
 def SAC_training_TBR(seed_in=42):

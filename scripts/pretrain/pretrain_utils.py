@@ -4,7 +4,8 @@ from datetime import datetime
 import gymnasium as gym
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import SubprocVecEnv
-from utils.env_utils import gen_rl_environment
+
+from astro_compass.utils.env_utils import gen_rl_environment
 
 
 def generate_env(params, seed_in):

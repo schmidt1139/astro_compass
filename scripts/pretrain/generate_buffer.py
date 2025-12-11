@@ -2,17 +2,17 @@ import os
 import random
 import shutil
 
-from core.training_data_generation import read_ephems_from_dir
 import torch
 import utils
-from pretrain_utils import generate_env, generate_paths
+from core.training_data_generation import read_ephems_from_dir
+from pretrain_utils import generate_paths
 from stable_baselines3 import SAC as SB3_SAC
-from utils.log_utils import read_toml_config_file, log
-from utils.rl_utils import (
-    import_training_into_replay_buffer,
+
+from astro_compass.utils.env_utils import gen_rl_environment
+from astro_compass.utils.log_utils import log, read_toml_config_file
+from astro_compass.utils.rl_utils import (
     import_training_into_replay_buffer_v3,
 )
-from utils.env_utils import gen_rl_environment
 
 print("GPU available: ", torch.cuda.is_available())
 
@@ -58,35 +58,42 @@ def main(params, training_data, seed_in=42):
     # read the ephems from directory
     params["ephem_version"] = 3.0  # ephem version to read
     params["cores"] = params.get("cores", 4)  # number of cores to use for reading
-    set_ephems, filenames = read_ephems_from_dir( training_data, 
-                                                  params["num_ephems_to_use"],  
-                                                  version=params["ephem_version"], 
-                                                  flag_return_filenames=True,
-                                                  params=params )
+    set_ephems, filenames = read_ephems_from_dir(
+        training_data,
+        params["num_ephems_to_use"],
+        version=params["ephem_version"],
+        flag_return_filenames=True,
+        params=params,
+    )
 
     import torch.nn as nn
+
     policy_kwargs = dict(
         activation_fn=nn.LeakyReLU,  # LeakyReLU activation function
     )
-    model = SB3_SAC("MlpPolicy", 
-                    env, 
-                    verbose=1, 
-                    seed=seed_in,
-                    tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
-                    buffer_size=buffer_size,
-                    policy_kwargs=policy_kwargs)
-    
+    model = SB3_SAC(
+        "MlpPolicy",
+        env,
+        verbose=1,
+        seed=seed_in,
+        tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
+        buffer_size=buffer_size,
+        policy_kwargs=policy_kwargs,
+    )
+
     test_log = log("Buffer capacity: " + str(buffer_size), test_log, True)
     test_log = log("Starting size: " + str(model.replay_buffer.size()), test_log, True)
 
-    import_training_into_replay_buffer_v3( set_ephems, test_log, model, env, params )
+    import_training_into_replay_buffer_v3(set_ephems, test_log, model, env, params)
 
     path_replay_buffer = os.path.join(path_output, "replay_buffer.pkl")
     model.save_replay_buffer(path_replay_buffer)
 
     test_log = log("Buffer capacity: " + str(buffer_size), test_log, True)
-    test_log = log("Ending buffer size: " + str(model.replay_buffer.size()), test_log, True)
-    
+    test_log = log(
+        "Ending buffer size: " + str(model.replay_buffer.size()), test_log, True
+    )
+
     test_log = log(f"\nSaved replay buffer to: {path_replay_buffer}", test_log, True)
 
     # copy the config file
@@ -95,6 +102,7 @@ def main(params, training_data, seed_in=42):
     )
     path_config_dst = os.path.join(path_output, params["config_toml"])
     shutil.copyfile(path_config_src, path_config_dst)
+
 
 if __name__ == "__main__":
     config_toml = "SAC_training_TBR_polar__JM_config.toml"

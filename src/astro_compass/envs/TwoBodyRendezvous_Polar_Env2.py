@@ -3,13 +3,21 @@ from typing import Optional
 
 import gymnasium as gym
 import numpy as np
-from scipy.integrate import solve_ivp
 from constants.constants import Constants
 from core.propagation import env_EOM_TBT_v2
 from core.spacecraft import Spacecraft
-from utils.rl_utils import create_relative_polar_observation_fast, create_relative_polar_observation_fast
-from utils.state_vector_utils import convert_alpha_from_fpa_to_cart, convert_radial_velocity_to_cartesian, polar_to_cartesian, calc_cart_from_OE, cartesian_to_polar, convert_fpa_to_velocity_components, convert_attitude_from_radial_to_cartesian
-from utils.rl_utils import compute_reward_fast
+from scipy.integrate import solve_ivp
+
+from astro_compass.utils.rl_utils import (
+    compute_reward_fast,
+    create_relative_polar_observation_fast,
+)
+from astro_compass.utils.state_vector_utils import (
+    calc_cart_from_OE,
+    cartesian_to_polar,
+    convert_attitude_from_radial_to_cartesian,
+)
+
 
 class TwoBodyRendezvous_Polar_Env2(gym.Env):
     def __init__(self, **kwargs):
@@ -299,7 +307,7 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
             "v_r_target_unit": self.v_r_target_unit,
             "v_t_target_unit": self.v_t_target_unit,
             "v_current_nd": self.v_current_nd,
-            "v_target_nd": self.v_target_nd
+            "v_target_nd": self.v_target_nd,
         }
 
     def seed(self, seed=None):
@@ -453,7 +461,7 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         )
 
         # --------------------------------------------------------------------------------------------
-        
+
         params_temp = {}
         params_temp["l_star"] = self.l_star
         params_temp["t_star"] = self.t_star
@@ -461,16 +469,14 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         params_temp["mu"] = self.param_mu
         current_state_t = self._state[0:6]
         ttg = self._state[9]
-        
+
         # create polar observation
-        obs, env_info = create_relative_polar_observation_fast( params_temp, 
-                                                               current_state_t,
-                                                                target_state_t,
-                                                                ttg )
+        obs, env_info = create_relative_polar_observation_fast(
+            params_temp, current_state_t, target_state_t, ttg
+        )
 
         for key, value in env_info.items():
             setattr(self, key, value)
-
 
         observation = obs
         self.elapsed_t = 0.0
@@ -601,28 +607,31 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         )
 
         return polar_observation
-    
-    def create_relative_polar_observation( self, x_nd, y_nd, vx_nd, vy_nd, mass_nd, TTG_nd ):
 
+    def create_relative_polar_observation(
+        self, x_nd, y_nd, vx_nd, vy_nd, mass_nd, TTG_nd
+    ):
         params_temp = {}
-        params_temp['l_star'] = self.l_star
-        params_temp['t_star'] = self.t_star
-        params_temp['m_star'] = self.m_star
+        params_temp["l_star"] = self.l_star
+        params_temp["t_star"] = self.t_star
+        params_temp["m_star"] = self.m_star
 
         # convert TTG to dimensional
         TTG_dim = TTG_nd * self.t_star
 
-        current_state_t = self._state[0:5] # current dim state at time t
+        current_state_t = self._state[0:5]  # current dim state at time t
 
         # get target state at current time
         target_state_t = self.get_target_cartesian_state_at_ttg(TTG_dim)
 
-        polar_observation, env_data = create_relative_polar_observation_fast(params_temp, current_state_t, target_state_t, TTG_dim)
+        polar_observation, env_data = create_relative_polar_observation_fast(
+            params_temp, current_state_t, target_state_t, TTG_dim
+        )
 
-        #set all relevant class variables
+        # set all relevant class variables
         for key, value in env_data.items():
             setattr(self, key, value)
-        
+
         self.polar_observation = polar_observation
 
         return polar_observation
@@ -666,45 +675,51 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
         return dx, dy, dr, dvx, dvy, dv, r_target, v_target, dr_norm, dv_norm
 
     def calc_reward(self, u):
-
         params_temp = {}
-        params_temp['l_star'] = self.l_star
-        params_temp['t_star'] = self.t_star
-        params_temp['m_star'] = self.m_star
-        params_temp['max_T'] = self.C1
-        params_temp['ISP'] = self.C2
-        params_temp['mu'] = self.param_mu
-        params_temp['time_dist_weight'] = self.time_dist_weight
-        params_temp['tof_weight'] = self.tof_weight
-        params_temp['r_dist_weight'] = self.r_dist_weight
-        params_temp['v_dist_weight'] = self.v_dist_weight
-        params_temp['tof_weight'] = self.tof_weight
-        params_temp['pos_r_weight'] = self.pos_weight
-        params_temp['vel_r_weight'] = self.vel_weight
-        params_temp['throttle_r_weight'] = self.throttle_r_weight
-        params_temp['success_threshold_pos'] = self.success_threshold_pos
-        params_temp['success_threshold_vel'] = self.success_threshold_vel
-        params_temp['precision_mult'] = self.precision_mult
-        params_temp['terminal_bonus'] = self.terminal_bonus
+        params_temp["l_star"] = self.l_star
+        params_temp["t_star"] = self.t_star
+        params_temp["m_star"] = self.m_star
+        params_temp["max_T"] = self.C1
+        params_temp["ISP"] = self.C2
+        params_temp["mu"] = self.param_mu
+        params_temp["time_dist_weight"] = self.time_dist_weight
+        params_temp["tof_weight"] = self.tof_weight
+        params_temp["r_dist_weight"] = self.r_dist_weight
+        params_temp["v_dist_weight"] = self.v_dist_weight
+        params_temp["tof_weight"] = self.tof_weight
+        params_temp["pos_r_weight"] = self.pos_weight
+        params_temp["vel_r_weight"] = self.vel_weight
+        params_temp["throttle_r_weight"] = self.throttle_r_weight
+        params_temp["success_threshold_pos"] = self.success_threshold_pos
+        params_temp["success_threshold_vel"] = self.success_threshold_vel
+        params_temp["precision_mult"] = self.precision_mult
+        params_temp["terminal_bonus"] = self.terminal_bonus
 
-        current_state_t = self._state[0:5] # current dim state at time t
+        current_state_t = self._state[0:5]  # current dim state at time t
         ttg = self._state[9]
         target_state_t = self.get_target_cartesian_state_at_ttg(ttg)
         step_count = self.step_count
         total_timesteps = self.timesteps_in_prop
 
-        reward, terminated, truncated, env_info = compute_reward_fast(params_temp, current_state_t, ttg,
-                                                     target_state_t, u, step_count, total_timesteps)
-        
-        self.pos_residual = env_info['pos_residual']
-        self.vel_residual = env_info['vel_residual']
-        self.time_reward = env_info['time_r_component']
-        self.pos_reward = env_info['pos_r_component']
-        self.vel_reward = env_info['vel_r_component']
-        self.throttle_reward = env_info['throttle_r_component']
-        self.terminated = env_info['terminated']
+        reward, terminated, truncated, env_info = compute_reward_fast(
+            params_temp,
+            current_state_t,
+            ttg,
+            target_state_t,
+            u,
+            step_count,
+            total_timesteps,
+        )
 
-        '''
+        self.pos_residual = env_info["pos_residual"]
+        self.vel_residual = env_info["vel_residual"]
+        self.time_reward = env_info["time_r_component"]
+        self.pos_reward = env_info["pos_r_component"]
+        self.vel_reward = env_info["vel_r_component"]
+        self.throttle_reward = env_info["throttle_r_component"]
+        self.terminated = env_info["terminated"]
+
+        """
         x_nd = self._state[0] / self.l_star
         y_nd = self._state[1] / self.l_star
         vx_nd = self._state[2] / (self.l_star / self.t_star)
@@ -811,8 +826,8 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
 
         return reward, terminated
     
-    '''
-        
+    """
+
         return reward, terminated, truncated
 
     def _apply_dV_in_VNB_frame(self, dV, X_i, Y_i, VX_i, VY_i):
@@ -942,8 +957,6 @@ class TwoBodyRendezvous_Polar_Env2(gym.Env):
 
         # determine reward and terminated status
         reward, terminated, truncated = self.calc_reward(u)
-
-
 
         # accumulate reward
         self.episode_reward += reward

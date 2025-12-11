@@ -1,28 +1,25 @@
-import gymnasium as gym
-import sys
 import os
-import torch
-import matplotlib.pyplot as plt
 import random
-
 from datetime import datetime
-from gymnasium import envs
-from gymnasium.envs.registration import register
-from stable_baselines3.common.callbacks import EvalCallback, CallbackList
-from stable_baselines3 import SAC
-from stable_baselines3.common.monitor import Monitor
 
+import gymnasium as gym
+import matplotlib.pyplot as plt
+import torch
+from stable_baselines3 import SAC
+from stable_baselines3.common.callbacks import CallbackList, EvalCallback
+from stable_baselines3.common.monitor import Monitor
 
 print("Now working in:", os.getcwd())
 
 from constants.constants import Constants
-from utils.log_utils import log
 from core.ephemeris import Ephemeris
 from core.spacecraft import Spacecraft
-from utils.state_vector_utils import cartesian_to_polar
-from utils.plotting_utils import plot_SAC_training, SACRolloutData
-from utils.rl_utils import log_training_perf, RewardLoggerCallback
 from envs.TwoBody_Orb2Orb_Transfer_Env_nd import TwoBody_Orb2Orb_Transfer_Env_nd
+
+from astro_compass.utils.log_utils import log
+from astro_compass.utils.plotting_utils import SACRolloutData, plot_SAC_training
+from astro_compass.utils.rl_utils import RewardLoggerCallback, log_training_perf
+from astro_compass.utils.state_vector_utils import cartesian_to_polar
 
 
 def SAC_training(seed_in=42):

@@ -1,10 +1,11 @@
-import torch
-import matplotlib.pyplot as plt
-import numpy as np
 import os
 
-from utils.state_vector_utils import non_dimensionalize
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
 from torch.utils.data import TensorDataset, random_split
+
+from astro_compass.utils.state_vector_utils import non_dimensionalize
 
 
 def evaluate_neural_network(

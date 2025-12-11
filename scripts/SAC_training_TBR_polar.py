@@ -11,10 +11,16 @@ from stable_baselines3 import SAC as SB3_SAC
 from stable_baselines3.common.callbacks import CallbackList, EvalCallback
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import SubprocVecEnv
-from utils.env_utils import gen_rl_environment
-from utils.log_utils import log, read_config_file, write_config_file, write_log_to_file
-from utils.plotting_utils import plot_SAC_training_TBR_polar
-from utils.rl_utils import (
+
+from astro_compass.utils.env_utils import gen_rl_environment
+from astro_compass.utils.log_utils import (
+    log,
+    read_config_file,
+    write_config_file,
+    write_log_to_file,
+)
+from astro_compass.utils.plotting_utils import plot_SAC_training_TBR_polar
+from astro_compass.utils.rl_utils import (
     RewardLoggerCallback,
     log_training_perf,
     pre_train,
@@ -122,9 +128,16 @@ def SAC_training_TBR(seed_in=42):
 
     # load model if specified, otherwise create new
     if params["load_model_checkpoint"]:
-        test_log = log("Loading SAC model from: " + params["path_SAC_model_load"], test_log, True)
-        model = SB3_SAC.load(params["path_SAC_model_load"], env=env, device=params.get("eval_device", "cpu"), seed=seed_in,
-                             tensorboard_log=path_output)  # Use path_output so SB3 creates SAC_1/ subdirectory
+        test_log = log(
+            "Loading SAC model from: " + params["path_SAC_model_load"], test_log, True
+        )
+        model = SB3_SAC.load(
+            params["path_SAC_model_load"],
+            env=env,
+            device=params.get("eval_device", "cpu"),
+            seed=seed_in,
+            tensorboard_log=path_output,
+        )  # Use path_output so SB3 creates SAC_1/ subdirectory
     else:
         # Implement custom NN architectures
         nn_arch_type = params.get("nn_arch_type", "default")
