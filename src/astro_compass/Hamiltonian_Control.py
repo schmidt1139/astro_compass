@@ -1,17 +1,17 @@
 import numpy as np
-from scipy.optimize import root
-from scipy.integrate import solve_ivp
-
-from TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 from Propagation import (
     Hamiltonian_EOM_TBT_v2,
-    smoothing_function_tanh,
     smoothing_function_homotopic,
+    smoothing_function_tanh,
 )
-from StateVectorUtilities import (
-    polar_to_cartesian,
-    non_dimensionalize,
+from scipy.integrate import solve_ivp
+from scipy.optimize import root
+from TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
+
+from astro_compass.StateVectorUtilities import (
     cartesian_to_polar,
+    non_dimensionalize,
+    polar_to_cartesian,
 )
 
 
