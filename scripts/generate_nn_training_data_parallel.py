@@ -1,10 +1,11 @@
 import os
 import sys
 
+from astro_compass.utils.path_utils import PROJECT_ROOT
+
 # Add project root to Python path
-project_root = os.path.dirname(os.path.abspath(__file__))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
 from envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 

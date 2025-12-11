@@ -2,16 +2,14 @@ import os
 
 import torch
 import torch.nn as nn
-import utils
 from pretrain_utils import generate_paths
 from stable_baselines3 import SAC as SB3_SAC
 
 from astro_compass.utils.buffer_utils import extract_episodes_from_buffer, plot_episodes
 from astro_compass.utils.env_utils import gen_rl_environment
 from astro_compass.utils.log_utils import read_toml_config_file
+from astro_compass.utils.path_utils import PROJECT_ROOT
 
-# HACK
-PROJECT_ROOT = os.path.dirname(os.path.dirname(utils.__file__)) + "/../.."
 print("GPU available: ", torch.cuda.is_available())
 
 

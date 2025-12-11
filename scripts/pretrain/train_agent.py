@@ -3,21 +3,19 @@ import random
 import shutil
 
 import torch
-import utils
 from pretrain_utils import generate_env, generate_paths
 from stable_baselines3 import SAC as SB3_SAC
 from stable_baselines3.common.callbacks import CallbackList, EvalCallback
 
 from astro_compass.utils.callbacks import ReplayBufferCheckpointCallback
 from astro_compass.utils.log_utils import read_toml_config_file
+from astro_compass.utils.path_utils import PROJECT_ROOT
 from astro_compass.utils.rl_utils import (
     RewardLoggerCallback,
     log_training_perf,
 )
 
 print("GPU available: ", torch.cuda.is_available())
-# HACK
-PROJECT_ROOT = os.path.dirname(os.path.dirname(utils.__file__)) + "/../.."
 
 
 def main(params, seed_in=42):

@@ -2,7 +2,6 @@ import os
 import random
 
 import torch
-import utils
 from pretrain_utils import generate_env, generate_paths
 from stable_baselines3 import SAC as SB3_SAC
 from stable_baselines3.common.callbacks import CallbackList, EvalCallback
@@ -17,14 +16,12 @@ from astro_compass.utils.log_utils import (
     write_config_file,
     write_log_to_file,
 )
+from astro_compass.utils.path_utils import PROJECT_ROOT
 from astro_compass.utils.plotting_utils import plot_SAC_training_TBR_polar
 from astro_compass.utils.rl_utils import (
     RewardLoggerCallback,
     rollout_model,
 )
-
-# HACK
-PROJECT_ROOT = os.path.dirname(os.path.dirname(utils.__file__)) + "/../.."
 
 
 def main(params, seed_in=42):
