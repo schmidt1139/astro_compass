@@ -19,10 +19,10 @@ sys.path.append(os.path.join(project_root, "src", "python"))
 sys.path.append(os.path.join(project_root, "src", "scripts"))
 
 from constants.constants import Constants
-from core.ephemeris import Ephemeris
-from core.spacecraft import Spacecraft
 from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 
+from astro_compass.core.ephemeris import Ephemeris
+from astro_compass.core.spacecraft import Spacecraft
 from astro_compass.utils.log_utils import log
 from astro_compass.utils.plotting_utils import plot_SAC_training
 from astro_compass.utils.rl_utils import log_training_perf

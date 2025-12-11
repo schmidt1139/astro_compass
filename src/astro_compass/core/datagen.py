@@ -8,8 +8,8 @@ from multiprocessing import Pool, cpu_count
 
 import matplotlib.pyplot as plot
 import numpy as np
-from core.process_single_trajectory import process_single_trajectory
 
+from astro_compass.core.process_single_trajectory import process_single_trajectory
 from astro_compass.utils.log_utils import log, write_config_file
 
 

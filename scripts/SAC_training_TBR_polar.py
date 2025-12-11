@@ -5,13 +5,13 @@ from datetime import datetime
 import gymnasium as gym
 import torch
 import torch.nn as nn
-from core.ephemeris_v2 import Ephemeris_v2 as Ephemeris
-from core.process_single_trajectory import process_single_trajectory
 from stable_baselines3 import SAC as SB3_SAC
 from stable_baselines3.common.callbacks import CallbackList, EvalCallback
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import SubprocVecEnv
 
+from astro_compass.core.ephemeris_v2 import Ephemeris_v2 as Ephemeris
+from astro_compass.core.process_single_trajectory import process_single_trajectory
 from astro_compass.utils.env_utils import gen_rl_environment
 from astro_compass.utils.log_utils import (
     log,

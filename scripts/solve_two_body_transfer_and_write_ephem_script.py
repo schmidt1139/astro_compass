@@ -1,12 +1,11 @@
-import gymnasium as gym
-import sys
 import os
 
-from gymnasium import envs
-from gymnasium.envs.registration import register
-from core.solve_two_body_transfer import solve_two_body_transfer_and_write_ephem
-from envs.TwoBody_Orb2Orb_Transfer_Env_nd import TwoBody_Orb2Orb_Transfer_Env_nd
 from constants.constants import Constants
+from envs.TwoBody_Orb2Orb_Transfer_Env_nd import TwoBody_Orb2Orb_Transfer_Env_nd
+
+from astro_compass.core.solve_two_body_transfer import (
+    solve_two_body_transfer_and_write_ephem,
+)
 
 # USER INPUTS ------------------------------------------------------------------
 

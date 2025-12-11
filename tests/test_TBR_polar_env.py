@@ -1,8 +1,8 @@
 import os
 
-from core.ephemeris_v2 import Ephemeris_v2
 from matplotlib import pyplot as plt
 
+from astro_compass.core.ephemeris_v2 import Ephemeris_v2
 from astro_compass.utils.env_utils import gen_rl_environment
 from astro_compass.utils.log_utils import (
     compare_logs,

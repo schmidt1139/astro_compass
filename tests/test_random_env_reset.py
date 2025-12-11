@@ -4,11 +4,11 @@ import time
 
 import gymnasium as gym
 import matplotlib.pyplot as plt
-from core.epehemeris import Ephemeris
-from core.hamiltonian_control import Hamiltonian_Controller_TBT
+from astro_compass.core.epehemeris import Ephemeris
 from gymnasium import envs
 from gymnasium.envs.registration import register
 
+from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
 from astro_compass.utils.state_vector_utils import polar_to_cartesian
 
 # register the environment if it isn't registered

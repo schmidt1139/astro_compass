@@ -1,14 +1,15 @@
-import sys
 import os
+import sys
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from datetime import datetime
+from multiprocessing import cpu_count
+
 from tqdm import tqdm
 
-from datetime import datetime
-from core.hamiltonian_control import Hamiltonian_Controller_TBT
-from core.ephemeris import Ephemeris
-from core.ephemeris_v2 import Ephemeris_v2
-from core.ephemeris_v3 import Ephemeris_v3
-from multiprocessing import cpu_count
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from astro_compass.core.ephemeris import Ephemeris
+from astro_compass.core.ephemeris_v2 import Ephemeris_v2
+from astro_compass.core.ephemeris_v3 import Ephemeris_v3
+from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
 
 # Adding python src code directory
 sys.path.append(os.path.abspath("../python"))

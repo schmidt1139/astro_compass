@@ -2,9 +2,9 @@ import os
 
 import torch
 from constants.constants import Constants
-from core.neural_network_controllers import NN_TBT_Controller
 from envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 
+from astro_compass.core.neural_network_controllers import NN_TBT_Controller
 from astro_compass.utils.log_utils import log
 from astro_compass.utils.nn_utils import query_NN_at_state
 from astro_compass.utils.test_utils import compare_log_files_with_tolerance

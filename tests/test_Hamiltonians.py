@@ -2,15 +2,14 @@ import os
 
 import matplotlib.pyplot as plot
 import numpy as np
+from envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 
 # # Adding python src code directory
 # current_dir = os.path.dirname(__file__)
 # python_src_dir = os.path.abspath(os.path.join(current_dir, "..", "python"))
 # sys.path.append(python_src_dir)
-from core.ephemeris import Ephemeris
-from core.hamiltonian_control import Hamiltonian_Controller_TBT
-from envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
-
+from astro_compass.core.ephemeris import Ephemeris
+from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
 from astro_compass.utils.log_utils import log
 
 

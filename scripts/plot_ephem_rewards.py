@@ -1,8 +1,8 @@
 import os
 
 import matplotlib.pyplot as plt
-from core.training_data_generation import read_ephems_from_dir
 
+from astro_compass.core.training_data_generation import read_ephems_from_dir
 from astro_compass.utils.env_utils import gen_rl_environment
 from astro_compass.utils.h_rl_fusion import calc_rewards_from_H_ephem
 from astro_compass.utils.log_utils import read_config_file

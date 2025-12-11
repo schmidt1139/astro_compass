@@ -1,8 +1,11 @@
 from constants.constants import Constants
-from core.ephemeris_v2 import Ephemeris_v2
-from core.exceptions import LowMassException, SpacecraftCollisionException
-from core.hamiltonian_control_TBR import FirstGuessException, Hamiltonian_Controller_TBR
 
+from astro_compass.core.ephemeris_v2 import Ephemeris_v2
+from astro_compass.core.exceptions import LowMassException, SpacecraftCollisionException
+from astro_compass.core.hamiltonian_control_TBR import (
+    FirstGuessException,
+    Hamiltonian_Controller_TBR,
+)
 from astro_compass.utils.log_utils import log
 
 

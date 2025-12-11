@@ -3,10 +3,10 @@ import signal
 import time
 
 import matplotlib.pyplot as plot
-from core.exceptions import TimeoutException, timeout_handler
-from core.gen_Hamiltonian_trajectory import gen_Hamiltonian_trajectory
 from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 
+from astro_compass.core.exceptions import TimeoutException, timeout_handler
+from astro_compass.core.gen_Hamiltonian_trajectory import gen_Hamiltonian_trajectory
 from astro_compass.utils.log_utils import log_parameters, write_log_to_file
 
 

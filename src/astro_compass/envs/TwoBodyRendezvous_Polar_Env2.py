@@ -4,10 +4,10 @@ from typing import Optional
 import gymnasium as gym
 import numpy as np
 from constants.constants import Constants
-from core.propagation import env_EOM_TBT_v2
-from core.spacecraft import Spacecraft
 from scipy.integrate import solve_ivp
 
+from astro_compass.core.propagation import env_EOM_TBT_v2
+from astro_compass.core.spacecraft import Spacecraft
 from astro_compass.utils.rl_utils import (
     compute_reward_fast,
     create_relative_polar_observation_fast,

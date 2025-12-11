@@ -9,14 +9,14 @@ import torch.nn as nn
 
 # Update ALL imports to use the new package structure (remove 'python.' prefix):
 from constants.constants import Constants
-from core.ephemeris import Ephemeris
-from core.spacecraft import Spacecraft
 from gymnasium import envs
 from gymnasium.envs.registration import register
 from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import CallbackList, EvalCallback
 from stable_baselines3.common.monitor import Monitor
 
+from astro_compass.core.ephemeris import Ephemeris
+from astro_compass.core.spacecraft import Spacecraft
 from astro_compass.utils.log_utils import log, log_parameters
 from astro_compass.utils.plotting_utils import SACRolloutData, plot_SAC_training
 from astro_compass.utils.rl_utils import (

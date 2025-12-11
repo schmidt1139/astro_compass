@@ -7,8 +7,7 @@ import cProfile
 import pstats
 import time
 
-from core.datagen import run_parallel_trajectory_generation
-
+from astro_compass.core.datagen import run_parallel_trajectory_generation
 from astro_compass.utils.log_utils import log, read_config_file, write_log_to_file
 
 

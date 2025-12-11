@@ -1,19 +1,21 @@
-import numpy as np
-import warnings
 import time
-from scipy.integrate import solve_ivp
-from scipy.optimize import root
-from core.propagation import Hamiltonian_EOM_TBT_v2
-from core.exceptions import (
-    FirstGuessException,
-    SpacecraftCollisionException,
-    LowMassException,
-    TimeoutException,
-)
+import warnings
 from typing import TYPE_CHECKING
 
+import numpy as np
+from scipy.integrate import solve_ivp
+from scipy.optimize import root
+
+from astro_compass.core.exceptions import (
+    FirstGuessException,
+    LowMassException,
+    SpacecraftCollisionException,
+    TimeoutException,
+)
+from astro_compass.core.propagation import Hamiltonian_EOM_TBT_v2
+
 if TYPE_CHECKING:
-    from core.hamiltonian_control_TBR import Hamiltonian_Controller_TBR
+    pass
 
 
 class Hamiltonian_Controller_TBR_Shooting:

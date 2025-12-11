@@ -1,6 +1,6 @@
-import sys
 import os
-from core.ephemeris import Ephemeris
+
+from astro_compass.core.ephemeris import Ephemeris
 
 
 def ingest_ephem_and_plot(path_to_ephemeris):

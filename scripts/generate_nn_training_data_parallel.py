@@ -1,16 +1,16 @@
-import sys
 import os
-import gymnasium as gym
-from gymnasium import envs
-from gymnasium.envs.registration import register
+import sys
 
 # Add project root to Python path
 project_root = os.path.dirname(os.path.abspath(__file__))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from core.training_data_generation import generate_nn_training_data_parallel
 from envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
+
+from astro_compass.core.training_data_generation import (
+    generate_nn_training_data_parallel,
+)
 
 if __name__ == "__main__":
     # Initialize dictionary with input parameters to function

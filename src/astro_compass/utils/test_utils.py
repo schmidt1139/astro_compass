@@ -1,9 +1,9 @@
 import re
 
 import numpy as np
-from core.ephemeris import Ephemeris
-from core.ephemeris_v2 import Ephemeris_v2
 
+from astro_compass.core.ephemeris import Ephemeris
+from astro_compass.core.ephemeris_v2 import Ephemeris_v2
 from astro_compass.utils.log_utils import log
 
 

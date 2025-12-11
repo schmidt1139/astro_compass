@@ -1,16 +1,9 @@
-import numpy as np
-import gymnasium as gym
-import matplotlib
 import matplotlib.pyplot as plot
-import sys
-import os
-
-from gymnasium import envs
-from gymnasium.envs.registration import register
-from core.ephemeris import Ephemeris
-from core.hamiltonian_control import Hamiltonian_Controller_TBT
+import numpy as np
 from envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 
+from astro_compass.core.ephemeris import Ephemeris
+from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
 
 # initialize the environment
 env = TwoBody_Orb2Orb_Transfer_Env()

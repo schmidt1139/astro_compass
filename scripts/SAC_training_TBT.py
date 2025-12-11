@@ -7,9 +7,6 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 from constants.constants import Constants
-from core.ephemeris import Ephemeris as Ephemeris
-from core.hamiltonian_control import Hamiltonian_Controller_TBT
-from core.spacecraft import Spacecraft
 from envs.TwoBody_Orb2Orb_Transfer_Env_nd_obs5 import (
     TwoBody_Orb2Orb_Transfer_Env_nd_obs5,
 )
@@ -17,6 +14,9 @@ from stable_baselines3 import SAC as SB3_SAC
 from stable_baselines3.common.callbacks import CallbackList, EvalCallback
 from stable_baselines3.common.monitor import Monitor
 
+from astro_compass.core.ephemeris import Ephemeris as Ephemeris
+from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
+from astro_compass.core.spacecraft import Spacecraft
 from astro_compass.utils.log_utils import (
     log,
     read_config_file,

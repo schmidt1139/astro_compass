@@ -1,7 +1,8 @@
 import os
 
 import matplotlib
-from core.datagen import run_parallel_trajectory_generation
+
+from astro_compass.core.datagen import run_parallel_trajectory_generation
 
 matplotlib.use("Agg")  # Use non-interactive backend for headless environments
 import time

@@ -1,6 +1,7 @@
 import numpy as np
 from constants.constants import Constants
-from core.exceptions import SpacecraftCollisionException, LowMassException
+
+from astro_compass.core.exceptions import SpacecraftCollisionException
 
 
 def spacecraft_EOM_radial_2D_EB(t, y, params):

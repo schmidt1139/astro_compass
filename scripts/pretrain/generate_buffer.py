@@ -4,10 +4,10 @@ import shutil
 
 import torch
 import utils
-from core.training_data_generation import read_ephems_from_dir
 from pretrain_utils import generate_paths
 from stable_baselines3 import SAC as SB3_SAC
 
+from astro_compass.core.training_data_generation import read_ephems_from_dir
 from astro_compass.utils.env_utils import gen_rl_environment
 from astro_compass.utils.log_utils import log, read_toml_config_file
 from astro_compass.utils.rl_utils import (
