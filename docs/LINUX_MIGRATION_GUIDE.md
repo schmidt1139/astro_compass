@@ -134,7 +134,7 @@ pip install -e .
 # They do NOT go to the system Python or affect other users!
 
 # Verify installation
-python -c "from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env; print('✓ Import successful')"
+python -c "from astro_compass.envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env; print('✓ Import successful')"
 
 # Check what's installed in YOUR environment only
 pip list

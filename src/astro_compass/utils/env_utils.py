@@ -1,5 +1,5 @@
-from envs.TwoBodyRendezvous_Polar_Env import TwoBodyRendezvous_Polar_Env
-from envs.TwoBodyRendezvous_Polar_Env2 import TwoBodyRendezvous_Polar_Env2
+from astro_compass.envs.TwoBodyRendezvous_Polar_Env import TwoBodyRendezvous_Polar_Env
+from astro_compass.envs.TwoBodyRendezvous_Polar_Env2 import TwoBodyRendezvous_Polar_Env2
 
 
 def gen_rl_environment(params):

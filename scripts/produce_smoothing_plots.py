@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plot
 import numpy as np
-from envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 
 from astro_compass.core.ephemeris import Ephemeris
 from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
+from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 
 # initialize the environment
 env = TwoBody_Orb2Orb_Transfer_Env()

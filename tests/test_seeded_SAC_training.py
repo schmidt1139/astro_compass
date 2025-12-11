@@ -7,15 +7,15 @@ import numpy as np
 import torch
 import torch.nn as nn
 from constants.constants import Constants
-from envs.TwoBody_Orb2Orb_Transfer_Env_nd_obs5 import (
-    TwoBody_Orb2Orb_Transfer_Env_nd_obs5,
-)
 from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import CallbackList, EvalCallback
 from stable_baselines3.common.monitor import Monitor
 
 from astro_compass.core.ephemeris import Ephemeris
 from astro_compass.core.spacecraft import Spacecraft
+from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env_nd_obs5 import (
+    TwoBody_Orb2Orb_Transfer_Env_nd_obs5,
+)
 from astro_compass.utils.log_utils import log, log_parameters
 from astro_compass.utils.plotting_utils import SACRolloutData, plot_SAC_training
 from astro_compass.utils.rl_utils import (

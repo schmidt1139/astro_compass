@@ -6,7 +6,6 @@ import gymnasium as gym
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
-from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from stable_baselines3 import SAC as SB3_SAC
 from stable_baselines3.common.callbacks import CallbackList, EvalCallback
 from stable_baselines3.common.monitor import Monitor
@@ -14,6 +13,7 @@ from stable_baselines3.common.monitor import Monitor
 from astro_compass.core.ephemeris_v2 import Ephemeris_v2 as Ephemeris
 from astro_compass.core.process_single_trajectory import process_single_trajectory
 from astro_compass.core.spacecraft import Spacecraft
+from astro_compass.envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from astro_compass.utils.log_utils import (
     log,
     read_config_file,

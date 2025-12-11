@@ -87,7 +87,7 @@ python -c "import gymnasium; print('   ✅ gymnasium:', gymnasium.__version__)" 
 python -c "import torch; print('   ✅ torch:', torch.__version__)" 2>/dev/null || echo "   ❌ torch failed"
 python -c "import matplotlib; print('   ✅ matplotlib:', matplotlib.__version__)" 2>/dev/null || echo "   ❌ matplotlib failed"
 python -c "import numpy; print('   ✅ numpy:', numpy.__version__)" 2>/dev/null || echo "   ❌ numpy failed"
-python -c "from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env; print('   ✅ TwoBodyRendezvous_Env imported successfully')" 2>/dev/null || echo "   ⚠️  TwoBodyRendezvous_Env import failed"
+python -c "from astro_compass.envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env; print('   ✅ TwoBodyRendezvous_Env imported successfully')" 2>/dev/null || echo "   ⚠️  TwoBodyRendezvous_Env import failed"
 echo ""
 
 # Show isolation info

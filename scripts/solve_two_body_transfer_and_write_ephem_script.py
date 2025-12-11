@@ -1,10 +1,12 @@
 import os
 
 from constants.constants import Constants
-from envs.TwoBody_Orb2Orb_Transfer_Env_nd import TwoBody_Orb2Orb_Transfer_Env_nd
 
 from astro_compass.core.solve_two_body_transfer import (
     solve_two_body_transfer_and_write_ephem,
+)
+from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env_nd import (
+    TwoBody_Orb2Orb_Transfer_Env_nd,
 )
 
 # USER INPUTS ------------------------------------------------------------------

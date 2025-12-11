@@ -2,10 +2,10 @@ import os
 import sys
 
 import numpy as np
-from envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 from gymnasium import envs
 from gymnasium.envs.registration import register
 
+from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 from astro_compass.utils.log_utils import log
 from astro_compass.utils.test_utils import compare_log_files_with_tolerance
 

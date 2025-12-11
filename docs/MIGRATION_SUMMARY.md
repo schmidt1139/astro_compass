@@ -181,7 +181,7 @@ The migration script will update **19 files**:
 
 After migration, verify:
 
-1. **Imports work**: `python3 -c "from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env"`
+1. **Imports work**: `python3 -c "from astro_compass.envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env"`
 2. **Unit tests pass**: `python3 -m pytest tests/`
 3. **Data generation runs**: `python3 src/scripts/datagen_Hamiltonian_TBR_controller.py`
 4. **Paths resolve correctly**: All data files can be read/written

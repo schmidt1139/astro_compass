@@ -1,6 +1,5 @@
 import numpy as np
 from constants.constants import Constants
-from envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 from scipy.integrate import solve_ivp
 from scipy.optimize import root
 
@@ -9,6 +8,7 @@ from astro_compass.core.propagation import (
     smoothing_function_homotopic,
     smoothing_function_tanh,
 )
+from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 from astro_compass.utils.state_vector_utils import (
     cartesian_to_polar,
     non_dimensionalize,

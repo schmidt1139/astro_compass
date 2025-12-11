@@ -3,7 +3,6 @@ import warnings
 
 import numpy as np
 from constants.constants import Constants
-from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from scipy.integrate import solve_ivp
 from scipy.optimize import root
 
@@ -13,6 +12,7 @@ from astro_compass.core.propagation import (
     smoothing_function_tanh,
 )
 from astro_compass.core.shooting_methods import Hamiltonian_Controller_TBR_Shooting
+from astro_compass.envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from astro_compass.utils.state_vector_utils import (
     non_dimensionalize,
 )

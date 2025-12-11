@@ -3,9 +3,9 @@ import time
 
 import matplotlib.pyplot as plot
 from constants.constants import Constants
-from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 
 from astro_compass.core.gen_Hamiltonian_trajectory import gen_Hamiltonian_trajectory
+from astro_compass.envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from astro_compass.utils.log_utils import log
 from astro_compass.utils.test_utils import compare_trajectories
 

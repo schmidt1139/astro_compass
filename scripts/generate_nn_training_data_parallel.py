@@ -7,11 +7,10 @@ from astro_compass.utils.path_utils import PROJECT_ROOT
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
-
 from astro_compass.core.training_data_generation import (
     generate_nn_training_data_parallel,
 )
+from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 
 if __name__ == "__main__":
     # Initialize dictionary with input parameters to function

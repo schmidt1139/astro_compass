@@ -9,20 +9,19 @@ from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import BaseCallback, CallbackList, EvalCallback
 from stable_baselines3.common.monitor import Monitor
 
-# Adding python src code directory
-# Get the project root directory (parent of tests/)
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-os.chdir(project_root)
+from astro_compass.utils.path_utils import PROJECT_ROOT
+
+os.chdir(PROJECT_ROOT)
 print("Now working in:", os.getcwd())
 
-sys.path.append(os.path.join(project_root, "src", "python"))
-sys.path.append(os.path.join(project_root, "src", "scripts"))
+sys.path.append(os.path.join(PROJECT_ROOT, "src"))
+sys.path.append(os.path.join(PROJECT_ROOT, "scripts"))
 
 from constants.constants import Constants
-from envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 
 from astro_compass.core.ephemeris import Ephemeris
 from astro_compass.core.spacecraft import Spacecraft
+from astro_compass.envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from astro_compass.utils.log_utils import log
 from astro_compass.utils.plotting_utils import plot_SAC_training
 from astro_compass.utils.rl_utils import log_training_perf
