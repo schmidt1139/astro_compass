@@ -4,8 +4,8 @@ from datetime import datetime, timezone
 
 import matplotlib.pyplot as plot
 import numpy as np
-from constants.constants import Constants
 
+from astro_compass.constants.constants import Constants
 from astro_compass.utils.plotting_utils import plot_overlay_ballistic_orbit
 
 

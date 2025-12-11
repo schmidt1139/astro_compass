@@ -6,15 +6,14 @@ import gymnasium as gym
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
-
-# Update ALL imports to use the new package structure (remove 'python.' prefix):
-from constants.constants import Constants
 from gymnasium import envs
 from gymnasium.envs.registration import register
 from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import CallbackList, EvalCallback
 from stable_baselines3.common.monitor import Monitor
 
+# Update ALL imports to use the new package structure (remove 'python.' prefix):
+from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris import Ephemeris
 from astro_compass.core.spacecraft import Spacecraft
 from astro_compass.utils.log_utils import log, log_parameters

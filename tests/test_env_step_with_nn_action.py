@@ -1,8 +1,8 @@
 import os
 
 import torch
-from constants.constants import Constants
 
+from astro_compass.constants.constants import Constants
 from astro_compass.core.neural_network_controllers import NN_TBT_Controller
 from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 from astro_compass.utils.log_utils import log

@@ -3,9 +3,9 @@ from typing import Optional
 
 import gymnasium as gym
 import numpy as np
-from constants.constants import Constants
 from scipy.integrate import solve_ivp
 
+from astro_compass.constants.constants import Constants
 from astro_compass.core.propagation import env_EOM_TBT_v2
 from astro_compass.core.spacecraft import Spacecraft
 from astro_compass.utils.rl_utils import (

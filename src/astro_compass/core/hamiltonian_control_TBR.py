@@ -2,10 +2,10 @@ import time
 import warnings
 
 import numpy as np
-from constants.constants import Constants
 from scipy.integrate import solve_ivp
 from scipy.optimize import root
 
+from astro_compass.constants.constants import Constants
 from astro_compass.core.propagation import (
     Hamiltonian_EOM_TBT_v2,
     smoothing_function_homotopic,

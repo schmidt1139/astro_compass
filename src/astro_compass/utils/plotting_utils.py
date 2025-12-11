@@ -4,8 +4,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from constants.constants import Constants
 
+from astro_compass.constants.constants import Constants
 from astro_compass.utils.h_rl_fusion import calc_rewards_from_H_ephem
 from astro_compass.utils.state_vector_utils import (
     convert_attitude_from_cartesian_to_radial,

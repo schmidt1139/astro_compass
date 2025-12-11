@@ -21,8 +21,7 @@ print("Now working in:", os.getcwd())
 sys.path.append(os.path.join(PROJECT_ROOT, "src", "python"))
 sys.path.append(os.path.join(PROJECT_ROOT, "src", "scripts"))
 
-from constants.constants import Constants
-
+from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris import Ephemeris
 from astro_compass.core.spacecraft import Spacecraft
 from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env_nd import (

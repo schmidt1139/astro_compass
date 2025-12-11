@@ -1,6 +1,6 @@
 import numpy as np
-from constants.constants import Constants
 
+from astro_compass.constants.constants import Constants
 from astro_compass.core.exceptions import SpacecraftCollisionException
 
 

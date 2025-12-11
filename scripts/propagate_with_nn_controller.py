@@ -5,8 +5,7 @@ import torch
 
 print("Now working in:", os.getcwd())
 
-from constants.constants import Constants
-
+from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris import Ephemeris
 from astro_compass.core.neural_network_controllers import NN_TBT_Controller
 from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env

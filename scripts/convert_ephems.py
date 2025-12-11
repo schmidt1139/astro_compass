@@ -2,10 +2,10 @@ import concurrent.futures
 import os
 
 import numpy as np
-from constants.constants import Constants
 from scipy.integrate import solve_ivp
 from tqdm import tqdm
 
+from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris_v3 import Ephemeris_v3
 from astro_compass.core.propagation import env_EOM_TBT_v2
 from astro_compass.core.training_data_generation import read_ephems_from_dir

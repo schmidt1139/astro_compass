@@ -1,9 +1,11 @@
-import numpy as np
-import matplotlib.pyplot as plot
 import os
 import time
-from constants.constants import Constants
 from datetime import datetime, timezone
+
+import matplotlib.pyplot as plot
+import numpy as np
+
+from astro_compass.constants.constants import Constants
 
 
 class Ephemeris:

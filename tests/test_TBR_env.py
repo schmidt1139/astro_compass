@@ -1,7 +1,6 @@
 import os
 
-from constants.constants import Constants
-
+from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris_v2 import Ephemeris_v2
 from astro_compass.envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from astro_compass.utils.log_utils import log

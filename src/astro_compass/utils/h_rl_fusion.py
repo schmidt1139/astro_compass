@@ -1,4 +1,4 @@
-from constants.constants import Constants
+from astro_compass.constants.constants import Constants
 
 
 def calc_rewards_from_H_ephem(ephem_H, env, params):

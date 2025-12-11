@@ -1,7 +1,6 @@
 import os
 
-from constants.constants import Constants
-
+from astro_compass.constants.constants import Constants
 from astro_compass.core.solve_two_body_transfer import (
     solve_two_body_transfer_and_write_ephem,
 )
