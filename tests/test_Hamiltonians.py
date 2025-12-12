@@ -3,14 +3,11 @@ import os
 import matplotlib.pyplot as plot
 import numpy as np
 
-# # Adding python src code directory
-# current_dir = os.path.dirname(__file__)
-# python_src_dir = os.path.abspath(os.path.join(current_dir, "..", "python"))
-# sys.path.append(python_src_dir)
 from astro_compass.core.ephemeris import Ephemeris
 from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
 from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 from astro_compass.utils.log_utils import log
+from astro_compass.utils.path_utils import DATA_ROOT
 
 
 def test_Hamiltonians(flag_report_live=False):
@@ -106,18 +103,20 @@ def test_Hamiltonians(flag_report_live=False):
     # print(sol)
 
     eph_out.write_to_file(
-        os.path.join("data", "test_data", "test_hamiltonians", "test_H_ephem.txt")
+        os.path.join(DATA_ROOT, "test_data", "test_hamiltonians", "test_H_ephem.txt")
     )
     eph1 = Ephemeris()
     eph1.read_from_file(
-        os.path.join("data", "test_data", "test_hamiltonians", "test_H_ephem.txt")
+        os.path.join(DATA_ROOT, "test_data", "test_hamiltonians", "test_H_ephem.txt")
     )
     test_log = log("Wrote test ephem", test_log, flag_report_live)
 
     # compare to truth file
     eph2 = Ephemeris()
     eph2.read_from_file(
-        os.path.join("data", "test_data", "test_hamiltonians", "test_H_ephem_truth.txt")
+        os.path.join(
+            DATA_ROOT, "test_data", "test_hamiltonians", "test_H_ephem_truth.txt"
+        )
     )
     test_log = log("Read truth ephem", test_log, flag_report_live)
 

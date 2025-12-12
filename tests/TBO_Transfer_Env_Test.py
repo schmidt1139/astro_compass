@@ -1,15 +1,7 @@
-import os
-import sys
-
 import gymnasium as gym
 import numpy as np
 from gymnasium import envs
 from gymnasium.envs.registration import register
-
-# Adding python src code directory
-current_dir = os.path.dirname(__file__)
-python_src_dir = os.path.abspath(os.path.join(current_dir, "..", "python"))
-sys.path.append(python_src_dir)
 
 from astro_compass.Ephemeris import Ephemeris
 

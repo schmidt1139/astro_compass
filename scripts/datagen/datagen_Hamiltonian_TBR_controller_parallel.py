@@ -9,6 +9,7 @@ import time
 
 from astro_compass.core.datagen import run_parallel_trajectory_generation
 from astro_compass.utils.log_utils import log, read_config_file, write_log_to_file
+from astro_compass.utils.path_utils import DATA_ROOT
 
 
 def datagen_Hamiltonian_TBR_controller_parallel():
@@ -16,7 +17,7 @@ def datagen_Hamiltonian_TBR_controller_parallel():
     time_str = time.strftime("%Y%m%d_%H%M%S")
 
     path_config = os.path.join(
-        "data", "config", "datagen_Hamiltonian_TBR_controller_parallel_config.txt"
+        DATA_ROOT, "config", "datagen_Hamiltonian_TBR_controller_parallel_config.txt"
     )
     params = read_config_file(path_config)
 

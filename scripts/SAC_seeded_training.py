@@ -17,6 +17,7 @@ from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris import Ephemeris
 from astro_compass.core.spacecraft import Spacecraft
 from astro_compass.utils.log_utils import log, log_parameters
+from astro_compass.utils.path_utils import DATA_ROOT
 from astro_compass.utils.plotting_utils import SACRolloutData, plot_SAC_training
 from astro_compass.utils.rl_utils import (
     RewardLoggerCallback,
@@ -116,14 +117,14 @@ def SAC_seeded_training(seed_in=42):
 
     # paths
     time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
-    path_nns = os.path.normpath(os.path.join(os.getcwd(), "data", "neural_networks"))
+    path_nns = os.path.normpath(os.path.join(DATA_ROOT, "neural_networks"))
     path_training_data = os.path.normpath(
-        os.path.join(os.getcwd(), "data", "training_ephems", "test_set_bang_bang")
+        os.path.join(DATA_ROOT, "training_ephems", "test_set_bang_bang")
     )
     path_output = os.path.normpath(
         os.path.join(
             os.getcwd(),
-            os.path.join("data", "script_output", "SAC_seeded_training_")
+            os.path.join(DATA_ROOT, "script_output", "SAC_seeded_training_")
             + time_tag
             + "\\",
         )

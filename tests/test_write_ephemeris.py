@@ -1,5 +1,4 @@
 import os
-import sys
 
 import gymnasium as gym
 import matplotlib.pyplot as plot
@@ -8,12 +7,9 @@ from gymnasium import envs
 from gymnasium.envs.registration import register
 
 from astro_compass.Constants import Constants
-
-# Adding python src code directory
-sys.path.append(os.path.abspath("../python"))
-
 from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
 from astro_compass.Ephemeris import Ephemeris
+from astro_compass.utils.path_utils import DATA_ROOT
 
 # register the environment if it isn't registered
 if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
@@ -88,7 +84,7 @@ def test_write_ephemeris(env, filename_eph):
 env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
 
 # Ephemeris filename
-dir_ephemeris_out = os.path.join("..", "..", "data", "training_ephems")
+dir_ephemeris_out = os.path.join(DATA_ROOT, "training_ephems")
 filename_ephemeris_out = dir_ephemeris_out + "test_ephemeris.txt"
 
 test_write_ephemeris(env, filename_ephemeris_out)

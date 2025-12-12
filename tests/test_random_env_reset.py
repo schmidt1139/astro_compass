@@ -8,6 +8,7 @@ from gymnasium.envs.registration import register
 
 from astro_compass.core.ephemeris import Ephemeris
 from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
+from astro_compass.utils.path_utils import DATA_ROOT
 from astro_compass.utils.state_vector_utils import polar_to_cartesian
 
 # register the environment if it isn't registered
@@ -196,7 +197,7 @@ def test_random_env_rest(env):
 
     # report test summary to a file
     file_path = os.path.join(
-        "..", "..", "data", "test_data", "test_random_TBT_transfer_report.csv"
+        DATA_ROOT, "test_data", "test_random_TBT_transfer_report.csv"
     )
 
     with open(file_path, "w") as f:
@@ -218,7 +219,7 @@ def test_random_env_rest(env):
 
     # report test summary to a file
     file_path = os.path.join(
-        "..", "..", "data", "test_data", "test_random_TBT_transfer_report.csv"
+        DATA_ROOT, "test_data", "test_random_TBT_transfer_report.csv"
     )
 
     with open(file_path, "w") as f:

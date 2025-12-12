@@ -9,7 +9,7 @@ from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import BaseCallback, CallbackList, EvalCallback
 from stable_baselines3.common.monitor import Monitor
 
-from astro_compass.utils.path_utils import PROJECT_ROOT
+from astro_compass.utils.path_utils import DATA_ROOT, PROJECT_ROOT
 
 os.chdir(PROJECT_ROOT)
 print("Now working in:", os.getcwd())
@@ -119,9 +119,9 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
     # print("GPU available: ", torch.cuda.is_available())  # Should print True if GPU is available)
 
     # paths
-    path_nns = os.path.normpath(os.path.join(os.getcwd(), "data", "neural_networks"))
+    path_nns = os.path.normpath(os.path.join(DATA_ROOT, "neural_networks"))
     path_output = os.path.normpath(
-        os.path.join(os.getcwd(), "data", "test_data", "test_SAC_training_TBR")
+        os.path.join(DATA_ROOT, "test_data", "test_SAC_training_TBR")
     )
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
     path_output_log = os.path.join(path_output, "SAC_Training_Log.txt")

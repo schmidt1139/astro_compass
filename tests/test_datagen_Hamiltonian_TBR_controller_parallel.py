@@ -8,19 +8,15 @@ matplotlib.use("Agg")  # Use non-interactive backend for headless environments
 import time
 
 from astro_compass.utils.log_utils import log, read_config_file
+from astro_compass.utils.path_utils import DATA_ROOT
 from astro_compass.utils.test_utils import compare_trajectories
 
 
 def test_datagen_Hamiltonian_TBR_parallel(flag_report_live):
     start_time = time.time()
 
-    # Get the workspace root (parent of tests directory)
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    workspace_root = os.path.dirname(script_dir)
-
     path_config = os.path.join(
-        workspace_root,
-        "data",
+        DATA_ROOT,
         "test_data",
         "test_datagen_Hamiltonian_TBR_parallel",
         "test_datagen_Hamiltonian_TBR_controller_parallel_config3.txt",

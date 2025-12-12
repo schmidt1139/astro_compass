@@ -4,6 +4,7 @@ from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris_v2 import Ephemeris_v2
 from astro_compass.envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from astro_compass.utils.log_utils import log
+from astro_compass.utils.path_utils import DATA_ROOT
 
 
 def test_TBR_env(flag_report_live: bool = False):
@@ -117,10 +118,10 @@ def test_TBR_env(flag_report_live: bool = False):
                 flag_continue = False
 
         # fig = eph.plot_xy();
-        # fig.savefig(os.path.join("data", "test_data", "test_TBR", "test_traj_") + str(count_traj) + "_TBR_env.png")
+        # fig.savefig(os.path.join(DATA_ROOT, "test_data", "test_TBR", "test_traj_") + str(count_traj) + "_TBR_env.png")
 
         eph.write_to_file(
-            os.path.join("data", "test_data", "test_TBR", "test_traj_ephemeris_")
+            os.path.join(DATA_ROOT, "test_data", "test_TBR", "test_traj_ephemeris_")
             + str(count_traj)
             + "_TBR_env.txt"
         )
@@ -140,7 +141,7 @@ def test_TBR_env(flag_report_live: bool = False):
         # load truth data for comparison
         eph_truth = Ephemeris_v2()
         eph_truth.read_from_file(
-            os.path.join("data", "test_data", "test_TBR", "test_traj_ephemeris_")
+            os.path.join(DATA_ROOT, "test_data", "test_TBR", "test_traj_ephemeris_")
             + str(count_traj)
             + "_TBR_env_truth.txt"
         )
@@ -148,7 +149,7 @@ def test_TBR_env(flag_report_live: bool = False):
         # re-ingest ephemeris data for comparison
         eph_comp = Ephemeris_v2()
         eph_comp.read_from_file(
-            os.path.join("data", "test_data", "test_TBR", "test_traj_ephemeris_")
+            os.path.join(DATA_ROOT, "test_data", "test_TBR", "test_traj_ephemeris_")
             + str(count_traj)
             + "_TBR_env.txt"
         )

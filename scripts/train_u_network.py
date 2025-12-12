@@ -1,26 +1,23 @@
 import os
-import sys
 
 import gymnasium as gym
 import numpy as np
 import torch
 import torch.nn as nn
-
-# Adding python src code directory
-current_dir = os.path.dirname(__file__)
-python_src_dir = os.path.abspath(os.path.join(current_dir, "..", "python"))
-sys.path.append(python_src_dir)
-
 from gymnasium import envs
 from gymnasium.envs.registration import register
-from Neural_Net_Controllers import NN_TBT_Controller_u
-from NN_Utils import evaluate_neural_network, pre_process_training_data, training_epoch
-from Plotting_Utils import format_plots, plot_training_loss
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from torch.utils.data import DataLoader
-from Training_Data_Generation import read_ephems_from_dir
 
 from astro_compass.Constants import Constants
+from astro_compass.Neural_Net_Controller import NN_TBT_Controller_u
+from astro_compass.Training_Data_Generation import read_ephems_from_dir
+from astro_compass.utils.nn_utils import (
+    evaluate_neural_network,
+    pre_process_training_data,
+    training_epoch,
+)
+from astro_compass.utils.plotting_utils import format_plots, plot_training_loss
 
 # register the environment if it isn't registered
 if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():

@@ -16,13 +16,14 @@ from astro_compass.utils.log_utils import (
     write_config_file,
     write_log_to_file,
 )
+from astro_compass.utils.path_utils import DATA_ROOT
 
 
 def datagen_Hamiltonian_TBR_controller():
     start_time = time.time()
 
     path_config = os.path.join(
-        "data", "config", "datagen_Hamiltonian_TBR_controller_config.txt"
+        DATA_ROOT, "config", "datagen_Hamiltonian_TBR_controller_config.txt"
     )
     params = read_config_file(path_config)
 
@@ -41,7 +42,7 @@ def datagen_Hamiltonian_TBR_controller():
         "Test Two-Body Rendezvous Hamiltonian Controller", test_log, flag_report_live
     )
 
-    plot.style.use(os.path.join("data", "support_files", "dark_scientific.mplstyle"))
+    plot.style.use(os.path.join(DATA_ROOT, "support_files", "dark_scientific.mplstyle"))
 
     env = TwoBodyRendezvous_Env(
         mu=params["mu"],  # solar gravitational parameter in m^3/s^2

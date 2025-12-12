@@ -7,6 +7,7 @@ from astro_compass.core.neural_network_controllers import NN_TBT_Controller
 from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 from astro_compass.utils.log_utils import log
 from astro_compass.utils.nn_utils import query_NN_at_state
+from astro_compass.utils.path_utils import DATA_ROOT
 from astro_compass.utils.test_utils import compare_log_files_with_tolerance
 
 
@@ -24,7 +25,7 @@ def test_env_step_with_nn_action(flag_report_live=False):
 
     # paths
     path_test_dir = os.path.normpath(
-        os.path.join(os.getcwd(), "data", "test_data", "test_env_step_with_nn_action")
+        os.path.join(DATA_ROOT, "test_data", "test_env_step_with_nn_action")
     )
     path_test_report = os.path.normpath(
         os.path.join(path_test_dir, "output_test_env_step_with_nn_action_log.txt")
