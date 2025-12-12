@@ -1,8 +1,8 @@
-import numpy as np
-import gymnasium as gym
-import sys
 import os
+import sys
 
+import gymnasium as gym
+import numpy as np
 from gymnasium import envs
 from gymnasium.envs.registration import register
 
@@ -11,8 +11,7 @@ current_dir = os.path.dirname(__file__)
 python_src_dir = os.path.abspath(os.path.join(current_dir, "..", "python"))
 sys.path.append(python_src_dir)
 
-from Ephemeris import Ephemeris
-
+from astro_compass.Ephemeris import Ephemeris
 
 # register the environment if it isn't registered
 if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():

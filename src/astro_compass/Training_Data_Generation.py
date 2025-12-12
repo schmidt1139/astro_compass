@@ -4,8 +4,8 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
 from multiprocessing import cpu_count
 
-from Ephemeris import Ephemeris
-from Hamiltonian_Control import Hamiltonian_Controller_TBT
+from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
+from astro_compass.Ephemeris import Ephemeris
 
 # Adding python src code directory
 sys.path.append(os.path.abspath("../python"))

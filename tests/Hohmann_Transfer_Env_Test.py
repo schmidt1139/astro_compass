@@ -1,17 +1,16 @@
-import numpy as np
+import os
+import sys
+
 import gymnasium as gym
 import matplotlib.pyplot as plot
-import sys
-import os
-
+import numpy as np
 from gymnasium import envs
 from gymnasium.envs.registration import register
 
 # Adding python src code directory
 sys.path.append(os.path.abspath("../python"))
 
-from Ephemeris import Ephemeris
-
+from astro_compass.Ephemeris import Ephemeris
 
 # register the environment if it isn't registered
 if "HohmannTransferEnv-v0" not in envs.registry.keys():

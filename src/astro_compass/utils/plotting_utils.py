@@ -799,7 +799,7 @@ def plot_SAC_training_TBR_polar(
 ):
     if ephem_H is not None:
         results = calc_rewards_from_H_ephem(ephem_H, env, params)
-        # Calculate rewards from ephemeris
+        # Calculate rewards from astro_compass.Ephemeris
 
         [
             arr_elapsed_time,

@@ -1,5 +1,4 @@
 import os
-import sys
 
 import gymnasium as gym
 import matplotlib
@@ -7,15 +6,13 @@ import matplotlib.pyplot as plot
 import numpy as np
 from gymnasium import envs
 from gymnasium.envs.registration import register
-
-# Adding python src code directory
-sys.path.append(os.path.abspath("../python"))
-
-from Ephemeris import Ephemeris
-from Hamiltonian_Control import Hamiltonian_Controller_TBT
-from Propagation import Hamiltonian_EOM_TBT_v2, smoothing_function_tanh
 from scipy.integrate import solve_ivp
 
+from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
+from astro_compass.Ephemeris import Ephemeris
+
+# Adding python src code directory
+from astro_compass.Propagation import Hamiltonian_EOM_TBT_v2, smoothing_function_tanh
 from astro_compass.StateVectorUtilities import non_dimensionalize
 
 # register the environment if it isn't registered
