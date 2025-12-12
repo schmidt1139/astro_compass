@@ -9,6 +9,7 @@ from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris_v3 import Ephemeris_v3
 from astro_compass.core.propagation import env_EOM_TBT_v2
 from astro_compass.core.training_data_generation import read_ephems_from_dir
+from astro_compass.utils.path_utils import PROJECT_ROOT
 
 
 def convert_ephem_wrapper(args):
@@ -159,11 +160,13 @@ def convert_ephems():
     params = {}
     params["num_vec_envs"] = cores
     path_ephems = os.path.join(
-        "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\training_TBR_circular_20251110\\training_TBR_circular\\ephems_extended\\"
+        PROJECT_ROOT,
+        "z_script_output",
+        "training_TBR_circular_20251110",
+        "training_TBR_circular",
+        "ephems_extended",
     )
-    path_output = os.path.join(
-        "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\temp_out2\\"
-    )
+    path_output = os.path.join(PROJECT_ROOT, "z_script_output", "temp_out2")
 
     set_ephems, filenames = read_ephems_from_dir(
         path_ephems,
