@@ -1,5 +1,4 @@
 import os
-import sys
 import time
 
 import gymnasium as gym
@@ -19,7 +18,7 @@ if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
     )
 
 # Adding python src code directory
-sys.path.append(os.path.abspath("../python"))
+
 
 # initialize the environment
 env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")

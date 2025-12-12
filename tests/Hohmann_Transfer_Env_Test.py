@@ -1,6 +1,3 @@
-import os
-import sys
-
 import gymnasium as gym
 import matplotlib.pyplot as plot
 import numpy as np
@@ -8,8 +5,6 @@ from gymnasium import envs
 from gymnasium.envs.registration import register
 
 # Adding python src code directory
-sys.path.append(os.path.abspath("../python"))
-
 from astro_compass.Ephemeris import Ephemeris
 
 # register the environment if it isn't registered

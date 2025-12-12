@@ -1,5 +1,4 @@
 import os
-import sys
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
 from multiprocessing import cpu_count
@@ -12,7 +11,6 @@ from astro_compass.core.ephemeris_v3 import Ephemeris_v3
 from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
 
 # Adding python src code directory
-sys.path.append(os.path.abspath("../python"))
 
 
 def generate_nn_training_data(env, args, thread_id, output_dir):
