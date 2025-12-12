@@ -2,9 +2,9 @@
 
 [paths]
 tb_log_name = "SAC_TBR_training"
-output_dir = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\pre_training"
+output_dir = "z_script_output\\pre_training"
 path_training_data = ""
-path_replay_buffer = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\buffer_generation\\SAC_training_TBR_polar20251201_151736\\replay_buffer.pkl"
+path_replay_buffer = "z_script_output\\buffer_generation\\SAC_training_TBR_polar20251201_151736\\replay_buffer.pkl"
 path_SAC_model_load = ""
 
 [environment]

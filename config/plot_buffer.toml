@@ -5,9 +5,9 @@ plot_n_most_recent_eps = 10
 
 [paths]
 tb_log_name = "SAC_TBR_training"
-output_dir = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\plot_buffer"
+output_dir = "z_script_output\\plot_buffer"
 path_training_data = ""
-path_replay_buffer = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\SAC_Training\\SAC_training_TBR_polar20251130_152528\\replay_buffer.pkl"
+path_replay_buffer = "z_script_output\\SAC_Training\\SAC_training_TBR_polar20251130_152528\\replay_buffer.pkl"
 path_SAC_model_load = ""
 
 [environment.vectorization]
