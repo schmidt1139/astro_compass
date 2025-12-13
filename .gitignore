@@ -7,3 +7,5 @@ data/plots/
 src/astro_compass.egg-info/*
 data/pre-training-data/*
 data/output/*
+data/runs/*
+logs/*
