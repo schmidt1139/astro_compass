@@ -21,7 +21,7 @@ from astro_compass.utils.log_utils import (
     write_config_file,
     write_log_to_file,
 )
-from astro_compass.utils.path_utils import DATA_ROOT
+from astro_compass.utils.path_utils import CONFIG_ROOT, RUNS_ROOT
 from astro_compass.utils.plotting_utils import SACRolloutData, plot_SAC_training
 from astro_compass.utils.rl_utils import (
     RewardLoggerCallback,
@@ -30,19 +30,16 @@ from astro_compass.utils.rl_utils import (
 )
 from astro_compass.utils.state_vector_utils import cartesian_to_polar
 
+plt.style.use("data/support_files/light_paper.mplstyle")
+print("GPU available: ", torch.cuda.is_available())
 
-def SAC_training_TBR(seed_in=42):
+
+def SAC_training_TBR(params, output_dir, seed_in=42):
     test_log = []
     test_log = log("SAC Training Script", test_log, True)
 
     # set random seed
     random.seed(seed_in)
-
-    # config path
-    path_config = os.path.join(DATA_ROOT, "config", "SAC_training_TBT_config.txt")
-
-    # define normalization parameters (for NN)
-    params = read_config_file(path_config)
 
     # initialize the environment
     env = gen_rl_environment(params)
@@ -50,26 +47,21 @@ def SAC_training_TBR(seed_in=42):
 
     sma_t_i = Constants.SMA_EARTH
 
-    plt.style.use("data/support_files/light_paper.mplstyle")
-
-    print(
-        "GPU available: ", torch.cuda.is_available()
-    )  # Should print True if GPU is available)
-
     # paths
     time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
-    path_nns = os.path.normpath(os.path.join(os.getcwd(), "data\\neural_networks\\"))
+    path_output = os.path.normpath(os.path.join(output_dir, time_tag))
+    path_nns = os.path.normpath(os.path.join(path_output, "neural_networks"))
+    path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
+    os.makedirs(path_nns, exist_ok=True)
+    # make a subdir for checkpoints
+    path_checkpoints = os.path.normpath(os.path.join(path_output, "checkpoints"))
+    path_ephems = os.path.normpath(os.path.join(path_output, "ephems"))
+    path_plots = os.path.normpath(os.path.join(path_output, "plots"))
+    os.makedirs(path_checkpoints, exist_ok=True)
+    os.makedirs(path_ephems, exist_ok=True)
+    os.makedirs(path_plots, exist_ok=True)
 
     # Handle both absolute and relative paths for output_dir
-    output_base = params["output_dir"]
-    if not os.path.isabs(output_base):
-        output_base = os.path.join(os.getcwd(), output_base)
-    path_output = os.path.normpath(
-        os.path.join(output_base, "SAC_training_TBT_" + time_tag)
-    )
-
-    path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
-    os.makedirs(path_output, exist_ok=True)
     params["output_dir_specific"] = path_output
 
     # env wrappers
@@ -79,14 +71,6 @@ def SAC_training_TBR(seed_in=42):
     env = Monitor(env)
     eval_env = Monitor(eval_env)
     training_steps = params["training_steps"]
-
-    # make a subdir for checkpoints
-    path_checkpoints = os.path.normpath(os.path.join(path_output, "checkpoints"))
-    path_ephems = os.path.normpath(os.path.join(path_output, "ephems"))
-    path_plots = os.path.normpath(os.path.join(path_output, "plots"))
-    os.makedirs(path_checkpoints, exist_ok=True)
-    os.makedirs(path_ephems, exist_ok=True)
-    os.makedirs(path_plots, exist_ok=True)
 
     # reset the environment
     observation, info = env.reset(seed=seed_in)
@@ -379,4 +363,12 @@ def SAC_training_TBR(seed_in=42):
     write_config_file(params, os.path.join(path_output, "SAC_Training_Config.txt"))
 
 
-SAC_training_TBR()
+if __name__ == "__main__":
+    path_config = os.path.join(CONFIG_ROOT, "SAC_training_TBT_config.txt")
+    params = read_config_file(path_config)
+
+    output_dir = os.path.join(RUNS_ROOT, "SAC_training_TBT")
+    # HACK FOR Legacy
+    params["output_dir"] = output_dir
+
+    SAC_training_TBR(params, output_dir)
