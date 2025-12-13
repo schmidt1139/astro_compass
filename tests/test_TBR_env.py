@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris_v2 import Ephemeris_v2
@@ -120,11 +121,8 @@ def test_TBR_env(flag_report_live: bool = False):
         # fig = eph.plot_xy();
         # fig.savefig(os.path.join(DATA_ROOT, "test_data", "test_TBR", "test_traj_") + str(count_traj) + "_TBR_env.png")
 
-        eph.write_to_file(
-            os.path.join(DATA_ROOT, "test_data", "test_TBR", "test_traj_ephemeris_")
-            + str(count_traj)
-            + "_TBR_env.txt"
-        )
+        output_file = tempfile.NamedTemporaryFile().name
+        eph.write_to_file(output_file)
 
         test_log = log("Final observation vector\n", test_log, flag_report_live)
         test_log = log("x_nd: " + str(obs[0]), test_log, flag_report_live)
@@ -148,11 +146,7 @@ def test_TBR_env(flag_report_live: bool = False):
 
         # re-ingest ephemeris data for comparison
         eph_comp = Ephemeris_v2()
-        eph_comp.read_from_file(
-            os.path.join(DATA_ROOT, "test_data", "test_TBR", "test_traj_ephemeris_")
-            + str(count_traj)
-            + "_TBR_env.txt"
-        )
+        eph_comp.read_from_file(output_file)
 
         eph_comp.compare_trajectories(
             eph_truth, position_tol=1e3, velocity_tol=1e-1, verbose=flag_report_live

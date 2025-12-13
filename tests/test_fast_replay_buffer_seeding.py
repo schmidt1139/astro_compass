@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 import torch.nn as nn
 from matplotlib import pyplot as plt
@@ -84,8 +85,9 @@ def test_fast_replay_buffer_seeding(flag_report_live: bool = False):
 
     import_training_into_replay_buffer_v3(set_ephems, test_log, model, env, params)
 
+    output_dir = tempfile.TemporaryDirectory().name
     path_replay_buffer = os.path.join(
-        path_test, "test_fast_replay_buffer_seeding_replay_buffer.pkl"
+        output_dir, "test_fast_replay_buffer_seeding_replay_buffer.pkl"
     )
     model.save_replay_buffer(path_replay_buffer)
 
@@ -125,7 +127,7 @@ def test_fast_replay_buffer_seeding(flag_report_live: bool = False):
             "Fast replay buffer seeding test FAILED.", test_log, flag_report_live
         )
 
-    return True
+    assert True
 
 
 if __name__ == "__main__":

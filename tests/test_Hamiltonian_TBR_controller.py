@@ -1,4 +1,5 @@
 import os
+import tempfile
 import time
 
 import matplotlib.pyplot as plot
@@ -46,7 +47,8 @@ def test_Hamiltonian_TBR_Controller(flag_report_live):
     }
 
     # Write configuration parameters to file
-    path_config = os.path.join(params["data_path"], "test_TBR_hamiltonian_config.txt")
+    output_data_dir = tempfile.TemporaryDirectory().name
+    path_config = tempfile.NamedTemporaryFile().name
     write_config_file(params, path_config)
 
     test_log = []
@@ -87,7 +89,7 @@ def test_Hamiltonian_TBR_Controller(flag_report_live):
                 os.path.join(params["data_path"], ephem_filename + ".txt")
             )
             if params["flag_plot_traj"] == True:
-                eph_output.save_plots(params["data_path"], ephem_filename, params, env)
+                eph_output.save_plots(output_data_dir, ephem_filename, params, env)
 
         else:
             arr_pass_count.append(0)
@@ -157,7 +159,7 @@ def test_Hamiltonian_TBR_Controller(flag_report_live):
                 "Some trajectories do not match truth data.", test_log, flag_report_live
             )
 
-        return flag_all_match
+        assert flag_all_match
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 import torch
 
@@ -27,9 +28,8 @@ def test_env_step_with_nn_action(flag_report_live=False):
     path_test_dir = os.path.normpath(
         os.path.join(DATA_ROOT, "test_data", "test_env_step_with_nn_action")
     )
-    path_test_report = os.path.normpath(
-        os.path.join(path_test_dir, "output_test_env_step_with_nn_action_log.txt")
-    )
+    path_test_report = tempfile.NamedTemporaryFile().name
+
     path_test_truth = os.path.normpath(
         os.path.join(path_test_dir, "truth_test_env_step_with_nn_action_log.txt")
     )

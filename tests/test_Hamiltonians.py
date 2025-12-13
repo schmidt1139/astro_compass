@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 import matplotlib.pyplot as plot
 import numpy as np
@@ -101,14 +102,10 @@ def test_Hamiltonians(flag_report_live=False):
         flag_report_live,
     )
     # print(sol)
-
-    eph_out.write_to_file(
-        os.path.join(DATA_ROOT, "test_data", "test_hamiltonians", "test_H_ephem.txt")
-    )
+    output_file = tempfile.NamedTemporaryFile().name
+    eph_out.write_to_file(output_file)
     eph1 = Ephemeris()
-    eph1.read_from_file(
-        os.path.join(DATA_ROOT, "test_data", "test_hamiltonians", "test_H_ephem.txt")
-    )
+    eph1.read_from_file(output_file)
     test_log = log("Wrote test ephem", test_log, flag_report_live)
 
     # compare to truth file

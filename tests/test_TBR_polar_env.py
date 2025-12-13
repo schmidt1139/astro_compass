@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 from matplotlib import pyplot as plt
 
@@ -23,7 +24,7 @@ def test_TBR_polar_env(flag_report_live: bool = False):
     plt.style.use(f"{DATA_ROOT}/support_files/light_paper.mplstyle")
 
     # config path
-    path_test = os.path.join(DATA_ROOT, "test_data", "test_TBR_polar_env")
+    path_test = tempfile.TemporaryDirectory().name
     path_config = os.path.join(path_test, "TBR_polar_config.txt")
 
     # define normalization parameters (for NN)
@@ -119,6 +120,8 @@ def test_TBR_polar_env(flag_report_live: bool = False):
             delta_target_v_nd = v_target_nd - v_current_nd
             d_v_r_unit = info["v_r_target_unit"] - info["v_r_unit"]
             d_v_t_unit = info["v_t_target_unit"] - info["v_t_unit"]
+            pos_residual = info["pos_residual"]
+            vel_residual = info["vel_residual"]
 
             eph.add_data(
                 info["Elapsed time"],
@@ -188,6 +191,8 @@ def test_TBR_polar_env(flag_report_live: bool = False):
                 vel_reward,  # velocity reward #21
                 mass_reward,  # mass reward #22
                 throttle_reward,  # throttle reward #23
+                pos_residual,
+                vel_residual,
             )
 
             steps += 1
@@ -250,7 +255,7 @@ def test_TBR_polar_env(flag_report_live: bool = False):
     else:
         test_log = log("Log file matches truth log file.", test_log, flag_report_live)
 
-    return flag_test_pass
+    assert flag_test_pass
 
 
 if __name__ == "__main__":

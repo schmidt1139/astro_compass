@@ -1,6 +1,7 @@
 import os
 import random
 import sys
+import tempfile
 
 import gymnasium as gym
 import matplotlib.pyplot as plt
@@ -13,7 +14,7 @@ from stable_baselines3.common.monitor import Monitor
 
 # Adding python src code directory
 # Get the project root directory (parent of tests/)
-from astro_compass.utils.path_utils import DATA_ROOT, PROJECT_ROOT
+from astro_compass.utils.path_utils import PROJECT_ROOT
 
 os.chdir(PROJECT_ROOT)
 print("Now working in:", os.getcwd())
@@ -135,10 +136,8 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
     # print("GPU available: ", torch.cuda.is_available())  # Should print True if GPU is available)
 
     # paths
-    path_nns = os.path.normpath(os.path.join(DATA_ROOT, "neural_networks"))
-    path_output = os.path.normpath(
-        os.path.join(DATA_ROOT, "test_data", "test_SAC_training")
-    )
+    path_nns = tempfile.TemporaryDirectory().name
+    path_output = tempfile.TemporaryDirectory().name
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
     path_output_log = os.path.join(path_output, "SAC_Training_Log.txt")
     path_output_log_truth = os.path.join(path_output, "SAC_Training_Log_truth.txt")

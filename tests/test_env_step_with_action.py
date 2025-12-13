@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 import numpy as np
 
@@ -77,9 +78,8 @@ def test_env_step_with_action(flag_report_live=False):
     dir_test = os.path.normpath(
         os.path.join(DATA_ROOT, "test_data", "test_env_step_with_action")
     )
-    path_test_report = os.path.normpath(
-        os.path.join(dir_test, "output_test_env_step_with_action_log.txt")
-    )
+    path_test_report = tempfile.NamedTemporaryFile().name
+
     path_test_truth = os.path.normpath(
         os.path.join(dir_test, "truth_test_env_step_with_action_log.txt")
     )
