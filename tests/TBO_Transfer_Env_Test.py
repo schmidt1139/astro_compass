@@ -3,7 +3,7 @@ import numpy as np
 from gymnasium import envs
 from gymnasium.envs.registration import register
 
-from astro_compass.Ephemeris import Ephemeris
+from astro_compass.core.ephemeris import Ephemeris
 
 # register the environment if it isn't registered
 if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():

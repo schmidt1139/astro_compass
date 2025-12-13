@@ -85,7 +85,7 @@ def plot_H_ephem_rewards():
 
         env = gen_rl_environment(params)
 
-        # Calculate rewards from astro_compass.Ephemeris
+        # Calculate rewards from astro_compass.core.ephemeris
         [
             arr_elapsed_time,
             arr_rewards,

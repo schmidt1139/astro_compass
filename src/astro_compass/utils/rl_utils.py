@@ -393,7 +393,7 @@ def import_training_into_replay_buffer_v2(
     path_training_data, test_log, model, env, params
 ):
     """
-    Import training data from astro_compass.Ephemeris v2.0 files into the replay buffer.
+    Import training data from astro_compass.core.ephemeris v2.0 files into the replay buffer.
     Handles 10-dimensional observation space (x, y, vx, vy, m, x_t, y_t, vx_t, vy_t, ttg).
     """
     from tqdm import tqdm
@@ -917,7 +917,7 @@ def rollout_model(env, params, model, test_log):
 
 def import_training_into_replay_buffer_v3(set_ephems, test_log, model, env, params):
     """
-    Import training data from astro_compass.Ephemeris v3.0 files into the replay buffer.
+    Import training data from astro_compass.core.ephemeris v3.0 files into the replay buffer.
     Handles 10-dimensional observation space (x, y, vx, vy, m, x_t, y_t, vx_t, vy_t, ttg).
 
     Does this without env overhead by directly setting states in the replay buffer.

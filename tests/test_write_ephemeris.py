@@ -7,8 +7,8 @@ from gymnasium import envs
 from gymnasium.envs.registration import register
 
 from astro_compass.Constants import Constants
+from astro_compass.core.ephemeris import Ephemeris
 from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
-from astro_compass.Ephemeris import Ephemeris
 
 # register the environment if it isn't registered
 if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():

@@ -5,7 +5,7 @@ from gymnasium import envs
 from gymnasium.envs.registration import register
 
 # Adding python src code directory
-from astro_compass.Ephemeris import Ephemeris
+from astro_compass.core.ephemeris import Ephemeris
 
 # register the environment if it isn't registered
 if "HohmannTransferEnv-v0" not in envs.registry.keys():

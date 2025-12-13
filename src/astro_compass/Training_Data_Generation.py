@@ -3,8 +3,8 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
 from multiprocessing import cpu_count
 
+from astro_compass.core.ephemeris import Ephemeris
 from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
-from astro_compass.Ephemeris import Ephemeris
 
 # Adding python src code directory
 
