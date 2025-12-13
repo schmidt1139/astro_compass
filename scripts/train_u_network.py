@@ -9,7 +9,7 @@ from gymnasium.envs.registration import register
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from torch.utils.data import DataLoader
 
-from astro_compass.Constants import Constants
+from astro_compass.constants.constants import Constants
 from astro_compass.core.neural_network_controllers import NN_TBT_Controller_u
 from astro_compass.core.training_data_generation import read_ephems_from_dir
 from astro_compass.utils.nn_utils import (

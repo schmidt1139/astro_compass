@@ -4,7 +4,7 @@ import gymnasium as gym
 import numpy as np
 from scipy.integrate import solve_ivp
 
-from astro_compass.Constants import Constants
+from astro_compass.constants.constants import Constants
 from astro_compass.core.propagation import spacecraft_EOM_radial_2D_EB
 from astro_compass.Spacecraft import Spacecraft
 

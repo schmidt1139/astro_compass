@@ -6,7 +6,7 @@ import numpy as np
 from gymnasium import envs
 from gymnasium.envs.registration import register
 
-from astro_compass.Constants import Constants
+from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris import Ephemeris
 from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
 
