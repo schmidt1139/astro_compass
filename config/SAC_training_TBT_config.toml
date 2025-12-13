@@ -10,6 +10,7 @@ env_step_size = 86400
 max_episode_steps = 500
 training_steps = 1_000
 tb_log_name = "SAC_TBR_training"
+env_type = "TwoBody_Orb2Orb_Transfer_Env_nd_obs5"
 eval_freq = 1000
 n_eval_episodes = 32
 print_freq = 1_000

@@ -8,6 +8,7 @@ PROJECT_ROOT = os.path.join(
 )
 DATA_ROOT = os.path.join(PROJECT_ROOT, "data")
 CONFIG_ROOT = os.path.join(PROJECT_ROOT, "config")
+LOGS_ROOT = os.path.join(PROJECT_ROOT, "logs")
 PLOT_ROOT = os.path.join(DATA_ROOT, "plots")
 RUNS_ROOT = os.path.join(DATA_ROOT, "runs")
 
@@ -15,6 +16,7 @@ os.makedirs(DATA_ROOT, exist_ok=True)
 os.makedirs(CONFIG_ROOT, exist_ok=True)
 os.makedirs(PLOT_ROOT, exist_ok=True)
 os.makedirs(RUNS_ROOT, exist_ok=True)
+os.makedirs(LOGS_ROOT, exist_ok=True)
 
 
 def get_run_paths(output_dir):
@@ -35,4 +37,5 @@ def get_run_paths(output_dir):
         "path_checkpoints": path_checkpoints,
         "path_ephems": path_ephems,
         "path_plots": path_plots,
+        "id": time_tag,
     }

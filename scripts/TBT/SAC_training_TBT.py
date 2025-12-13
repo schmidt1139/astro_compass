@@ -11,7 +11,12 @@ from astro_compass.core.ephemeris import Ephemeris as Ephemeris
 from astro_compass.utils.env_utils import gen_rl_environment
 from astro_compass.utils.log_utils import read_toml_config_file
 from astro_compass.utils.model_utils import get_model
-from astro_compass.utils.path_utils import CONFIG_ROOT, RUNS_ROOT, get_run_paths
+from astro_compass.utils.path_utils import (
+    CONFIG_ROOT,
+    LOGS_ROOT,
+    RUNS_ROOT,
+    get_run_paths,
+)
 from astro_compass.utils.plotting_utils import plot_reward_per_episode
 from astro_compass.utils.rl_utils import (
     RewardLoggerCallback,
@@ -72,7 +77,7 @@ def SAC_training_TBT(params, output_dir, seed_in=42):
         total_timesteps=training_steps,
         progress_bar=True,
         callback=callback_list,
-        tb_log_name=run_paths["path_output"].split(os.sep)[-1],  # time stamp
+        tb_log_name=os.path.join(LOGS_ROOT, run_paths["id"]),
     )
 
     # Save the model
