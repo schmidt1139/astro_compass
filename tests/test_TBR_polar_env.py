@@ -239,7 +239,7 @@ def test_TBR_polar_env(flag_report_live: bool = False):
     path_log = os.path.join(output_dir, "test_TBR_polar_env_log.txt")
     write_log_to_file(path_log, test_log)
 
-    path_truth_log = os.path.join(path_test, "truth_TBR_polar_env_log.txt")
+    path_truth_log = os.path.join(path_test, "truth_TBR_polar_env_log.txt")  # reward 0?
     truth_log = read_log_from_file(path_truth_log)
 
     log_compare = read_log_from_file(path_log)

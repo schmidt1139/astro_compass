@@ -109,8 +109,7 @@ def compare_log_files_with_tolerance(
         return are_same
 
     except Exception as e:
-        if flag_report_live:
-            print(f"Error comparing log files: {e}")
+        print(f"Error comparing log files: {e}")
         return False
 
 

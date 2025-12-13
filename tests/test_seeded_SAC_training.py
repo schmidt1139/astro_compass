@@ -29,7 +29,7 @@ from astro_compass.utils.state_vector_utils import cartesian_to_polar
 from astro_compass.utils.test_utils import compare_log_files_with_tolerance
 
 
-def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
+def test_seeded_SAC_training(flag_report_live=True, seed_in=42):
     test_log = []
     test_log = log("SAC Training Script", test_log, flag_report_live)
 
@@ -103,15 +103,15 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
     # time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
     path_nns = tempfile.mkdtemp()
     # os.path.normpath(os.path.join(DATA_ROOT, "neural_networks"))
-    path_training_data = os.path.normpath(
-        os.path.join(DATA_ROOT, "test_data", "test_seeded_SAC_training", "input")
+    truth_dir = os.path.normpath(
+        os.path.join(DATA_ROOT, "test_data", "test_seeded_SAC_training")
     )
+    path_training_data = os.path.normpath(os.path.join(truth_dir, "input"))
     path_output = tempfile.mkdtemp()
 
-    os.path.normpath(os.path.join(DATA_ROOT, "test_data", "test_seeded_SAC_training"))
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
     path_output_log = os.path.join(path_output, "SAC_Training_Log.txt")
-    path_output_log_truth = os.path.join(path_output, "truth_SAC_Training_Log.txt")
+    path_output_log_truth = os.path.join(truth_dir, "truth_SAC_Training_Log.txt")
     os.makedirs(path_output, exist_ok=True)
 
     # reset the environment
