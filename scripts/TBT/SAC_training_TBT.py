@@ -16,16 +16,13 @@ from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
 from astro_compass.core.spacecraft import Spacecraft
 from astro_compass.utils.env_utils import gen_rl_environment
 from astro_compass.utils.log_utils import (
-    log,
     read_config_file,
     write_config_file,
-    write_log_to_file,
 )
 from astro_compass.utils.path_utils import CONFIG_ROOT, RUNS_ROOT
 from astro_compass.utils.plotting_utils import SACRolloutData, plot_SAC_training
 from astro_compass.utils.rl_utils import (
     RewardLoggerCallback,
-    log_training_perf,
     pre_train,
 )
 from astro_compass.utils.state_vector_utils import cartesian_to_polar
@@ -36,7 +33,7 @@ print("GPU available: ", torch.cuda.is_available())
 
 def SAC_training_TBR(params, output_dir, seed_in=42):
     test_log = []
-    test_log = log("SAC Training Script", test_log, True)
+    print("SAC Training Script")
 
     # set random seed
     random.seed(seed_in)
@@ -49,14 +46,11 @@ def SAC_training_TBR(params, output_dir, seed_in=42):
 
     # paths
     time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
-    path_output = os.path.normpath(os.path.join(output_dir, time_tag))
-    path_nns = os.path.normpath(os.path.join(path_output, "neural_networks"))
-    path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
-    os.makedirs(path_nns, exist_ok=True)
-    # make a subdir for checkpoints
-    path_checkpoints = os.path.normpath(os.path.join(path_output, "checkpoints"))
-    path_ephems = os.path.normpath(os.path.join(path_output, "ephems"))
-    path_plots = os.path.normpath(os.path.join(path_output, "plots"))
+    path_output = os.path.join(output_dir, time_tag)
+    path_SAC_model = os.path.join(path_output, "model")
+    path_checkpoints = os.path.join(path_output, "checkpoints")
+    path_ephems = os.path.join(path_output, "ephems")
+    path_plots = os.path.join(path_output, "plots")
     os.makedirs(path_checkpoints, exist_ok=True)
     os.makedirs(path_ephems, exist_ok=True)
     os.makedirs(path_plots, exist_ok=True)
@@ -74,18 +68,16 @@ def SAC_training_TBR(params, output_dir, seed_in=42):
 
     # reset the environment
     observation, info = env.reset(seed=seed_in)
-    test_log = log("Environment has been reset", test_log, True)
-    test_log = log("Seed: " + str(seed_in), test_log, True)
-    test_log = log(
-        "Max steps per episode: " + str(max_episode_steps_in), test_log, True
-    )
+    print("Environment has been reset")
+    print("Seed: " + str(seed_in))
+    print("Max steps per episode: " + str(max_episode_steps_in))
 
     # Create the SAC model with TensorBoard logging
     buffer_size = params.get("buffer_size", 1000000)  # Default 1M transitions
 
     # load model if specified, otherwise create new
     if params["load_model_checkpoint"]:
-        test_log = log(
+        print(
             "Loading SAC model from: " + params["path_SAC_model_load"], test_log, True
         )
         model = SB3_SAC.load(
@@ -142,7 +134,7 @@ def SAC_training_TBR(params, output_dir, seed_in=42):
             )
 
     if params["read_replay_buffer"]:
-        test_log = log(
+        print(
             "Loading replay buffer from: " + params["path_replay_buffer"],
             test_log,
             True,
@@ -159,7 +151,7 @@ def SAC_training_TBR(params, output_dir, seed_in=42):
         if hasattr(model, "_logger"):
             delattr(model, "_logger")
 
-    callback = RewardLoggerCallback(print_freq=params["print_freq"])
+    callback = RewardLoggerCallback(log_freq=params["log_freq"])
     # Eval callback: saves best model by mean reward on eval_env
     eval_callback = EvalCallback(
         eval_env,
@@ -186,10 +178,7 @@ def SAC_training_TBR(params, output_dir, seed_in=42):
     arr_epsisode_rs = callback.episode_rewards
     print("Episodes:", len(callback.episode_rewards))
     print("Timesteps:", model.num_timesteps)
-    test_log = log("Training complete", test_log, True)
-    test_log = log_training_perf(
-        test_log, callback, eval_callback, model, training_steps, True
-    )
+    print("Training complete")
 
     # Save the model
     model.save(path_SAC_model)
@@ -201,7 +190,7 @@ def SAC_training_TBR(params, output_dir, seed_in=42):
     rollout_data1 = SACRolloutData()
     sum_reward = 0.0
 
-    test_log = log("Plotting test trajectory...", test_log, True)
+    print("Plotting test trajectory...")
     count_step = 0
     flag_continue = True
     terminated = False
@@ -209,9 +198,7 @@ def SAC_training_TBR(params, output_dir, seed_in=42):
 
     # optionally generate hamiltonian trajectory off of ephem
     if params.get("flag_gen_H_traj", False):
-        test_log = log(
-            "Generating Hamiltonian trajectory for comparison...", test_log, True
-        )
+        print("Generating Hamiltonian trajectory for comparison...", test_log, True)
         params["data_path"] = path_output
         params["scenario_index"] = 0
         params["flag_plot_traj"] = False
@@ -250,12 +237,10 @@ def SAC_training_TBR(params, output_dir, seed_in=42):
             eph_out.write_to_file(ephem_path, mod_vector_write_frequency=1)
 
         try:
-            test_log = log(
-                "Generated Hamiltonian trajectory for comparison...", test_log, True
-            )
+            print("Generated Hamiltonian trajectory for comparison...", test_log, True)
             ephem_H.read_from_file(ephem_path)
         except Exception as e:
-            test_log = log(
+            print(
                 "Error generating Hamiltonian trajectory file: " + str(e),
                 test_log,
                 True,
@@ -317,23 +302,23 @@ def SAC_training_TBR(params, output_dir, seed_in=42):
         if terminated or truncated:
             break
 
-    test_log = log("Test trajectory complete", test_log, True)
-    test_log = log("Steps taken: " + str(count_step), test_log, True)
-    test_log = log("Total reward: " + str(rollout_data1.sum_reward), test_log, True)
-    test_log = log("Final x: " + str(obs[0]) + " ", test_log, True)
-    test_log = log("Final y: " + str(obs[1]) + " ", test_log, True)
-    test_log = log("Final vx: " + str(obs[2]) + " ", test_log, True)
-    test_log = log("Final vy: " + str(obs[3]) + " ", test_log, True)
-    test_log = log("Final m: " + str(obs[4]) + " ", test_log, True)
-    test_log = log("Final sma: " + str(arr_OE[0]) + " ", test_log, True)
-    test_log = log("Final ecc: " + str(arr_OE[1]) + " ", test_log, True)
-    test_log = log("terminated: " + str(terminated) + " ", test_log, True)
-    test_log = log("truncated: " + str(truncated) + " ", test_log, True)
+    print("Test trajectory complete")
+    print("Steps taken: " + str(count_step))
+    print("Total reward: " + str(rollout_data1.sum_reward))
+    print("Final x: " + str(obs[0]) + " ")
+    print("Final y: " + str(obs[1]) + " ")
+    print("Final vx: " + str(obs[2]) + " ")
+    print("Final vy: " + str(obs[3]) + " ")
+    print("Final m: " + str(obs[4]) + " ")
+    print("Final sma: " + str(arr_OE[0]) + " ")
+    print("Final ecc: " + str(arr_OE[1]) + " ")
+    print("terminated: " + str(terminated) + " ")
+    print("truncated: " + str(truncated) + " ")
 
     # final env info
     for key, value in info.items():
         if key != "ODE Solution":
-            test_log = log(f"{key}: {value}", test_log, True)
+            print(f"{key}: {value}")
 
     # plot the results
     plot_SAC_training(
@@ -353,11 +338,8 @@ def SAC_training_TBR(params, output_dir, seed_in=42):
         mod_vector_write_frequency=1,
     )
 
-    test_log = log("Complete!", test_log, True)
-    test_log = log("Plots saved to: " + path_output, test_log, True)
-
-    # save log to file
-    write_log_to_file(os.path.join(path_output, "SAC_Training_Log.txt"), test_log)
+    print("Complete!")
+    print("Plots saved to: " + path_output)
 
     # write config to output dir
     write_config_file(params, os.path.join(path_output, "SAC_Training_Config.txt"))
