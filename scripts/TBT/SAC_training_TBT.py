@@ -5,8 +5,6 @@ from datetime import datetime
 import gymnasium as gym
 import matplotlib.pyplot as plt
 import torch
-import torch.nn as nn
-from stable_baselines3 import SAC as SB3_SAC
 from stable_baselines3.common.callbacks import CallbackList, EvalCallback
 from stable_baselines3.common.monitor import Monitor
 
@@ -19,6 +17,7 @@ from astro_compass.utils.log_utils import (
     read_config_file,
     write_config_file,
 )
+from astro_compass.utils.model_utils import get_model
 from astro_compass.utils.path_utils import CONFIG_ROOT, RUNS_ROOT
 from astro_compass.utils.plotting_utils import SACRolloutData, plot_SAC_training
 from astro_compass.utils.rl_utils import (
@@ -76,69 +75,10 @@ def SAC_training_TBR(params, output_dir, seed_in=42):
     buffer_size = params.get("buffer_size", 1000000)  # Default 1M transitions
 
     # load model if specified, otherwise create new
-    if params["load_model_checkpoint"]:
-        print(
-            "Loading SAC model from: " + params["path_SAC_model_load"], test_log, True
-        )
-        model = SB3_SAC.load(
-            params["path_SAC_model_load"],
-            env=env,
-            device="cpu",
-            seed=seed_in,
-            tensorboard_log=path_output,
-        )  # Use path_output so SB3 creates SAC_1/ subdirectory
-    else:
-        # Implement custom NN architectures
-        nn_arch_type = params.get("nn_arch_type", "default")
-        if nn_arch_type == "custom":
-            # use default architecture
-            # define the policy architecture
-            policy_kwargs = dict(
-                net_arch=[32, 32, 32, 32, 32],  # four hidden layers with 32 units each
-                activation_fn=nn.LeakyReLU,  # LeakyReLU activation function
-                optimizer_kwargs=dict(eps=1e-5),
-            )
-            model = SB3_SAC(
-                "MlpPolicy",
-                env,
-                learning_rate=params["learning_rate"],
-                verbose=1,
-                device="cpu",
-                seed=seed_in,
-                tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
-                buffer_size=buffer_size,
-                tau=params.get("tau", 0.005),
-                train_freq=params.get("train_freq", 1),
-                gradient_steps=params.get("gradient_steps", 1),
-                policy_kwargs=policy_kwargs,
-            )
-
-        else:
-            # use default architecture
-            policy_kwargs = dict(
-                optimizer_kwargs=dict(eps=1e-5)  # More stable Adam optimizer
-            )
-            model = SB3_SAC(
-                "MlpPolicy",
-                env,
-                learning_rate=params["learning_rate"],
-                verbose=1,
-                device="cpu",
-                seed=seed_in,
-                tensorboard_log=path_output,  # Use path_output so SB3 creates SAC_1/ subdirectory
-                buffer_size=buffer_size,
-                tau=params.get("tau", 0.005),
-                train_freq=params.get("train_freq", 1),
-                gradient_steps=params.get("gradient_steps", 1),
-                policy_kwargs=policy_kwargs,
-            )
+    model = get_model(params, env, seed_in, path_output)
 
     if params["read_replay_buffer"]:
-        print(
-            "Loading replay buffer from: " + params["path_replay_buffer"],
-            test_log,
-            True,
-        )
+        print("Loading replay buffer from: " + params["path_replay_buffer"])
         model.load_replay_buffer(params["path_replay_buffer"])
 
     # pre-train networks if specified
@@ -198,7 +138,7 @@ def SAC_training_TBR(params, output_dir, seed_in=42):
 
     # optionally generate hamiltonian trajectory off of ephem
     if params.get("flag_gen_H_traj", False):
-        print("Generating Hamiltonian trajectory for comparison...", test_log, True)
+        print("Generating Hamiltonian trajectory for comparison...")
         params["data_path"] = path_output
         params["scenario_index"] = 0
         params["flag_plot_traj"] = False
@@ -237,7 +177,7 @@ def SAC_training_TBR(params, output_dir, seed_in=42):
             eph_out.write_to_file(ephem_path, mod_vector_write_frequency=1)
 
         try:
-            print("Generated Hamiltonian trajectory for comparison...", test_log, True)
+            print("Generated Hamiltonian trajectory for comparison...")
             ephem_H.read_from_file(ephem_path)
         except Exception as e:
             print(
