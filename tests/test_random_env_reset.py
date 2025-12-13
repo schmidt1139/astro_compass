@@ -17,14 +17,10 @@ if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
         entry_point="astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env:TwoBody_Orb2Orb_Transfer_Env",
     )
 
-# Adding python src code directory
 
+def test_random_env_rest():
+    env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
 
-# initialize the environment
-env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
-
-
-def test_random_env_rest(env):
     # parameters
     num_trajs = 100
 

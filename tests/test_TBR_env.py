@@ -165,7 +165,7 @@ def test_TBR_env(flag_report_live: bool = False):
             flag_report_live,
         )
 
-    return flag_test_pass
+    assert flag_test_pass
 
 
 if __name__ == "__main__":

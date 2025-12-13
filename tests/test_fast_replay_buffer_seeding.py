@@ -127,7 +127,7 @@ def test_fast_replay_buffer_seeding(flag_report_live: bool = False):
             "Fast replay buffer seeding test FAILED.", test_log, flag_report_live
         )
 
-    assert True
+    assert flag_pass
 
 
 if __name__ == "__main__":

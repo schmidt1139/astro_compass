@@ -357,7 +357,7 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
     if flag_report_live:
         print("Log files match truth (with numerical tolerance):", are_same)
 
-    return are_same
+    assert are_same
 
 
 if __name__ == "__main__":

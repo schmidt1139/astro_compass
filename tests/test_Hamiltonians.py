@@ -142,7 +142,7 @@ def test_Hamiltonians(flag_report_live=False):
     else:
         test_log = log("Test FAILED", test_log, flag_report_live)
 
-    return flag_pass
+    assert flag_pass
 
 
 if __name__ == "__main__":

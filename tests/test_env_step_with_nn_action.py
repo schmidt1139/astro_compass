@@ -134,7 +134,7 @@ def test_env_step_with_nn_action(flag_report_live=False):
         path_test_report, path_test_truth, flag_report_live=False
     )
 
-    return are_same
+    assert are_same
 
 
 if __name__ == "__main__":
