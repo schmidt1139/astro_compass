@@ -3,7 +3,7 @@ from scipy.integrate import solve_ivp
 from scipy.optimize import root
 from TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 
-from astro_compass.Propagation import (
+from astro_compass.core.propagation import (
     Hamiltonian_EOM_TBT_v2,
     smoothing_function_homotopic,
     smoothing_function_tanh,

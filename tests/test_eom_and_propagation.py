@@ -9,10 +9,13 @@ from gymnasium.envs.registration import register
 from scipy.integrate import solve_ivp
 
 from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
-from astro_compass.Ephemeris import Ephemeris
 
 # Adding python src code directory
-from astro_compass.Propagation import Hamiltonian_EOM_TBT_v2, smoothing_function_tanh
+from astro_compass.core.propagation import (
+    Hamiltonian_EOM_TBT_v2,
+    smoothing_function_tanh,
+)
+from astro_compass.Ephemeris import Ephemeris
 from astro_compass.StateVectorUtilities import non_dimensionalize
 from astro_compass.utils.path_utils import PLOT_ROOT
 
