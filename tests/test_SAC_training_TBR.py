@@ -15,8 +15,7 @@ from astro_compass.core.ephemeris import Ephemeris
 from astro_compass.core.spacecraft import Spacecraft
 from astro_compass.envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from astro_compass.utils.log_utils import log
-from astro_compass.utils.path_utils import PROJECT_ROOT
-from astro_compass.utils.plotting_utils import plot_SAC_training
+from astro_compass.utils.path_utils import DATA_ROOT, PROJECT_ROOT
 from astro_compass.utils.rl_utils import log_training_perf
 from astro_compass.utils.state_vector_utils import cartesian_to_polar
 from astro_compass.utils.test_utils import compare_log_files_with_tolerance
@@ -102,12 +101,12 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
         step_size=params["env_step_size"],
     )
 
-    max_episode_steps_in = 500
+    max_episode_steps_in = 1001
     env = gym.wrappers.TimeLimit(env, max_episode_steps=max_episode_steps_in)
     eval_env = gym.wrappers.TimeLimit(eval_env, max_episode_steps=max_episode_steps_in)
     env = Monitor(env)
     eval_env = Monitor(eval_env)
-    training_steps = max_episode_steps_in * 10
+    training_steps = max_episode_steps_in
 
     obs, info = env.reset(seed=seed_in)
     obs, info = eval_env.reset(seed=seed_in)
@@ -123,7 +122,11 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
     path_output = tempfile.mkdtemp()
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
     path_output_log = os.path.join(path_output, "SAC_Training_Log.txt")
-    path_output_log_truth = os.path.join(path_output, "SAC_Training_TBR_Log_truth.txt")
+    path_output_log_truth = os.path.join(
+        DATA_ROOT,
+        "test_data",
+        "SAC_Training_TBR_Log_truth.txt",
+    )
 
     # reset the environment
     observation, info = env.reset(seed=seed_in)
@@ -267,13 +270,13 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
     test_log = log("truncated: " + str(truncated) + " ", test_log, flag_report_live)
 
     # plot the results
-    plot_SAC_training(
-        rollout_data1,
-        arr_epsisode_numbers,
-        arr_epsisode_rs,
-        path_output,
-        eph,
-    )
+    # plot_SAC_training(
+    #     rollout_data1,
+    #     arr_epsisode_numbers,
+    #     arr_epsisode_rs,
+    #     path_output,
+    #     eph,
+    # )
 
     env.close()
 
@@ -293,6 +296,13 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
     with open(os.path.join(path_output, "SAC_Training_Log.txt"), "w") as f:
         for line in test_log:
             f.write(line + "\n")
+
+    # # # save truth log to file (for first-time setup)
+    # with open(
+    #     os.path.join(DATA_ROOT, "test_data", "SAC_Training_TBR_Log_truth.txt"), "w"
+    # ) as f:
+    #     for line in test_log:
+    #         f.write(line + "\n")
 
     # Compare log files with numerical tolerance for cross-platform compatibility
     are_same = compare_log_files_with_tolerance(
