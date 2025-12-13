@@ -53,7 +53,7 @@ def SAC_training_TBT(params, output_dir, seed_in=42):
     if params["read_replay_buffer"]:
         model.load_replay_buffer(params["path_replay_buffer"])
 
-    callback = RewardLoggerCallback(log_freq=params["log_freq"])
+    callback = RewardLoggerCallback(print_freq=params["print_freq"])
     # Eval callback: saves best model by mean reward on eval_env
     eval_callback = EvalCallback(
         eval_env,
@@ -88,7 +88,7 @@ def SAC_training_TBT(params, output_dir, seed_in=42):
 
 
 if __name__ == "__main__":
-    path_config = os.path.join(CONFIG_ROOT, "SAC_training_TBT_config.txt")
+    path_config = os.path.join(CONFIG_ROOT, "SAC_training_TBT_config.toml")
     params = read_toml_config_file(path_config)
 
     output_dir = os.path.join(RUNS_ROOT, "SAC_training_TBT")
