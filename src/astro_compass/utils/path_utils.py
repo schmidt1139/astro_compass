@@ -19,8 +19,9 @@ os.makedirs(RUNS_ROOT, exist_ok=True)
 os.makedirs(LOGS_ROOT, exist_ok=True)
 
 
-def get_run_paths(output_dir):
-    time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
+def get_run_paths(output_dir, time_tag=None):
+    if time_tag is None:
+        time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
     path_output = os.path.join(output_dir, time_tag)
     path_SAC_model = os.path.join(path_output, "model")
     path_checkpoints = os.path.join(path_output, "checkpoints")

@@ -7,8 +7,16 @@ from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris import Ephemeris as Ephemeris
 from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
 from astro_compass.core.spacecraft import Spacecraft
+from astro_compass.utils.env_utils import gen_rl_environment
 from astro_compass.utils.log_utils import (
+    read_toml_config_file,
     write_config_file,
+)
+from astro_compass.utils.model_utils import get_model
+from astro_compass.utils.path_utils import (
+    CONFIG_ROOT,
+    RUNS_ROOT,
+    get_run_paths,
 )
 from astro_compass.utils.plotting_utils import SACRolloutData, plot_SAC_training
 from astro_compass.utils.state_vector_utils import cartesian_to_polar
@@ -183,3 +191,18 @@ def eval_TBT_agent(env, model, params, path_output, path_ephems):
 
     # write config to output dir
     write_config_file(params, os.path.join(path_output, "SAC_Training_Config.txt"))
+
+
+def main():
+    seed_in = 42
+    params_path = os.path.join(CONFIG_ROOT, "SAC_training_TBT_config.toml")
+    params = read_toml_config_file(params_path)
+    env = gen_rl_environment(params)
+    time_tag = "20251213_182606"
+    paths = get_run_paths(RUNS_ROOT, time_tag)
+    model = get_model(params, env, seed_in, paths["path_SAC_model"])
+    eval_TBT_agent(env, model, params, paths["path_output"], paths["path_ephems"])
+
+
+if __name__ == "__main__":
+    main()
