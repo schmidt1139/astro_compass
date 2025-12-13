@@ -44,6 +44,7 @@ def SAC_training_TBT(params, output_dir, seed_in=42):
     path_checkpoints = os.path.join(path_output, "checkpoints")
     path_ephems = os.path.join(path_output, "ephems")
     path_plots = os.path.join(path_output, "plots")
+    os.makedirs(path_SAC_model, exist_ok=True)
     os.makedirs(path_checkpoints, exist_ok=True)
     os.makedirs(path_ephems, exist_ok=True)
     os.makedirs(path_plots, exist_ok=True)
@@ -114,7 +115,7 @@ def SAC_training_TBT(params, output_dir, seed_in=42):
     plot_reward_per_episode(
         arr_epsisode_numbers,
         arr_epsisode_rs,
-        os.path.join(path_plots, "reward_per_episode.png"),
+        path_plots,
     )
 
 
