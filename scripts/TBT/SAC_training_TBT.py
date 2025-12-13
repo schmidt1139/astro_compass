@@ -9,9 +9,7 @@ from stable_baselines3.common.monitor import Monitor
 
 from astro_compass.core.ephemeris import Ephemeris as Ephemeris
 from astro_compass.utils.env_utils import gen_rl_environment
-from astro_compass.utils.log_utils import (
-    read_config_file,
-)
+from astro_compass.utils.log_utils import read_toml_config_file
 from astro_compass.utils.model_utils import get_model
 from astro_compass.utils.path_utils import CONFIG_ROOT, RUNS_ROOT, get_run_paths
 from astro_compass.utils.plotting_utils import plot_reward_per_episode
@@ -91,7 +89,7 @@ def SAC_training_TBT(params, output_dir, seed_in=42):
 
 if __name__ == "__main__":
     path_config = os.path.join(CONFIG_ROOT, "SAC_training_TBT_config.txt")
-    params = read_config_file(path_config)
+    params = read_toml_config_file(path_config)
 
     output_dir = os.path.join(RUNS_ROOT, "SAC_training_TBT")
     # HACK FOR Legacy
