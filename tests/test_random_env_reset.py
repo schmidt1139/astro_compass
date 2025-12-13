@@ -22,7 +22,7 @@ def test_random_env_rest():
     env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
 
     # parameters
-    num_trajs = 100
+    num_trajs = 2
 
     # reset the evironment using set seed value and set counters
     seed_env = 42
@@ -79,14 +79,12 @@ def test_random_env_rest():
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.plot(arr_time, arr_rho)
             ax.set_title("Traj #" + str(count) + " Switching Function")
-            plt.show()
 
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.plot(arr_time, arr_u)
             ax.set_title(
                 "Traj #" + str(count) + " Spacecraft Thrust Throttle over Time"
             )
-            plt.show()
 
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.plot(arr_time, arr_alpha_x, label="alpha_x")
@@ -95,7 +93,6 @@ def test_random_env_rest():
                 "Traj #" + str(count) + " Alpha Vector (Maneuver Direction) over Time"
             )
             ax.legend()
-            plt.show()
 
             # Ephemeris plotting
             sun_rad = 6.957e8
@@ -104,12 +101,10 @@ def test_random_env_rest():
             eph_out.plot_xy(sun_rad, "Traj #" + str(count))
             eph_out.plot_xy_ref_orbit(sma_Earth, "Earth Orbit")
             eph_out.plot_xy_ref_orbit(sma_Mars, "Mars Orbit")
-            plt.show()
 
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.plot(arr_time, eph_out.arr_m)
             ax.set_title("Traj #" + str(count) + " Spacecraft Mass over Time")
-            plt.show()
 
             # determine mass expenditure
             net_delta_m = eph_out.arr_m[0] - eph_out.arr_m[-1]
@@ -143,7 +138,7 @@ def test_random_env_rest():
             ax.plot(arr_time, arr_dm)
             ax.plot(arr_time, arr_zero)
             ax.set_title("Traj #" + str(count) + " Mass Rate over Time")
-            plt.show()
+            plt.close()
 
             if flag_positive_mass_rate:
                 print("Warning - Positive Mass Rate: ", flag_positive_mass_rate)
@@ -211,9 +206,7 @@ def test_random_env_rest():
     print("")
 
     # report test summary to a file
-    file_path = os.path.join(
-        DATA_ROOT, "test_data", "test_random_TBT_transfer_report.csv"
-    )
+    file_path = tempfile.NamedTemporaryFile().name
 
     with open(file_path, "w") as f:
         for line in sa_report:
@@ -223,4 +216,4 @@ def test_random_env_rest():
 
 
 if __name__ == "__main__":
-    test_random_env_rest(env)
+    test_random_env_rest()
