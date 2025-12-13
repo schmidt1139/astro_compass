@@ -33,32 +33,29 @@ def misc_plotting(path_plots=None):
     df_eval_rewards = pd.read_csv( os.path.join(path_plots, "eval_rewards.csv") )
     arr_eval_rewards = df_eval_rewards["mean_reward"].tolist()
     arr_eval_rewards_std = df_eval_rewards["std_reward"].tolist()
-    arr_iters = list( range(1, len(arr_eval_rewards)+1) )
-    arr_iters = [x * 1_000 for x in arr_iters]  # assuming batch size of 1_000 for pre-training
+    arr_iters_r = list( range(1, len(arr_eval_rewards)+1) )
+    arr_iters_r = [x * 2_000 for x in arr_iters_r]  # assuming batch size of 1_000 for pre-training
     arr_eval_rewards_upper = [m + s for m, s in zip(arr_eval_rewards, arr_eval_rewards_std)]
     arr_eval_rewards_lower = [m - s for m, s in zip(arr_eval_rewards, arr_eval_rewards_std)]
 
-    plt.figure()
-    plt.plot(arr_iters, arr_actor_loss_pt, label="Actor Loss")
-    plt.xlabel("Pre-training Steps")
-    plt.ylabel("Actor Loss")
-    plt.legend()
-    plt.grid(True)
-    plt.savefig(os.path.join(path_plots, "actor_loss_plot_pretrain.png"))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7, 3))
+    ax1.plot(arr_iters, arr_actor_loss_pt, label="Actor Loss")
+    ax1.set_xlabel("Pre-training Steps")
+    ax1.set_ylabel("Actor Loss")
+    ax1.legend()
+    ax1.grid(True)
+
+    ax2.semilogy(arr_iters, arr_critic_loss_pt, label="Critic Loss")
+    ax2.set_xlabel("Pre-training Steps")
+    ax2.set_ylabel("Critic Loss")
+    ax2.legend()
+    ax2.grid(True)
+    plt.savefig(os.path.join(path_plots, "actor_critic_loss_plot_pretrain.png"))
     plt.close()
 
     plt.figure()
-    plt.semilogy(arr_iters, arr_critic_loss_pt, label="Critic Loss")
-    plt.xlabel("Pre-training Steps")
-    plt.ylabel("Critic Loss")
-    plt.legend()
-    plt.grid(True)
-    plt.savefig(os.path.join(path_plots, "critic_loss_plot_pretrain.png"))
-    plt.close()
-
-    plt.figure()
-    plt.plot(arr_iters, arr_eval_rewards, label="Mean Evaluation Reward")
-    plt.fill_between(arr_iters, arr_eval_rewards_lower, arr_eval_rewards_upper, color='b', alpha=0.2, label="+/- 1 Std Dev")
+    plt.plot(arr_iters_r, arr_eval_rewards, label="Mean Evaluation Reward")
+    plt.fill_between(arr_iters_r, arr_eval_rewards_lower, arr_eval_rewards_upper, color='b', alpha=0.2, label="+/- 1 Std Dev")
     plt.xlabel("Pre-training Steps")
     plt.ylabel("Evaluation Rewards")
     plt.legend()
@@ -67,6 +64,6 @@ def misc_plotting(path_plots=None):
     plt.close()
 
 if __name__ == "__main__":
-    path_to_data = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\Dec08\\pre_train\\SAC_training_TBR_polar20251208_151503"
+    path_to_data = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\Dec08\\curiosity\\Dec08\\pre_train\\SAC_training_TBR_polar20251208_192218"
     path_to_data = os.path.abspath(path_to_data)
     misc_plotting(path_to_data)

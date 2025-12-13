@@ -5,10 +5,10 @@ tb_log_name = "SAC_TBR_training"
 output_dir = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\Dec08\\eval"
 path_training_data = ""
 path_replay_buffer = ""
-path_SAC_model_load = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\Dec08\\train\\SAC_training_TBR_polar20251208_133052\\best_model.zip"
+path_SAC_model_load = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\Dec08\\curiosity\\Dec08\\train\\SAC_training_TBR_polar20251208_171007\\best_model.zip"
 
 [eval]
-num_rollouts = 100
+num_rollouts = 2
 
 [environment.vectorization]
 num_vec_envs = 4
@@ -99,7 +99,7 @@ eval_device = "cuda"
 ephem_version = 2.0
 ephem_step_size = 70
 flag_gen_H_traj = true
-seed_traj = 48
+seed_traj = 50
 flag_report_live = true
 eps_threshold = 0.1
 init_costate_guesses = 32

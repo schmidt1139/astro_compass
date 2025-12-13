@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 # HACK
 PROJECT_ROOT = os.path.dirname(os.path.dirname(utils.__file__)) + "/../.."
 
-def main(params, seed_in=42):
+def main(params, seed_in=43):
 
     os.environ["OMP_NUM_THREADS"] = "1"
     os.environ["OPENBLAS_NUM_THREADS"] = "1"

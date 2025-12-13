@@ -66,7 +66,7 @@ def mc_evaluate_agent(params):
         arr_episode_rs.append(total_reward)
         arr_position_res.append(rollout_data.arr_position_res[-1])
         arr_velocity_res.append(rollout_data.arr_velocity_res[-1])
-        arr_m.append(rollout_data.arr_mass[-1])
+        arr_m.append(rollout_data.arr_mass[-1]/rollout_data.arr_mass[0])  # final mass ratio
         list_pos_residuals.append(rollout_data.arr_position_res)
         list_vel_residuals.append(rollout_data.arr_velocity_res)
         list_rewards.append(rollout_data.arr_reward)
@@ -74,6 +74,8 @@ def mc_evaluate_agent(params):
     return arr_episode_numbers, arr_episode_rs, arr_position_res, arr_velocity_res, arr_m, list_pos_residuals, list_vel_residuals, list_rewards
 
 def plot_log_mc_results(mc_results, test_log, params):
+
+    bins_in = 20
 
     arr_episode_numbers, arr_episode_rs, arr_position_res, arr_velocity_res, arr_m, list_pos_residuals, list_vel_residuals, list_rewards = mc_results
     mean_r = sum(arr_episode_rs) / len(arr_episode_rs)
@@ -116,8 +118,8 @@ def plot_log_mc_results(mc_results, test_log, params):
     test_log = log("", test_log, True)
 
     #generate reward histogram
-    plt.figure(figsize=(10, 6))
-    plt.hist(arr_episode_rs, bins=20, color='blue', alpha=0.7)
+    plt.figure()
+    plt.hist(arr_episode_rs, bins=bins_in, color='blue', alpha=0.7)
     plt.title('Histogram of Episode Rewards')
     plt.xlabel('Reward')
     plt.ylabel('Frequency')
@@ -126,8 +128,8 @@ def plot_log_mc_results(mc_results, test_log, params):
     plt.savefig(f"{plt_path}/mc_episode_rewards_histogram.png", dpi=300)
     plt.close()
 
-    plt.figure(figsize=(10, 6))
-    plt.hist(arr_position_res, bins=20, color='blue', alpha=0.7)
+    plt.figure()
+    plt.hist(arr_position_res, bins=bins_in, color='blue', alpha=0.7)
     plt.title('Histogram of Episode Position Residuals')
     plt.xlabel('Position Residual')
     plt.ylabel('Frequency')
@@ -136,8 +138,8 @@ def plot_log_mc_results(mc_results, test_log, params):
     plt.savefig(f"{plt_path}/mc_episode_position_residuals_histogram.png", dpi=300)
     plt.close()
 
-    plt.figure(figsize=(10, 6))
-    plt.hist(arr_velocity_res, bins=20, color='blue', alpha=0.7)
+    plt.figure()
+    plt.hist(arr_velocity_res, bins=bins_in, color='blue', alpha=0.7)
     plt.title('Histogram of Episode Velocity Residuals')
     plt.xlabel('Velocity Residual')
     plt.ylabel('Frequency')
@@ -146,8 +148,8 @@ def plot_log_mc_results(mc_results, test_log, params):
     plt.savefig(f"{plt_path}/mc_episode_velocity_residuals_histogram.png", dpi=300)
     plt.close()
 
-    plt.figure(figsize=(10, 6))
-    plt.hist(arr_m, bins=20, color='blue', alpha=0.7)
+    plt.figure()
+    plt.hist(arr_m, bins=bins_in, color='blue', alpha=0.7)
     plt.title('Histogram of Episode Final Mass')
     plt.xlabel('Final Mass')
     plt.ylabel('Frequency')
@@ -192,5 +194,12 @@ def plot_log_mc_results(mc_results, test_log, params):
     plt_path = params["path_plots"]
     plt.savefig(f"{plt_path}/mc_rewards_over_time.png", dpi=300)
     plt.close()
+
+    #save histogram data to dir
+    path_data = params["path_plots"]
+    np.save(f'{plt_path}/mc_episode_rewards.npy', np.array(arr_episode_rs))
+    np.save(f'{plt_path}/mc_episode_position_res.npy', np.array(arr_position_res))
+    np.save(f'{plt_path}/mc_episode_velocity_res.npy', np.array(arr_velocity_res))
+    np.save(f'{plt_path}/mc_episode_final_mass.npy', np.array(arr_m))
 
     return test_log
