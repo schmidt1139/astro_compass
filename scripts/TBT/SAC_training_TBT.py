@@ -12,7 +12,6 @@ from astro_compass.core.ephemeris import Ephemeris as Ephemeris
 from astro_compass.utils.env_utils import gen_rl_environment
 from astro_compass.utils.log_utils import (
     read_config_file,
-    write_config_file,
 )
 from astro_compass.utils.model_utils import get_model
 from astro_compass.utils.path_utils import CONFIG_ROOT, RUNS_ROOT
@@ -27,10 +26,6 @@ print("GPU available: ", torch.cuda.is_available())
 
 
 def SAC_training_TBT(params, output_dir, seed_in=42):
-    test_log = []
-    print("SAC Training Script")
-
-    # set random seed
     random.seed(seed_in)
 
     # initialize the environment
@@ -49,15 +44,14 @@ def SAC_training_TBT(params, output_dir, seed_in=42):
     os.makedirs(path_ephems, exist_ok=True)
     os.makedirs(path_plots, exist_ok=True)
 
-    # Handle both absolute and relative paths for output_dir
-    params["output_dir_specific"] = path_output
-
     # env wrappers
     max_episode_steps_in = params["max_episode_steps"]
     env = gym.wrappers.TimeLimit(env, max_episode_steps=max_episode_steps_in)
     eval_env = gym.wrappers.TimeLimit(eval_env, max_episode_steps=max_episode_steps_in)
+
     env = Monitor(env)
     eval_env = Monitor(eval_env)
+
     training_steps = params["training_steps"]
 
     # reset the environment
@@ -106,9 +100,6 @@ def SAC_training_TBT(params, output_dir, seed_in=42):
 
     # Save the model
     model.save(path_SAC_model)
-
-    # write config to output dir
-    write_config_file(params, os.path.join(path_output, "SAC_Training_Config.txt"))
 
     arr_epsisode_numbers = list(range(1, len(callback.episode_rewards) + 1))
     arr_epsisode_rs = callback.episode_rewards
