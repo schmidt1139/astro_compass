@@ -136,8 +136,8 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
     # print("GPU available: ", torch.cuda.is_available())  # Should print True if GPU is available)
 
     # paths
-    path_nns = tempfile.TemporaryDirectory().name
-    path_output = tempfile.TemporaryDirectory().name
+    path_nns = tempfile.mkdtemp()
+    path_output = tempfile.mkdtemp()
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
     path_output_log = os.path.join(path_output, "SAC_Training_Log.txt")
     path_output_log_truth = os.path.join(path_output, "SAC_Training_Log_truth.txt")

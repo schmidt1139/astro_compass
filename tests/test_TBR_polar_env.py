@@ -24,7 +24,7 @@ def test_TBR_polar_env(flag_report_live: bool = False):
     plt.style.use(f"{DATA_ROOT}/support_files/light_paper.mplstyle")
 
     # config path
-    path_test = tempfile.TemporaryDirectory().name
+    path_test = os.path.join(DATA_ROOT, "test_data", "test_TBR_polar_env")
     path_config = os.path.join(path_test, "TBR_polar_config.txt")
 
     # define normalization parameters (for NN)
@@ -40,6 +40,8 @@ def test_TBR_polar_env(flag_report_live: bool = False):
     seed_traj = params["seed_env"]
     eph = Ephemeris_v2()
     rollout_data = SACRolloutData_TBR_polar()
+
+    output_dir = tempfile.mkdtemp()
 
     flag_test_pass = True
 
@@ -206,19 +208,15 @@ def test_TBR_polar_env(flag_report_live: bool = False):
         # fig = eph.plot_xy();
         # fig.savefig(os.path.join(DATA_ROOT, "test_data", "test_TBR", "test_traj_") + str(count_traj) + "_TBR_env.png")
 
-        plot_SAC_training_TBR_polar(rollout_data, path_test, eph, params, env)
+        plot_SAC_training_TBR_polar(rollout_data, output_dir, eph, params, env)
 
         eph.write_to_file(
-            os.path.join(
-                DATA_ROOT, "test_data", "test_TBR_polar_env", "test_traj_ephemeris_"
-            )
-            + str(count_traj)
-            + "_TBR_env.txt"
+            os.path.join(output_dir, f"test_traj_ephemeris_{count_traj}_TBR_env.txt")
         )
 
         fig_orb = plot_rendezvous_traj(eph, env, params)
         fig_orb.savefig(
-            os.path.join(path_test, "SAC_Test_Traj.png"), dpi=300, bbox_inches="tight"
+            os.path.join(output_dir, "SAC_Test_Traj.png"), dpi=300, bbox_inches="tight"
         )
 
         test_log = log("Final observation vector\n", test_log, flag_report_live)
@@ -238,7 +236,7 @@ def test_TBR_polar_env(flag_report_live: bool = False):
 
         test_log = log("\n\n\n", test_log, flag_report_live)
 
-    path_log = os.path.join(path_test, "test_TBR_polar_env_log.txt")
+    path_log = os.path.join(output_dir, "test_TBR_polar_env_log.txt")
     write_log_to_file(path_log, test_log)
 
     path_truth_log = os.path.join(path_test, "truth_TBR_polar_env_log.txt")

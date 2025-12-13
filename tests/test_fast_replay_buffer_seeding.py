@@ -85,7 +85,7 @@ def test_fast_replay_buffer_seeding(flag_report_live: bool = False):
 
     import_training_into_replay_buffer_v3(set_ephems, test_log, model, env, params)
 
-    output_dir = tempfile.TemporaryDirectory().name
+    output_dir = tempfile.mkdtemp()
     path_replay_buffer = os.path.join(
         output_dir, "test_fast_replay_buffer_seeding_replay_buffer.pkl"
     )

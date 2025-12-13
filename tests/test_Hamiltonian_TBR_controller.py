@@ -47,7 +47,7 @@ def test_Hamiltonian_TBR_Controller(flag_report_live=False):
     }
 
     # Write configuration parameters to file
-    output_data_dir = tempfile.TemporaryDirectory().name
+    output_data_dir = tempfile.mkdtemp()
     path_config = tempfile.NamedTemporaryFile().name
     write_config_file(params, path_config)
 
