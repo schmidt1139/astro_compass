@@ -229,8 +229,6 @@ def _plot_sac_training_trajectory(eph, eph_h, path_output):
 
 def plot_SAC_training(
     SACRolloutData,
-    arr_episode_numbers,
-    arr_episode_rs,
     path_output,
     eph,
     eph_h=None,
@@ -247,9 +245,6 @@ def plot_SAC_training(
     _plot_sac_training_attitude(SACRolloutData, path_output)
     _plot_sac_training_nd_state(SACRolloutData, path_output)
     _plot_sac_training_orbital_elements(SACRolloutData, path_output)
-    _plot_sac_training_reward_per_episode(
-        arr_episode_numbers, arr_episode_rs, path_output
-    )
     _plot_sac_training_trajectory(eph, eph_h, path_output)
 
 

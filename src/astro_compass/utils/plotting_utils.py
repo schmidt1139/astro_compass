@@ -265,9 +265,7 @@ class SACRolloutData_TBR_polar:
         self.arr_velocity_res.append(velocity_res)
 
 
-def plot_SAC_training(
-    SACRolloutData, arr_episode_numbers, arr_episode_rs, path_output, eph, eph_h=None
-):
+def plot_SAC_training(SACRolloutData, path_output, eph, eph_h=None):
     # plot reward over time
     plt.figure()
     plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_reward_tot, label="Reward")
@@ -360,6 +358,18 @@ def plot_SAC_training(
     plt.grid(True, alpha=0.3)  # Force grid on with some transparency
     plt.savefig(os.path.join(path_output, "SAC_ECC_Achieved.png"), dpi=300)
 
+    # generate and save figures
+    fig_orb = eph.plot_xy()
+    if eph_h is not None:
+        fig_orb = eph.overlay_ref_orbit(
+            ephem=eph_h, label="Hamiltonian Trajectory", color_in="#f89540"
+        )
+    fig_orb = eph.plot_xy_ref_orbit(Constants.SMA_MARS, "Mars", "#b7410e")
+    fig_orb = eph.plot_xy_ref_orbit(Constants.SMA_EARTH, "Earth")
+    fig_orb.savefig(os.path.join(path_output, "SAC_Test_Traj.png"), dpi=300)
+
+
+def plot_reward_per_episode(arr_episode_numbers, arr_episode_rs, path_output):
     plt.figure()
     plt.plot(arr_episode_numbers, arr_episode_rs, label="Training Reward per Episode")
     plt.xlabel("Episode Number")
@@ -370,16 +380,6 @@ def plot_SAC_training(
     plt.savefig(
         os.path.join(path_output, "SAC_Training_reward_per_episode.png"), dpi=300
     )
-
-    # generate and save figures
-    fig_orb = eph.plot_xy()
-    if eph_h is not None:
-        fig_orb = eph.overlay_ref_orbit(
-            ephem=eph_h, label="Hamiltonian Trajectory", color_in="#f89540"
-        )
-    fig_orb = eph.plot_xy_ref_orbit(Constants.SMA_MARS, "Mars", "#b7410e")
-    fig_orb = eph.plot_xy_ref_orbit(Constants.SMA_EARTH, "Earth")
-    fig_orb.savefig(os.path.join(path_output, "SAC_Test_Traj.png"), dpi=300)
 
 
 def plot_SAC_training_TBR(
