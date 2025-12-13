@@ -26,7 +26,7 @@ plt.style.use("data/support_files/light_paper.mplstyle")
 print("GPU available: ", torch.cuda.is_available())
 
 
-def SAC_training_TBR(params, output_dir, seed_in=42):
+def SAC_training_TBT(params, output_dir, seed_in=42):
     test_log = []
     print("SAC Training Script")
 
@@ -126,4 +126,4 @@ if __name__ == "__main__":
     # HACK FOR Legacy
     params["output_dir"] = output_dir
 
-    SAC_training_TBR(params, output_dir)
+    SAC_training_TBT(params, output_dir)
