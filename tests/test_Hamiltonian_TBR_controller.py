@@ -18,7 +18,7 @@ def write_config_file(params, path_config):
             f.write(f"{key}: {value}\n")
 
 
-def test_Hamiltonian_TBR_Controller(flag_report_live):
+def test_Hamiltonian_TBR_Controller(flag_report_live=False):
     start_time = time.time()
 
     # define parameters

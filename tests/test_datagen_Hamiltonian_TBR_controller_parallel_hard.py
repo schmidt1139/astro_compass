@@ -12,7 +12,7 @@ from astro_compass.utils.path_utils import DATA_ROOT
 from astro_compass.utils.test_utils import compare_trajectories
 
 
-def test_datagen_Hamiltonian_TBR_parallel_hard(flag_report_live):
+def test_datagen_Hamiltonian_TBR_parallel_hard(flag_report_live=False):
     start_time = time.time()
 
     path_config = os.path.join(
@@ -69,7 +69,7 @@ def test_datagen_Hamiltonian_TBR_parallel_hard(flag_report_live):
             "Some trajectories do not match truth data.", test_log, flag_report_live
         )
 
-    return flag_all_match
+    assert flag_all_match
 
 
 if __name__ == "__main__":

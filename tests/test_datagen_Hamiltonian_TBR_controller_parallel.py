@@ -12,7 +12,7 @@ from astro_compass.utils.path_utils import DATA_ROOT
 from astro_compass.utils.test_utils import compare_trajectories
 
 
-def test_datagen_Hamiltonian_TBR_parallel(flag_report_live):
+def test_datagen_Hamiltonian_TBR_parallel(flag_report_live=False):
     start_time = time.time()
 
     path_config = os.path.join(
