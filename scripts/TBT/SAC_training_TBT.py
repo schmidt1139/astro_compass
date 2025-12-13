@@ -18,7 +18,6 @@ from astro_compass.utils.path_utils import CONFIG_ROOT, RUNS_ROOT
 from astro_compass.utils.plotting_utils import plot_reward_per_episode
 from astro_compass.utils.rl_utils import (
     RewardLoggerCallback,
-    pre_train,
 )
 
 plt.style.use("data/support_files/light_paper.mplstyle")
@@ -65,16 +64,6 @@ def SAC_training_TBT(params, output_dir, seed_in=42):
     if params["read_replay_buffer"]:
         print("Loading replay buffer from: " + params["path_replay_buffer"])
         model.load_replay_buffer(params["path_replay_buffer"])
-
-    # pre-train networks if specified
-    if params["pre_train_networks"]:
-        test_log, arr_actor_loss_pt, arr_critic_loss_pt = pre_train(
-            test_log, model, params, env
-        )
-        # Remove the minimal logger from pre-training so model.learn() can set up TensorBoard properly
-        # This ensures TensorBoard logging works correctly during actual training
-        if hasattr(model, "_logger"):
-            delattr(model, "_logger")
 
     callback = RewardLoggerCallback(log_freq=params["log_freq"])
     # Eval callback: saves best model by mean reward on eval_env
