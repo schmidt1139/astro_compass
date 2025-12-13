@@ -16,14 +16,14 @@ def main():
     for i in range(1000):
         action, _state = model.predict(obs, deterministic=True)
         obs, reward, done, info = vec_env.step(action)
-        vec_env.render("human")
+        # vec_env.render("human")
         # VecEnv resets automatically
         # if done:
         #   obs = vec_env.reset()
 
     vec_env.close()
     env.close()
-    time.sleep(10.0)  # 100 ms pause
+    time.sleep(1.0)
 
 
 if __name__ == "__main__":
