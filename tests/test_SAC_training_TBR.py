@@ -272,8 +272,6 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
     # plot the results
     # plot_SAC_training(
     #     rollout_data1,
-    #     arr_epsisode_numbers,
-    #     arr_epsisode_rs,
     #     path_output,
     #     eph,
     # )

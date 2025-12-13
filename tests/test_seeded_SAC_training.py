@@ -327,8 +327,6 @@ def test_seeded_SAC_training(flag_report_live=True, seed_in=42):
     # plot the results
     plot_SAC_training(
         rollout_data1,
-        arr_epsisode_numbers,
-        arr_epsisode_rs,
         path_output,
         eph,
     )
