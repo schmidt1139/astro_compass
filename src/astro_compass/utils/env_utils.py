@@ -1,3 +1,6 @@
+from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env_nd_obs5 import (
+    TwoBody_Orb2Orb_Transfer_Env_nd_obs5,
+)
 from astro_compass.envs.TwoBodyRendezvous_Polar_Env import TwoBodyRendezvous_Polar_Env
 from astro_compass.envs.TwoBodyRendezvous_Polar_Env2 import TwoBodyRendezvous_Polar_Env2
 
@@ -84,6 +87,8 @@ def gen_rl_environment(params):
             theta_max_final_env_deg=params.get("theta_max_final_env_deg", 360.0),
             prop_length_scale=params.get("prop_length_scale", 1.0),
         )
+    elif params["env_type"] == "TwoBody_Orb2Orb_Transfer_Env_nd_obs5":
+        env = TwoBody_Orb2Orb_Transfer_Env_nd_obs5(**params)
     else:
         raise NotImplementedError(
             f"Environment type {params['env_type']} not implemented."

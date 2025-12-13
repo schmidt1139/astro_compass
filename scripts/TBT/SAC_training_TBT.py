@@ -14,9 +14,7 @@ from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris import Ephemeris as Ephemeris
 from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
 from astro_compass.core.spacecraft import Spacecraft
-from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env_nd_obs5 import (
-    TwoBody_Orb2Orb_Transfer_Env_nd_obs5,
-)
+from astro_compass.utils.env_utils import gen_rl_environment
 from astro_compass.utils.log_utils import (
     log,
     read_config_file,
@@ -47,28 +45,8 @@ def SAC_training_TBR(seed_in=42):
     params = read_config_file(path_config)
 
     # initialize the environment
-    env = TwoBody_Orb2Orb_Transfer_Env_nd_obs5(
-        mu=params["mu"],
-        max_T=params["max_T"],
-        ISP=params["ISP"],
-        l_star=params["l_star"],
-        m_star=params["m_star"],
-        t_star=params["t_star"],
-        g0=params["g0"],
-        step_size=params["env_step_size"],
-        mass_penalty=params["mass_penalty"],
-    )
-
-    eval_env = TwoBody_Orb2Orb_Transfer_Env_nd_obs5(
-        mu=params["mu"],
-        max_T=params["max_T"],
-        ISP=params["ISP"],
-        l_star=params["l_star"],
-        m_star=params["m_star"],
-        t_star=params["t_star"],
-        g0=params["g0"],
-        step_size=params["env_step_size"],
-    )
+    env = gen_rl_environment(params)
+    eval_env = gen_rl_environment(params)
 
     sma_t_i = Constants.SMA_EARTH
 
