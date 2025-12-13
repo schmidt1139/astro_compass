@@ -139,6 +139,8 @@ def process_single_trajectory(params):
         os.path.join(ephem_dir, ephem_filename + ".txt") if flag_solved else None
     )
     if flag_solved and eph_output is not None:
+        os.makedirs(ephem_dir, exist_ok=True)
+
         eph_output.write_to_file(os.path.join(ephem_dir, ephem_filename + ".txt"))
 
     # Add parameters to the log after trajectory generation

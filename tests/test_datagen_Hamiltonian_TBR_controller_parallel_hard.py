@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 import matplotlib
 
@@ -23,18 +24,8 @@ def test_datagen_Hamiltonian_TBR_parallel_hard(flag_report_live=False):
     )
     params = read_config_file(path_config)
 
-    # Validate and normalize data_path
-    if "data_path" not in params:
-        raise ValueError("data_path must be specified in configuration file")
-
-    # Strip whitespace and normalize path
-    data_path = params["data_path"].strip()
-
-    # Convert to absolute path if relative
-    if not os.path.isabs(data_path):
-        data_path = os.path.abspath(data_path)
-
-    params["data_path"] = os.path.normpath(data_path)
+    output_path = tempfile.mkdtemp()
+    params["data_path"] = output_path
 
     # Run parallel trajectory generation
     test_log, arr_pass_count, sa_output_ephems, sa_summary = (
