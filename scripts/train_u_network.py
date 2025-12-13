@@ -10,8 +10,8 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 from torch.utils.data import DataLoader
 
 from astro_compass.Constants import Constants
+from astro_compass.core.neural_network_controllers import NN_TBT_Controller_u
 from astro_compass.core.training_data_generation import read_ephems_from_dir
-from astro_compass.Neural_Net_Controller import NN_TBT_Controller_u
 from astro_compass.utils.nn_utils import (
     evaluate_neural_network,
     pre_process_training_data,
