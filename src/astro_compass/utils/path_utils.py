@@ -26,7 +26,6 @@ def get_run_paths(output_dir):
     path_checkpoints = os.path.join(path_output, "checkpoints")
     path_ephems = os.path.join(path_output, "ephems")
     path_plots = os.path.join(path_output, "plots")
-    os.makedirs(path_SAC_model, exist_ok=True)
     os.makedirs(path_checkpoints, exist_ok=True)
     os.makedirs(path_ephems, exist_ok=True)
     os.makedirs(path_plots, exist_ok=True)
