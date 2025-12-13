@@ -99,3 +99,7 @@ def test_env_step_no_action(flag_report_live=False):
         path_test_report, path_test_truth, flag_report_live=False
     )
     return are_same
+
+
+if __name__ == "__main__":
+    test_env_step_no_action(flag_report_live=True)

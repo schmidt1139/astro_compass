@@ -93,3 +93,7 @@ def test_env_step_with_action(flag_report_live=False):
     )
 
     return are_same
+
+
+if __name__ == "__main__":
+    test_env_step_with_action(flag_report_live=True)

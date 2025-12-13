@@ -80,11 +80,12 @@ def test_write_ephemeris(env, filename_eph):
     print("Ephemeris of trajectory written to: ", filename_ephemeris_out)
 
 
-# initialize the environment
-env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
+if __name__ == "__main__":
+    # initialize the environment
+    env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
 
-# Ephemeris filename
-dir_ephemeris_out = os.path.join(DATA_ROOT, "training_ephems")
-filename_ephemeris_out = dir_ephemeris_out + "test_ephemeris.txt"
+    # Ephemeris filename
+    dir_ephemeris_out = os.path.join(DATA_ROOT, "training_ephems")
+    filename_ephemeris_out = dir_ephemeris_out + "test_ephemeris.txt"
 
-test_write_ephemeris(env, filename_ephemeris_out)
+    test_write_ephemeris(env, filename_ephemeris_out)

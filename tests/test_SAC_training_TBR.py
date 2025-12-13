@@ -9,23 +9,22 @@ from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import BaseCallback, CallbackList, EvalCallback
 from stable_baselines3.common.monitor import Monitor
 
+from astro_compass.constants.constants import Constants
+from astro_compass.core.ephemeris import Ephemeris
+from astro_compass.core.spacecraft import Spacecraft
+from astro_compass.envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
+from astro_compass.utils.log_utils import log
 from astro_compass.utils.path_utils import DATA_ROOT, PROJECT_ROOT
+from astro_compass.utils.plotting_utils import plot_SAC_training
+from astro_compass.utils.rl_utils import log_training_perf
+from astro_compass.utils.state_vector_utils import cartesian_to_polar
+from astro_compass.utils.test_utils import compare_log_files_with_tolerance
 
 os.chdir(PROJECT_ROOT)
 print("Now working in:", os.getcwd())
 
 sys.path.append(os.path.join(PROJECT_ROOT, "src"))
 sys.path.append(os.path.join(PROJECT_ROOT, "scripts"))
-
-from astro_compass.constants.constants import Constants
-from astro_compass.core.ephemeris import Ephemeris
-from astro_compass.core.spacecraft import Spacecraft
-from astro_compass.envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
-from astro_compass.utils.log_utils import log
-from astro_compass.utils.plotting_utils import plot_SAC_training
-from astro_compass.utils.rl_utils import log_training_perf
-from astro_compass.utils.state_vector_utils import cartesian_to_polar
-from astro_compass.utils.test_utils import compare_log_files_with_tolerance
 
 
 class RewardLoggerCallback(BaseCallback):
@@ -307,4 +306,5 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
     return are_same
 
 
-test_SAC_training_TBR()
+if __name__ == "__main__":
+    test_SAC_training_TBR()

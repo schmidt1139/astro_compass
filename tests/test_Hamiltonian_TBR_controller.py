@@ -158,3 +158,7 @@ def test_Hamiltonian_TBR_Controller(flag_report_live):
             )
 
         return flag_all_match
+
+
+if __name__ == "__main__":
+    test_Hamiltonian_TBR_Controller(True)

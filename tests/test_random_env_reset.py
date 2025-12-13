@@ -229,4 +229,5 @@ def test_random_env_rest(env):
     f.close()
 
 
-test_random_env_rest(env)
+if __name__ == "__main__":
+    test_random_env_rest(env)

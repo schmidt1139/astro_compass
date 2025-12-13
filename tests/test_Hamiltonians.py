@@ -146,3 +146,7 @@ def test_Hamiltonians(flag_report_live=False):
         test_log = log("Test FAILED", test_log, flag_report_live)
 
     return flag_pass
+
+
+if __name__ == "__main__":
+    test_Hamiltonians(True)
