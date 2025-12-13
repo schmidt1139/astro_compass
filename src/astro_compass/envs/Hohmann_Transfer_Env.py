@@ -4,7 +4,7 @@ import gymnasium as gym
 import numpy as np
 from scipy.integrate import solve_ivp
 
-from astro_compass.Spacecraft import Spacecraft
+from astro_compass.core.spacecraft import Spacecraft
 
 
 class HohmannTransferEnv(gym.Env):

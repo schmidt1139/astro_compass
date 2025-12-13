@@ -6,7 +6,7 @@ from scipy.integrate import solve_ivp
 
 from astro_compass.constants.constants import Constants
 from astro_compass.core.propagation import spacecraft_EOM_radial_2D_EB
-from astro_compass.Spacecraft import Spacecraft
+from astro_compass.core.spacecraft import Spacecraft
 
 
 class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
