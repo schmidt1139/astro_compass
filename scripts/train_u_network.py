@@ -23,7 +23,7 @@ from astro_compass.utils.plotting_utils import format_plots, plot_training_loss
 if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
     register(
         id="TwoBody_Orb2Orb_Transfer_Env-v0",
-        entry_point="TwoBody_Orb2Orb_Transfer_Env:TwoBody_Orb2Orb_Transfer_Env",
+        entry_point="astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env:TwoBody_Orb2Orb_Transfer_Env",
     )
 
 

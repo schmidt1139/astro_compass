@@ -30,7 +30,7 @@ from astro_compass.utils.state_vector_utils import cartesian_to_polar
 if "TwoBody_Orb2Orb_Transfer_Env_nd_obs5-v0" not in envs.registry.keys():
     register(
         id="TwoBody_Orb2Orb_Transfer_Env_nd_obs5-v0",
-        entry_point="envs.TwoBody_Orb2Orb_Transfer_Env_nd_obs5:TwoBody_Orb2Orb_Transfer_Env_nd_obs5",
+        entry_point="astro_compass.envs.envs.TwoBody_Orb2Orb_Transfer_Env_nd_obs5:TwoBody_Orb2Orb_Transfer_Env_nd_obs5",
         max_episode_steps=500,  # <-- set your desired max steps per episode
     )
 

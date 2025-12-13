@@ -11,7 +11,7 @@ from astro_compass.Ephemeris import Ephemeris
 if "HohmannTransferEnv-v0" not in envs.registry.keys():
     register(
         id="HohmannTransferEnv-v0",
-        entry_point="Hohmann_Transfer_Env:HohmannTransferEnv",
+        entry_point="astro_compass.envs.Hohmann_Transfer_Env:HohmannTransferEnv",
     )
 
 
@@ -100,4 +100,5 @@ def test_runnable_env(env, num_trajectories, num_steps_per_traj):
     print("Test successful")
 
 
-test_runnable_env(env, num_traj, steps_per_traj)
+if __name__ == "__main__":
+    test_runnable_env(env, num_traj, steps_per_traj)

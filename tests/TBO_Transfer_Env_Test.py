@@ -9,7 +9,7 @@ from astro_compass.Ephemeris import Ephemeris
 if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
     register(
         id="TwoBody_Orb2Orb_Transfer_Env-v0",
-        entry_point="TwoBody_Orb2Orb_Transfer_Env:TwoBody_Orb2Orb_Transfer_Env",
+        entry_point="astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env:TwoBody_Orb2Orb_Transfer_Env",
     )
 
 
@@ -93,4 +93,5 @@ def test_runnable_env(env, num_trajectories, num_steps_per_traj):
     print("Test successful")
 
 
-test_runnable_env(env, num_traj, steps_per_traj)
+if __name__ == "__main__":
+    test_runnable_env(env, num_traj, steps_per_traj)
