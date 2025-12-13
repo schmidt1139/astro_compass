@@ -1,6 +1,5 @@
 import os
 import random
-from datetime import datetime
 
 import gymnasium as gym
 import matplotlib.pyplot as plt
@@ -14,7 +13,7 @@ from astro_compass.utils.log_utils import (
     read_config_file,
 )
 from astro_compass.utils.model_utils import get_model
-from astro_compass.utils.path_utils import CONFIG_ROOT, RUNS_ROOT
+from astro_compass.utils.path_utils import CONFIG_ROOT, RUNS_ROOT, get_run_paths
 from astro_compass.utils.plotting_utils import plot_reward_per_episode
 from astro_compass.utils.rl_utils import (
     RewardLoggerCallback,
@@ -32,16 +31,8 @@ def SAC_training_TBT(params, output_dir, seed_in=42):
     eval_env = gen_rl_environment(params)
 
     # paths
-    time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
-    path_output = os.path.join(output_dir, time_tag)
-    path_SAC_model = os.path.join(path_output, "model")
-    path_checkpoints = os.path.join(path_output, "checkpoints")
-    path_ephems = os.path.join(path_output, "ephems")
-    path_plots = os.path.join(path_output, "plots")
-    os.makedirs(path_SAC_model, exist_ok=True)
-    os.makedirs(path_checkpoints, exist_ok=True)
-    os.makedirs(path_ephems, exist_ok=True)
-    os.makedirs(path_plots, exist_ok=True)
+    run_paths = get_run_paths(output_dir)
+    path_output = run_paths["path_output"]
 
     # env wrappers
     max_episode_steps_in = params["max_episode_steps"]
@@ -59,10 +50,9 @@ def SAC_training_TBT(params, output_dir, seed_in=42):
     print("Seed: " + str(seed_in))
     print("Max steps per episode: " + str(max_episode_steps_in))
 
-    model = get_model(params, env, seed_in, path_output)
+    model = get_model(params, env, seed_in, run_paths["path_SAC_model"])
 
     if params["read_replay_buffer"]:
-        print("Loading replay buffer from: " + params["path_replay_buffer"])
         model.load_replay_buffer(params["path_replay_buffer"])
 
     callback = RewardLoggerCallback(log_freq=params["log_freq"])
@@ -84,18 +74,18 @@ def SAC_training_TBT(params, output_dir, seed_in=42):
         total_timesteps=training_steps,
         progress_bar=True,
         callback=callback_list,
-        tb_log_name=params["tb_log_name"],
+        tb_log_name=run_paths["path_output"].split(os.sep)[-1],  # time stamp
     )
 
     # Save the model
-    model.save(path_SAC_model)
+    model.save(run_paths["path_SAC_model"])
 
     arr_epsisode_numbers = list(range(1, len(callback.episode_rewards) + 1))
     arr_epsisode_rs = callback.episode_rewards
     plot_reward_per_episode(
         arr_epsisode_numbers,
         arr_epsisode_rs,
-        path_plots,
+        run_paths["path_plots"],
     )
 
 
