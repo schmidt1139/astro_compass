@@ -3,10 +3,10 @@ from typing import Optional
 import gymnasium as gym
 import numpy as np
 from scipy.integrate import solve_ivp
-from Spacecraft import Spacecraft
 
 from astro_compass.Constants import Constants
 from astro_compass.Propagation import spacecraft_EOM_radial_2D_EB
+from astro_compass.Spacecraft import Spacecraft
 
 
 class TwoBody_Orb2Orb_Transfer_Env(gym.Env):
