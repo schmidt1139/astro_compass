@@ -16,8 +16,8 @@ from astro_compass.core.propagation import (
     Hamiltonian_EOM_TBT_v2,
     smoothing_function_tanh,
 )
-from astro_compass.StateVectorUtilities import non_dimensionalize
 from astro_compass.utils.path_utils import PLOT_ROOT
+from astro_compass.utils.state_vector_utils import non_dimensionalize
 
 # register the environment if it isn't registered
 if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
