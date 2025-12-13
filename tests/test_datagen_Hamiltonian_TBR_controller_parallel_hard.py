@@ -16,10 +16,11 @@ from astro_compass.utils.test_utils import compare_trajectories
 def test_datagen_Hamiltonian_TBR_parallel_hard(flag_report_live=False):
     start_time = time.time()
 
+    test_dir = os.path.join(
+        DATA_ROOT, "test_data", "test_datagen_Hamiltonian_TBR_parallel_hard"
+    )
     path_config = os.path.join(
-        DATA_ROOT,
-        "test_data",
-        "test_datagen_Hamiltonian_TBR_parallel_hard",
+        test_dir,
         "test_datagen_Hamiltonian_TBR_controller_parallel_config_hard.txt",
     )
     params = read_config_file(path_config)
@@ -38,7 +39,7 @@ def test_datagen_Hamiltonian_TBR_parallel_hard(flag_report_live=False):
         # Extract filename and replace 'test_' with 'truth_'
         filename = os.path.basename(output_path)
         truth_filename = filename.replace("test_", "truth_")
-        truth_path = os.path.join(params["data_path"], "ephems", truth_filename)
+        truth_path = os.path.join(test_dir, "ephems", truth_filename)
         sa_truth_ephems.append(truth_path)
 
     # sort output files to match truth files
