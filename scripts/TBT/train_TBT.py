@@ -95,9 +95,7 @@ def SAC_training_TBT(params, output_dir, seed_in=42):
 if __name__ == "__main__":
     path_config = os.path.join(CONFIG_ROOT, "SAC_training_TBT_config.toml")
     params = read_toml_config_file(path_config)
-
-    output_dir = os.path.join(RUNS_ROOT, "SAC_training_TBT")
     # HACK FOR Legacy
-    params["output_dir"] = output_dir
+    params["output_dir"] = RUNS_ROOT
 
-    SAC_training_TBT(params, output_dir)
+    SAC_training_TBT(params, RUNS_ROOT)
