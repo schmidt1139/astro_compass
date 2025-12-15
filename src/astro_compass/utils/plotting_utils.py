@@ -981,3 +981,68 @@ def plot_rendezvous_traj(eph, env, params):
     fig_orb = vis.adjust_plot_limits()
 
     return fig_orb
+
+
+def plot_SAC_TBT_training(
+    SACRolloutData,
+    arr_episode_numbers,
+    arr_episode_rs,
+    path_output,
+    eph,
+    eph_h=None,
+    params=None,
+    env=None,
+):
+    # plot reward over time
+    plt.figure()
+    plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_reward_tot, label="Reward")
+    plt.xlabel("Time [days]")
+    plt.ylabel("Reward")
+    plt.title("SAC Training Reward over Time")
+    plt.legend()
+    plt.grid(True, alpha=0.3)  # Force grid on with some transparency
+    plt.savefig(os.path.join(path_output, "SAC_Training_Reward.png"), dpi=300)
+
+    # generate and save figures
+    fig_orb = eph.plot_xy(color_in="#7e03a8")
+    if eph_h is not None:
+        fig_orb = eph.overlay_ref_orbit(
+            ephem=eph_h, label="Hamiltonian Trajectory", color_in="#f89540"
+        )
+
+    x_init = eph.arr_x[0]
+    y_init = eph.arr_y[0]
+    vx_init = eph.arr_vx[0]
+    vy_init = eph.arr_vy[0]
+    x_target_init = eph.arr_x_target[0]
+    y_target_init = eph.arr_y_target[0]
+    vx_target_init = eph.arr_vx_target[0]
+    vy_target_init = eph.arr_vy_target[0]
+
+    fig_orb = plot_overlay_ballistic_orbit(
+        x_init,
+        y_init,
+        vx_init,
+        vy_init,
+        env,
+        fig_orb,
+        params,
+        eph,
+        label_in="Initial Orbit",
+        color_in="#0d0887",
+    )
+    fig_orb = plot_overlay_ballistic_orbit(
+        x_target_init,
+        y_target_init,
+        vx_target_init,
+        vy_target_init,
+        env,
+        fig_orb,
+        params,
+        eph,
+        label_in="Target Orbit",
+        color_in="#cc4778",
+    )
+    fig_orb = eph.adjust_plot_limits()
+
+    fig_orb.savefig(os.path.join(path_output, "SAC_Test_Traj.png"), dpi=300)
