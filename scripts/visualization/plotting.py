@@ -8,6 +8,7 @@ import pandas as pd
 from astro_compass.constants.constants import Constants
 from astro_compass.utils.h_rl_fusion import calc_rewards_from_H_ephem
 from astro_compass.utils.state_vector_utils import convert_alpha_from_cart_to_fpa
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 
 def format_plots():
@@ -217,13 +218,14 @@ def _plot_sac_training_reward_per_episode(
 
 
 def _plot_sac_training_trajectory(eph, eph_h, path_output):
-    fig_orb = eph.plot_xy()
+    vis = EphemPlotter(eph)
+    fig_orb = vis.plot_xy()
     if eph_h is not None:
-        fig_orb = eph.overlay_ref_orbit(
+        fig_orb = vis.overlay_ref_orbit(
             ephem=eph_h, label="Hamiltonian Trajectory", color_in="#f89540"
         )
-    fig_orb = eph.plot_xy_ref_orbit(Constants.SMA_MARS, "Mars", "#b7410e")
-    fig_orb = eph.plot_xy_ref_orbit(Constants.SMA_EARTH, "Earth")
+    fig_orb = vis.plot_xy_ref_orbit(Constants.SMA_MARS, "Mars", "#b7410e")
+    fig_orb = vis.plot_xy_ref_orbit(Constants.SMA_EARTH, "Earth")
     fig_orb.savefig(os.path.join(path_output, "SAC_Test_Traj.png"), dpi=300)
 
 
@@ -651,8 +653,9 @@ def _plot_pretraining_losses(
 
 def _plot_tbr_polar_rendezvous_trajectory(eph, env, params, path_output, ephem_H=None):
     fig_orb = plot_rendezvous_traj(eph, env, params)
+    vis = EphemPlotter(eph)
     if params.get("flag_gen_H_traj", False) and (ephem_H is not None):
-        fig_orb = eph.overlay_ref_orbit(
+        fig_orb = vis.overlay_ref_orbit(
             ephem=ephem_H, label="Hamiltonian Trajectory", color_in="#f89540"
         )
     fig_orb.savefig(
@@ -750,7 +753,7 @@ def plot_SAC_training_TBR_polar(
 
 
 def plot_overlay_ballistic_orbit(
-    x, y, vx, vy, env, fig, params, eph, label_in, color_in="lime"
+    x, y, vx, vy, env, fig, params, vis, label_in, color_in="lime"
 ):
     # check env type
     if params.get("env_type", "TwoBodyRendezvous_Env") == "TwoBodyRendezvous_Polar_Env":
@@ -797,8 +800,8 @@ def plot_overlay_ballistic_orbit(
         arr_x.append(x_i)
         arr_y.append(y_i)
         step_count += 1
-
-    fig = eph.overlay_ref_orbit(
+    vis = EphemPlotter(ph)
+    fig = vis.overlay_ref_orbit(
         ephem=None, label=label_in, color_in=color_in, arr_x=arr_x, arr_y=arr_y
     )
 
@@ -806,7 +809,8 @@ def plot_overlay_ballistic_orbit(
 
 
 def plot_rendezvous_traj(eph, env, params):
-    fig_orb = eph.plot_xy(color_in="#7e03a8")
+    vis = EphemPlotter(eph)
+    fig_orb = vis.plot_xy(color_in="#7e03a8")
 
     x_target = eph.arr_x_target[-1]
     y_target = eph.arr_y_target[-1]
@@ -821,7 +825,7 @@ def plot_rendezvous_traj(eph, env, params):
         env,
         fig_orb,
         params,
-        eph,
+        vis,
         label_in="Target Orbit",
         color_in="#cc4778",
     )
@@ -839,7 +843,7 @@ def plot_rendezvous_traj(eph, env, params):
         env,
         fig_orb,
         params,
-        eph,
+        vis,
         label_in="Initial Orbit",
         color_in="#0d0887",
     )

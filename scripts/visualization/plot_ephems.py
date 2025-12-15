@@ -2,6 +2,7 @@ import os
 
 from astro_compass.core.ephemeris import Ephemeris
 from astro_compass.utils.path_utils import PROJECT_ROOT
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 
 def ingest_ephem_and_plot(path_to_ephemeris):
@@ -18,7 +19,8 @@ def ingest_ephem_and_plot(path_to_ephemeris):
     print("Number of vectors: ", eph.num_vectors)
 
     # Plot the ephemeris
-    figs = eph.plot_all_ephemeris_data()
+    vis = EphemPlotter(eph)
+    figs = vis.plot_all_ephemeris_data()
 
     # report the final vector
     index = eph.num_vectors - 1

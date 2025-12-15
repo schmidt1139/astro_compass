@@ -4,6 +4,7 @@ from gymnasium import envs
 from gymnasium.envs.registration import register
 
 from astro_compass.core.ephemeris import Ephemeris
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 # register the environment if it isn't registered
 if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
@@ -86,9 +87,10 @@ def test_runnable_env(env, num_trajectories, num_steps_per_traj):
 
         if count_traj == num_traj - 1:
             print("Plotting last trajectory...")
-            eph.plot_xy(info["planet_radii"])
-            eph.plot_xy_ref_orbit(observation[6], "Earth Orbit")
-            eph.plot_all_ephemeris_data()
+            vis = EphemPlotter(eph)
+            vis.plot_xy(info["planet_radii"])
+            vis.plot_xy_ref_orbit(observation[6], "Earth Orbit")
+            vis.plot_all_ephemeris_data()
 
     print("Test successful")
 

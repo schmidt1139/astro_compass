@@ -6,7 +6,68 @@ import numpy as np
 
 from astro_compass.constants.constants import Constants
 from astro_compass.utils.path_utils import RUNS_ROOT
-from astro_compass.utils.plotting_utils import plot_overlay_ballistic_orbit
+
+
+def plot_overlay_ballistic_orbit(
+    x, y, vx, vy, env, fig, params, vis, label_in, color_in="lime"
+):
+    # check env type
+    if params.get("env_type", "TwoBodyRendezvous_Env") == "TwoBodyRendezvous_Polar_Env":
+        flag_use_obs = False
+    elif (
+        params.get("env_type", "TwoBodyRendezvous_Env")
+        == "TwoBodyRendezvous_Polar_Env2"
+    ):
+        flag_use_obs = False
+    else:
+        flag_use_obs = True
+
+    obs, info = env.reset()
+
+    state_in = [x, y, vx, vy, 1000.0, x, y, vx, vy, Constants.YEARS_TO_SEC * 10.0]
+
+    unwrapped_env = env.unwrapped
+    obs, info = unwrapped_env.set_state(state_in)
+
+    T = info["orbital_period_years"] * Constants.YEARS_TO_SEC
+
+    time = 0.0
+    flag_done = False
+    arr_x = []
+    arr_y = []
+    max_steps = 10000  # Safety limit to prevent infinite loop
+    step_count = 0
+
+    while not flag_done and step_count < max_steps:
+        obs, reward, done, truncated, info = env.step([0.0, 0.0, 0.0])
+
+        if flag_use_obs:
+            obs = obs
+            # dim state
+            x_i = obs[0] * params["l_star"]
+            y_i = obs[1] * params["l_star"]
+        else:
+            unwrapped_env = env.unwrapped
+            obs = unwrapped_env.get_cartesian_state()
+            x_i = obs[0]
+            y_i = obs[1]
+
+        if info["Elapsed time"] >= T or done or truncated:
+            flag_done = True
+
+        arr_x.append(x_i)
+        arr_y.append(y_i)
+        step_count += 1
+
+    fig = vis.overlay_ref_orbit(
+        ephem=None,
+        label=label_in,
+        color_in=color_in,
+        arr_x=arr_x,
+        arr_y=arr_y,
+    )
+
+    return fig
 
 
 class EphemPlotter:
@@ -14,7 +75,10 @@ class EphemPlotter:
         self.ephem = ephem
 
     def plot_xy(
-        self, radius_central_body=Constants.RADIUS_SUN_M, plot_label="Trajectory"
+        self,
+        radius_central_body=Constants.RADIUS_SUN_M,
+        plot_label="Trajectory",
+        color_in="#5c01a6",
     ):
         # plt.style.use("data/support_files/dark_scientific.mplstyle");
 
@@ -54,11 +118,11 @@ class EphemPlotter:
         yf = y_au[-1]
 
         if plt.rcParams["figure.facecolor"] == "black":
-            markerfacecolor_in = "white"
+            markerfacecolor_in = color_in
             markeredgecolor_in = "white"
             background_color = "black"
         else:
-            markerfacecolor_in = "black"
+            markerfacecolor_in = color_in
             markeredgecolor_in = "black"
             background_color = "white"
 
@@ -68,8 +132,8 @@ class EphemPlotter:
             label="Initial State",
             marker="o",
             color=background_color,
-            linestyle="",
-            markerfacecolor=markerfacecolor_in,
+            linestyle=None,
+            markerfacecolor="none",
             markeredgecolor=markeredgecolor_in,
             markersize=8,
         )
@@ -78,23 +142,25 @@ class EphemPlotter:
             yf,
             label="Final State",
             marker="x",
-            linestyle="",
+            linestyle=None,
             markerfacecolor=markerfacecolor_in,
             markeredgecolor=markeredgecolor_in,
             color=background_color,
             markersize=8,
         )
-        ax.plot(x_au, y_au, label="Trajectory")
+        ax.plot(x_au, y_au, label="Trajectory", color=color_in)
 
         if radius_cb_au > 0.1 * max_lim:
-            ax.plot(arr_x_cb, arr_y_cb, label="Central Body", linewidth=4, color="gold")
+            ax.plot(
+                arr_x_cb, arr_y_cb, label="Central Body", linewidth=4, color="#f0f921"
+            )
         else:
             ax.plot(
                 arr_x_cb,
                 arr_y_cb,
                 label="Central Body",
                 color=background_color,
-                markerfacecolor="gold",
+                markerfacecolor="#f0f921",
                 linestyle=None,
                 marker="o",
                 markersize=8,
@@ -116,7 +182,6 @@ class EphemPlotter:
     def plot_xy_ref_orbit(self, orbit_sma, label, color_in="lime"):
         fig = self.ephem.fig_xy
         ax = self.ephem.ax_xy
-        scale = Constants.SMA_EARTH
 
         arr_x_ref = np.array([])
         arr_y_ref = np.array([])
@@ -126,8 +191,8 @@ class EphemPlotter:
         # plot central body
         for i in range(0, pts):
             theta = 2 * np.pi * i / pts
-            x_ref = orbit_sma * np.cos(theta) / scale
-            y_ref = orbit_sma * np.sin(theta) / scale
+            x_ref = orbit_sma * np.cos(theta)
+            y_ref = orbit_sma * np.sin(theta)
 
             arr_x_ref = np.append(arr_x_ref, x_ref)
             arr_y_ref = np.append(arr_y_ref, y_ref)
@@ -189,48 +254,34 @@ class EphemPlotter:
             plt.show()
         figs.append(fig)
 
-        fig = self.ephem.plot_xy()
-        if flag_show:
-            plt.show()
-        figs.append(fig)
-
         return figs
 
-    def get_vector_at_index(self, index):
-        # extract the vector elements at index
-        et = self.ephem.arr_et[index]
-        x = self.ephem.arr_x[index]
-        y = self.ephem.arr_y[index]
-        vx = self.ephem.arr_vx[index]
-        vy = self.ephem.arr_vy[index]
-        m = self.ephem.arr_m[index]
-        alpha_x = self.ephem.arr_alpha_x[index]
-        alpha_y = self.ephem.arr_alpha_y[index]
-        u = self.ephem.arr_u[index]
-
-        # construct output vector
-        vector = np.array([et, x, y, vx, vy, m, alpha_x, alpha_y, u])
-
-        return vector
-
-    def overlay_ref_orbit(self, ephem, label, color_in="lime"):
+    def overlay_ref_orbit(self, ephem, label, color_in="lime", arr_x=None, arr_y=None):
         # Overlay a reference Keplerian orbit on the existing XY plot
         fig = self.ephem.fig_xy
         ax = self.ephem.ax_xy
-
-        # insert line break
-        fig = self.ephem.fig_xy
-        ax = self.ephem.ax_xy
+        flag_xy_exists = False
 
         # Convert to AU
         scale = Constants.SMA_EARTH
 
-        arr_x = np.array([])
-        arr_y = np.array([])
+        if arr_x is None or arr_y is None:
+            arr_x = np.array([])
+            arr_y = np.array([])
+            num_vecs = ephem.num_vectors
+        else:
+            arr_x = arr_x
+            arr_y = arr_y
+            num_vecs = len(arr_x)
+            flag_xy_exists = True
 
-        for i in range(0, ephem.num_vectors):
-            x = ephem.arr_x[i]
-            y = ephem.arr_y[i]
+        for i in range(0, num_vecs):
+            if not flag_xy_exists:
+                x = ephem.arr_x[i]
+                y = ephem.arr_y[i]
+            else:
+                x = arr_x[i]
+                y = arr_y[i]
 
             arr_x = np.append(arr_x, x)
             arr_y = np.append(arr_y, y)
@@ -274,14 +325,43 @@ class EphemPlotter:
 
         return self.ephem.fig_xy
 
-    def compare_trajectories(self, other_ephem, position_tol=1e-12, velocity_tol=1e-6):
+    def add_target_icon(
+        self, x_target, y_target, marker_in="+", color_in="red", size_in=12
+    ):
+        # Add a target icon to the existing XY plot
+        fig = self.ephem.fig_xy
+        ax = self.ephem.ax_xy
+
+        # Convert to AU
+        scale = Constants.SMA_EARTH
+
+        ax.plot(
+            x_target / scale,
+            y_target / scale,
+            label="Target",
+            marker=marker_in,
+            linestyle=None,
+            color=color_in,
+            markersize=size_in,
+        )
+        ax.legend()  # Update legend to include the new plot
+
+        self.ephem.fig_xy = fig
+        self.ephem.ax_xy = ax
+
+        return self.ephem.fig_xy
+
+    def compare_trajectories(
+        self, other_ephem, position_tol=1e-12, velocity_tol=1e-6, verbose=False
+    ):
         # Compare this ephemeris trajectory to another ephemeris trajectory
         # Returns True if all corresponding states are within the specified tolerances
 
         if self.ephem.num_vectors != other_ephem.num_vectors:
-            print(
-                f"Different number of vectors: {self.ephem.num_vectors} vs {other_ephem.num_vectors}"
-            )
+            if verbose == True:
+                print(
+                    f"Different number of vectors: {self.ephem.num_vectors} vs {other_ephem.num_vectors}"
+                )
             return False  # Different number of vectors
 
         for i in range(self.ephem.num_vectors):
@@ -296,12 +376,13 @@ class EphemPlotter:
                 or dvx > velocity_tol
                 or dvy > velocity_tol
             ):
-                print(
-                    f"Difference at index {i}: x={self.ephem.arr_x[i]}, y={self.ephem.arr_y[i]}, vx={self.ephem.arr_vx[i]}, vy={self.ephem.arr_vy[i]}"
-                )
-                print(
-                    f"                 vs x={other_ephem.arr_x[i]}, y={other_ephem.arr_y[i]}, vx={other_ephem.arr_vx[i]}, vy={other_ephem.arr_vy[i]}"
-                )
+                if verbose == True:
+                    print(
+                        f"Difference at index {i}: x={self.ephem.arr_x[i]}, y={self.ephem.arr_y[i]}, vx={self.ephem.arr_vx[i]}, vy={self.ephem.arr_vy[i]}"
+                    )
+                    print(
+                        f"                 vs x={other_ephem.arr_x[i]}, y={other_ephem.arr_y[i]}, vx={other_ephem.arr_vx[i]}, vy={other_ephem.arr_vy[i]}"
+                    )
                 return False  # States differ beyond tolerances
 
         return True  # All states are within tolerances
@@ -329,16 +410,7 @@ class EphemPlotter:
             self.ephem.arr_vy[0],
         )
         fig_xy = plot_overlay_ballistic_orbit(
-            x,
-            y,
-            vx,
-            vy,
-            env,
-            fig_xy,
-            params,
-            self.ephem,
-            "Initial Orbit",
-            color_in="lime",
+            x, y, vx, vy, env, fig_xy, params, self, "Initial Orbit", color_in="lime"
         )
         x, y, vx, vy = (
             self.ephem.arr_x[-1],

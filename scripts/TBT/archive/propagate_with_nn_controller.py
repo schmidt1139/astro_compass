@@ -11,6 +11,7 @@ from astro_compass.core.neural_network_controllers import NN_TBT_Controller
 from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 from astro_compass.utils.log_utils import log
 from astro_compass.utils.nn_utils import query_NN_at_state
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 # initialize the environment
 env = TwoBody_Orb2Orb_Transfer_Env()
@@ -115,10 +116,11 @@ def prop_with_nn_controller(env, seed_in):
     test_log = log("Percent error (%): " + str(pct_diff), test_log, True)
 
     # generate and save figures
-    fig_orb = eph.plot_xy()
-    eph.plot_xy_ref_orbit(Constants.SMA_MARS, "Mars", "#b7410e")
-    eph.plot_xy_ref_orbit(Constants.SMA_EARTH, "Earth")
-    figs = eph.plot_all_ephemeris_data(False)
+    vis = EphemPlotter(eph)
+    fig_orb = vis.plot_xy()
+    vis.plot_xy_ref_orbit(Constants.SMA_MARS, "Mars", "#b7410e")
+    vis.plot_xy_ref_orbit(Constants.SMA_EARTH, "Earth")
+    figs = vis.plot_all_ephemeris_data(False)
 
     path_traj_plot = os.path.join(path_plots, "traj_nn_propagation.jpg")
     path_fuel_use_plot = os.path.join(path_plots, "fuel_use_nn_propagation.jpg")

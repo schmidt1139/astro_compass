@@ -4,6 +4,7 @@ import numpy as np
 from astro_compass.core.ephemeris import Ephemeris
 from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
 from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 # initialize the environment
 env = TwoBody_Orb2Orb_Transfer_Env()
@@ -53,8 +54,8 @@ print("\n\n\n\n")
 eph_out, arr_time, arr_u, arr_rho, arr_alpha_x, arr_alpha_y = (
     H_controller.generate_output_ephemeris(eph)
 )
-
-figs = eph_out.plot_all_ephemeris_data(False)
+vis = EphemPlotter(eph_out)
+figs = vis.plot_all_ephemeris_data(False)
 
 i = 0
 eph_num = 1
@@ -66,9 +67,9 @@ for fig in figs:
 sun_rad = 6.957e8
 sma_Earth = 149598023 * 1000  # m
 sma_Mars = 2.32495e8 * 1000  # m
-eph_out.plot_xy(sun_rad)
-eph_out.plot_xy_ref_orbit(sma_Earth, "Earth Orbit")
-traj_plot = eph_out.plot_xy_ref_orbit(sma_Mars, "Mars Orbit")
+vis.plot_xy(sun_rad)
+vis.plot_xy_ref_orbit(sma_Earth, "Earth Orbit")
+traj_plot = vis.plot_xy_ref_orbit(sma_Mars, "Mars Orbit")
 
 traj_plot.savefig("data\\plots\\eph_" + str(eph_num) + "_traj_plot.pdf")
 

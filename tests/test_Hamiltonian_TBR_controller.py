@@ -9,6 +9,7 @@ from astro_compass.core.gen_Hamiltonian_trajectory import gen_Hamiltonian_trajec
 from astro_compass.envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from astro_compass.utils.log_utils import log
 from astro_compass.utils.test_utils import compare_trajectories
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 
 def write_config_file(params, path_config):
@@ -89,7 +90,8 @@ def test_Hamiltonian_TBR_Controller(flag_report_live=False):
                 os.path.join(params["data_path"], ephem_filename + ".txt")
             )
             if params["flag_plot_traj"] == True:
-                eph_output.save_plots(output_data_dir, ephem_filename, params, env)
+                vis = EphemPlotter(eph_output)
+                vis.save_plots(output_data_dir, ephem_filename, params, env)
 
         else:
             arr_pass_count.append(0)

@@ -10,6 +10,7 @@ from astro_compass.utils.h_rl_fusion import calc_rewards_from_H_ephem
 from astro_compass.utils.state_vector_utils import (
     convert_attitude_from_cartesian_to_radial,
 )
+from astro_compass.vis.ephem_plotter import EphemPlotter, plot_overlay_ballistic_orbit
 
 
 def format_plots():
@@ -359,13 +360,14 @@ def plot_SAC_training(SACRolloutData, path_output, eph, eph_h=None):
     plt.savefig(os.path.join(path_output, "SAC_ECC_Achieved.png"), dpi=300)
 
     # generate and save figures
-    fig_orb = eph.plot_xy()
+    vis = EphemPlotter(eph)
+    fig_orb = vis.plot_xy()
     if eph_h is not None:
-        fig_orb = eph.overlay_ref_orbit(
+        fig_orb = vis.overlay_ref_orbit(
             ephem=eph_h, label="Hamiltonian Trajectory", color_in="#f89540"
         )
-    fig_orb = eph.plot_xy_ref_orbit(Constants.SMA_MARS, "Mars", "#b7410e")
-    fig_orb = eph.plot_xy_ref_orbit(Constants.SMA_EARTH, "Earth")
+    fig_orb = vis.plot_xy_ref_orbit(Constants.SMA_MARS, "Mars", "#b7410e")
+    fig_orb = vis.plot_xy_ref_orbit(Constants.SMA_EARTH, "Earth")
     fig_orb.savefig(os.path.join(path_output, "SAC_Test_Traj.png"), dpi=300)
 
 
@@ -700,7 +702,8 @@ def plot_SAC_training_TBR(
         plt.close(fig)
 
     # generate and save figures
-    fig_orb = eph.plot_xy(color_in="#7e03a8")
+    vis = EphemPlotter(eph)
+    fig_orb = vis.plot_xy(color_in="#7e03a8")
     x_target = SACRolloutData_TBR.arr_x_target[-1] * params["l_star"]
     y_target = SACRolloutData_TBR.arr_y_target[-1] * params["l_star"]
     vx_target = (
@@ -717,7 +720,7 @@ def plot_SAC_training_TBR(
         env,
         fig_orb,
         params,
-        eph,
+        vis,
         label_in="Target Orbit",
         color_in="#cc4778",
     )
@@ -729,14 +732,15 @@ def plot_SAC_training_TBR(
         env,
         fig_orb,
         params,
-        eph,
+        vis,
         label_in="Initial Orbit",
         color_in="#0d0887",
     )
     fig_orb = eph.add_target_icon(x_target, y_target, color_in="#cc4778")
 
     if params.get("flag_gen_H_traj", False) and (ephem_H is not None):
-        fig_orb = eph.overlay_ref_orbit(
+        vis = EphemPlotter(eph)
+        fig_orb = vis.overlay_ref_orbit(
             ephem=ephem_H, label="Hamiltonian Trajectory", color_in="#f89540"
         )
 
@@ -1193,7 +1197,8 @@ def plot_SAC_training_TBR_polar(
     # generate and save figures
     fig_orb = plot_rendezvous_traj(eph, env, params)
     if params.get("flag_gen_H_traj", False) and (ephem_H is not None):
-        fig_orb = eph.overlay_ref_orbit(
+        vis = EphemPlotter(eph)
+        fig_orb = vis.overlay_ref_orbit(
             ephem=ephem_H, label="Hamiltonian Trajectory", color_in="#f89540"
         )
     fig_orb.savefig(
@@ -1255,66 +1260,9 @@ def plot_SAC_training_TBR_polar(
         df.to_csv(os.path.join(path_output, "SAC_Rewards.csv"), index=False)
 
 
-def plot_overlay_ballistic_orbit(
-    x, y, vx, vy, env, fig, params, eph, label_in, color_in="lime"
-):
-    # check env type
-    if params.get("env_type", "TwoBodyRendezvous_Env") == "TwoBodyRendezvous_Polar_Env":
-        flag_use_obs = False
-    elif (
-        params.get("env_type", "TwoBodyRendezvous_Env")
-        == "TwoBodyRendezvous_Polar_Env2"
-    ):
-        flag_use_obs = False
-    else:
-        flag_use_obs = True
-
-    obs, info = env.reset()
-
-    state_in = [x, y, vx, vy, 1000.0, x, y, vx, vy, Constants.YEARS_TO_SEC * 10.0]
-
-    unwrapped_env = env.unwrapped
-    obs, info = unwrapped_env.set_state(state_in)
-
-    T = info["orbital_period_years"] * Constants.YEARS_TO_SEC
-
-    time = 0.0
-    flag_done = False
-    arr_x = []
-    arr_y = []
-    max_steps = 10000  # Safety limit to prevent infinite loop
-    step_count = 0
-
-    while not flag_done and step_count < max_steps:
-        obs, reward, done, truncated, info = env.step([0.0, 0.0, 0.0])
-
-        if flag_use_obs:
-            obs = obs
-            # dim state
-            x_i = obs[0] * params["l_star"]
-            y_i = obs[1] * params["l_star"]
-        else:
-            unwrapped_env = env.unwrapped
-            obs = unwrapped_env.get_cartesian_state()
-            x_i = obs[0]
-            y_i = obs[1]
-
-        if info["Elapsed time"] >= T or done or truncated:
-            flag_done = True
-
-        arr_x.append(x_i)
-        arr_y.append(y_i)
-        step_count += 1
-
-    fig = eph.overlay_ref_orbit(
-        ephem=None, label=label_in, color_in=color_in, arr_x=arr_x, arr_y=arr_y
-    )
-
-    return fig
-
-
 def plot_rendezvous_traj(eph, env, params):
-    fig_orb = eph.plot_xy(color_in="#7e03a8")
+    vis = EphemPlotter(eph)
+    fig_orb = vis.plot_xy(color_in="#7e03a8")
 
     x_target = eph.arr_x_target[-1]
     y_target = eph.arr_y_target[-1]
@@ -1329,7 +1277,7 @@ def plot_rendezvous_traj(eph, env, params):
         env,
         fig_orb,
         params,
-        eph,
+        vis,
         label_in="Target Orbit",
         color_in="#cc4778",
     )
@@ -1347,13 +1295,13 @@ def plot_rendezvous_traj(eph, env, params):
         env,
         fig_orb,
         params,
-        eph,
+        vis,
         label_in="Initial Orbit",
         color_in="#0d0887",
     )
+    vis = EphemPlotter(eph)
+    fig_orb = vis.add_target_icon(x_target, y_target, color_in="#cc4778")
 
-    fig_orb = eph.add_target_icon(x_target, y_target, color_in="#cc4778")
-
-    fig_orb = eph.adjust_plot_limits()
+    fig_orb = vis.adjust_plot_limits()
 
     return fig_orb

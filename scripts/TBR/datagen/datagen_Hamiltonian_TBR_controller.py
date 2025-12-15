@@ -17,6 +17,7 @@ from astro_compass.utils.log_utils import (
     write_log_to_file,
 )
 from astro_compass.utils.path_utils import DATA_ROOT
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 
 def datagen_Hamiltonian_TBR_controller():
@@ -113,7 +114,8 @@ def datagen_Hamiltonian_TBR_controller():
                 os.path.join(params["data_path"], ephem_filename + ".txt")
             )
             if params["flag_plot_traj"] == True and eph_output is not None:
-                eph_output.save_plots(params["data_path"], ephem_filename, params, env)
+                vis = EphemPlotter(eph_output)
+                vis.save_plots(params["data_path"], ephem_filename, params, env)
 
         else:
             print(

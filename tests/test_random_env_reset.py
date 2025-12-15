@@ -9,6 +9,7 @@ from gymnasium.envs.registration import register
 from astro_compass.core.ephemeris import Ephemeris
 from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
 from astro_compass.utils.state_vector_utils import polar_to_cartesian
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 # register the environment if it isn't registered
 if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
@@ -98,9 +99,10 @@ def test_random_env_rest():
             sun_rad = 6.957e8
             sma_Earth = 149598023 * 1000  # m
             sma_Mars = 2.32495e8 * 1000  # m
-            eph_out.plot_xy(sun_rad, "Traj #" + str(count))
-            eph_out.plot_xy_ref_orbit(sma_Earth, "Earth Orbit")
-            eph_out.plot_xy_ref_orbit(sma_Mars, "Mars Orbit")
+            vis = EphemPlotter(eph_out)
+            vis.plot_xy(sun_rad, "Traj #" + str(count))
+            vis.plot_xy_ref_orbit(sma_Earth, "Earth Orbit")
+            vis.plot_xy_ref_orbit(sma_Mars, "Mars Orbit")
 
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.plot(arr_time, eph_out.arr_m)

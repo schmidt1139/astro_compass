@@ -9,6 +9,7 @@ from gymnasium.envs.registration import register
 from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris import Ephemeris
 from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 # register the environment if it isn't registered
 if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
@@ -68,9 +69,10 @@ def test_write_ephemeris():
     # Ephemeris plotting
     sma_Earth = 149598023 * 1000  # m
     sma_Mars = 2.32495e8 * 1000  # m
-    eph_out.plot_xy(Constants.RADIUS_SUN_M)
-    eph_out.plot_xy_ref_orbit(sma_Earth, "Earth Orbit")
-    eph_out.plot_xy_ref_orbit(sma_Mars, "Mars Orbit")
+    vis = EphemPlotter(eph_out)
+    vis.plot_xy(Constants.RADIUS_SUN_M)
+    vis.plot_xy_ref_orbit(sma_Earth, "Earth Orbit")
+    vis.plot_xy_ref_orbit(sma_Mars, "Mars Orbit")
 
     np.set_printoptions(precision=16)
     print("Solution for initial co-states: ", h_sol)

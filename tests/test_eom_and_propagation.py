@@ -18,6 +18,7 @@ from astro_compass.core.propagation import (
 )
 from astro_compass.utils.path_utils import PLOT_ROOT
 from astro_compass.utils.state_vector_utils import non_dimensionalize
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 # register the environment if it isn't registered
 if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
@@ -313,9 +314,10 @@ def main():
 
     # Ephemeris plotting
     sun_rad = 6.957e8
-    eph.plot_xy(sun_rad)
-    eph.plot_xy_ref_orbit(sma_Earth, "Earth Orbit")
-    eph.plot_xy_ref_orbit(sma_Mars, "Mars Orbit")
+    vis = EphemPlotter(eph)
+    vis.plot_xy(sun_rad)
+    vis.plot_xy_ref_orbit(sma_Earth, "Earth Orbit")
+    vis.plot_xy_ref_orbit(sma_Mars, "Mars Orbit")
 
     print("r: ", r_0)
     print("theta: ", theta_0)

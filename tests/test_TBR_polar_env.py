@@ -205,7 +205,7 @@ def test_TBR_polar_env(flag_report_live: bool = False):
             if steps >= params["max_steps"]:
                 flag_continue = False
 
-        # fig = eph.plot_xy();
+        # fig = vis.plot_xy();
         # fig.savefig(os.path.join(DATA_ROOT, "test_data", "test_TBR", "test_traj_") + str(count_traj) + "_TBR_env.png")
 
         plot_SAC_training_TBR_polar(rollout_data, output_dir, eph, params, env)

@@ -15,6 +15,7 @@ from stable_baselines3.common.monitor import Monitor
 # Adding python src code directory
 # Get the project root directory (parent of tests/)
 from astro_compass.utils.path_utils import PROJECT_ROOT
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 os.chdir(PROJECT_ROOT)
 print("Now working in:", os.getcwd())
@@ -282,8 +283,8 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
         os.path.join(path_output, "SAC_Test_Traj_Ephem.txt"),
         mod_vector_write_frequency=1,
     )
-
-    fig_xy = eph.plot_xy()
+    vis = EphemPlotter(eph)
+    fig_xy = vis.plot_xy()
     fig_xy.savefig(os.path.join(path_output, "SAC_Test_Traj.png"))
 
     test_log = log("Complete!", test_log, flag_report_live)

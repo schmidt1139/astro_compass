@@ -19,6 +19,7 @@ from astro_compass.utils.path_utils import DATA_ROOT, PROJECT_ROOT
 from astro_compass.utils.rl_utils import log_training_perf
 from astro_compass.utils.state_vector_utils import cartesian_to_polar
 from astro_compass.utils.test_utils import compare_log_files_with_tolerance
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 os.chdir(PROJECT_ROOT)
 print("Now working in:", os.getcwd())
@@ -284,7 +285,8 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
         mod_vector_write_frequency=1,
     )
 
-    fig_xy = eph.plot_xy()
+    vis = EphemPlotter(eph)
+    fig_xy = vis.plot_xy()
     fig_xy.savefig(os.path.join(path_output, "SAC_Test_Traj.png"))
 
     test_log = log("Complete!", test_log, flag_report_live)

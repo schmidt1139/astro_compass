@@ -82,7 +82,8 @@ def test_runnable_env(env, num_trajectories, num_steps_per_traj):
 
         if count_traj == num_traj - 1:
             print("Plotting last trajectory...")
-            fig = eph.plot_xy(info["planet_radii"])
+            vis = EphemPlotter(eph)
+            fig = vis.plot_xy(info["planet_radii"])
             plot.show(fig)
 
     fig_reward, ax = plot.subplots(figsize=(6, 6))

@@ -9,6 +9,7 @@ from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
 from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 from astro_compass.utils.log_utils import log
 from astro_compass.utils.path_utils import DATA_ROOT
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 
 def test_Hamiltonians(flag_report_live=False):
@@ -88,9 +89,10 @@ def test_Hamiltonians(flag_report_live=False):
     sun_rad = 6.957e8
     sma_Earth = 149598023 * 1000  # m
     sma_Mars = 2.32495e8 * 1000  # m
-    eph_out.plot_xy(sun_rad)
-    eph_out.plot_xy_ref_orbit(sma_Earth, "Earth Orbit")
-    eph_out.plot_xy_ref_orbit(sma_Mars, "Mars Orbit")
+    vis = EphemPlotter(eph_out)
+    vis.plot_xy(sun_rad)
+    vis.plot_xy_ref_orbit(sma_Earth, "Earth Orbit")
+    vis.plot_xy_ref_orbit(sma_Mars, "Mars Orbit")
 
     np.set_printoptions(precision=16)
     test_log = log(
@@ -132,7 +134,8 @@ def test_Hamiltonians(flag_report_live=False):
         flag_pass = False
 
     else:
-        flag_pass = eph1.compare_trajectories(
+        vis = EphemPlotter(eph1)
+        flag_pass = vis.compare_trajectories(
             eph2, position_tol=1_000_000.0, velocity_tol=1.0
         )
 
