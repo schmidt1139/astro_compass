@@ -7,7 +7,6 @@ from scipy.integrate import solve_ivp
 from astro_compass.constants.constants import Constants
 from astro_compass.core.propagation import env_EOM_TBT_v2
 from astro_compass.core.spacecraft import Spacecraft
-from astro_compass.utils.rl_utils import compute_obs_fast_TBT, compute_reward_fast_TBT
 from astro_compass.utils.state_vector_utils import (
     calc_cart_from_OE,
     calc_OE_from_cart,
@@ -140,19 +139,21 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         # set the random seed for the environment
         self.seed = seed_in
 
-    def decode_observation(self, obs: np.ndarray) -> dict:
-        if len(obs) != len(self.observation_names):
+    @classmethod
+    def decode_observation(cls, obs: np.ndarray) -> dict:
+        if len(obs) != len(cls.observation_names):
             raise ValueError(
-                f"Obs length {len(obs)} != expected {len(self.observation_names)}"
+                f"Obs length {len(obs)} != expected {len(cls.observation_names)}"
             )
-        return dict(zip(self.observation_names, map(float, obs)))
+        return dict(zip(cls.observation_names, map(float, obs)))
 
-    def decode_state(self, state: np.ndarray) -> dict:
-        if len(state) != len(self.state_names):
+    @classmethod
+    def decode_state(cls, state: np.ndarray) -> dict:
+        if len(state) != len(cls.state_names):
             raise ValueError(
-                f"State length {len(state)} != expected {len(self.state_names)}"
+                f"State length {len(state)} != expected {len(cls.state_names)}"
             )
-        return dict(zip(self.state_names, map(float, state)))
+        return dict(zip(cls.state_names, map(float, state)))
 
     def _get_info(self, ode_solution, delta_r):
         # to-do: add orbital elements as optional and append to output dictionary
@@ -327,7 +328,7 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         }
 
         state_dict = self.decode_state(self._state)
-        observation, env_data = compute_obs_fast_TBT(
+        observation, env_data = self.compute_obs_fast_TBT(
             state_dict,
             params_temp,
             self.TTG_dim,
@@ -365,7 +366,7 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
             "ISP": self.ISP,
         }
         state_dict = self.decode_state(self._state)
-        reward, truncated, terminated, env_info = compute_reward_fast_TBT(
+        reward, truncated, terminated, env_info = self.compute_reward_fast_TBT(
             state_dict,
             params_temp,
             u,
@@ -493,7 +494,11 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
             "m_star": self.m_star,
         }
         state_dict = self.decode_state(self._state)
-        observation, env_data = compute_obs_fast_TBT(state_dict, params_temp, self.TTG)
+        observation, env_data = self.compute_obs_fast_TBT(
+            state_dict,
+            params_temp,
+            self.TTG,
+        )
 
         for key in env_data:
             setattr(self, key, env_data[key])
@@ -550,7 +555,9 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
             "m_star": self.m_star,
         }
         state_dict = self.decode_state(self._state)
-        observation, env_data = compute_obs_fast_TBT(state_dict, params_temp, self.TTG)
+        observation, env_data = self.compute_obs_fast_TBT(
+            state_dict, params_temp, self.TTG
+        )
 
         for key in env_data:
             setattr(self, key, env_data[key])
@@ -708,3 +715,145 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         # Update the spacecraft in the environment
         self._spacecraft = sc
         self._spacecraft_target = sc_target
+
+    @classmethod
+    def compute_reward_fast_TBT(cls, state_dict, params, u, TTG):
+        # non-dimensionalize states
+        x_nd = state_dict["x_m"] / params["l_star"]
+        y_nd = state_dict["y_m"] / params["l_star"]
+        vx_nd = state_dict["vx_m_s"] / (params["l_star"] / params["t_star"])
+        vy_nd = state_dict["vy_m_s"] / (params["l_star"] / params["t_star"])
+        m_nd = state_dict["m_kg"] / params["m_star"]
+        x_target_nd = state_dict["x_t_m"] / params["l_star"]
+        y_target_nd = state_dict["y_t_m"] / params["l_star"]
+        vx_target_nd = state_dict["vx_t_m_s"] / (params["l_star"] / params["t_star"])
+        vy_target_nd = state_dict["vy_t_m_s"] / (params["l_star"] / params["t_star"])
+
+        sc = Spacecraft(
+            0.0, 0.0, 0.0, 0.0, state_dict["m_kg"], params["max_T"], params["ISP"]
+        )
+        sc.update_state_cartesian(
+            state_dict["x_m"],
+            state_dict["y_m"],
+            state_dict["vx_m_s"],
+            state_dict["vy_m_s"],
+            state_dict["m_kg"],
+        )
+        arr_OE = sc.calc_Planar_OE(0.0, 0.0, 0.0, 0.0, Constants.MU_SUN_M)
+        e = arr_OE[1]
+
+        # calculate the reward components
+        r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0 = cartesian_to_polar(
+            x_nd,
+            y_nd,
+            vx_nd,
+            vy_nd,
+        )
+        r_nd_target, eta_nd_target, v_r_nd_target, v_eta_nd_target = cartesian_to_polar(
+            x_target_nd,
+            y_target_nd,
+            vx_target_nd,
+            vy_target_nd,
+        )
+
+        episode_timeout = TTG <= 0.0
+
+        terminated = False
+        truncated = False
+
+        if r_nd_0 < 0.01:
+            reward = 0.0
+            terminated = True
+            truncated = False
+        elif e >= 1.0:
+            reward = 0.0
+            terminated = True
+            truncated = False
+        else:
+            # calculate distance to target
+            d_r_nd = np.sqrt((x_nd - x_target_nd) ** 2 + (y_nd - y_target_nd) ** 2)
+            d_v_nd = np.sqrt((vx_nd - vx_target_nd) ** 2 + (vy_nd - vy_target_nd) ** 2)
+
+            # position reward
+            pos_reward = np.exp(-params["r_dist_weight"] * d_r_nd**2)
+            pos_reward = (-1 + pos_reward) * params["pos_r_weight"]
+
+            # velocity reward
+            vel_reward = np.exp(-params["v_dist_weight"] * d_v_nd**2)
+            vel_reward = (-1 + vel_reward) * params["vel_r_weight"]
+
+            # throttle penalty
+            throttle_reward = -u * params["throttle_r_weight"]
+
+            reward = pos_reward + vel_reward + throttle_reward
+
+        if episode_timeout:
+            # Nothing good or bad assigned to this
+            truncated = True
+
+        env_info = {}
+
+        return reward, terminated, truncated, env_info
+
+    @classmethod
+    def compute_obs_fast_TBT(cls, state_dict, params, ttg):
+        l_star = params["l_star"]
+        t_star = params["t_star"]
+        m_star = params["m_star"]
+
+        x_current_nd = state_dict["x_m"] / l_star
+        y_current_nd = state_dict["y_m"] / l_star
+        vx_current_nd = state_dict["vx_m_s"] / (l_star / t_star)
+        vy_current_nd = state_dict["vy_m_s"] / (l_star / t_star)
+        mass_current_nd = state_dict["m_kg"] / m_star
+
+        x_target_nd = state_dict["x_t_m"] / l_star
+        y_target_nd = state_dict["y_t_m"] / l_star
+        vx_target_nd = state_dict["vx_t_m_s"] / (l_star / t_star)
+        vy_target_nd = state_dict["vy_t_m_s"] / (l_star / t_star)
+
+        r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0 = cartesian_to_polar(
+            x_current_nd,
+            y_current_nd,
+            vx_current_nd,
+            vy_current_nd,
+        )
+        r_nd_target, eta_nd_target, v_r_nd_target, v_eta_nd_target = cartesian_to_polar(
+            x_target_nd,
+            y_target_nd,
+            vx_target_nd,
+            vy_target_nd,
+        )
+
+        cos_eta = np.cos(eta_nd_0)
+        sin_eta = np.sin(eta_nd_0)
+
+        ttg_nd = ttg / t_star
+
+        polar_observation = np.array(
+            [
+                # Spherical Position SC
+                r_nd_0,  # 0
+                cos_eta,  # 1
+                sin_eta,  # 2
+                v_r_nd_0,  # 3
+                v_eta_nd_0,  # 4
+                mass_current_nd,  # 5
+                r_nd_target,  # 6
+                v_r_nd_target,  # 7
+                v_eta_nd_target,  # 8
+                ttg_nd,  # 9
+            ],
+            dtype=np.float32,
+        )
+
+        env_data = {
+            "arr_r_polar_nd": [r_nd_0, eta_nd_0],
+            "arr_v_polar_nd": [v_r_nd_0, v_eta_nd_0],
+            "arr_rf_polar_nd": [r_nd_target, eta_nd_target],
+            "arr_vf_polar_nd": [v_r_nd_target, v_eta_nd_target],
+            "cos_eta": cos_eta,
+            "sin_eta": sin_eta,
+        }
+
+        return polar_observation, env_data
