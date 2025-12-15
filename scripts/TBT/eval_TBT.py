@@ -16,7 +16,7 @@ from astro_compass.utils.path_utils import (
     RUNS_ROOT,
     get_run_paths,
 )
-from astro_compass.utils.plotting_utils import plot_SAC_training
+from astro_compass.vis.rollout_plotter import RolloutPlotter
 
 plt.style.use("data/support_files/light_paper.mplstyle")
 print("GPU available: ", torch.cuda.is_available())
@@ -55,12 +55,8 @@ def eval_TBT_agent(env, model, params, path_output, path_ephems):
     )
 
     # plot the results
-    plot_SAC_training(
-        rollout_data,
-        path_output,
-        eph,
-        ephem_H if ephem_H is not None else None,
-    )
+    vis = RolloutPlotter(rollout_data, path_output)
+    vis.plot(eph, ephem_H if ephem_H is not None else None)
 
     env.close()
 

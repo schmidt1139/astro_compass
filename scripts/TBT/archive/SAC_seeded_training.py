@@ -19,13 +19,13 @@ from astro_compass.core.rollouts import SACRolloutData
 from astro_compass.core.spacecraft import Spacecraft
 from astro_compass.utils.log_utils import log, log_parameters
 from astro_compass.utils.path_utils import DATA_ROOT
-from astro_compass.utils.plotting_utils import plot_SAC_training
 from astro_compass.utils.rl_utils import (
     RewardLoggerCallback,
     import_training_into_replay_buffer,
     log_training_perf,
 )
 from astro_compass.utils.state_vector_utils import cartesian_to_polar
+from astro_compass.vis.rollout_plotter import RolloutPlotter
 
 # register the environment if it isn't registered
 if "TwoBody_Orb2Orb_Transfer_Env_nd_obs5-v0" not in envs.registry.keys():
@@ -317,11 +317,8 @@ def SAC_seeded_training(seed_in=42):
     test_log = log("truncated: " + str(truncated) + " ", test_log, True)
 
     # plot the results
-    plot_SAC_training(
-        rollout_data1,
-        path_output,
-        eph,
-    )
+    vis = RolloutPlotter(rollout_data1, path_output)
+    vis.plot(eph)
 
     env.close()
 

@@ -11,7 +11,11 @@ class RolloutPlotter:
         self.rollout_data = rollout_data
         self.path_output = path_output
 
-    def plot(self, eph=None, ephem_H=None):
+    def plot(
+        self,
+        eph=None,
+        ephem_H=None,
+    ):
         self.plot_return_vs_time()
         self.plot_reward_vs_time()
         self.plot_throttle_vs_time()
@@ -26,7 +30,9 @@ class RolloutPlotter:
         # plot reward over time
         plt.figure()
         plt.plot(
-            self.rollout_data.arr_time, self.rollout_data.arr_reward_tot, label="Reward"
+            self.rollout_data.arr_time,
+            self.rollout_data.arr_reward_tot,
+            label="Reward",
         )
         plt.xlabel("Time [days]")
         plt.ylabel("Reward")
@@ -39,7 +45,9 @@ class RolloutPlotter:
         # plot reward over time per step
         plt.figure()
         plt.plot(
-            self.rollout_data.arr_time, self.rollout_data.arr_reward, label="Reward"
+            self.rollout_data.arr_time,
+            self.rollout_data.arr_reward,
+            label="Reward",
         )
         plt.plot(
             self.rollout_data.arr_time,
@@ -64,7 +72,9 @@ class RolloutPlotter:
     def plot_throttle_vs_time(self):
         plt.figure()
         plt.plot(
-            self.rollout_data.arr_time, self.rollout_data.arr_throttle, label="Throttle"
+            self.rollout_data.arr_time,
+            self.rollout_data.arr_throttle,
+            label="Throttle",
         )
         plt.xlabel("Time [days]")
         plt.ylabel("Throttle")
@@ -79,10 +89,14 @@ class RolloutPlotter:
     def plot_attitude_vs_time(self):
         plt.figure()
         plt.plot(
-            self.rollout_data.arr_time, self.rollout_data.arr_alpha_x, label="alpha_x"
+            self.rollout_data.arr_time,
+            self.rollout_data.arr_alpha_x,
+            label="alpha_x",
         )
         plt.plot(
-            self.rollout_data.arr_time, self.rollout_data.arr_alpha_y, label="alpha_y"
+            self.rollout_data.arr_time,
+            self.rollout_data.arr_alpha_y,
+            label="alpha_y",
         )
         plt.xlabel("Time [days]")
         plt.ylabel("Attitude")
@@ -108,7 +122,11 @@ class RolloutPlotter:
     # plot sma over time
     def plot_sma_vs_time(self):
         plt.figure()
-        plt.plot(self.rollout_data.arr_time, self.rollout_data.arr_sma, label="sma")
+        plt.plot(
+            self.rollout_data.arr_time,
+            self.rollout_data.arr_sma,
+            label="sma",
+        )
         plt.plot(
             self.rollout_data.arr_time,
             self.rollout_data.arr_sma_target,
@@ -123,7 +141,11 @@ class RolloutPlotter:
 
     def plot_ecc_vs_time(self):
         plt.figure()
-        plt.plot(self.rollout_data.arr_time, self.rollout_data.arr_ecc, label="ecc")
+        plt.plot(
+            self.rollout_data.arr_time,
+            self.rollout_data.arr_ecc,
+            label="ecc",
+        )
         plt.plot(
             self.rollout_data.arr_time,
             self.rollout_data.arr_ecc_target,
@@ -153,4 +175,4 @@ class RolloutPlotter:
             )
         fig_orb = vis.plot_xy_ref_orbit(Constants.SMA_MARS, "Mars", "#b7410e")
         fig_orb = vis.plot_xy_ref_orbit(Constants.SMA_EARTH, "Earth")
-        fig_orb.savefig(os.path.join(path_output, "SAC_Test_Traj.png"), dpi=300)
+        fig_orb.savefig(os.path.join(self.path_output, "SAC_Test_Traj.png"), dpi=300)

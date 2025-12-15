@@ -19,9 +19,9 @@ from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env_nd import (
     TwoBody_Orb2Orb_Transfer_Env_nd,
 )
 from astro_compass.utils.log_utils import log
-from astro_compass.utils.plotting_utils import plot_SAC_training
 from astro_compass.utils.rl_utils import RewardLoggerCallback, log_training_perf
 from astro_compass.utils.state_vector_utils import cartesian_to_polar
+from astro_compass.vis.rollout_plotter import RolloutPlotter
 
 
 def SAC_training(seed_in=42):
@@ -217,11 +217,8 @@ def SAC_training(seed_in=42):
     test_log = log("truncated: " + str(truncated) + " ", test_log, True)
 
     # plot the results
-    plot_SAC_training(
-        rollout_data1,
-        path_output,
-        eph,
-    )
+    vis = RolloutPlotter(rollout_data1, path_output)
+    vis.plot(eph)
 
     env.close()
 

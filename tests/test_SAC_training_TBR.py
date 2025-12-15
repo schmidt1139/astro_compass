@@ -271,11 +271,7 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
     test_log = log("truncated: " + str(truncated) + " ", test_log, flag_report_live)
 
     # plot the results
-    # plot_SAC_training(
-    #     rollout_data1,
-    #     path_output,
-    #     eph,
-    # )
+    # vis = RolloutPlotter(rolloutData, path_output)
 
     env.close()
 
