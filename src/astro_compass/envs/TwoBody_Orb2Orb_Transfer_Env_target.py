@@ -19,15 +19,42 @@ from astro_compass.utils.state_vector_utils import (
 
 
 class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
+    # Internal state vector (what self._state stores)
+    state_names = (
+        "x_m",
+        "y_m",
+        "vx_m_s",
+        "vy_m_s",
+        "m_kg",
+        "x_t_m",
+        "y_t_m",
+        "vx_t_m_s",
+        "vy_t_m_s",
+    )
+
+    # Observation vector (what reset()/step() returns)
+    observation_names = (
+        "r_nd",
+        "cos_eta",
+        "sin_eta",
+        "v_r_nd",
+        "v_eta_nd",
+        "m_nd",
+        "r_t_nd",
+        "v_r_t_nd",
+        "v_eta_t_nd",
+        "ttg_nd",
+    )
+
     def __init__(self, **kwargs):
         # define limits of the state parameters
-        low_array = np.full(10, -np.inf, dtype=np.float32)
-        high_array = np.full(10, np.inf, dtype=np.float32)
-
-        # define the state space (in this case the observation is the state) 5x5
+        N_obs = len(self.observation_names)
+        low_array = np.full(N_obs, -np.inf, dtype=np.float32)
+        high_array = np.full(N_obs, np.inf, dtype=np.float32)
         self.observation_space = gym.spaces.Box(low=low_array, high=high_array)
 
-        self._state = np.full(7, 0.0, dtype=np.float32)  # initialize state vector
+        N_states = len(self.state_names)
+        self._state = np.full(N_states, 0.0, dtype=np.float32)
 
         self._keplerian_elements = np.array([0, 0, 0, 0, 0, 0], dtype=np.float32)
         self._keplerian_elements_target = np.array([0, 0, 0, 0, 0, 0], dtype=np.float32)
@@ -112,6 +139,20 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
     def seed(self, seed_in: Optional[int] = None):
         # set the random seed for the environment
         self.seed = seed_in
+
+    def decode_observation(self, obs: np.ndarray) -> dict:
+        if len(obs) != len(self.observation_names):
+            raise ValueError(
+                f"Obs length {len(obs)} != expected {len(self.observation_names)}"
+            )
+        return dict(zip(self.observation_names, map(float, obs)))
+
+    def decode_state(self, state: np.ndarray) -> dict:
+        if len(state) != len(self.state_names):
+            raise ValueError(
+                f"State length {len(state)} != expected {len(self.state_names)}"
+            )
+        return dict(zip(self.state_names, map(float, state)))
 
     def _get_info(self, ode_solution, delta_r):
         # to-do: add orbital elements as optional and append to output dictionary
@@ -284,8 +325,12 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
             "t_star": self.t_star,
             "m_star": self.m_star,
         }
+
+        state_dict = self.decode_state(self._state)
         observation, env_data = compute_obs_fast_TBT(
-            self._state, params_temp, self.TTG_dim
+            state_dict,
+            params_temp,
+            self.TTG_dim,
         )
 
         for key in env_data:
@@ -319,8 +364,12 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
             "max_T": self.max_T,
             "ISP": self.ISP,
         }
+        state_dict = self.decode_state(self._state)
         reward, truncated, terminated, env_info = compute_reward_fast_TBT(
-            self._state, params_temp, u, self.TTG
+            state_dict,
+            params_temp,
+            u,
+            self.TTG,
         )
 
         for key in env_info:
@@ -330,11 +379,12 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
 
     def step(self, action):
         # unpack the state vector
-        x = self._state[0]
-        y = self._state[1]
-        vx = self._state[2]
-        vy = self._state[3]
-        mass = self._state[4]
+        state = self.decode_state(self._state)
+        x = state["x_m"]
+        y = state["y_m"]
+        vx = state["vx_m_s"]
+        vy = state["vy_m_s"]
+        mass = state["m_kg"]
 
         # central body location
         x_cb = self._arr_cb[0]
@@ -436,7 +486,8 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
             "t_star": self.t_star,
             "m_star": self.m_star,
         }
-        observation, env_data = compute_obs_fast_TBT(self._state, params_temp, self.TTG)
+        state_dict = self.decode_state(self._state)
+        observation, env_data = compute_obs_fast_TBT(state_dict, params_temp, self.TTG)
 
         for key in env_data:
             setattr(self, key, env_data[key])

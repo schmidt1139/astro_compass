@@ -13,6 +13,9 @@ from astro_compass.core.ephemeris_v2 import Ephemeris_v2
 from astro_compass.core.rollouts import SACRolloutData_TBR_polar
 from astro_compass.core.spacecraft import Spacecraft
 from astro_compass.core.training_data_generation import read_ephems_from_dir
+from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env_target import (
+    TwoBody_Orb2Orb_Transfer_Env_target,
+)
 from astro_compass.utils.log_utils import log
 from astro_compass.utils.state_vector_utils import (
     cartesian_to_polar,
@@ -1005,7 +1008,8 @@ def extract_experiences_from_ephem(eph, params):
             )
         elif env_type == "TwoBody_Orb2Orb_Transfer_Env_target":
             state = np.concatenate((current_state, target_state))
-            obs, _ = compute_obs_fast_TBT(state, params, ttg)
+            state_dict = TwoBody_Orb2Orb_Transfer_Env_target.decode_state(state)
+            obs, _ = compute_obs_fast_TBT(state_dict, params, ttg)
         else:
             raise NotImplementedError("Check env type")
 
@@ -1030,8 +1034,9 @@ def extract_experiences_from_ephem(eph, params):
             )
         elif env_type == "TwoBody_Orb2Orb_Transfer_Env_target":
             state = np.concatenate((current_state, target_state))
+            state_dict = TwoBody_Orb2Orb_Transfer_Env_target.decode_state(state)
             reward, terminated, truncated, _ = compute_reward_fast_TBT(
-                state, params, u, ttg
+                state_dict, params, u, ttg
             )
         else:
             raise NotImplementedError("Check env type")
@@ -1059,6 +1064,7 @@ def extract_experiences_from_ephem(eph, params):
                 )
             elif env_type == "TwoBody_Orb2Orb_Transfer_Env_target":
                 state = np.concatenate((next_current_state, next_target_state))
+                state_dict = TwoBody_Orb2Orb_Transfer_Env_target.decode_state(state)
                 next_obs, _ = compute_obs_fast_TBT(state, params, next_ttg)
             else:
                 raise NotImplementedError("Check env type")
@@ -1203,27 +1209,33 @@ def create_relative_polar_observation_fast(
     return polar_observation, env_data
 
 
-def compute_obs_fast_TBT(state, params, ttg):
+def compute_obs_fast_TBT(state_dict, params, ttg):
     l_star = params["l_star"]
     t_star = params["t_star"]
     m_star = params["m_star"]
 
-    x_current_nd = state[0] / l_star
-    y_current_nd = state[1] / l_star
-    vx_current_nd = state[2] / (l_star / t_star)
-    vy_current_nd = state[3] / (l_star / t_star)
-    mass_current_nd = state[4] / m_star
+    x_current_nd = state_dict["x_m"] / l_star
+    y_current_nd = state_dict["y_m"] / l_star
+    vx_current_nd = state_dict["vx_m_s"] / (l_star / t_star)
+    vy_current_nd = state_dict["vy_m_s"] / (l_star / t_star)
+    mass_current_nd = state_dict["m_kg"] / m_star
 
-    x_target_nd = state[5] / l_star
-    y_target_nd = state[6] / l_star
-    vx_target_nd = state[7] / (l_star / t_star)
-    vy_target_nd = state[8] / (l_star / t_star)
+    x_target_nd = state_dict["x_t_m"] / l_star
+    y_target_nd = state_dict["y_t_m"] / l_star
+    vx_target_nd = state_dict["vx_t_m_s"] / (l_star / t_star)
+    vy_target_nd = state_dict["vy_t_m_s"] / (l_star / t_star)
 
     r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0 = cartesian_to_polar(
-        x_current_nd, y_current_nd, vx_current_nd, vy_current_nd
+        x_current_nd,
+        y_current_nd,
+        vx_current_nd,
+        vy_current_nd,
     )
     r_nd_target, eta_nd_target, v_r_nd_target, v_eta_nd_target = cartesian_to_polar(
-        x_target_nd, y_target_nd, vx_target_nd, vy_target_nd
+        x_target_nd,
+        y_target_nd,
+        vx_target_nd,
+        vy_target_nd,
     )
 
     cos_eta = np.cos(eta_nd_0)
@@ -1376,30 +1388,43 @@ def compute_reward_fast(
     return reward, terminated, truncated, env_info
 
 
-def compute_reward_fast_TBT(state, params, u, TTG):
+def compute_reward_fast_TBT(state_dict, params, u, TTG):
     # non-dimensionalize states
-    x_nd = state[0] / params["l_star"]
-    y_nd = state[1] / params["l_star"]
-    vx_nd = state[2] / (params["l_star"] / params["t_star"])
-    vy_nd = state[3] / (params["l_star"] / params["t_star"])
-    m_nd = state[4] / params["m_star"]
+    x_nd = state_dict["x_m"] / params["l_star"]
+    y_nd = state_dict["y_m"] / params["l_star"]
+    vx_nd = state_dict["vx_m_s"] / (params["l_star"] / params["t_star"])
+    vy_nd = state_dict["vy_m_s"] / (params["l_star"] / params["t_star"])
+    m_nd = state_dict["m_kg"] / params["m_star"]
+    x_target_nd = state_dict["x_t_m"] / params["l_star"]
+    y_target_nd = state_dict["y_t_m"] / params["l_star"]
+    vx_target_nd = state_dict["vx_t_m_s"] / (params["l_star"] / params["t_star"])
+    vy_target_nd = state_dict["vy_t_m_s"] / (params["l_star"] / params["t_star"])
 
-    x_target_nd = state[5] / params["l_star"]
-    y_target_nd = state[6] / params["l_star"]
-    vx_target_nd = state[7] / (params["l_star"] / params["t_star"])
-    vy_target_nd = state[8] / (params["l_star"] / params["t_star"])
-
-    sc = Spacecraft(0.0, 0.0, 0.0, 0.0, state[4], params["max_T"], params["ISP"])
-    sc.update_state_cartesian(state[0], state[1], state[2], state[3], state[4])
+    sc = Spacecraft(
+        0.0, 0.0, 0.0, 0.0, state_dict["m_kg"], params["max_T"], params["ISP"]
+    )
+    sc.update_state_cartesian(
+        state_dict["x_m"],
+        state_dict["y_m"],
+        state_dict["vx_m_s"],
+        state_dict["vy_m_s"],
+        state_dict["m_kg"],
+    )
     arr_OE = sc.calc_Planar_OE(0.0, 0.0, 0.0, 0.0, Constants.MU_SUN_M)
     e = arr_OE[1]
 
     # calculate the reward components
     r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0 = cartesian_to_polar(
-        x_nd, y_nd, vx_nd, vy_nd
+        x_nd,
+        y_nd,
+        vx_nd,
+        vy_nd,
     )
     r_nd_target, eta_nd_target, v_r_nd_target, v_eta_nd_target = cartesian_to_polar(
-        x_target_nd, y_target_nd, vx_target_nd, vy_target_nd
+        x_target_nd,
+        y_target_nd,
+        vx_target_nd,
+        vy_target_nd,
     )
 
     episode_timeout = TTG <= 0.0
