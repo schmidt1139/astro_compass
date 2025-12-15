@@ -12,7 +12,7 @@ from astro_compass.utils.path_utils import DATA_ROOT
 def generate_env(params, seed_in):
     def single_env_make_env(params, seed):
         env = gen_rl_environment(params)
-        env.seed(seed)
+        # env.seed(seed)
         env = gym.wrappers.TimeLimit(
             env,
             max_episode_steps=params["max_episode_steps"],
