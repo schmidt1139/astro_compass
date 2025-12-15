@@ -184,3 +184,42 @@ class Ephemeris_v2:
             # check if the ephemeris data section has been reached
             if line == "<Ephemeris Start>":
                 flag_ephem_start = True
+
+    def get_vector_at_index(self, index):
+        # extract the vector elements at index
+        et = self.arr_et[index]
+        x = self.arr_x[index]
+        y = self.arr_y[index]
+        vx = self.arr_vx[index]
+        vy = self.arr_vy[index]
+        m = self.arr_m[index]
+        x_target = self.arr_x_target[index]
+        y_target = self.arr_y_target[index]
+        vx_target = self.arr_vx_target[index]
+        vy_target = self.arr_vy_target[index]
+        TTG = self.arr_TTG[index]
+        alpha_x = self.arr_alpha_x[index]
+        alpha_y = self.arr_alpha_y[index]
+        u = self.arr_u[index]
+
+        # construct output vector
+        vector = np.array(
+            [
+                et,
+                x,
+                y,
+                vx,
+                vy,
+                m,
+                x_target,
+                y_target,
+                vx_target,
+                vy_target,
+                TTG,
+                alpha_x,
+                alpha_y,
+                u,
+            ]
+        )
+
+        return vector
