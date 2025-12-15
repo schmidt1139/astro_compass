@@ -1,0 +1,63 @@
+SAC Training Script
+
+
+Parameter Start:
+  mu: 1.3e+20
+  max_T: 1.33
+  ISP: 3872.0
+  TOF: 34713360.0
+  l_star: 149598023000
+  m_star: 3366.0
+  t_star: 5074778.662111725
+  g0: 9.80665
+  env_step_size: 86400
+  flag_seed_replay_buffer: True
+  num_ephems_to_use: 10
+  include_callbacks_in_learn: True
+  training_steps: 500
+  max_episode_steps_in: 500
+  print_freq: 2500
+  n_eval_episodes: 16
+Parameter End.
+
+
+Environment has been reset
+Seed: 42
+Max steps per episode: 500
+Experience buffer size: 0
+Experience buffer capacity: 1000000
+Importing training data into replay buffer
+Using only first 10 ephemerides
+Reading ephemerides
+Number of ephemerides loaded into replay buffer: 10
+Number of total state vectors: 1000
+Seeded experience buffer size: 1000
+Seeded experience buffer capacity: 1000000
+Experience buffer size: 1500
+Experience buffer capacity: 1000000
+Episodes: 1
+Timesteps: 500
+Training complete
+FINAL TRAINING METRICS
+Total episodes: 1
+Total timesteps (model.num_timesteps): 500
+Average episode reward: -14198.496334
+Best episode reward: -14198.496334
+Last episode reward: -14198.496334
+Average episode length: 500.0
+Best eval mean reward: -inf
+Plotting test trajectory...
+Test trajectory complete
+Steps taken: 500
+Total reward: -749.8077
+Final x: -1.5232185 
+Final y: 0.113661736 
+Final vx: -0.07734816 
+Final vy: -0.81376404 
+Final m: 0.98883575 
+Final sma: 233303745608.85815 
+Final ecc: 0.028865389191066085 
+terminated: False 
+truncated: True 
+Complete!
+Plots saved!

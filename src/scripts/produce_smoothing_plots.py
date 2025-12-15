@@ -7,42 +7,15 @@ import os
 
 from gymnasium import envs
 from gymnasium.envs.registration import register
-
-# Adding python src code directory
-sys.path.append(os.path.abspath("../python"))
-
-from Ephemeris import Ephemeris
-from Hamiltonian_Control import Hamiltonian_Controller_TBT
-
-
-# register the environment if it isn't registered
-if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
-    register(
-        id="TwoBody_Orb2Orb_Transfer_Env-v0",
-        entry_point="TwoBody_Orb2Orb_Transfer_Env:TwoBody_Orb2Orb_Transfer_Env",
-    )
+from core.ephemeris import Ephemeris
+from core.hamiltonian_control import Hamiltonian_Controller_TBT
+from envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 
 
 # initialize the environment
-env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
+env = TwoBody_Orb2Orb_Transfer_Env()
 
-#plotting setup
-matplotlib.rcParams.update({
-    "text.usetex": False,                      # Use LaTeX for all text
-    "font.family": "serif",                   # Use serif font
-    "font.size": 10,                          # Match AIAA body font size
-    "axes.labelsize": 10,
-    "axes.titlesize": 10,
-    "legend.fontsize": 9,
-    "xtick.labelsize": 9,
-    "ytick.labelsize": 9,
-    "lines.linewidth": 1.2,
-    "lines.markersize": 4,
-    "figure.figsize": (3.5, 2.5),             # Single-column figure
-    "figure.dpi": 300,
-    "savefig.bbox": "tight",
-    "axes.grid": False,                       # No gridlines in AIAA style
-})
+plot.style.use("data/support_files/light_paper.mplstyle")
 
 
 # The prescribed time of flight for the transfer trajectory [s]
@@ -69,7 +42,7 @@ print("Targeter eps 1.0")
 # compute Hamiltonian Solution
 H_controller = Hamiltonian_Controller_TBT(env, init_observation, init_info, input_TOF)
 
-#alter parameters
+# alter parameters
 H_controller.gamma = 1 - (1 / 2) ** (6)
 H_controller.eps_0 = 1.0 / H_controller.gamma
 H_controller.eps = H_controller.eps_0
@@ -88,14 +61,14 @@ eph_out, arr_time, arr_u, arr_rho, arr_alpha_x, arr_alpha_y = (
     H_controller.generate_output_ephemeris(eph)
 )
 
-figs = eph_out.plot_all_ephemeris_data()
+figs = eph_out.plot_all_ephemeris_data(False)
 
 i = 0
 eph_num = 1
 for fig in figs:
     i = i + 1
-    fig.savefig("..\\..\\data\\plots\\eph_" + str(eph_num) + "_plot" + str(i) + ".pdf")
-    
+    fig.savefig("data\\plots\\eph_" + str(eph_num) + "_plot" + str(i) + ".pdf")
+
 # Ephemeris plotting
 sun_rad = 6.957e8
 sma_Earth = 149598023 * 1000  # m
@@ -104,9 +77,9 @@ eph_out.plot_xy(sun_rad)
 eph_out.plot_xy_ref_orbit(sma_Earth, "Earth Orbit")
 traj_plot = eph_out.plot_xy_ref_orbit(sma_Mars, "Mars Orbit")
 
-traj_plot.savefig("..\\..\\data\\plots\\eph_" + str(eph_num) + "_traj_plot.pdf")
+traj_plot.savefig("data\\plots\\eph_" + str(eph_num) + "_traj_plot.pdf")
 
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
 # eps 0.1
@@ -116,9 +89,9 @@ print("Targeter eps 0.1")
 # compute Hamiltonian Solution
 H_controller2 = Hamiltonian_Controller_TBT(env, init_observation, init_info, input_TOF)
 
-#alter parameters
+# alter parameters
 H_controller2.eps_threshold = 0.1
-H_controller2.arr_lam_0 = np.array([-0.575, -0.261, -0.407, -1.047,  0.139])
+H_controller2.arr_lam_0 = np.array([-0.575, -0.261, -0.407, -1.047, 0.139])
 
 # compute solution
 flag_solved, h_sol, eps, sol, log = H_controller2.hamiltonian_solution_finder()
@@ -144,9 +117,9 @@ print("Targeter eps 0.01")
 # compute Hamiltonian Solution
 H_controller3 = Hamiltonian_Controller_TBT(env, init_observation, init_info, input_TOF)
 
-#alter parameters
+# alter parameters
 H_controller3.eps_threshold = 0.01
-H_controller3.arr_lam_0 = np.array([-0.575, -0.261, -0.407, -1.047,  0.139])
+H_controller3.arr_lam_0 = np.array([-0.575, -0.261, -0.407, -1.047, 0.139])
 
 # compute solution
 flag_solved, h_sol, eps, sol, log = H_controller3.hamiltonian_solution_finder()
@@ -171,8 +144,8 @@ print("Targeter eps 0.001")
 # compute Hamiltonian Solution
 H_controller4 = Hamiltonian_Controller_TBT(env, init_observation, init_info, input_TOF)
 
-#alter parameters
-H_controller4.arr_lam_0 = np.array([-0.575, -0.261, -0.407, -1.047,  0.139])
+# alter parameters
+H_controller4.arr_lam_0 = np.array([-0.575, -0.261, -0.407, -1.047, 0.139])
 
 # compute solution
 flag_solved, h_sol, eps, sol, log = H_controller4.hamiltonian_solution_finder()
@@ -200,8 +173,8 @@ H_controller5 = Hamiltonian_Controller_TBT(env, init_observation, init_info, inp
 
 H_controller5.eps_threshold = 0.0001
 
-#alter parameters
-H_controller5.arr_lam_0 = np.array([-0.575, -0.261, -0.407, -1.047,  0.139])
+# alter parameters
+H_controller5.arr_lam_0 = np.array([-0.575, -0.261, -0.407, -1.047, 0.139])
 
 # compute solution
 flag_solved, h_sol, eps, sol, log = H_controller5.hamiltonian_solution_finder()
@@ -217,51 +190,51 @@ eph_out5, arr_time5, arr_u5, arr_rho5, arr_alpha_x5, arr_alpha_y5 = (
 )
 
 
-#plotting-----------------------------------------------------------------------
+# plotting-----------------------------------------------------------------------
 
 fig, ax = plot.subplots(figsize=(6, 6))
-ax.plot(eph_out.arr_et/86400, arr_rho, label=r"$\epsilon = 1$")
+ax.plot(eph_out.arr_et / 86400, arr_rho, label=r"$\epsilon = 1$")
 # ax.plot(eph_out2.arr_et/86400, arr_rho2, label=r"$\epsilon = 0.1$")
 # ax.plot(eph_out3.arr_et/86400, arr_rho3, label=r"$\epsilon = 0.01$")
 # ax.plot(eph_out4.arr_et/86400, arr_rho4, label=r"$\epsilon = 0.001$")
-ax.plot(eph_out5.arr_et/86400, arr_rho5, label=r"$\epsilon = 0.0001$")
+ax.plot(eph_out5.arr_et / 86400, arr_rho5, label=r"$\epsilon = 0.0001$")
 ax.set_xlabel(r"Elapsed Time (days)")
 ax.set_ylabel(r"Switching Function $\rho$")
 fig.tight_layout()
 ax.set_title(r"Switching Function $\rho$")
 ax.legend(loc="upper right")
 fig.tight_layout()
-fig.savefig("..\\..\\data\\plots\\rho.pdf")  # Vector format
+fig.savefig("data\\plots\\rho.pdf")  # Vector format
 plot.show()
 
 fig, ax = plot.subplots(figsize=(6, 6))
-ax.plot(eph_out.arr_et/86400, arr_u, label=r"$\epsilon = 1$")
+ax.plot(eph_out.arr_et / 86400, arr_u, label=r"$\epsilon = 1$")
 # ax.plot(eph_out2.arr_et/86400, arr_u2, label=r"$\epsilon = 0.1$")
 # ax.plot(eph_out3.arr_et/86400, arr_u3, label=r"$\epsilon = 0.01$")
 # ax.plot(eph_out4.arr_et/86400, arr_u4, label=r"$\epsilon = 0.001$")
-ax.plot(eph_out5.arr_et/86400, arr_u5, label=r"$\epsilon = 0.0001$")
+ax.plot(eph_out5.arr_et / 86400, arr_u5, label=r"$\epsilon = 0.0001$")
 ax.set_xlabel(r"Elapsed Time (days)")
 ax.set_ylabel(r"$u$")
 fig.tight_layout()
 ax.set_title(r"Spacecraft Thrust Throttle $u$ over Time")
 ax.legend(loc="upper right")
 fig.tight_layout()
-fig.savefig("..\\..\\data\plots\\throttle.pdf")  # Vector format
+fig.savefig("data\\plots\\throttle.pdf")  # Vector format
 plot.show()
 
 fig, ax = plot.subplots(figsize=(6, 6))
-ax.plot(eph_out.arr_et/86400, eph_out.arr_m, label=r"$\epsilon = 1$")
-ax.plot(eph_out2.arr_et/86400, eph_out2.arr_m, label=r"$\epsilon = 0.1$")
-ax.plot(eph_out3.arr_et/86400, eph_out3.arr_m, label=r"$\epsilon = 0.01$")
-ax.plot(eph_out4.arr_et/86400, eph_out4.arr_m, label=r"$\epsilon = 0.001$")
-ax.plot(eph_out5.arr_et/86400, eph_out5.arr_m, label=r"$\epsilon = 0.0001$")
+ax.plot(eph_out.arr_et / 86400, eph_out.arr_m, label=r"$\epsilon = 1$")
+ax.plot(eph_out2.arr_et / 86400, eph_out2.arr_m, label=r"$\epsilon = 0.1$")
+ax.plot(eph_out3.arr_et / 86400, eph_out3.arr_m, label=r"$\epsilon = 0.01$")
+ax.plot(eph_out4.arr_et / 86400, eph_out4.arr_m, label=r"$\epsilon = 0.001$")
+ax.plot(eph_out5.arr_et / 86400, eph_out5.arr_m, label=r"$\epsilon = 0.0001$")
 ax.set_xlabel(r"Elapsed Time (days)")
 ax.set_ylabel(r"$u$")
 fig.tight_layout()
 ax.set_title(r"Spacecraft Mass over Time")
 ax.legend(loc="upper right")
 fig.tight_layout()
-fig.savefig("..\\..\\data\plots\\mass.pdf")  # Vector format
+fig.savefig("data\\plots\\mass.pdf")  # Vector format
 plot.show()
 
 fig, ax = plot.subplots(figsize=(6, 6))
@@ -271,8 +244,8 @@ ax.set_title(r"$alpha$ Vector (Maneuver Direction) over Time")
 fig.tight_layout()
 ax.legend()
 
-print("e=1 final mass: ", eph_out.arr_m[-1] )
-print("e=0.0001 final mass: ", eph_out5.arr_m[-1] )
+print("e=1 final mass: ", eph_out.arr_m[-1])
+print("e=0.0001 final mass: ", eph_out5.arr_m[-1])
 
 sun_rad = 6.957e8
 sma_Earth = 149598023 * 1000  # m
@@ -298,8 +271,8 @@ i = 0
 eph_num = 5
 for fig in figs:
     i = i + 1
-    fig.savefig("..\\..\\data\\plots\\eph_" + str(eph_num) + "_plot" + str(i) + ".pdf")
-    
+    fig.savefig("data\\plots\\eph_" + str(eph_num) + "_plot" + str(i) + ".pdf")
+
 # Ephemeris plotting
 sun_rad = 6.957e8
 sma_Earth = 149598023 * 1000  # m
@@ -308,7 +281,7 @@ eph_out5.plot_xy(sun_rad)
 eph_out5.plot_xy_ref_orbit(sma_Earth, "Earth Orbit")
 traj_plot5 = eph_out5.plot_xy_ref_orbit(sma_Mars, "Mars Orbit")
 
-traj_plot5.savefig("..\\..\\data\\plots\\eph_" + str(eph_num) + "_traj_plot.pdf")
+traj_plot5.savefig("data\\plots\\eph_" + str(eph_num) + "_traj_plot.pdf")
 
-filename="..\\..\\data\\training_ephems\\ephemris_report_20250510.txt"
+filename = "data\\training_ephems\\ephemeris_report_20250510.txt"
 eph_out.write_to_file(filename, mod_vector_write_frequency=10)

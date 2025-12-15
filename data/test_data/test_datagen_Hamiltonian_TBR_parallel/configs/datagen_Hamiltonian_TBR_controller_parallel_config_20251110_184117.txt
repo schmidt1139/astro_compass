@@ -1,0 +1,38 @@
+mu: 1.3e+20
+max_T: 0.00133
+ISP: 3872.0
+l_star: 149598023000
+m_star: 3366.0
+t_star: 5074778.662111725
+g0: 9.80665
+env_step_size: 86400
+seed_env_init: 751851167
+num_trajs: 16
+tof_scales: [1.0, 0.75, 1.0, 1.25]
+tof_weights: [0.25, 0.25, 0.25, 0.25]
+data_path: data\test_data\test_datagen_Hamiltonian_TBR_parallel\
+eps_threshold: 0.0001
+flag_plot_traj: True
+init_costate_guesses: 8
+root_max_iters: 10000
+kep_scenario_weights: [0.5, 0.5]
+a_min_init_env_nd: [149598023000.0, 149598023000.0]
+a_max_init_env_nd: [232495000000.0, 778479000000.0]
+e_min_init_env: [0.0001, 0.0001]
+e_max_init_env: [0.0001, 0.0001]
+w_min_init_env_deg: [0.0, 0.0]
+w_max_init_env_deg: [0.0, 0.0]
+a_min_final_env_nd: [149598023000.0, 149598023000.0]
+a_max_final_env_nd: [232495000000.0, 778479000000.0]
+e_min_final_env: [0.0001, 0.0001]
+e_max_final_env: [0.0001, 0.0001]
+w_min_final_env_deg: [0.0, 0.0]
+w_max_final_env_deg: [0.0, 0.0]
+flag_report_live: True
+randomize_seeds: False
+randomize_tofs: False
+randomize_limits: False
+num_cores: 4
+timeout_per_trajectory: 300
+flag_debug_h_targeter: False
+gamma: 0.75

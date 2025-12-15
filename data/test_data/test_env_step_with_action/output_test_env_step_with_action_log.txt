@@ -1,0 +1,76 @@
+Test Environment Step with Thrust Action
+Environment has been reset
+Seed: 42
+Observation: 
+X: 34863220.0
+Y: -229866220.0
+VX: 23.379026
+VY: 3.545837
+m: 3366.0
+mu: 130000000000.0
+sma_target: 149598020.0
+
+
+Info: 
+Elapsed time: 0.0
+ODE Solution: None
+delta_state: None
+planet_radii: [695700.]
+a: 232495000.0
+e: 1.2412671e-16
+w: 26.56505
+theta: 342.0591
+max_thrust: 0.00133
+ISP: 3872.0
+
+
+Action
+u: 1.0
+alpha_x: 1.0
+alpha_y: 1.0
+
+
+Observation: 
+X: 34947384.0
+Y: -229853440.0
+VX: 23.378733
+VY: 3.5554028
+m: 3365.874
+mu: 130000000000.0
+sma_target: 149598020.0
+
+
+reward: 0.7354824
+terminated: False
+truncated: False
+
+
+Info post-step: 
+Elapsed time: 3600.0
+ODE Solution:   message: The solver successfully reached the end of the integration interval.
+  success: True
+   status: 0
+        t: [ 0.000e+00  1.860e+00  2.046e+01  2.064e+02  2.066e+03
+             3.600e+03]
+        y: [[ 3.486e+07  3.486e+07 ...  3.491e+07  3.495e+07]
+            [-2.299e+08 -2.299e+08 ... -2.299e+08 -2.299e+08]
+            ...
+            [ 3.546e+00  3.546e+00 ...  3.551e+00  3.555e+00]
+            [ 3.366e+03  3.366e+03 ...  3.366e+03  3.366e+03]]
+      sol: None
+ t_events: None
+ y_events: None
+     nfev: 32
+     njev: 0
+      nlu: 0
+delta_state: [ 8.4164000e+04  1.2784000e+04 -2.9373169e-04  9.5658302e-03
+ -1.2597656e-01]
+planet_radii: [695700.]
+a: 232517540.0
+e: 0.000103325714
+w: 28.830996
+theta: 339.81412
+max_thrust: 0.00133
+ISP: 3872.0
+
+

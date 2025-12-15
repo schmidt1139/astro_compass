@@ -1,0 +1,108 @@
+# SAC TBR polar pretraining configuration
+
+[paths]
+tb_log_name = "SAC_TBR_training"
+output_dir = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\pre_training"
+path_training_data = ""
+path_replay_buffer = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\buffer_generation\\SAC_training_TBR_polar20251201_151736\\replay_buffer.pkl"
+path_SAC_model_load = ""
+
+[environment]
+env_type = "TwoBodyRendezvous_Polar_Env2"
+mu = 1.3e20
+max_T = 1.33
+ISP = 3872.0
+l_star = 149598023000.0
+m_star = 3366.0
+t_star = 5074778.662111725
+g0 = 9.80665
+env_step_size = 1209600
+
+[environment.initial]
+a_min_init_env_nd = 149598023000.0
+a_max_init_env_nd = 149598023000.0
+e_min_init_env = 0.0001
+e_max_init_env = 0.0001
+w_min_init_env_deg = 0.0
+w_max_init_env_deg = 0.0
+theta_min_init_env_deg = 0.0
+theta_max_init_env_deg = 2.0
+
+[environment.final]
+a_min_final_env_nd = 232495000000.0
+a_max_final_env_nd = 232495000000.0
+e_min_final_env = 0.0001
+e_max_final_env = 0.0001
+w_min_final_env_deg = 0.0
+w_max_final_env_deg = 0.0
+theta_min_final_env_deg = 180.0
+theta_max_final_env_deg = 182.0
+
+[environment.episode]
+max_episode_steps = 5000
+
+[environment.reward]
+# Weights must sum to 1
+pos_r_weight = 1.0
+vel_r_weight = 1.0
+throttle_r_weight = 0.02
+tof_weight = 1.0
+tof_scale = 1.0
+time_dist_weight = 0.0
+success_threshold_pos = 0.01
+success_threshold_vel = 0.01
+terminal_bonus = 0.0
+precision_mult = 1.0
+prop_length_scale = 1.5
+# ensure that there's always some signal
+r_dist_weight = 0.2 
+v_dist_weight = 0.2 
+flag_hyperbolic_termination = true
+
+[environment.vectorization]
+num_vec_envs = 4
+cores = 4
+
+[training]
+pre_train_networks = true
+save_pre_training_only_replay_buffer = true
+save_final_replay_buffer = true
+read_replay_buffer = true
+load_model_checkpoint = false
+eval_freq = 500
+training_steps = 10_000
+pretrain_gradient_steps = 100_000
+n_eval_episodes = 3
+print_freq = 2000
+buffer_size = 200_000
+num_ephems_to_use = 1000
+batch_size = 1_000
+pt_log_interval = 10_000
+t_log_interval = 2000
+loss_report_rate = 10
+checkpoint_freq = 10_000
+
+[model]
+learning_rate = 0.0003
+tau = 0.005
+train_freq = 1
+train_freq_unit = "step" # or step 
+gradient_steps = 1
+max_grad_norm = 0.5
+nn_arch_type = "custom"
+net_arch = [256, 256]
+eval_device = "cuda"
+
+
+[general]
+ephem_version = 3.0
+ephem_step_size = 70
+flag_gen_H_traj = true
+seed_traj = 48
+flag_report_live = true
+eps_threshold = 0.1
+init_costate_guesses = 32
+root_max_iters = 10000
+timeout_per_trajectory = 600
+gamma = 0.5
+flag_debug_h_targeter = false

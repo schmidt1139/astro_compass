@@ -1,0 +1,290 @@
+Test Two-Body Rendezvous Hamiltonian Controller
+Initial observation vector
+
+x_nd: -0.20924272
+y_nd: 0.9916338
+vx_nd: -0.971941
+vy_nd: -0.20498805
+mass_nd: 1.0
+x_target_nd: 0.89744705
+y_target_nd: 0.9282935
+vx_target_nd: -0.63269025
+vy_target_nd: 0.6117545
+
+Elapsed time: 0.0
+ODE Solution: None
+delta_state: None
+planet_radii: [6.957e+08]
+a: 1.0134483575820923
+e: 9.999999747378752e-05
+w: 90.0
+theta: 101.91507720947266
+max_thrust: 1.33
+ISP: 3872.0
+dx: -1.106689691543579
+dy: 0.0633402168750763
+dr: 1.1085008382797241
+dvx: -0.33925071358680725
+dvy: -0.8167425394058228
+dv: 0.8843977451324463
+r_target: 193157644288.0
+v_target: 0.8800798058509827
+dr_norm: 0.8585191369056702
+dv_norm: 1.0049062967300415
+orbital_period_nd: 6.410358428955078
+orbital_period_years: 1.0308499336242676
+a_target: 1.2912675621451168
+e_target: 0.00010001168237002106
+w_target: 89.97006755679863
+theta_target: 45.997871150759195
+orbital_period_target_nd: 9.21943337658731
+mu: 1.3e+20
+step_count: 0
+TOF: 46786584.1033919
+TOF_nd: 9.21943344104844
+
+Using TOF: 1.482577375220737 years
+Hamiltonian solution found: True
+Hamiltonian solution details:
+
+Hamiltonian Targeter Initialized
+kwarg flag_report_live set to False
+kwarg eps_threshold set to 0.0001
+kwarg init_costate_guesses set to 4
+kwarg root_max_iters set to 1600
+Boundary Conditions
+x_0_nd: -0.20924271643161774
+y_0_nd: 0.9916337728500366
+vx_0_nd: -0.9719410538673401
+vy_0_nd: -0.20498806238174438
+t_star: 5074778.662111725
+
+x_f_nd: 0.8974471575202568
+y_f_nd: 0.9282935664463962
+vx_f_nd: -0.6326902539004083
+vy_f_nd: 0.61175454086384
+Initial co-state vector guess [0.1 0.1 0.1 0.1 0.1]
+Checking initial co-state guess
+Attempt 1 completed - Residual norm: 3.1191336793544637e-13
+Attempt 1   Lambda: [0.1 0.1 0.1 0.1 0.1] passed
+Initial guess root finding converged with residual: 3.1191e-13
+f evals:  147
+Root finding converged with residual: 3.1191e-13
+k_max: 640
+eps0: 1.0
+
+k: 1
+gamma_k: 0.5
+eps_k: 1.0
+Root finding converged with residual: 3.1191e-13
+arr_lam_sol_k: [ 3.43061527 -7.49784608  9.17078226 -0.90301708  1.83847298]
+root f evals:  147
+Residual mag: 3.1191336793544637e-13
+Root tol: 0.001
+flag_constrain_u at iteration: True
+
+k: 2
+gamma_k: 0.5
+eps_k: 0.5
+Root finding converged with residual: 8.9463e-14
+arr_lam_sol_k: [ 2.76464715 -6.02290492  7.36683708 -0.73616961  1.47406263]
+root f evals:  39
+Residual mag: 8.946302605212166e-14
+Root tol: 0.001
+flag_constrain_u at iteration: True
+
+k: 3
+gamma_k: 0.5
+eps_k: 0.25
+Root finding converged with residual: 8.7605e-14
+arr_lam_sol_k: [ 2.53756518 -5.51306829  6.74328174 -0.68223326  1.34713759]
+root f evals:  33
+Residual mag: 8.760512241657609e-14
+Root tol: 0.001
+flag_constrain_u at iteration: True
+
+k: 4
+gamma_k: 0.5
+eps_k: 0.125
+Root finding converged with residual: 6.4015e-13
+arr_lam_sol_k: [ 2.48315347 -5.38818735  6.59036283 -0.67054379  1.31556435]
+root f evals:  27
+Residual mag: 6.401460101624097e-13
+Root tol: 0.001
+flag_constrain_u at iteration: True
+
+k: 5
+gamma_k: 0.5
+eps_k: 0.0625
+Root finding converged with residual: 8.5907e-14
+arr_lam_sol_k: [ 2.47107644 -5.36023982  6.55604183 -0.66808456  1.30839709]
+root f evals:  27
+Residual mag: 8.590738056536445e-14
+Root tol: 0.001
+flag_constrain_u at iteration: True
+
+k: 6
+gamma_k: 0.5
+eps_k: 0.03125
+Root finding converged with residual: 4.3310e-12
+arr_lam_sol_k: [ 2.46807767 -5.35332388  6.54753845 -0.66746752  1.30661882]
+root f evals:  21
+Residual mag: 4.3309660768743345e-12
+Root tol: 0.001
+flag_constrain_u at iteration: True
+
+k: 7
+gamma_k: 0.5
+eps_k: 0.015625
+Root finding converged with residual: 6.6418e-13
+arr_lam_sol_k: [ 2.46732711 -5.35159439  6.54541157 -0.66731258  1.30617401]
+root f evals:  21
+Residual mag: 6.641837892810866e-13
+Root tol: 0.001
+flag_constrain_u at iteration: True
+
+k: 8
+gamma_k: 0.5
+eps_k: 0.0078125
+Root finding converged with residual: 6.3735e-14
+arr_lam_sol_k: [ 2.46713943 -5.35116202  6.54487982 -0.66727382  1.3060628 ]
+root f evals:  21
+Residual mag: 6.373472746604052e-14
+Root tol: 0.001
+flag_constrain_u at iteration: True
+
+k: 9
+gamma_k: 0.5
+eps_k: 0.00390625
+Root finding converged with residual: 1.8761e-13
+arr_lam_sol_k: [ 2.4670925  -5.3510539   6.54474686 -0.66726412  1.30603499]
+root f evals:  21
+Residual mag: 1.8760617936538874e-13
+Root tol: 0.001
+flag_constrain_u at iteration: True
+
+k: 10
+gamma_k: 0.5
+eps_k: 0.001953125
+Root finding converged with residual: 1.1314e-13
+arr_lam_sol_k: [ 2.46708076 -5.35102688  6.54471362 -0.6672617   1.30602804]
+root f evals:  21
+Residual mag: 1.1313761676362055e-13
+Root tol: 0.001
+flag_constrain_u at iteration: True
+
+k: 11
+gamma_k: 0.5
+eps_k: 0.0009765625
+Root finding converged with residual: 9.3921e-08
+arr_lam_sol_k: [ 2.46708037 -5.35102566  6.54471204 -0.66726179  1.30602842]
+root f evals:  29
+Residual mag: 9.39208132943242e-08
+Root tol: 0.001
+flag_constrain_u at iteration: True
+
+k: 12
+gamma_k: 0.5
+eps_k: 0.00048828125
+Root finding converged with residual: 3.1494e-12
+arr_lam_sol_k: [ 2.46707711 -5.35101845  6.54470326 -0.66726094  1.30602587]
+root f evals:  15
+Residual mag: 3.1493654555308027e-12
+Root tol: 0.001
+flag_constrain_u at iteration: True
+
+k: 13
+gamma_k: 0.5
+eps_k: 0.000244140625
+Root finding converged with residual: 1.1967e-08
+arr_lam_sol_k: [ 2.46707692 -5.35101801  6.54470272 -0.6672609   1.30602576]
+root f evals:  15
+Residual mag: 1.196672396995887e-08
+Root tol: 0.001
+flag_constrain_u at iteration: True
+
+k: 14
+gamma_k: 0.5
+eps_k: 0.0001220703125
+Root finding converged with residual: 1.9480e-08
+arr_lam_sol_k: [ 2.46707692 -5.35101801  6.54470272 -0.6672609   1.30602576]
+root f evals:  9
+Residual mag: 1.9479662766343323e-08
+Root tol: 0.001
+flag_constrain_u at iteration: True
+
+k: 15
+gamma_k: 0.5
+eps_k: 6.103515625e-05
+Root finding converged with residual: 2.5895e-08
+arr_lam_sol_k: [ 2.46707692 -5.35101801  6.54470272 -0.6672609   1.30602576]
+root f evals:  9
+Residual mag: 2.5894811642520496e-08
+Root tol: 0.001
+flag_constrain_u at iteration: True
+
+=== Final Integration Parameters ===
+eps: 6.103516e-05
+flag_constrain_u: True
+arr_lam_sol: [ 2.46707692 -5.35101801  6.54470272 -0.6672609   1.30602576]
+Residual from last iteration: 2.5895e-08
+Targeter converged
+Shooting iters: 749
+Root tol: 0.001
+Final integration residual: 2.5895e-08
+Final state: x=0.897447, y=0.928294, vx=-0.632690, vy=0.611755
+Target state: x=0.897447, y=0.928294, vx=-0.632690, vy=0.611755
+Target initial x,y:
+x_i_target: 134256320.0
+y_i_target: 138870880.0
+
+Final mass nd: 0.5812277989077509
+Wrote ephem to following path...
+data\test_data\test_datagen_Hamiltonian_TBR_parallel\test_TBR_ephem_traj_seed_1138347477_tof_1p0.txt
+
+
+Parameter Start:
+  mu: 1.3e+20
+  max_T: 0.00133
+  ISP: 3872.0
+  l_star: 149598023000
+  m_star: 3366.0
+  t_star: 5074778.662111725
+  g0: 9.80665
+  env_step_size: 86400
+  seed_env_init: 1138347471
+  num_trajs: 8
+  tof_scales: [1.0]
+  tof_weights: [1.0]
+  data_path: data\test_data\test_datagen_Hamiltonian_TBR_parallel\
+  eps_threshold: 0.0001
+  flag_plot_traj: False
+  init_costate_guesses: 4
+  root_max_iters: 1600
+  kep_scenario_weights: [1.0]
+  a_min_init_env_nd: 108200000000.0
+  a_max_init_env_nd: 232495000000.0
+  e_min_init_env: 0.0001
+  e_max_init_env: 0.0001
+  w_min_init_env_deg: 0.0
+  w_max_init_env_deg: 0.0
+  a_min_final_env_nd: 108200000000.0
+  a_max_final_env_nd: 232495000000.0
+  e_min_final_env: 0.0001
+  e_max_final_env: 0.0001
+  w_min_final_env_deg: 0.0
+  w_max_final_env_deg: 0.0
+  flag_report_live: True
+  randomize_seeds: False
+  randomize_tofs: False
+  randomize_limits: False
+  num_cores: 4
+  timeout_per_trajectory: 1200
+  traj_num: 6
+  seed_traj: 1138347477
+  tof_scale: 1.0
+  tof_index: 0
+  scenario_index: 0
+Parameter End.
+
+

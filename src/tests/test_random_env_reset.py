@@ -183,35 +183,34 @@ def test_random_env_rest(env):
         print("Solution for initial co-states: ", h_sol)
         print("Final smoothing parameter used in solution generation: ", eps)
         seed_env = seed_env + 1
-        print("Elapsed time: ", delta_time )
-        print("flag_solved: ", flag_solved )
+        print("Elapsed time: ", delta_time)
+        print("flag_solved: ", flag_solved)
         print("")
 
     end_time = time.time()
     total_time = end_time - start_time
     time_per_traj = total_time / count
-    
+
     print("------------------------------------------------------------------")
     print("")
     print("Summary")
     print("")
-    print("Postive mass rate count: ", count_pos_mass_rate )
-    print("Traj count: ", count )
-    print("Targeter converged count: ", count_solved )
+    print("Postive mass rate count: ", count_pos_mass_rate)
+    print("Traj count: ", count)
+    print("Targeter converged count: ", count_solved)
     print("Total elapsed time: ", total_time)
     print("Average time per traj: ", time_per_traj)
     print("")
-    
-    #report test summary to a file
+
+    # report test summary to a file
     file_path = "..\\..\\data\\test_data\\test_random_TBT_transfer_report.csv"
-    
+
     with open(file_path, "w") as f:
         for line in sa_report:
             f.write(line + "\n")
-        
+
     f.close()
-        
-    
+
     print("------------------------------------------------------------------")
     print("")
     print("Summary")

@@ -1,10 +1,6 @@
 import sys
 import os
-
-# Adding python src code directory
-sys.path.append(os.path.abspath("../python"))
-
-from Ephemeris import Ephemeris
+from core.ephemeris import Ephemeris
 
 
 def ingest_ephem_and_plot(path_to_ephemeris):
@@ -21,12 +17,7 @@ def ingest_ephem_and_plot(path_to_ephemeris):
     print("Number of vectors: ", eph.num_vectors)
 
     # Plot the ephemeris
-    eph.plot_xy()
-    sma_Earth = 149598023 * 1000  # m
-    sma_Mars = 2.32495e8 * 1000  # m
-    eph.plot_xy_ref_orbit(sma_Mars, "Mars")
-    eph.plot_xy_ref_orbit(sma_Earth, "Earth")
-    eph.plot_all_ephemeris_data()
+    figs = eph.plot_all_ephemeris_data()
 
     # report the final vector
     index = eph.num_vectors - 1
@@ -34,8 +25,10 @@ def ingest_ephem_and_plot(path_to_ephemeris):
     print("Final vector: ", state_vector)
 
 
-directory = "..\\..\\data\\training_ephems\\"
-ephem_file_name = "test_ephemeris.txt"
+directory = os.path.join(
+    "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\temp_out\\"
+)
+ephem_file_name = "test_TBR_ephem_traj_seed_2002693622_tof_1p0_scenario_0_extended.txt"
 path_to_ephemeris = directory + ephem_file_name
 
 ingest_ephem_and_plot(path_to_ephemeris)
