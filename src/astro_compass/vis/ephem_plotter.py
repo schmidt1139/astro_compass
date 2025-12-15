@@ -14,13 +14,22 @@ def plot_overlay_ballistic_orbit(
     # check env type
     if params.get("env_type", "TwoBodyRendezvous_Env") == "TwoBodyRendezvous_Polar_Env":
         flag_use_obs = False
+        state_in = [x, y, vx, vy, 1000.0, x, y, vx, vy, Constants.YEARS_TO_SEC * 10.0]
     elif (
         params.get("env_type", "TwoBodyRendezvous_Env")
         == "TwoBodyRendezvous_Polar_Env2"
     ):
         flag_use_obs = False
+        state_in = [x, y, vx, vy, 1000.0, x, y, vx, vy, Constants.YEARS_TO_SEC * 10.0]
+    elif (
+        params.get("env_type", "TwoBodyRendezvous_Env")
+        == "TwoBody_Orb2Orb_Transfer_Env_target"
+    ):
+        flag_use_obs = False
+        state_in = [x, y, vx, vy, 1000.0, Constants.SMA_EARTH, 0.001, 0.0]
     else:
         flag_use_obs = True
+        state_in = [x, y, vx, vy, 1000.0, x, y, vx, vy, Constants.YEARS_TO_SEC * 10.0]
 
     obs, info = env.reset()
 
