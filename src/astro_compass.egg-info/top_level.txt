@@ -1,2 +1,2 @@
-python
+astro_compass
 scripts

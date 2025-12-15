@@ -1,35 +1,36 @@
-import gymnasium as gym
-import sys
 import os
-import matplotlib.pyplot as plt
 import random
-import numpy as np
+import sys
 
+import gymnasium as gym
+import matplotlib.pyplot as plt
+import numpy as np
 from gymnasium import envs
 from gymnasium.envs.registration import register
-from stable_baselines3.common.callbacks import BaseCallback
-from stable_baselines3.common.callbacks import EvalCallback, CallbackList
 from stable_baselines3 import SAC
+from stable_baselines3.common.callbacks import BaseCallback, CallbackList, EvalCallback
 from stable_baselines3.common.monitor import Monitor
 
 # Adding python src code directory
 # Get the project root directory (parent of tests/)
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-os.chdir(project_root)
+from astro_compass.utils.path_utils import PROJECT_ROOT
+
+os.chdir(PROJECT_ROOT)
 print("Now working in:", os.getcwd())
 
-sys.path.append(os.path.join(project_root, "src", "python"))
-sys.path.append(os.path.join(project_root, "src", "scripts"))
+sys.path.append(os.path.join(PROJECT_ROOT, "src", "python"))
+sys.path.append(os.path.join(PROJECT_ROOT, "src", "scripts"))
 
-from constants.constants import Constants
-from utils.log_utils import log
-from utils.test_utils import compare_log_files_with_tolerance
-from core.ephemeris import Ephemeris
-from core.spacecraft import Spacecraft
-from utils.state_vector_utils import cartesian_to_polar
-from utils.rl_utils import log_training_perf
-from envs.TwoBody_Orb2Orb_Transfer_Env_nd import TwoBody_Orb2Orb_Transfer_Env_nd
-
+from astro_compass.constants.constants import Constants
+from astro_compass.core.ephemeris import Ephemeris
+from astro_compass.core.spacecraft import Spacecraft
+from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env_nd import (
+    TwoBody_Orb2Orb_Transfer_Env_nd,
+)
+from astro_compass.utils.log_utils import log
+from astro_compass.utils.rl_utils import log_training_perf
+from astro_compass.utils.state_vector_utils import cartesian_to_polar
+from astro_compass.utils.test_utils import compare_log_files_with_tolerance
 
 # register the environment if it isn't registered
 if "TwoBody_Orb2Orb_Transfer_Env_nd-v0" not in envs.registry.keys():
@@ -66,11 +67,11 @@ class RewardLoggerCallback(BaseCallback):
 
 
 def test_SAC_training(flag_report_live=False, seed_in=42):
-
     # set random seeds for reproducibility
     random.seed(seed_in)
     np.random.seed(seed_in)
     import torch
+
     torch.manual_seed(seed_in)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed_in)
@@ -126,7 +127,7 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
     obs, info = env.reset(seed=seed_in)
     obs, info = eval_env.reset(seed=seed_in)
 
-    plt.close('all')
+    plt.close("all")
     plt.style.use("data/support_files/dark_scientific.mplstyle")
 
     test_log = []
@@ -208,9 +209,7 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
     obs, info = eval_env.reset(seed=42)
     eph = Ephemeris()  # create new ephemeris object
 
-
     while flag_continue:
-
         # step the env
         action, _states = model.predict(obs, deterministic=True)
         throttle = action[0]
@@ -297,7 +296,9 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
             f.write(line + "\n")
 
     # Compare log files with numerical tolerance for cross-platform compatibility
-    are_same = compare_log_files_with_tolerance(path_output_log, path_output_log_truth, flag_report_live=flag_report_live)
+    are_same = compare_log_files_with_tolerance(
+        path_output_log, path_output_log_truth, flag_report_live=flag_report_live
+    )
 
     if flag_report_live:
         print("Log files match truth (with numerical tolerance):", are_same)

@@ -4,11 +4,6 @@ data/training_ephems/
 data/horizons_ephems/
 data/plots/
 .venv/*
-astro_compass.egg-info/*
+src/astro_compass.egg-info/*
 data/pre-training-data/*
 data/output/*
-/src/python/astro_compass.egg-info/dependency_links.txt
-/src/python/astro_compass.egg-info/PKG-INFO
-/src/python/astro_compass.egg-info/requires.txt
-/src/python/astro_compass.egg-info/SOURCES.txt
-/src/python/astro_compass.egg-info/top_level.txt

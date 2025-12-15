@@ -1,13 +1,11 @@
-import numpy as np
-import gymnasium as gym
-import sys
 import os
+import sys
 
-from gymnasium import envs
-from gymnasium.envs.registration import register
-from utils.log_utils import log
-from utils.test_utils import compare_log_files_with_tolerance
-from envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
+import numpy as np
+
+from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
+from astro_compass.utils.log_utils import log
+from astro_compass.utils.test_utils import compare_log_files_with_tolerance
 
 # Adding python src code directory
 current_dir = os.path.dirname(__file__)
@@ -16,7 +14,6 @@ sys.path.append(python_src_dir)
 
 
 def test_env_step_with_action(flag_report_live=False):
-
     # initialize the environment
     env = TwoBody_Orb2Orb_Transfer_Env()
     seed_in = 42
@@ -96,6 +93,8 @@ def test_env_step_with_action(flag_report_live=False):
             f.write(line + "\n")
 
     # Compare log files with numerical tolerance for cross-platform compatibility
-    are_same = compare_log_files_with_tolerance(path_test_report, path_test_truth, flag_report_live=False)
+    are_same = compare_log_files_with_tolerance(
+        path_test_report, path_test_truth, flag_report_live=False
+    )
 
     return are_same
