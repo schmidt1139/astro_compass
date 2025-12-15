@@ -4,6 +4,7 @@ import tempfile
 from matplotlib import pyplot as plt
 
 from astro_compass.core.ephemeris_v2 import Ephemeris_v2
+from astro_compass.core.rollouts import SACRolloutData_TBR_polar
 from astro_compass.utils.env_utils import gen_rl_environment
 from astro_compass.utils.log_utils import (
     compare_logs,
@@ -14,7 +15,6 @@ from astro_compass.utils.log_utils import (
 )
 from astro_compass.utils.path_utils import DATA_ROOT
 from astro_compass.utils.plotting_utils import (
-    SACRolloutData_TBR_polar,
     plot_rendezvous_traj,
     plot_SAC_training_TBR_polar,
 )

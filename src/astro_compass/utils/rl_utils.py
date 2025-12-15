@@ -10,10 +10,10 @@ from tqdm import tqdm
 
 from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris_v2 import Ephemeris_v2
+from astro_compass.core.rollouts import SACRolloutData_TBR_polar
 from astro_compass.core.spacecraft import Spacecraft
 from astro_compass.core.training_data_generation import read_ephems_from_dir
 from astro_compass.utils.log_utils import log
-from astro_compass.utils.plotting_utils import SACRolloutData_TBR_polar
 from astro_compass.utils.state_vector_utils import (
     cartesian_to_polar,
     convert_attitude_from_cartesian_to_radial,

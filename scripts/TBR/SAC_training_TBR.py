@@ -12,6 +12,7 @@ from stable_baselines3.common.monitor import Monitor
 
 from astro_compass.core.ephemeris_v2 import Ephemeris_v2 as Ephemeris
 from astro_compass.core.process_single_trajectory import process_single_trajectory
+from astro_compass.core.rollouts import SACRolloutData_TBR
 from astro_compass.core.spacecraft import Spacecraft
 from astro_compass.envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from astro_compass.utils.log_utils import (
@@ -22,7 +23,6 @@ from astro_compass.utils.log_utils import (
 )
 from astro_compass.utils.path_utils import DATA_ROOT
 from astro_compass.utils.plotting_utils import (
-    SACRolloutData_TBR,
     plot_SAC_training_TBR,
 )
 from astro_compass.utils.rl_utils import (

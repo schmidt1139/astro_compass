@@ -13,12 +13,13 @@ print("Now working in:", os.getcwd())
 
 from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris import Ephemeris
+from astro_compass.core.rollouts import SACRolloutData
 from astro_compass.core.spacecraft import Spacecraft
 from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env_nd import (
     TwoBody_Orb2Orb_Transfer_Env_nd,
 )
 from astro_compass.utils.log_utils import log
-from astro_compass.utils.plotting_utils import SACRolloutData, plot_SAC_training
+from astro_compass.utils.plotting_utils import plot_SAC_training
 from astro_compass.utils.rl_utils import RewardLoggerCallback, log_training_perf
 from astro_compass.utils.state_vector_utils import cartesian_to_polar
 

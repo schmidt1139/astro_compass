@@ -13,13 +13,14 @@ from stable_baselines3.common.monitor import Monitor
 
 from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris import Ephemeris
+from astro_compass.core.rollouts import SACRolloutData
 from astro_compass.core.spacecraft import Spacecraft
 from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env_nd_obs5 import (
     TwoBody_Orb2Orb_Transfer_Env_nd_obs5,
 )
 from astro_compass.utils.log_utils import log, log_parameters
 from astro_compass.utils.path_utils import DATA_ROOT
-from astro_compass.utils.plotting_utils import SACRolloutData, plot_SAC_training
+from astro_compass.utils.plotting_utils import plot_SAC_training
 from astro_compass.utils.rl_utils import (
     RewardLoggerCallback,
     import_training_into_replay_buffer,

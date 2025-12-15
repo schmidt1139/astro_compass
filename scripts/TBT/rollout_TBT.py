@@ -6,6 +6,7 @@ import torch
 
 from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris import Ephemeris as Ephemeris
+from astro_compass.core.rollouts import SACRolloutData
 from astro_compass.core.spacecraft import Spacecraft
 from astro_compass.utils.env_utils import gen_rl_environment
 from astro_compass.utils.log_utils import (
@@ -17,7 +18,6 @@ from astro_compass.utils.path_utils import (
     RUNS_ROOT,
     get_run_paths,
 )
-from astro_compass.utils.plotting_utils import SACRolloutData
 from astro_compass.utils.state_vector_utils import cartesian_to_polar
 
 plt.style.use("data/support_files/light_paper.mplstyle")
