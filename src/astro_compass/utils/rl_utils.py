@@ -945,11 +945,6 @@ def extract_experiences_from_ephem(eph, params):
             obs, _ = create_relative_polar_observation_fast(
                 params, current_state, target_state, ttg
             )
-        elif env_type == "TwoBody_Orb2Orb_Transfer_Env_target":
-            state = np.concatenate((current_state, target_state))
-            env = TwoBody_Orb2Orb_Transfer_Env_target
-            state_dict = env.decode_state(state)
-            obs, _ = env.compute_obs_fast_TBT(state_dict, params, ttg)
         else:
             raise NotImplementedError("Check env type")
 
@@ -971,16 +966,6 @@ def extract_experiences_from_ephem(eph, params):
         ):
             reward, terminated, truncated, _ = compute_reward_fast(
                 params, current_state, ttg, target_state, u
-            )
-        elif env_type == "TwoBody_Orb2Orb_Transfer_Env_target":
-            state = np.concatenate((current_state, target_state))
-            env = TwoBody_Orb2Orb_Transfer_Env_target
-            state_dict = env.decode_state(state)
-            reward, terminated, truncated, _ = env.compute_reward_fast_TBT(
-                state_dict,
-                params,
-                u,
-                ttg,
             )
         else:
             raise NotImplementedError("Check env type")
@@ -1006,13 +991,94 @@ def extract_experiences_from_ephem(eph, params):
                 next_obs, _ = create_relative_polar_observation_fast(
                     params, next_current_state, next_target_state, next_ttg
                 )
-            elif env_type == "TwoBody_Orb2Orb_Transfer_Env_target":
-                state = np.concatenate((next_current_state, next_target_state))
-                env = TwoBody_Orb2Orb_Transfer_Env_target
-                state_dict = env.decode_state(state)
-                next_obs, _ = env.compute_obs_fast_TBT(state, params, next_ttg)
             else:
                 raise NotImplementedError("Check env type")
+
+        obs_batch.append(obs)
+        action_batch.append(action)
+        reward_batch.append(reward)
+        next_obs_batch.append(next_obs)
+        done_batch.append(done)
+
+    # update the last done to be terminal
+    if len(done_batch) > 0:
+        done_batch[-1] = True
+
+    # After the loop, before buffer import:
+    obs_batch = np.stack(obs_batch)  # shape (N, obs_dim)
+    action_batch = np.stack(action_batch)  # shape (N, action_dim)
+    reward_batch = np.array(reward_batch).reshape(-1, 1)  # shape (N, 1)
+    next_obs_batch = np.stack(next_obs_batch)  # shape (N, obs_dim)
+    done_batch = np.array(done_batch).reshape(-1, 1)  # shape (N, 1)
+
+    return obs_batch, action_batch, reward_batch, next_obs_batch, done_batch
+
+
+def extract_experiences_from_ephem_TBT(eph, params):
+    # Step through ephem and gather observations, actions, rewards, next_obs, dones
+    obs_batch = []
+    action_batch = []
+    reward_batch = []
+    next_obs_batch = []
+    done_batch = []
+
+    num_steps_per_SART = params["ephem_step_size"]
+    env = TwoBody_Orb2Orb_Transfer_Env_target
+
+    # Only add every num_steps_per_SART-th vector
+    for i in range(
+        0, eph.num_vectors - 1, num_steps_per_SART
+    ):  # -1 to ensure we have next_obs
+        state_vec = eph.get_vector_at_index(i)
+
+        # unpack state
+        t = state_vec[0]
+        current_state = state_vec[1:6]  # x, y, vx, vy, m
+        target_state = state_vec[6:10]  # x_t, y_t, vx, vy
+        ttg = state_vec[10]
+        alpha_x = state_vec[11]
+        alpha_y = state_vec[12]
+        u = state_vec[13]
+
+        # compute polar observation
+        state = np.concatenate((current_state, target_state))
+        state_dict = env.decode_state(state)
+        obs, _ = env.compute_obs_fast_TBT(state_dict, params, ttg)
+
+        # polar action
+        # Convert alpha_x, alpha_y to polar form
+        x = current_state[0]
+        y = current_state[1]
+        alpha_vr, alpha_theta = convert_attitude_from_cartesian_to_radial(
+            x, y, alpha_x, alpha_y
+        )
+        action = np.array([u, alpha_vr, alpha_theta], dtype=np.float32)
+        u = action[0]
+
+        reward, terminated, truncated, _ = env.compute_reward_fast_TBT(
+            state_dict,
+            params,
+            u,
+            ttg,
+        )
+
+        # check if terminal
+        done = terminated or truncated
+
+        # next observation
+        next_t = t + params["env_step_size"]
+        if next_t > eph.get_vector_at_index(eph.num_vectors - 1)[0]:
+            break
+        else:
+            next_state_vec = eph.get_interpolated_vector_at_time(next_t)
+            next_current_state = next_state_vec[1:6]
+            next_target_state = next_state_vec[6:10]
+            next_ttg = next_state_vec[10]
+
+            # compute polar observation
+            state = np.concatenate((next_current_state, next_target_state))
+            state_dict = env.decode_state(state)
+            next_obs, _ = env.compute_obs_fast_TBT(state, params, next_ttg)
 
         obs_batch.append(obs)
         action_batch.append(action)
