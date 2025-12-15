@@ -1,10 +1,12 @@
-import numpy as np
-import gymnasium as gym
 from typing import Optional
+
+import gymnasium as gym
+import numpy as np
 from scipy.integrate import solve_ivp
-from Constants import Constants
 from Spacecraft import Spacecraft
-from Propagation import spacecraft_EOM_radial_2D_EB
+
+from astro_compass.Constants import Constants
+from astro_compass.Propagation import spacecraft_EOM_radial_2D_EB
 
 
 class TwoBody_Orb2Orb_Transfer_Env(gym.Env):

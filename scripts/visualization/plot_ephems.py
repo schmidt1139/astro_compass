@@ -1,6 +1,7 @@
 import os
 
 from astro_compass.core.ephemeris import Ephemeris
+from astro_compass.utils.path_utils import PROJECT_ROOT
 
 
 def ingest_ephem_and_plot(path_to_ephemeris):
@@ -25,9 +26,7 @@ def ingest_ephem_and_plot(path_to_ephemeris):
     print("Final vector: ", state_vector)
 
 
-directory = os.path.join(
-    "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\temp_out\\"
-)
+directory = os.path.join(PROJECT_ROOT, "z_script_output", "temp_out")
 ephem_file_name = "test_TBR_ephem_traj_seed_2002693622_tof_1p0_scenario_0_extended.txt"
 path_to_ephemeris = directory + ephem_file_name
 

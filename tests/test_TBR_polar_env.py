@@ -11,6 +11,7 @@ from astro_compass.utils.log_utils import (
     read_log_from_file,
     write_log_to_file,
 )
+from astro_compass.utils.path_utils import DATA_ROOT
 from astro_compass.utils.plotting_utils import (
     SACRolloutData_TBR_polar,
     plot_rendezvous_traj,
@@ -19,10 +20,10 @@ from astro_compass.utils.plotting_utils import (
 
 
 def test_TBR_polar_env(flag_report_live: bool = False):
-    plt.style.use("data/support_files/light_paper.mplstyle")
+    plt.style.use(f"{DATA_ROOT}/support_files/light_paper.mplstyle")
 
     # config path
-    path_test = os.path.join("data", "test_data", "test_TBR_polar_env")
+    path_test = os.path.join(DATA_ROOT, "test_data", "test_TBR_polar_env")
     path_config = os.path.join(path_test, "TBR_polar_config.txt")
 
     # define normalization parameters (for NN)
@@ -198,13 +199,13 @@ def test_TBR_polar_env(flag_report_live: bool = False):
                 flag_continue = False
 
         # fig = eph.plot_xy();
-        # fig.savefig(os.path.join("data", "test_data", "test_TBR", "test_traj_") + str(count_traj) + "_TBR_env.png")
+        # fig.savefig(os.path.join(DATA_ROOT, "test_data", "test_TBR", "test_traj_") + str(count_traj) + "_TBR_env.png")
 
         plot_SAC_training_TBR_polar(rollout_data, path_test, eph, params, env)
 
         eph.write_to_file(
             os.path.join(
-                "data", "test_data", "test_TBR_polar_env", "test_traj_ephemeris_"
+                DATA_ROOT, "test_data", "test_TBR_polar_env", "test_traj_ephemeris_"
             )
             + str(count_traj)
             + "_TBR_env.txt"

@@ -7,6 +7,7 @@ from stable_baselines3 import SAC as SB3_SAC
 from astro_compass.core.training_data_generation import read_ephems_from_dir
 from astro_compass.utils.env_utils import gen_rl_environment
 from astro_compass.utils.log_utils import log, read_config_file
+from astro_compass.utils.path_utils import DATA_ROOT
 from astro_compass.utils.rl_utils import import_training_into_replay_buffer_v3
 from astro_compass.utils.test_utils import binary_compare
 
@@ -18,7 +19,7 @@ def test_fast_replay_buffer_seeding(flag_report_live: bool = False):
     plt.style.use("data/support_files/light_paper.mplstyle")
 
     # config path
-    path_test = os.path.join("data", "test_data", "test_fast_replay_buffer_seeding")
+    path_test = os.path.join(DATA_ROOT, "test_data", "test_fast_replay_buffer_seeding")
     path_config = os.path.join(path_test, "test_fast_replay_buffer_seeding_config.txt")
 
     # define normalization parameters (for NN)

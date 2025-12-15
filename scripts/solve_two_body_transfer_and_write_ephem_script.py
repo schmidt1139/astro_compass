@@ -7,6 +7,7 @@ from astro_compass.core.solve_two_body_transfer import (
 from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env_nd import (
     TwoBody_Orb2Orb_Transfer_Env_nd,
 )
+from astro_compass.utils.path_utils import DATA_ROOT
 
 # USER INPUTS ------------------------------------------------------------------
 
@@ -23,7 +24,7 @@ args = {
     "max_thrust": 1.33,  # Max thrust of the spacecraft engine [N]
     "ISP": 3872.0,  # Specific impulse of the spacecraft engine [s]
     "filename_ephemeris_out": os.path.join(
-        "data", "training_ephems", "solution_ephemeris.txt"
+        DATA_ROOT, "training_ephems", "solution_ephemeris.txt"
     ),  # output path
 }
 

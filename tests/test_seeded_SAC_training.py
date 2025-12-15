@@ -17,6 +17,7 @@ from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env_nd_obs5 import (
     TwoBody_Orb2Orb_Transfer_Env_nd_obs5,
 )
 from astro_compass.utils.log_utils import log, log_parameters
+from astro_compass.utils.path_utils import DATA_ROOT
 from astro_compass.utils.plotting_utils import SACRolloutData, plot_SAC_training
 from astro_compass.utils.rl_utils import (
     RewardLoggerCallback,
@@ -99,14 +100,12 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
 
     # paths
     # time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
-    path_nns = os.path.normpath(os.path.join(os.getcwd(), "data", "neural_networks"))
+    path_nns = os.path.normpath(os.path.join(DATA_ROOT, "neural_networks"))
     path_training_data = os.path.normpath(
-        os.path.join(
-            os.getcwd(), "data", "test_data", "test_seeded_SAC_training", "input"
-        )
+        os.path.join(DATA_ROOT, "test_data", "test_seeded_SAC_training", "input")
     )
     path_output = os.path.normpath(
-        os.path.join(os.getcwd(), "data", "test_data", "test_seeded_SAC_training")
+        os.path.join(DATA_ROOT, "test_data", "test_seeded_SAC_training")
     )
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
     path_output_log = os.path.join(path_output, "SAC_Training_Log.txt")

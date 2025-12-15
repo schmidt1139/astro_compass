@@ -77,10 +77,10 @@ eval_device: cpu
 # Paths/Filenames
 
 tb_log_name: SAC_TBR_training
-output_dir: C:\Users\micha\MSI_Data\Masters_Thesis\z_script_output\SAC_Training
-path_training_data: C:\Users\micha\MSI_Data\Masters_Thesis\z_script_output\training_TBR_circular_20251110\training_TBR_circular\ephems_extended
-path_replay_buffer: C:\Users\micha\MSI_Data\Masters_Thesis\z_script_output\replay_buffers\tbr_circular\replay_buffer_pre_training_circular.pkl
-path_SAC_model_load: C:\Users\micha\MSI_Data\Masters_Thesis\z_script_output\SAC_Training\SAC_training_20251118_161446\best_model.zip
+output_dir: z_script_output\SAC_Training
+path_training_data: z_script_output\training_TBR_circular_20251110\training_TBR_circular\ephems_extended
+path_replay_buffer: z_script_output\replay_buffers\tbr_circular\replay_buffer_pre_training_circular.pkl
+path_SAC_model_load: z_script_output\SAC_Training\SAC_training_20251118_161446\best_model.zip
 
 # General
 

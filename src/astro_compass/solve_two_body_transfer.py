@@ -1,7 +1,8 @@
-import numpy as np
 import matplotlib.pyplot as plot
-from Ephemeris import Ephemeris
-from Hamiltonian_Control import Hamiltonian_Controller_TBT
+import numpy as np
+
+from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
+from astro_compass.Ephemeris import Ephemeris
 
 
 def solve_two_body_transfer_and_write_ephem(env, args):

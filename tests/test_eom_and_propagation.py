@@ -1,5 +1,4 @@
 import os
-import sys
 
 import gymnasium as gym
 import matplotlib
@@ -7,16 +6,15 @@ import matplotlib.pyplot as plot
 import numpy as np
 from gymnasium import envs
 from gymnasium.envs.registration import register
-
-# Adding python src code directory
-sys.path.append(os.path.abspath("../python"))
-
-from Ephemeris import Ephemeris
-from Hamiltonian_Control import Hamiltonian_Controller_TBT
-from Propagation import Hamiltonian_EOM_TBT_v2, smoothing_function_tanh
 from scipy.integrate import solve_ivp
 
+from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
+from astro_compass.Ephemeris import Ephemeris
+
+# Adding python src code directory
+from astro_compass.Propagation import Hamiltonian_EOM_TBT_v2, smoothing_function_tanh
 from astro_compass.StateVectorUtilities import non_dimensionalize
+from astro_compass.utils.path_utils import DATA_ROOT
 
 # register the environment if it isn't registered
 if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
@@ -269,7 +267,7 @@ ax.set_xlabel(r"Elapsed Time (days)")
 ax.set_ylabel(r"Non-Dimensional States")
 ax.legend()
 fig.tight_layout()
-fig.savefig(os.path.join("..", "..", "data", "plots", "states_nd.pdf"))  # Vector format
+fig.savefig(os.path.join(DATA_ROOT, "plots", "states_nd.pdf"))  # Vector format
 plot.show()
 
 fig, ax = plot.subplots(figsize=(6, 6))
@@ -283,9 +281,7 @@ ax.set_xlabel(r"Elapsed Time (days)")
 ax.set_ylabel(r"Non-Dimensional Co-States $\vec{\lambda}$")
 ax.legend()
 fig.tight_layout()
-fig.savefig(
-    os.path.join("..", "..", "data", "plots", "costates_nd.pdf")
-)  # Vector format
+fig.savefig(os.path.join(DATA_ROOT, "plots", "costates_nd.pdf"))  # Vector format
 plot.show()
 
 fig, ax = plot.subplots(figsize=(6, 6))

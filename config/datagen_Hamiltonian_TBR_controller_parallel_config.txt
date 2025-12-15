@@ -30,7 +30,7 @@ theta_max_final_env_deg: 181.0
 
 #datagen
 
-data_path: C:\Users\micha\MSI_Data\Masters_Thesis\z_script_output\training_TBR_overfit
+data_path: z_script_output\training_TBR_overfit
 num_trajs: 900
 randomize_seeds: True
 randomize_tofs: True

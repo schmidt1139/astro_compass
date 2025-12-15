@@ -2,17 +2,31 @@
 
 [paths]
 tb_log_name = "SAC_TBR_training"
-output_dir = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\agent_eval"
-path_training_data = "~/Documents/astro_compass/data/pre-training-data/training-TBR-overfit"
-path_replay_buffer = "~/Documents/astro_compass/data/pre-training-data/replay_buffers/tbr_overfit/replay_buffer.pkl"
-path_SAC_model_load = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\runs_for_record\\curiosity\\overfit_10million\\SAC_training_TBR_polar20251128_001406\\best_model.zip"
+output_dir = "z_script_output\\SAC_Training"
+path_training_data = ""
+path_replay_buffer = "z_script_output\\buffer_generation\\SAC_training_TBR_polar20251128_144703\\replay_buffer.pkl"
+path_SAC_model_load = "z_script_output\\SAC_Training\\SAC_training_TBR_polar20251127_202634\\best_model.zip"
 
-[eval]
-num_rollouts = 100
-
-[environment.vectorization]
-num_vec_envs = 2
-cores = 2
+[training]
+pre_train_networks = true
+save_pre_training_only_replay_buffer = true
+save_final_replay_buffer = true
+read_replay_buffer = true
+load_model_checkpoint = false
+eval_freq = 500
+training_steps = 1_600
+pretrain_gradient_steps = 5000
+n_eval_episodes = 3
+print_freq = 2000
+buffer_size = 200_000
+num_ephems_to_use = 1000
+batch_size = 256
+pt_log_interval = 2000
+t_log_interval = 2000
+loss_report_rate = 10
+checkpoint_freq = 1000
+flag_checkpoint_replay_buffer = true
+n_freq_checkpoint_replay_buffer = 100
 
 [environment]
 env_type = "TwoBodyRendezvous_Polar_Env2"
@@ -65,24 +79,9 @@ prop_length_scale = 1.5
 r_dist_weight = 0.2 
 v_dist_weight = 0.2 
 
-[training]
-pre_train_networks = true
-save_pre_training_only_replay_buffer = true
-save_final_replay_buffer = true
-read_replay_buffer = true
-load_model_checkpoint = false
-eval_freq = 500
-training_steps = 10_000
-pretrain_gradient_steps = 5000
-n_eval_episodes = 3
-print_freq = 2000
-buffer_size = 200_000
-num_ephems_to_use = 1000
-batch_size = 256
-pt_log_interval = 2000
-t_log_interval = 2000
-loss_report_rate = 10
-checkpoint_freq = 1000
+[environment.vectorization]
+num_vec_envs = 4
+cores = 4
 
 [model]
 learning_rate = 0.0003

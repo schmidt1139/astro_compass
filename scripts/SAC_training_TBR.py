@@ -20,6 +20,7 @@ from astro_compass.utils.log_utils import (
     write_config_file,
     write_log_to_file,
 )
+from astro_compass.utils.path_utils import DATA_ROOT
 from astro_compass.utils.plotting_utils import (
     SACRolloutData_TBR,
     plot_SAC_training_TBR,
@@ -37,7 +38,7 @@ def SAC_training_TBR(seed_in=42):
     random.seed(seed_in)
 
     # config path
-    path_config = os.path.join("data", "config", "SAC_training_TBR_config.txt")
+    path_config = os.path.join(DATA_ROOT, "config", "SAC_training_TBR_config.txt")
 
     # define normalization parameters (for NN)
     params = read_config_file(path_config)

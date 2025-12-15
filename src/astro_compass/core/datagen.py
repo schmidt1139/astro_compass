@@ -11,6 +11,7 @@ import numpy as np
 
 from astro_compass.core.process_single_trajectory import process_single_trajectory
 from astro_compass.utils.log_utils import log, write_config_file
+from astro_compass.utils.path_utils import DATA_ROOT
 
 
 def record_pass_stats(arr_pass_count, tof_index, scenario_index):
@@ -167,7 +168,7 @@ def run_parallel_trajectory_generation(params):
 
     test_log = log(f"Starting at {time_str}", test_log, True)
 
-    plot.style.use(os.path.join("data", "support_files", "dark_scientific.mplstyle"))
+    plot.style.use(os.path.join(DATA_ROOT, "support_files", "dark_scientific.mplstyle"))
 
     # Determine number of processes to use
     num_processes = min(cpu_count(), params.get("num_cores", cpu_count()))

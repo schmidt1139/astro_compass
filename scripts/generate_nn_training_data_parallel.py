@@ -1,7 +1,7 @@
 import os
 import sys
 
-from astro_compass.utils.path_utils import PROJECT_ROOT
+from astro_compass.utils.path_utils import DATA_ROOT, PROJECT_ROOT
 
 # Add project root to Python path
 if PROJECT_ROOT not in sys.path:
@@ -27,7 +27,7 @@ if __name__ == "__main__":
         "max_thrust": 1.33,  # Max thrust of the spacecraft engine [N]
         "ISP": 3872.0,  # Specific impulse of the spacecraft engine [s]
         "eps_final": 0.0001,  # Final smoothing parameter to achieve
-        "output_dir": os.path.join("data", "training_ephems", "test_set3"),
+        "output_dir": os.path.join(DATA_ROOT, "training_ephems", "test_set3"),
     }
 
     # initialize the environment
