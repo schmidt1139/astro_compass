@@ -2,8 +2,6 @@ import os
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import numpy as np
-import torch
-import torch.nn as nn
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.evaluation import evaluate_policy
 from tqdm import tqdm
@@ -64,65 +62,6 @@ def log_training_perf(
         )
 
     return test_log
-
-
-def copy_linear_layers(src_sequential: nn.Sequential, dst_sequential: nn.Sequential):
-    # Extract linear layers from both source and destination sequential models
-    src_linears = [m for m in src_sequential.modules() if isinstance(m, nn.Linear)]
-    dst_linears = [m for m in dst_sequential.modules() if isinstance(m, nn.Linear)]
-
-    # Check if the networks sizes are the same
-    assert len(src_linears) == len(dst_linears), (
-        f"Linear layer count mismatch: {len(src_linears)} vs {len(dst_linears)}"
-    )
-
-    with torch.no_grad():
-        # Step through both sets of linear layers and copy weights and biases
-        for s, d in zip(src_linears, dst_linears):
-            # ensure the shapes match before copying
-            assert s.weight.shape == d.weight.shape, (
-                f"Weight shape mismatch {s.weight.shape} vs {d.weight.shape}"
-            )
-
-            # Copy weights and biases
-            d.weight.copy_(s.weight)
-
-            if s.bias is not None and d.bias is not None:
-                assert s.bias.shape == d.bias.shape
-                d.bias.copy_(s.bias)
-
-
-def load_pretrained_nn_into_SAC(supervised_controller, sac_model):
-    src_layers = nn.Sequential(
-        supervised_controller.fc1,
-        supervised_controller.fc2,
-        supervised_controller.fc3,
-        supervised_controller.fc4,
-        supervised_controller.fc5,
-    )
-
-    dst_layers = sac_model.policy.actor.latent_pi
-
-    print("Loading pre-trained controller")
-
-    # copy the weights and biases from the supervised controller to the SAC model
-    copy_linear_layers(src_layers, dst_layers)
-
-    with torch.no_grad():
-        # SB3's actor.mu is a Linear(act_latent_dim -> act_dim)
-        assert (
-            sac_model.policy.actor.mu.weight.shape
-            == supervised_controller.fc6.weight.shape
-        )
-        sac_model.policy.actor.mu.weight.copy_(supervised_controller.fc6.weight)
-        sac_model.policy.actor.mu.bias.copy_(supervised_controller.fc6.bias)
-
-    # Initialize log_std to something small (more deterministic at start)
-    with torch.no_grad():
-        if hasattr(sac_model.policy.actor, "log_std") and isinstance(
-            sac_model.policy.actor.log_std, nn.Parameter
-        ):
-            sac_model.policy.actor.log_std.fill_(-4.0)  # e.g., std ≈ exp(-4) ~ 0.018
 
 
 def import_training_into_replay_buffer(
