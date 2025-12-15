@@ -335,6 +335,12 @@ def pre_train(test_log, model, params, env):
             test_log,
             True,
         )
+    elif ephem_version == 3.0 and (env.observation_space.shape[0] == 10):
+        test_log = log(
+            "Environment observation space matches expected shape for ephemeris version 3.0",
+            test_log,
+            True,
+        )
     else:
         raise ValueError(
             f"Environment observation space shape {env.observation_space.shape} does not match expected shape for ephemeris version {ephem_version}"
@@ -393,7 +399,7 @@ def import_training_into_replay_buffer_v2(
     path_training_data, test_log, model, env, params
 ):
     """
-    Import training data from astro_compass.core.ephemeris v2.0 files into the replay buffer.
+    Import training data from ephemeris v2.0 files into the replay buffer.
     Handles 10-dimensional observation space (x, y, vx, vy, m, x_t, y_t, vx_t, vy_t, ttg).
     """
     from tqdm import tqdm
@@ -917,7 +923,7 @@ def rollout_model(env, params, model, test_log):
 
 def import_training_into_replay_buffer_v3(set_ephems, test_log, model, env, params):
     """
-    Import training data from astro_compass.core.ephemeris v3.0 files into the replay buffer.
+    Import training data from ephemeris v3.0 files into the replay buffer.
     Handles 10-dimensional observation space (x, y, vx, vy, m, x_t, y_t, vx_t, vy_t, ttg).
 
     Does this without env overhead by directly setting states in the replay buffer.
@@ -990,9 +996,18 @@ def extract_experiences_from_ephem(eph, params):
         u = state_vec[13]
 
         # compute polar observation
-        obs, _ = create_relative_polar_observation_fast(
-            params, current_state, target_state, ttg
-        )
+        if (
+            env_type == "TwoBodyRendezvous_Polar_Env2"
+            or env_type == "TwoBodyRendezvous_Polar_Env"
+        ):
+            obs, _ = create_relative_polar_observation_fast(
+                params, current_state, target_state, ttg
+            )
+        elif env_type == "TwoBody_Orb2Orb_Transfer_Env_target":
+            state = np.concatenate((current_state, target_state))
+            obs, _ = compute_obs_fast_TBT(state, params, ttg)
+        else:
+            raise NotImplementedError("Check env type")
 
         # polar action
         # Convert alpha_x, alpha_y to polar form
@@ -1005,9 +1020,21 @@ def extract_experiences_from_ephem(eph, params):
         u = action[0]
 
         # compute the reward
-        reward, terminated, truncated, _ = compute_reward_fast(
-            params, current_state, ttg, target_state, u
-        )
+        # compute polar observation
+        if (
+            env_type == "TwoBodyRendezvous_Polar_Env2"
+            or env_type == "TwoBodyRendezvous_Polar_Env"
+        ):
+            reward, terminated, truncated, _ = compute_reward_fast(
+                params, current_state, ttg, target_state, u
+            )
+        elif env_type == "TwoBody_Orb2Orb_Transfer_Env_target":
+            state = np.concatenate((current_state, target_state))
+            reward, terminated, truncated, _ = compute_reward_fast_TBT(
+                state, params, u, ttg
+            )
+        else:
+            raise NotImplementedError("Check env type")
 
         # check if terminal
         done = terminated or truncated
@@ -1021,9 +1048,20 @@ def extract_experiences_from_ephem(eph, params):
             next_current_state = next_state_vec[1:6]
             next_target_state = next_state_vec[6:10]
             next_ttg = next_state_vec[10]
-            next_obs, _ = create_relative_polar_observation_fast(
-                params, next_current_state, next_target_state, next_ttg
-            )
+
+            # compute polar observation
+            if (
+                env_type == "TwoBodyRendezvous_Polar_Env2"
+                or env_type == "TwoBodyRendezvous_Polar_Env"
+            ):
+                next_obs, _ = create_relative_polar_observation_fast(
+                    params, next_current_state, next_target_state, next_ttg
+                )
+            elif env_type == "TwoBody_Orb2Orb_Transfer_Env_target":
+                state = np.concatenate((next_current_state, next_target_state))
+                next_obs, _ = compute_obs_fast_TBT(state, params, next_ttg)
+            else:
+                raise NotImplementedError("Check env type")
 
         obs_batch.append(obs)
         action_batch.append(action)
@@ -1165,6 +1203,63 @@ def create_relative_polar_observation_fast(
     return polar_observation, env_data
 
 
+def compute_obs_fast_TBT(state, params, ttg):
+    l_star = params["l_star"]
+    t_star = params["t_star"]
+    m_star = params["m_star"]
+
+    x_current_nd = state[0] / l_star
+    y_current_nd = state[1] / l_star
+    vx_current_nd = state[2] / (l_star / t_star)
+    vy_current_nd = state[3] / (l_star / t_star)
+    mass_current_nd = state[4] / m_star
+
+    x_target_nd = state[5] / l_star
+    y_target_nd = state[6] / l_star
+    vx_target_nd = state[7] / (l_star / t_star)
+    vy_target_nd = state[8] / (l_star / t_star)
+
+    r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0 = cartesian_to_polar(
+        x_current_nd, y_current_nd, vx_current_nd, vy_current_nd
+    )
+    r_nd_target, eta_nd_target, v_r_nd_target, v_eta_nd_target = cartesian_to_polar(
+        x_target_nd, y_target_nd, vx_target_nd, vy_target_nd
+    )
+
+    cos_eta = np.cos(eta_nd_0)
+    sin_eta = np.sin(eta_nd_0)
+
+    ttg_nd = ttg / t_star
+
+    polar_observation = np.array(
+        [
+            # Spherical Position SC
+            r_nd_0,  # 0
+            cos_eta,  # 1
+            sin_eta,  # 2
+            v_r_nd_0,  # 3
+            v_eta_nd_0,  # 4
+            mass_current_nd,  # 5
+            r_nd_target,  # 6
+            v_r_nd_target,  # 7
+            v_eta_nd_target,  # 8
+            ttg_nd,  # 9
+        ],
+        dtype=np.float32,
+    )
+
+    env_data = {
+        "arr_r_polar_nd": [r_nd_0, eta_nd_0],
+        "arr_v_polar_nd": [v_r_nd_0, v_eta_nd_0],
+        "arr_rf_polar_nd": [r_nd_target, eta_nd_target],
+        "arr_vf_polar_nd": [v_r_nd_target, v_eta_nd_target],
+        "cos_eta": cos_eta,
+        "sin_eta": sin_eta,
+    }
+
+    return polar_observation, env_data
+
+
 def compute_reward_fast(
     params,
     current_state_t,
@@ -1277,5 +1372,71 @@ def compute_reward_fast(
         "terminated": terminated,
         "truncated": truncated,
     }
+
+    return reward, terminated, truncated, env_info
+
+
+def compute_reward_fast_TBT(state, params, u, TTG):
+    # non-dimensionalize states
+    x_nd = state[0] / params["l_star"]
+    y_nd = state[1] / params["l_star"]
+    vx_nd = state[2] / (params["l_star"] / params["t_star"])
+    vy_nd = state[3] / (params["l_star"] / params["t_star"])
+    m_nd = state[4] / params["m_star"]
+
+    x_target_nd = state[5] / params["l_star"]
+    y_target_nd = state[6] / params["l_star"]
+    vx_target_nd = state[7] / (params["l_star"] / params["t_star"])
+    vy_target_nd = state[8] / (params["l_star"] / params["t_star"])
+
+    sc = Spacecraft(0.0, 0.0, 0.0, 0.0, state[4], params["max_T"], params["ISP"])
+    sc.update_state_cartesian(state[0], state[1], state[2], state[3], state[4])
+    arr_OE = sc.calc_Planar_OE(0.0, 0.0, 0.0, 0.0, Constants.MU_SUN_M)
+    e = arr_OE[1]
+
+    # calculate the reward components
+    r_nd_0, eta_nd_0, v_r_nd_0, v_eta_nd_0 = cartesian_to_polar(
+        x_nd, y_nd, vx_nd, vy_nd
+    )
+    r_nd_target, eta_nd_target, v_r_nd_target, v_eta_nd_target = cartesian_to_polar(
+        x_target_nd, y_target_nd, vx_target_nd, vy_target_nd
+    )
+
+    episode_timeout = TTG <= 0.0
+
+    terminated = False
+    truncated = False
+
+    if r_nd_0 < 0.01:
+        reward = 0.0
+        terminated = True
+        truncated = False
+    elif e >= 1.0:
+        reward = 0.0
+        terminated = True
+        truncated = False
+    else:
+        # calculate distance to target
+        d_r_nd = np.sqrt((x_nd - x_target_nd) ** 2 + (y_nd - y_target_nd) ** 2)
+        d_v_nd = np.sqrt((vx_nd - vx_target_nd) ** 2 + (vy_nd - vy_target_nd) ** 2)
+
+        # position reward
+        pos_reward = np.exp(-params["r_dist_weight"] * d_r_nd**2)
+        pos_reward = (-1 + pos_reward) * params["pos_r_weight"]
+
+        # velocity reward
+        vel_reward = np.exp(-params["v_dist_weight"] * d_v_nd**2)
+        vel_reward = (-1 + vel_reward) * params["vel_r_weight"]
+
+        # throttle penalty
+        throttle_reward = -u * params["throttle_r_weight"]
+
+        reward = pos_reward + vel_reward + throttle_reward
+
+    if episode_timeout:
+        # Nothing good or bad assigned to this
+        truncated = True
+
+    env_info = {}
 
     return reward, terminated, truncated, env_info

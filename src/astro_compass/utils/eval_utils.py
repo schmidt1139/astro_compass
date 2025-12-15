@@ -16,6 +16,7 @@ def run_single_rollout(seed, params):
     rollout_env.seed(seed)
     params["seed_traj"] = seed
     params["flag_report_live"] = False
+    env_type = params["env_type"]
 
     # load model
     model = SB3_SAC.load(
@@ -26,7 +27,12 @@ def run_single_rollout(seed, params):
         verbose=0,
     )  # Use path_output so SB3 creates SAC_1/ subdirectory
 
-    return rollout_model(rollout_env, params, model, [])
+    if env_type == "TwoBody_Orb2Orb_Transfer_Env_target":
+        from astro_compass.utils.rl_utils import rollout_model_TBT
+
+        return rollout_model_TBT(rollout_env, params, model, [])
+    else:
+        return rollout_model(rollout_env, params, model, [])
 
 
 def mc_evaluate_agent(params):
@@ -43,6 +49,7 @@ def mc_evaluate_agent(params):
     arr_m = []
     list_pos_residuals = []
     list_vel_residuals = []
+    list_rewards = []
 
     with ProcessPoolExecutor(max_workers=num_workers) as executor:
         futures = [executor.submit(run_single_rollout, s, params) for s in seeds]
@@ -65,6 +72,7 @@ def mc_evaluate_agent(params):
         arr_m.append(rollout_data.arr_mass[-1])
         list_pos_residuals.append(rollout_data.arr_position_res)
         list_vel_residuals.append(rollout_data.arr_velocity_res)
+        list_rewards.append(rollout_data.arr_reward)
 
     return (
         arr_episode_numbers,
@@ -74,6 +82,7 @@ def mc_evaluate_agent(params):
         arr_m,
         list_pos_residuals,
         list_vel_residuals,
+        list_rewards,
     )
 
 
@@ -86,6 +95,7 @@ def plot_log_mc_results(mc_results, test_log, params):
         arr_m,
         list_pos_residuals,
         list_vel_residuals,
+        list_rewards,
     ) = mc_results
     mean_r = sum(arr_episode_rs) / len(arr_episode_rs)
     percentile_95_r = np.percentile(arr_episode_rs, 95)
@@ -153,7 +163,7 @@ def plot_log_mc_results(mc_results, test_log, params):
     plt.ylabel("Frequency")
     plt.grid(True)
     plt_path = params["path_plots"]
-    plt.savefig(f"{plt_path}/mc_episode_rewards_histogram.png")
+    plt.savefig(f"{plt_path}/mc_episode_rewards_histogram.png", dpi=300)
     plt.close()
 
     plt.figure(figsize=(10, 6))
@@ -163,7 +173,7 @@ def plot_log_mc_results(mc_results, test_log, params):
     plt.ylabel("Frequency")
     plt.grid(True)
     plt_path = params["path_plots"]
-    plt.savefig(f"{plt_path}/mc_episode_position_residuals_histogram.png")
+    plt.savefig(f"{plt_path}/mc_episode_position_residuals_histogram.png", dpi=300)
     plt.close()
 
     plt.figure(figsize=(10, 6))
@@ -173,7 +183,7 @@ def plot_log_mc_results(mc_results, test_log, params):
     plt.ylabel("Frequency")
     plt.grid(True)
     plt_path = params["path_plots"]
-    plt.savefig(f"{plt_path}/mc_episode_velocity_residuals_histogram.png")
+    plt.savefig(f"{plt_path}/mc_episode_velocity_residuals_histogram.png", dpi=300)
     plt.close()
 
     plt.figure(figsize=(10, 6))
@@ -183,7 +193,7 @@ def plot_log_mc_results(mc_results, test_log, params):
     plt.ylabel("Frequency")
     plt.grid(True)
     plt_path = params["path_plots"]
-    plt.savefig(f"{plt_path}/mc_episode_final_mass_histogram.png")
+    plt.savefig(f"{plt_path}/mc_episode_final_mass_histogram.png", dpi=300)
     plt.close()
 
     # plot position residuals over time for all episodes
@@ -198,7 +208,7 @@ def plot_log_mc_results(mc_results, test_log, params):
     plt.ylabel("Position Residual (nd)")
     plt.grid(True)
     plt_path = params["path_plots"]
-    plt.savefig(f"{plt_path}/mc_position_residuals_over_time.png")
+    plt.savefig(f"{plt_path}/mc_position_residuals_over_time.png", dpi=300)
     plt.close()
 
     # plot velocity residuals over time for all episodes
@@ -213,7 +223,18 @@ def plot_log_mc_results(mc_results, test_log, params):
     plt.ylabel("Velocity Residual (nd)")
     plt.grid(True)
     plt_path = params["path_plots"]
-    plt.savefig(f"{plt_path}/mc_velocity_residuals_over_time.png")
+    plt.savefig(f"{plt_path}/mc_velocity_residuals_over_time.png", dpi=300)
+    plt.close()
+
+    for i, arr_rs in enumerate(list_rewards):
+        plt.plot(arr_rs, alpha=0.5)
+
+    plt.title("Rewards Over Time for " + str(len(list_rewards)) + " Episodes")
+    plt.xlabel("Time Step")
+    plt.ylabel("Reward")
+    plt.grid(True)
+    plt_path = params["path_plots"]
+    plt.savefig(f"{plt_path}/mc_rewards_over_time.png", dpi=300)
     plt.close()
 
     return test_log
