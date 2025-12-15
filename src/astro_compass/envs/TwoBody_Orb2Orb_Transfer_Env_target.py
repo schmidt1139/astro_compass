@@ -135,6 +135,12 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         self.w_min_final_env_rad = np.deg2rad(self.w_min_final_env_deg)
         self.w_max_final_env_rad = np.deg2rad(self.w_max_final_env_deg)
 
+        self.scale_params = {
+            "l_star": self.l_star,
+            "t_star": self.t_star,
+            "m_star": self.m_star,
+        }
+
     def seed(self, seed_in: Optional[int] = None):
         # set the random seed for the environment
         self.seed = seed_in
@@ -229,7 +235,6 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
             "state_eta_deg": np.rad2deg(self.eta_0),
             "state_r_dot_nd": self.r_dot_0 * self.t_star / self.l_star,
             "state_v_eta_nd": self.v_eta_0 * self.t_star / self.l_star,
-            "state_aol_deg": np.rad2deg(self.aol_0),
             "max_thrust": self._spacecraft.max_thrust,
             "ISP": self._spacecraft.specific_impulse,
             "dm_nd": self.dm_nd,
@@ -321,16 +326,10 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         self.timesteps_in_TOF = int(TTG_dim / self.step_size) + 1
         self.timesteps_in_prop = self.timesteps_in_TOF * self.prop_length_scale
 
-        params_temp = {
-            "l_star": self.l_star,
-            "t_star": self.t_star,
-            "m_star": self.m_star,
-        }
-
         state_dict = self.decode_state(self._state)
         observation, env_data = self.compute_obs_fast_TBT(
             state_dict,
-            params_temp,
+            self.scale_params,
             self.TTG_dim,
         )
 
@@ -352,9 +351,6 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         e = self._keplerian_elements[1]
 
         params_temp = {
-            "l_star": self.l_star,
-            "t_star": self.t_star,
-            "m_star": self.m_star,
             "pos_r_weight": self.pos_r_weight,
             "vel_r_weight": self.vel_r_weight,
             "throttle_r_weight": self.throttle_r_weight,
@@ -364,6 +360,7 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
             "e": e,
             "max_T": self.max_T,
             "ISP": self.ISP,
+            **self.scale_params,
         }
         state_dict = self.decode_state(self._state)
         reward, truncated, terminated, env_info = self.compute_reward_fast_TBT(
@@ -488,15 +485,10 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         self.episode_reward += reward
 
         # construct observation
-        params_temp = {
-            "l_star": self.l_star,
-            "t_star": self.t_star,
-            "m_star": self.m_star,
-        }
         state_dict = self.decode_state(self._state)
         observation, env_data = self.compute_obs_fast_TBT(
             state_dict,
-            params_temp,
+            self.scale_params,
             self.TTG,
         )
 
@@ -549,14 +541,9 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         )
 
         # construct observation
-        params_temp = {
-            "l_star": self.l_star,
-            "t_star": self.t_star,
-            "m_star": self.m_star,
-        }
         state_dict = self.decode_state(self._state)
         observation, env_data = self.compute_obs_fast_TBT(
-            state_dict, params_temp, self.TTG
+            state_dict, self.scale_params, self.TTG
         )
 
         for key in env_data:
