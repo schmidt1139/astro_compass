@@ -453,9 +453,8 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         mass_0 = y_final_m[4]
 
         # change in state vector
-        delta_r = (y_final - y0) * np.array(
-            [1000, 1000, 1000, 1000, 1], dtype=np.float32
-        )
+        scale_vec = np.array([1000, 1000, 1000, 1000, 1], dtype=np.float32)
+        delta_r = (y_final - y0) * scale_vec
 
         # update the state and elapsed time
         self.elapsed_t = self.elapsed_t + self.step_size
@@ -468,7 +467,14 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
 
         # update env
         self.update_env(
-            x_0, y_0, vx_0, vy_0, mass_0, self.a_target, self.e_target, self.w_target
+            x_0,
+            y_0,
+            vx_0,
+            vy_0,
+            mass_0,
+            self.a_target,
+            self.e_target,
+            self.w_target,
         )
 
         # update the time to go
@@ -527,7 +533,14 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
 
         # update the env
         self.update_env(
-            x_in, y_in, vx_in, vy_in, m_in, a_target_in, e_target_in, w_target_in
+            x_in,
+            y_in,
+            vx_in,
+            vy_in,
+            m_in,
+            a_target_in,
+            e_target_in,
+            w_target_in,
         )
 
         # construct observation
@@ -536,7 +549,8 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
             "t_star": self.t_star,
             "m_star": self.m_star,
         }
-        observation, env_data = compute_obs_fast_TBT(self._state, params_temp, self.TTG)
+        state_dict = self.decode_state(self._state)
+        observation, env_data = compute_obs_fast_TBT(state_dict, params_temp, self.TTG)
 
         for key in env_data:
             setattr(self, key, env_data[key])
@@ -567,7 +581,11 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
 
         # compute target orbit cartesian coordinates
         x_f, y_f, vx_f, vy_f = calc_cart_from_OE(
-            a_target, e_target, w_target, theta_target, self.mu
+            a_target,
+            e_target,
+            w_target,
+            theta_target,
+            self.mu,
         )
 
         # check that the argument of latitude matches
@@ -589,15 +607,16 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
             if (
                 angle_diff > 0.05
             ):  # ~2.9 degrees tolerance - accounts for numerical precision near wraparound
-                print(
-                    f"ERROR: w_0={np.rad2deg(w_0):.2f}°, theta_0={np.rad2deg(theta_0):.2f}°"
-                )
-                print(
-                    f"ERROR: aol_check={np.rad2deg(aol_check_norm):.2f}°, aol_0={np.rad2deg(aol_0_norm):.2f}°"
-                )
+                w_0_deg = np.rad2deg(w_0)
+                theta_0_deg = np.rad2deg(theta_0)
+                aol_0_deg = np.rad2deg(aol_0_norm)
+                aol_check_deg = np.rad2deg(aol_check_norm)
+                angle_diff_deg = np.rad2deg(angle_diff)
+                print(f"ERROR: w_0={w_0_deg:.2f}°, theta_0={theta_0_deg:.2f}°")
+                print(f"ERROR: aol_check={aol_check_deg:.2f}°, aol_0={aol_0_deg:.2f}°")
                 print(f"ERROR: Elapsed time: {self.elapsed_t}s")
                 raise ValueError(
-                    f"Argument of latitude mismatch: aol_check={np.rad2deg(aol_check_norm):.2f}°, aol_0={np.rad2deg(aol_0_norm):.2f}°, diff={np.rad2deg(angle_diff):.2f}°"
+                    f"Argument of latitude mismatch: aol_check={aol_check_deg:.2f}°, aol_0={aol_0_deg:.2f}°, diff={angle_diff_deg:.2f}°"
                 )
 
         # compute polar coordinates
