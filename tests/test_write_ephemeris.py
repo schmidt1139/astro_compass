@@ -1,29 +1,27 @@
-import numpy as np
+import tempfile
+
 import gymnasium as gym
 import matplotlib.pyplot as plot
-import sys
-import os
-
+import numpy as np
 from gymnasium import envs
 from gymnasium.envs.registration import register
-from Constants import Constants
 
-# Adding python src code directory
-sys.path.append(os.path.abspath("../python"))
-
-from Ephemeris import Ephemeris
-from Hamiltonian_Control import Hamiltonian_Controller_TBT
-
+from astro_compass.constants.constants import Constants
+from astro_compass.core.ephemeris import Ephemeris
+from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 # register the environment if it isn't registered
 if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
     register(
         id="TwoBody_Orb2Orb_Transfer_Env-v0",
-        entry_point="TwoBody_Orb2Orb_Transfer_Env:TwoBody_Orb2Orb_Transfer_Env",
+        entry_point="astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env:TwoBody_Orb2Orb_Transfer_Env",
     )
 
 
-def test_write_ephemeris(env, filename_eph):
+def test_write_ephemeris():
+    env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
+
     # The prescribed time of flight for the transfer trajectory [s]
     input_TOF = 1.1 * 365.25 * 24 * 60 * 60
 
@@ -42,8 +40,8 @@ def test_write_ephemeris(env, filename_eph):
     H_controller = Hamiltonian_Controller_TBT(
         env, init_observation, init_info, input_TOF
     )
-    
-    #reduce smoothing for faster convergence
+
+    # reduce smoothing for faster convergence
     H_controller.max_k = 2
 
     # compute solution
@@ -71,24 +69,20 @@ def test_write_ephemeris(env, filename_eph):
     # Ephemeris plotting
     sma_Earth = 149598023 * 1000  # m
     sma_Mars = 2.32495e8 * 1000  # m
-    eph_out.plot_xy(Constants.RADIUS_SUN_M)
-    eph_out.plot_xy_ref_orbit(sma_Earth, "Earth Orbit")
-    eph_out.plot_xy_ref_orbit(sma_Mars, "Mars Orbit")
+    vis = EphemPlotter(eph_out)
+    vis.plot_xy(Constants.RADIUS_SUN_M)
+    vis.plot_xy_ref_orbit(sma_Earth, "Earth Orbit")
+    vis.plot_xy_ref_orbit(sma_Mars, "Mars Orbit")
 
     np.set_printoptions(precision=16)
     print("Solution for initial co-states: ", h_sol)
     print("Final smoothing parameter used in solution generation: ", eps)
 
     # write ephemeris file
-    eph_out.write_to_file(filename_ephemeris_out, mod_vector_write_frequency=10)
-    print("Ephemeris of trajectory written to: ", filename_ephemeris_out)
+    output_file = tempfile.NamedTemporaryFile().name
+    eph_out.write_to_file(output_file, mod_vector_write_frequency=10)
+    print("Ephemeris of trajectory written to: ", output_file)
 
 
-# initialize the environment
-env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
-
-# Ephemeris filename
-dir_ephemeris_out = os.path.join("..", "..", "data", "training_ephems")
-filename_ephemeris_out = dir_ephemeris_out + "test_ephemeris.txt"
-
-test_write_ephemeris(env, filename_ephemeris_out)
+if __name__ == "__main__":
+    test_write_ephemeris()

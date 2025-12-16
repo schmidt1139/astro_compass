@@ -8,6 +8,7 @@ from astro_compass.core.exceptions import TimeoutException, timeout_handler
 from astro_compass.core.gen_Hamiltonian_trajectory import gen_Hamiltonian_trajectory
 from astro_compass.envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from astro_compass.utils.log_utils import log_parameters, write_log_to_file
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 
 def process_single_trajectory(params):
@@ -132,13 +133,16 @@ def process_single_trajectory(params):
 
     # Save plots if solved
     if flag_solved and params["flag_plot_traj"] and eph_output is not None:
-        eph_output.save_plots(plot_dir, ephem_filename, params, env)
+        vis = EphemPlotter(eph_output)
+        vis.save_plots(plot_dir, ephem_filename, params, env)
 
     # write ephemeris if solved
     ephem_path = (
         os.path.join(ephem_dir, ephem_filename + ".txt") if flag_solved else None
     )
     if flag_solved and eph_output is not None:
+        os.makedirs(ephem_dir, exist_ok=True)
+
         eph_output.write_to_file(os.path.join(ephem_dir, ephem_filename + ".txt"))
 
     # Add parameters to the log after trajectory generation

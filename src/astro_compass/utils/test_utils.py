@@ -5,6 +5,7 @@ import numpy as np
 from astro_compass.core.ephemeris import Ephemeris
 from astro_compass.core.ephemeris_v2 import Ephemeris_v2
 from astro_compass.utils.log_utils import log
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 
 def compare_trajectories(
@@ -33,8 +34,8 @@ def compare_trajectories(
         test_log = log("Comparing trajectory files", test_log, flag_report_live)
         test_log = log(f"Output: {ephem_file}", test_log, flag_report_live)
         test_log = log(f"Truth: {sa_truth_ephems[index]}", test_log, flag_report_live)
-
-        flag_same = eph.compare_trajectories(
+        vis = EphemPlotter(eph)
+        flag_same = vis.compare_trajectories(
             eph_truth, position_tol=1_000_000.0, velocity_tol=1.0
         )
 
@@ -109,8 +110,7 @@ def compare_log_files_with_tolerance(
         return are_same
 
     except Exception as e:
-        if flag_report_live:
-            print(f"Error comparing log files: {e}")
+        print(f"Error comparing log files: {e}")
         return False
 
 

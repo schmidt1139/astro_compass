@@ -1,5 +1,5 @@
 import os
-import sys
+import tempfile
 
 import numpy as np
 from gymnasium import envs
@@ -7,19 +7,14 @@ from gymnasium.envs.registration import register
 
 from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 from astro_compass.utils.log_utils import log
+from astro_compass.utils.path_utils import DATA_ROOT
 from astro_compass.utils.test_utils import compare_log_files_with_tolerance
-
-# Adding python src code directory
-current_dir = os.path.dirname(__file__)
-python_src_dir = os.path.abspath(os.path.join(current_dir, "..", "python"))
-sys.path.append(python_src_dir)
-
 
 # register the environment if it isn't registered
 if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
     register(
         id="TwoBody_Orb2Orb_Transfer_Env-v0",
-        entry_point="TwoBody_Orb2Orb_Transfer_Env:TwoBody_Orb2Orb_Transfer_Env",
+        entry_point="astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env:TwoBody_Orb2Orb_Transfer_Env",
     )
 
 
@@ -88,11 +83,9 @@ def test_env_step_no_action(flag_report_live=False):
 
     # write the log to a text file
     dir_test = os.path.normpath(
-        os.path.join(os.getcwd(), "data", "test_data", "test_env_step_no_action")
+        os.path.join(DATA_ROOT, "test_data", "test_env_step_no_action")
     )
-    path_test_report = os.path.normpath(
-        os.path.join(dir_test, "output_test_env_step_no_action_log.txt")
-    )
+    path_test_report = tempfile.NamedTemporaryFile().name
     path_test_truth = os.path.normpath(
         os.path.join(dir_test, "truth_test_env_step_no_action_log.txt")
     )
@@ -105,3 +98,7 @@ def test_env_step_no_action(flag_report_live=False):
         path_test_report, path_test_truth, flag_report_live=False
     )
     return are_same
+
+
+if __name__ == "__main__":
+    test_env_step_no_action(flag_report_live=True)

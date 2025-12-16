@@ -1,8 +1,10 @@
 import os
+import tempfile
 
 from matplotlib import pyplot as plt
 
 from astro_compass.core.ephemeris_v2 import Ephemeris_v2
+from astro_compass.core.rollouts import SACRolloutData_TBR_polar
 from astro_compass.utils.env_utils import gen_rl_environment
 from astro_compass.utils.log_utils import (
     compare_logs,
@@ -11,18 +13,18 @@ from astro_compass.utils.log_utils import (
     read_log_from_file,
     write_log_to_file,
 )
+from astro_compass.utils.path_utils import DATA_ROOT
 from astro_compass.utils.plotting_utils import (
-    SACRolloutData_TBR_polar,
     plot_rendezvous_traj,
     plot_SAC_training_TBR_polar,
 )
 
 
 def test_TBR_polar_env(flag_report_live: bool = False):
-    plt.style.use("data/support_files/light_paper.mplstyle")
+    plt.style.use(f"{DATA_ROOT}/support_files/light_paper.mplstyle")
 
     # config path
-    path_test = os.path.join("data", "test_data", "test_TBR_polar_env")
+    path_test = os.path.join(DATA_ROOT, "test_data", "test_TBR_polar_env")
     path_config = os.path.join(path_test, "TBR_polar_config.txt")
 
     # define normalization parameters (for NN)
@@ -38,6 +40,8 @@ def test_TBR_polar_env(flag_report_live: bool = False):
     seed_traj = params["seed_env"]
     eph = Ephemeris_v2()
     rollout_data = SACRolloutData_TBR_polar()
+
+    output_dir = tempfile.mkdtemp()
 
     flag_test_pass = True
 
@@ -118,6 +122,8 @@ def test_TBR_polar_env(flag_report_live: bool = False):
             delta_target_v_nd = v_target_nd - v_current_nd
             d_v_r_unit = info["v_r_target_unit"] - info["v_r_unit"]
             d_v_t_unit = info["v_t_target_unit"] - info["v_t_unit"]
+            pos_residual = info["pos_residual"]
+            vel_residual = info["vel_residual"]
 
             eph.add_data(
                 info["Elapsed time"],
@@ -187,6 +193,8 @@ def test_TBR_polar_env(flag_report_live: bool = False):
                 vel_reward,  # velocity reward #21
                 mass_reward,  # mass reward #22
                 throttle_reward,  # throttle reward #23
+                pos_residual,
+                vel_residual,
             )
 
             steps += 1
@@ -197,22 +205,18 @@ def test_TBR_polar_env(flag_report_live: bool = False):
             if steps >= params["max_steps"]:
                 flag_continue = False
 
-        # fig = eph.plot_xy();
-        # fig.savefig(os.path.join("data", "test_data", "test_TBR", "test_traj_") + str(count_traj) + "_TBR_env.png")
+        # fig = vis.plot_xy();
+        # fig.savefig(os.path.join(DATA_ROOT, "test_data", "test_TBR", "test_traj_") + str(count_traj) + "_TBR_env.png")
 
-        plot_SAC_training_TBR_polar(rollout_data, path_test, eph, params, env)
+        plot_SAC_training_TBR_polar(rollout_data, output_dir, eph, params, env)
 
         eph.write_to_file(
-            os.path.join(
-                "data", "test_data", "test_TBR_polar_env", "test_traj_ephemeris_"
-            )
-            + str(count_traj)
-            + "_TBR_env.txt"
+            os.path.join(output_dir, f"test_traj_ephemeris_{count_traj}_TBR_env.txt")
         )
 
         fig_orb = plot_rendezvous_traj(eph, env, params)
         fig_orb.savefig(
-            os.path.join(path_test, "SAC_Test_Traj.png"), dpi=300, bbox_inches="tight"
+            os.path.join(output_dir, "SAC_Test_Traj.png"), dpi=300, bbox_inches="tight"
         )
 
         test_log = log("Final observation vector\n", test_log, flag_report_live)
@@ -232,10 +236,10 @@ def test_TBR_polar_env(flag_report_live: bool = False):
 
         test_log = log("\n\n\n", test_log, flag_report_live)
 
-    path_log = os.path.join(path_test, "test_TBR_polar_env_log.txt")
+    path_log = os.path.join(output_dir, "test_TBR_polar_env_log.txt")
     write_log_to_file(path_log, test_log)
 
-    path_truth_log = os.path.join(path_test, "truth_TBR_polar_env_log.txt")
+    path_truth_log = os.path.join(path_test, "truth_TBR_polar_env_log.txt")  # reward 0?
     truth_log = read_log_from_file(path_truth_log)
 
     log_compare = read_log_from_file(path_log)
@@ -249,7 +253,7 @@ def test_TBR_polar_env(flag_report_live: bool = False):
     else:
         test_log = log("Log file matches truth log file.", test_log, flag_report_live)
 
-    return flag_test_pass
+    assert flag_test_pass
 
 
 if __name__ == "__main__":

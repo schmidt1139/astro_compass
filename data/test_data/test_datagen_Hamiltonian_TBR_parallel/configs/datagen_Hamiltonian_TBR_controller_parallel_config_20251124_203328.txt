@@ -10,7 +10,7 @@ seed_env_init: 751851167
 num_trajs: 16
 tof_scales: [1.0, 0.75, 1.0, 1.25]
 tof_weights: [0.25, 0.25, 0.25, 0.25]
-data_path: C:\Users\micha\MSI_Data\Masters_Thesis\astro_compass\data\test_data\test_datagen_Hamiltonian_TBR_parallel
+data_path: astro_compass\data\test_data\test_datagen_Hamiltonian_TBR_parallel
 eps_threshold: 0.0001
 flag_plot_traj: True
 init_costate_guesses: 8

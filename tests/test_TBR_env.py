@@ -1,9 +1,12 @@
 import os
+import tempfile
 
 from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris_v2 import Ephemeris_v2
 from astro_compass.envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from astro_compass.utils.log_utils import log
+from astro_compass.utils.path_utils import DATA_ROOT
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 
 def test_TBR_env(flag_report_live: bool = False):
@@ -116,14 +119,11 @@ def test_TBR_env(flag_report_live: bool = False):
             if steps >= params["max_steps"]:
                 flag_continue = False
 
-        # fig = eph.plot_xy();
-        # fig.savefig(os.path.join("data", "test_data", "test_TBR", "test_traj_") + str(count_traj) + "_TBR_env.png")
+        # fig = vis.plot_xy();
+        # fig.savefig(os.path.join(DATA_ROOT, "test_data", "test_TBR", "test_traj_") + str(count_traj) + "_TBR_env.png")
 
-        eph.write_to_file(
-            os.path.join("data", "test_data", "test_TBR", "test_traj_ephemeris_")
-            + str(count_traj)
-            + "_TBR_env.txt"
-        )
+        output_file = tempfile.NamedTemporaryFile().name
+        eph.write_to_file(output_file)
 
         test_log = log("Final observation vector\n", test_log, flag_report_live)
         test_log = log("x_nd: " + str(obs[0]), test_log, flag_report_live)
@@ -140,20 +140,16 @@ def test_TBR_env(flag_report_live: bool = False):
         # load truth data for comparison
         eph_truth = Ephemeris_v2()
         eph_truth.read_from_file(
-            os.path.join("data", "test_data", "test_TBR", "test_traj_ephemeris_")
+            os.path.join(DATA_ROOT, "test_data", "test_TBR", "test_traj_ephemeris_")
             + str(count_traj)
             + "_TBR_env_truth.txt"
         )
 
         # re-ingest ephemeris data for comparison
         eph_comp = Ephemeris_v2()
-        eph_comp.read_from_file(
-            os.path.join("data", "test_data", "test_TBR", "test_traj_ephemeris_")
-            + str(count_traj)
-            + "_TBR_env.txt"
-        )
-
-        eph_comp.compare_trajectories(
+        eph_comp.read_from_file(output_file)
+        vis = EphemPlotter(eph_comp)
+        vis.compare_trajectories(
             eph_truth, position_tol=1e3, velocity_tol=1e-1, verbose=flag_report_live
         )
 
@@ -170,4 +166,8 @@ def test_TBR_env(flag_report_live: bool = False):
             flag_report_live,
         )
 
-    return flag_test_pass
+    assert flag_test_pass
+
+
+if __name__ == "__main__":
+    test_TBR_env(flag_report_live=True)

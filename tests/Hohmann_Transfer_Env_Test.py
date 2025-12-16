@@ -1,23 +1,17 @@
-import numpy as np
 import gymnasium as gym
 import matplotlib.pyplot as plot
-import sys
-import os
-
+import numpy as np
 from gymnasium import envs
 from gymnasium.envs.registration import register
 
 # Adding python src code directory
-sys.path.append(os.path.abspath("../python"))
-
-from Ephemeris import Ephemeris
-
+from astro_compass.core.ephemeris import Ephemeris
 
 # register the environment if it isn't registered
 if "HohmannTransferEnv-v0" not in envs.registry.keys():
     register(
         id="HohmannTransferEnv-v0",
-        entry_point="Hohmann_Transfer_Env:HohmannTransferEnv",
+        entry_point="astro_compass.envs.Hohmann_Transfer_Env:HohmannTransferEnv",
     )
 
 
@@ -88,7 +82,8 @@ def test_runnable_env(env, num_trajectories, num_steps_per_traj):
 
         if count_traj == num_traj - 1:
             print("Plotting last trajectory...")
-            fig = eph.plot_xy(info["planet_radii"])
+            vis = EphemPlotter(eph)
+            fig = vis.plot_xy(info["planet_radii"])
             plot.show(fig)
 
     fig_reward, ax = plot.subplots(figsize=(6, 6))
@@ -106,4 +101,5 @@ def test_runnable_env(env, num_trajectories, num_steps_per_traj):
     print("Test successful")
 
 
-test_runnable_env(env, num_traj, steps_per_traj)
+if __name__ == "__main__":
+    test_runnable_env(env, num_traj, steps_per_traj)

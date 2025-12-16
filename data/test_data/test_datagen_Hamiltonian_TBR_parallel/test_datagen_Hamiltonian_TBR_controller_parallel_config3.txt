@@ -7,7 +7,7 @@ t_star: 5074778.662111725
 g0: 9.80665
 env_step_size: 86400
 seed_env_init: 751851167
-num_trajs: 16
+num_trajs: 4
 tof_scales: [1.0,0.75,1.0,1.25]
 tof_weights: [0.25,0.25,0.25,0.25]
 data_path: data\test_data\test_datagen_Hamiltonian_TBR_parallel

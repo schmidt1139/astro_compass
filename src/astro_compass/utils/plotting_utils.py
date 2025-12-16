@@ -10,6 +10,7 @@ from astro_compass.utils.h_rl_fusion import calc_rewards_from_H_ephem
 from astro_compass.utils.state_vector_utils import (
     convert_attitude_from_cartesian_to_radial,
 )
+from astro_compass.vis.ephem_plotter import EphemPlotter, plot_overlay_ballistic_orbit
 
 
 def format_plots():
@@ -46,320 +47,7 @@ def plot_training_loss(arr_epochs, arr_loss_train, arr_loss, path_plot, params):
     fig.savefig(path_plot)
 
 
-class SACRolloutData:
-    def __init__(self):
-        self.arr_time = []
-        self.arr_reward_tot = []
-        self.arr_reward = []
-        self.arr_throttle = []
-        self.arr_alpha_x = []
-        self.arr_alpha_y = []
-        self.arr_x = []
-        self.arr_y = []
-        self.arr_vx = []
-        self.arr_vy = []
-        self.arr_sma = []
-        self.arr_sma_target = []
-        self.arr_ecc = []
-        self.arr_ecc_target = []
-        self.arr_ecc_max = []
-        self.arr_reward_mass = []
-        self.arr_reward_distance = []
-        self.sum_reward = 0.0
-
-    def add_step(
-        self,
-        time,
-        reward,
-        throttle,
-        alpha_x,
-        alpha_y,
-        x,
-        y,
-        vx,
-        vy,
-        sma,
-        sma_target,
-        ecc,
-        ecc_target,
-        ecc_max,
-        reward_mass,
-        reward_distance,
-    ):
-        self.arr_time.append(time)  # convert to days
-        self.arr_reward.append(reward)
-        self.arr_throttle.append(throttle)
-        self.arr_alpha_x.append(alpha_x)
-        self.arr_alpha_y.append(alpha_y)
-        self.arr_x.append(x)
-        self.arr_y.append(y)
-        self.arr_vx.append(vx)
-        self.arr_vy.append(vy)
-        self.arr_sma.append(sma)
-        self.arr_sma_target.append(sma_target)
-        self.arr_ecc.append(ecc)
-        self.arr_ecc_target.append(ecc_target)
-        self.arr_ecc_max.append(ecc_max)
-        self.sum_reward += reward
-        self.arr_reward_tot.append(self.sum_reward)
-        self.arr_reward_mass.append(reward_mass)
-        self.arr_reward_distance.append(reward_distance)
-
-
-class SACRolloutData_TBR:
-    def __init__(self):
-        self.arr_time = []
-        self.arr_reward_tot = []
-        self.arr_reward = []
-        self.arr_throttle = []
-        self.arr_alpha_x = []
-        self.arr_alpha_y = []
-        self.arr_x = []
-        self.arr_y = []
-        self.arr_vx = []
-        self.arr_vy = []
-        self.arr_m = []
-        self.arr_x_target = []
-        self.arr_y_target = []
-        self.arr_vx_target = []
-        self.arr_vy_target = []
-        self.arr_ttg = []
-        self.arr_pos_reward = []
-        self.arr_vel_reward = []
-        self.arr_mass_reward = []
-        self.sum_reward = 0.0
-
-    def add_step(
-        self,
-        time,
-        reward,
-        throttle,
-        alpha_x,
-        alpha_y,
-        x,
-        y,
-        vx,
-        vy,
-        m,
-        x_target,
-        y_target,
-        vx_target,
-        vy_target,
-        ttg,
-        pos_reward,
-        vel_reward,
-        mass_reward,
-    ):
-        self.arr_time.append(time)  # convert to days
-        self.arr_reward.append(reward)
-        self.arr_throttle.append(throttle)
-        self.arr_alpha_x.append(alpha_x)
-        self.arr_alpha_y.append(alpha_y)
-        self.arr_x.append(x)
-        self.arr_y.append(y)
-        self.arr_vx.append(vx)
-        self.arr_vy.append(vy)
-        self.arr_m.append(m)
-        self.arr_x_target.append(x_target)
-        self.arr_y_target.append(y_target)
-        self.arr_vx_target.append(vx_target)
-        self.arr_vy_target.append(vy_target)
-        self.arr_ttg.append(ttg)
-        self.arr_pos_reward.append(pos_reward)
-        self.arr_vel_reward.append(vel_reward)
-        self.arr_mass_reward.append(mass_reward)
-        self.sum_reward += reward
-        self.arr_reward_tot.append(self.sum_reward)
-
-
-class SACRolloutData_TBR_polar:
-    def __init__(self):
-        self.arr_time = []
-        self.arr_reward_tot = []
-        self.arr_reward = []
-
-        self.arr_throttle = []
-        self.arr_alpha_r = []
-        self.arr_alpha_theta = []
-
-        self.arr_rad = []
-        self.arr_cos_theta = []
-        self.arr_sin_theta = []
-        self.arr_v = []
-        self.arr_v_r_unit = []
-        self.arr_v_t_unit = []
-        self.arr_mass = []
-
-        self.arr_rad_f = []
-        self.arr_cos_theta_f = []
-        self.arr_sin_theta_f = []
-        self.arr_v_f = []
-        self.arr_v_r_f_unit = []
-        self.arr_v_t_f_unit = []
-        self.arr_ttg = []
-
-        self.arr_pos_reward = []
-        self.arr_vel_reward = []
-        self.arr_mass_reward = []
-        self.arr_throttle_reward = []
-        self.sum_reward = 0.0
-
-        self.arr_position_res = []
-        self.arr_velocity_res = []
-
-    def add_step(
-        self,
-        time,
-        reward,
-        throttle,
-        alpha_r,
-        alpha_theta,
-        rad,
-        cos_theta,
-        sin_theta,
-        v,
-        v_r_unit,
-        v_t_unit,
-        m,
-        rad_f,
-        cos_theta_f,
-        sin_theta_f,
-        v_f,
-        v_r_f_unit,
-        v_t_f_unit,
-        ttg,
-        pos_reward,
-        vel_reward,
-        mass_reward,
-        throttle_reward,
-        position_res,
-        velocity_res,
-    ):
-        self.arr_time.append(time)  # convert to days
-        self.arr_reward.append(reward)
-        self.arr_throttle.append(throttle)
-        self.arr_alpha_r.append(alpha_r)
-        self.arr_alpha_theta.append(alpha_theta)
-        self.arr_rad.append(rad)
-        self.arr_cos_theta.append(cos_theta)
-        self.arr_sin_theta.append(sin_theta)
-        self.arr_v.append(v)
-        self.arr_v_r_unit.append(v_r_unit)
-        self.arr_v_t_unit.append(v_t_unit)
-        self.arr_mass.append(m)
-        self.arr_rad_f.append(rad_f)
-        self.arr_cos_theta_f.append(cos_theta_f)
-        self.arr_sin_theta_f.append(sin_theta_f)
-        self.arr_v_f.append(v_f)
-        self.arr_v_r_f_unit.append(v_r_f_unit)
-        self.arr_v_t_f_unit.append(v_t_f_unit)
-        self.arr_ttg.append(ttg)
-        self.arr_pos_reward.append(pos_reward)
-        self.arr_vel_reward.append(vel_reward)
-        self.arr_mass_reward.append(mass_reward)
-        self.arr_throttle_reward.append(throttle_reward)
-
-        self.sum_reward += reward
-        self.arr_reward_tot.append(self.sum_reward)
-        self.arr_position_res.append(position_res)
-        self.arr_velocity_res.append(velocity_res)
-
-
-def plot_SAC_training(
-    SACRolloutData, arr_episode_numbers, arr_episode_rs, path_output, eph, eph_h=None
-):
-    # plot reward over time
-    plt.figure()
-    plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_reward_tot, label="Reward")
-    plt.xlabel("Time [days]")
-    plt.ylabel("Reward")
-    plt.title("SAC Training Reward over Time")
-    plt.legend()
-    plt.grid(True, alpha=0.3)  # Force grid on with some transparency
-    plt.savefig(os.path.join(path_output, "SAC_Training_Reward.png"), dpi=300)
-
-    # plot reward over time per step
-    plt.figure()
-    plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_reward, label="Reward")
-    plt.plot(
-        SACRolloutData.arr_time,
-        SACRolloutData.arr_reward_mass,
-        label="Reward Mass Component",
-    )
-    plt.plot(
-        SACRolloutData.arr_time,
-        SACRolloutData.arr_reward_distance,
-        label="Reward Distance Component",
-    )
-    plt.xlabel("Time [days]")
-    plt.ylabel("Reward per Step")
-    plt.title("SAC Training Reward Per Step over Time")
-    plt.legend()
-    plt.grid(True, alpha=0.3)  # Force grid on with some transparency
-    plt.savefig(os.path.join(path_output, "SAC_Training_Reward_Per_Step.png"), dpi=300)
-
-    # plot throttle over time
-    plt.figure()
-    plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_throttle, label="Throttle")
-    plt.xlabel("Time [days]")
-    plt.ylabel("Throttle")
-    plt.title("SAC Training Throttle over Time")
-    plt.legend()
-    plt.grid(True, alpha=0.3)  # Force grid on with some transparency
-    plt.savefig(os.path.join(path_output, "SAC_Training_Throttle.png"), dpi=300)
-
-    # plot attitude over time
-    plt.figure()
-    plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_alpha_x, label="alpha_x")
-    plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_alpha_y, label="alpha_y")
-    plt.xlabel("Time [days]")
-    plt.ylabel("Attitude")
-    plt.title("SAC Training Burn Attitude over Time")
-    plt.legend()
-    plt.grid(True, alpha=0.3)  # Force grid on with some transparency
-    plt.savefig(os.path.join(path_output, "SAC_Training_Alpha.png"), dpi=300)
-
-    # plot nd state over time
-    plt.figure()
-    plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_x, label="x")
-    plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_y, label="y")
-    plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_vx, label="vx")
-    plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_vy, label="vy")
-    plt.xlabel("Time [days]")
-    plt.ylabel("ND state")
-    plt.title("SAC Training ND State over Time")
-    plt.legend()
-    plt.grid(True, alpha=0.3)  # Force grid on with some transparency
-    plt.savefig(os.path.join(path_output, "SAC_ND_State.png"), dpi=300)
-
-    # plot nd state over time
-    plt.figure()
-    plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_sma, label="sma")
-    plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_sma_target, label="sma_target")
-    plt.xlabel("Time [days]")
-    plt.ylabel("SMA Achieved [m]")
-    plt.title("SAC Achieved SMA over Time")
-    plt.legend()
-    plt.grid(True, alpha=0.3)  # Force grid on with some transparency
-    plt.savefig(os.path.join(path_output, "SAC_SMA_Achieved.png"), dpi=300)
-
-    plt.figure()
-    plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_ecc, label="ecc")
-    plt.plot(SACRolloutData.arr_time, SACRolloutData.arr_ecc_target, label="ecc_target")
-    plt.plot(
-        SACRolloutData.arr_time,
-        SACRolloutData.arr_ecc_max,
-        label="ecc_max",
-        linestyle="--",
-        color="red",
-    )
-    plt.xlabel("Time [days]")
-    plt.ylabel("ECC Achieved")
-    plt.title("SAC Achieved ECC over Time")
-    plt.legend()
-    plt.grid(True, alpha=0.3)  # Force grid on with some transparency
-    plt.savefig(os.path.join(path_output, "SAC_ECC_Achieved.png"), dpi=300)
-
+def plot_reward_per_episode(arr_episode_numbers, arr_episode_rs, path_output):
     plt.figure()
     plt.plot(arr_episode_numbers, arr_episode_rs, label="Training Reward per Episode")
     plt.xlabel("Episode Number")
@@ -370,16 +58,6 @@ def plot_SAC_training(
     plt.savefig(
         os.path.join(path_output, "SAC_Training_reward_per_episode.png"), dpi=300
     )
-
-    # generate and save figures
-    fig_orb = eph.plot_xy()
-    if eph_h is not None:
-        fig_orb = eph.overlay_ref_orbit(
-            ephem=eph_h, label="Hamiltonian Trajectory", color_in="#f89540"
-        )
-    fig_orb = eph.plot_xy_ref_orbit(Constants.SMA_MARS, "Mars", "#b7410e")
-    fig_orb = eph.plot_xy_ref_orbit(Constants.SMA_EARTH, "Earth")
-    fig_orb.savefig(os.path.join(path_output, "SAC_Test_Traj.png"), dpi=300)
 
 
 def plot_SAC_training_TBR(
@@ -700,7 +378,8 @@ def plot_SAC_training_TBR(
         plt.close(fig)
 
     # generate and save figures
-    fig_orb = eph.plot_xy(color_in="#7e03a8")
+    vis = EphemPlotter(eph)
+    fig_orb = vis.plot_xy(color_in="#7e03a8")
     x_target = SACRolloutData_TBR.arr_x_target[-1] * params["l_star"]
     y_target = SACRolloutData_TBR.arr_y_target[-1] * params["l_star"]
     vx_target = (
@@ -717,7 +396,7 @@ def plot_SAC_training_TBR(
         env,
         fig_orb,
         params,
-        eph,
+        vis,
         label_in="Target Orbit",
         color_in="#cc4778",
     )
@@ -729,14 +408,15 @@ def plot_SAC_training_TBR(
         env,
         fig_orb,
         params,
-        eph,
+        vis,
         label_in="Initial Orbit",
         color_in="#0d0887",
     )
     fig_orb = eph.add_target_icon(x_target, y_target, color_in="#cc4778")
 
     if params.get("flag_gen_H_traj", False) and (ephem_H is not None):
-        fig_orb = eph.overlay_ref_orbit(
+        vis = EphemPlotter(eph)
+        fig_orb = vis.overlay_ref_orbit(
             ephem=ephem_H, label="Hamiltonian Trajectory", color_in="#f89540"
         )
 
@@ -799,7 +479,7 @@ def plot_SAC_training_TBR_polar(
 ):
     if ephem_H is not None:
         results = calc_rewards_from_H_ephem(ephem_H, env, params)
-        # Calculate rewards from ephemeris
+        # Calculate rewards from astro_compass.core.ephemeris
 
         [
             arr_elapsed_time,
@@ -1193,7 +873,8 @@ def plot_SAC_training_TBR_polar(
     # generate and save figures
     fig_orb = plot_rendezvous_traj(eph, env, params)
     if params.get("flag_gen_H_traj", False) and (ephem_H is not None):
-        fig_orb = eph.overlay_ref_orbit(
+        vis = EphemPlotter(eph)
+        fig_orb = vis.overlay_ref_orbit(
             ephem=ephem_H, label="Hamiltonian Trajectory", color_in="#f89540"
         )
     fig_orb.savefig(
@@ -1255,66 +936,9 @@ def plot_SAC_training_TBR_polar(
         df.to_csv(os.path.join(path_output, "SAC_Rewards.csv"), index=False)
 
 
-def plot_overlay_ballistic_orbit(
-    x, y, vx, vy, env, fig, params, eph, label_in, color_in="lime"
-):
-    # check env type
-    if params.get("env_type", "TwoBodyRendezvous_Env") == "TwoBodyRendezvous_Polar_Env":
-        flag_use_obs = False
-    elif (
-        params.get("env_type", "TwoBodyRendezvous_Env")
-        == "TwoBodyRendezvous_Polar_Env2"
-    ):
-        flag_use_obs = False
-    else:
-        flag_use_obs = True
-
-    obs, info = env.reset()
-
-    state_in = [x, y, vx, vy, 1000.0, x, y, vx, vy, Constants.YEARS_TO_SEC * 10.0]
-
-    unwrapped_env = env.unwrapped
-    obs, info = unwrapped_env.set_state(state_in)
-
-    T = info["orbital_period_years"] * Constants.YEARS_TO_SEC
-
-    time = 0.0
-    flag_done = False
-    arr_x = []
-    arr_y = []
-    max_steps = 10000  # Safety limit to prevent infinite loop
-    step_count = 0
-
-    while not flag_done and step_count < max_steps:
-        obs, reward, done, truncated, info = env.step([0.0, 0.0, 0.0])
-
-        if flag_use_obs:
-            obs = obs
-            # dim state
-            x_i = obs[0] * params["l_star"]
-            y_i = obs[1] * params["l_star"]
-        else:
-            unwrapped_env = env.unwrapped
-            obs = unwrapped_env.get_cartesian_state()
-            x_i = obs[0]
-            y_i = obs[1]
-
-        if info["Elapsed time"] >= T or done or truncated:
-            flag_done = True
-
-        arr_x.append(x_i)
-        arr_y.append(y_i)
-        step_count += 1
-
-    fig = eph.overlay_ref_orbit(
-        ephem=None, label=label_in, color_in=color_in, arr_x=arr_x, arr_y=arr_y
-    )
-
-    return fig
-
-
 def plot_rendezvous_traj(eph, env, params):
-    fig_orb = eph.plot_xy(color_in="#7e03a8")
+    vis = EphemPlotter(eph)
+    fig_orb = vis.plot_xy(color_in="#7e03a8")
 
     x_target = eph.arr_x_target[-1]
     y_target = eph.arr_y_target[-1]
@@ -1329,7 +953,7 @@ def plot_rendezvous_traj(eph, env, params):
         env,
         fig_orb,
         params,
-        eph,
+        vis,
         label_in="Target Orbit",
         color_in="#cc4778",
     )
@@ -1347,13 +971,13 @@ def plot_rendezvous_traj(eph, env, params):
         env,
         fig_orb,
         params,
-        eph,
+        vis,
         label_in="Initial Orbit",
         color_in="#0d0887",
     )
+    vis = EphemPlotter(eph)
+    fig_orb = vis.add_target_icon(x_target, y_target, color_in="#cc4778")
 
-    fig_orb = eph.add_target_icon(x_target, y_target, color_in="#cc4778")
-
-    fig_orb = eph.adjust_plot_limits()
+    fig_orb = vis.adjust_plot_limits()
 
     return fig_orb

@@ -1,6 +1,7 @@
 import os
 import random
 import sys
+import tempfile
 
 import gymnasium as gym
 import matplotlib.pyplot as plt
@@ -9,23 +10,22 @@ from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import BaseCallback, CallbackList, EvalCallback
 from stable_baselines3.common.monitor import Monitor
 
-from astro_compass.utils.path_utils import PROJECT_ROOT
+from astro_compass.constants.constants import Constants
+from astro_compass.core.ephemeris import Ephemeris
+from astro_compass.core.spacecraft import Spacecraft
+from astro_compass.envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
+from astro_compass.utils.log_utils import log
+from astro_compass.utils.path_utils import DATA_ROOT, PROJECT_ROOT
+from astro_compass.utils.rl_utils import log_training_perf
+from astro_compass.utils.state_vector_utils import cartesian_to_polar
+from astro_compass.utils.test_utils import compare_log_files_with_tolerance
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 os.chdir(PROJECT_ROOT)
 print("Now working in:", os.getcwd())
 
 sys.path.append(os.path.join(PROJECT_ROOT, "src"))
 sys.path.append(os.path.join(PROJECT_ROOT, "scripts"))
-
-from astro_compass.constants.constants import Constants
-from astro_compass.core.ephemeris import Ephemeris
-from astro_compass.core.spacecraft import Spacecraft
-from astro_compass.envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
-from astro_compass.utils.log_utils import log
-from astro_compass.utils.plotting_utils import plot_SAC_training
-from astro_compass.utils.rl_utils import log_training_perf
-from astro_compass.utils.state_vector_utils import cartesian_to_polar
-from astro_compass.utils.test_utils import compare_log_files_with_tolerance
 
 
 class RewardLoggerCallback(BaseCallback):
@@ -102,12 +102,12 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
         step_size=params["env_step_size"],
     )
 
-    max_episode_steps_in = 500
+    max_episode_steps_in = 1001
     env = gym.wrappers.TimeLimit(env, max_episode_steps=max_episode_steps_in)
     eval_env = gym.wrappers.TimeLimit(eval_env, max_episode_steps=max_episode_steps_in)
     env = Monitor(env)
     eval_env = Monitor(eval_env)
-    training_steps = max_episode_steps_in * 10
+    training_steps = max_episode_steps_in
 
     obs, info = env.reset(seed=seed_in)
     obs, info = eval_env.reset(seed=seed_in)
@@ -119,13 +119,15 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
     # print("GPU available: ", torch.cuda.is_available())  # Should print True if GPU is available)
 
     # paths
-    path_nns = os.path.normpath(os.path.join(os.getcwd(), "data", "neural_networks"))
-    path_output = os.path.normpath(
-        os.path.join(os.getcwd(), "data", "test_data", "test_SAC_training_TBR")
-    )
+    path_nns = tempfile.mkdtemp()
+    path_output = tempfile.mkdtemp()
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
     path_output_log = os.path.join(path_output, "SAC_Training_Log.txt")
-    path_output_log_truth = os.path.join(path_output, "SAC_Training_TBR_Log_truth.txt")
+    path_output_log_truth = os.path.join(
+        DATA_ROOT,
+        "test_data",
+        "SAC_Training_TBR_Log_truth.txt",
+    )
 
     # reset the environment
     observation, info = env.reset(seed=seed_in)
@@ -269,13 +271,7 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
     test_log = log("truncated: " + str(truncated) + " ", test_log, flag_report_live)
 
     # plot the results
-    plot_SAC_training(
-        rollout_data1,
-        arr_epsisode_numbers,
-        arr_epsisode_rs,
-        path_output,
-        eph,
-    )
+    # vis = RolloutPlotter(rolloutData, path_output)
 
     env.close()
 
@@ -285,7 +281,8 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
         mod_vector_write_frequency=1,
     )
 
-    fig_xy = eph.plot_xy()
+    vis = EphemPlotter(eph)
+    fig_xy = vis.plot_xy()
     fig_xy.savefig(os.path.join(path_output, "SAC_Test_Traj.png"))
 
     test_log = log("Complete!", test_log, flag_report_live)
@@ -296,6 +293,13 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
         for line in test_log:
             f.write(line + "\n")
 
+    # # # save truth log to file (for first-time setup)
+    # with open(
+    #     os.path.join(DATA_ROOT, "test_data", "SAC_Training_TBR_Log_truth.txt"), "w"
+    # ) as f:
+    #     for line in test_log:
+    #         f.write(line + "\n")
+
     # Compare log files with numerical tolerance for cross-platform compatibility
     are_same = compare_log_files_with_tolerance(
         path_output_log, path_output_log_truth, flag_report_live=flag_report_live
@@ -304,7 +308,8 @@ def test_SAC_training_TBR(flag_report_live=False, seed_in=42):
     if flag_report_live:
         print("Log files match truth (with numerical tolerance):", are_same)
 
-    return are_same
+    assert are_same
 
 
-test_SAC_training_TBR()
+if __name__ == "__main__":
+    test_SAC_training_TBR()

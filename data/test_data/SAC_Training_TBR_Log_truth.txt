@@ -1,0 +1,30 @@
+SAC Training Script
+Environment has been reset
+Seed: 42
+Training complete
+FINAL TRAINING METRICS
+Total episodes: 1
+Total timesteps (model.num_timesteps): 1001
+Average episode reward: 2.232617
+Best episode reward: 2.232617
+Last episode reward: 2.232617
+Average episode length: 590.0
+Best eval mean reward: 31.878438400000004
+Plotting test trajectory...
+Test trajectory complete
+Steps taken: 590
+Total reward: 0.20160851757100318
+Final x: -1.3149436 
+Final y: -1.3793246 
+Final vx: 0.5716152 
+Final vy: -0.0053019067 
+Final m: 0.737307 
+Final x_target: -5334044700.0 
+Final y_target: 61430665000.0 
+Final vx_target: -55932.633 
+Final vy_target: -1976.0886 
+Final ttg: 34800.0 
+terminated: True 
+truncated: False 
+Complete!
+Plots saved!

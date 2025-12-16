@@ -1,4 +1,5 @@
 import os
+import tempfile
 import time
 
 import matplotlib.pyplot as plot
@@ -8,6 +9,7 @@ from astro_compass.core.gen_Hamiltonian_trajectory import gen_Hamiltonian_trajec
 from astro_compass.envs.TwoBodyRendezvous_Env import TwoBodyRendezvous_Env
 from astro_compass.utils.log_utils import log
 from astro_compass.utils.test_utils import compare_trajectories
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 
 def write_config_file(params, path_config):
@@ -17,7 +19,7 @@ def write_config_file(params, path_config):
             f.write(f"{key}: {value}\n")
 
 
-def test_Hamiltonian_TBR_Controller(flag_report_live):
+def test_Hamiltonian_TBR_Controller(flag_report_live=False):
     start_time = time.time()
 
     # define parameters
@@ -46,7 +48,8 @@ def test_Hamiltonian_TBR_Controller(flag_report_live):
     }
 
     # Write configuration parameters to file
-    path_config = os.path.join(params["data_path"], "test_TBR_hamiltonian_config.txt")
+    output_data_dir = tempfile.mkdtemp()
+    path_config = tempfile.NamedTemporaryFile().name
     write_config_file(params, path_config)
 
     test_log = []
@@ -87,7 +90,8 @@ def test_Hamiltonian_TBR_Controller(flag_report_live):
                 os.path.join(params["data_path"], ephem_filename + ".txt")
             )
             if params["flag_plot_traj"] == True:
-                eph_output.save_plots(params["data_path"], ephem_filename, params, env)
+                vis = EphemPlotter(eph_output)
+                vis.save_plots(output_data_dir, ephem_filename, params, env)
 
         else:
             arr_pass_count.append(0)
@@ -157,4 +161,8 @@ def test_Hamiltonian_TBR_Controller(flag_report_live):
                 "Some trajectories do not match truth data.", test_log, flag_report_live
             )
 
-        return flag_all_match
+        assert flag_all_match
+
+
+if __name__ == "__main__":
+    test_Hamiltonian_TBR_Controller(True)

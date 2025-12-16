@@ -1,24 +1,16 @@
-import numpy as np
 import gymnasium as gym
-import sys
-import os
-
+import numpy as np
 from gymnasium import envs
 from gymnasium.envs.registration import register
 
-# Adding python src code directory
-current_dir = os.path.dirname(__file__)
-python_src_dir = os.path.abspath(os.path.join(current_dir, "..", "python"))
-sys.path.append(python_src_dir)
-
-from Ephemeris import Ephemeris
-
+from astro_compass.core.ephemeris import Ephemeris
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 # register the environment if it isn't registered
 if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
     register(
         id="TwoBody_Orb2Orb_Transfer_Env-v0",
-        entry_point="TwoBody_Orb2Orb_Transfer_Env:TwoBody_Orb2Orb_Transfer_Env",
+        entry_point="astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env:TwoBody_Orb2Orb_Transfer_Env",
     )
 
 
@@ -95,11 +87,13 @@ def test_runnable_env(env, num_trajectories, num_steps_per_traj):
 
         if count_traj == num_traj - 1:
             print("Plotting last trajectory...")
-            eph.plot_xy(info["planet_radii"])
-            eph.plot_xy_ref_orbit(observation[6], "Earth Orbit")
-            eph.plot_all_ephemeris_data()
+            vis = EphemPlotter(eph)
+            vis.plot_xy(info["planet_radii"])
+            vis.plot_xy_ref_orbit(observation[6], "Earth Orbit")
+            vis.plot_all_ephemeris_data()
 
     print("Test successful")
 
 
-test_runnable_env(env, num_traj, steps_per_traj)
+if __name__ == "__main__":
+    test_runnable_env(env, num_traj, steps_per_traj)

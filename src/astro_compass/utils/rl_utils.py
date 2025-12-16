@@ -10,12 +10,12 @@ from tqdm import tqdm
 
 from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris_v2 import Ephemeris_v2
+from astro_compass.core.rollouts import SACRolloutData_TBR_polar
 from astro_compass.core.spacecraft import Spacecraft
 from astro_compass.core.training_data_generation import read_ephems_from_dir
-from astro_compass.StateVectorUtilities import cartesian_to_polar
 from astro_compass.utils.log_utils import log
-from astro_compass.utils.plotting_utils import SACRolloutData_TBR_polar
 from astro_compass.utils.state_vector_utils import (
+    cartesian_to_polar,
     convert_attitude_from_cartesian_to_radial,
 )
 
@@ -393,7 +393,7 @@ def import_training_into_replay_buffer_v2(
     path_training_data, test_log, model, env, params
 ):
     """
-    Import training data from ephemeris v2.0 files into the replay buffer.
+    Import training data from astro_compass.core.ephemeris v2.0 files into the replay buffer.
     Handles 10-dimensional observation space (x, y, vx, vy, m, x_t, y_t, vx_t, vy_t, ttg).
     """
     from tqdm import tqdm
@@ -917,7 +917,7 @@ def rollout_model(env, params, model, test_log):
 
 def import_training_into_replay_buffer_v3(set_ephems, test_log, model, env, params):
     """
-    Import training data from ephemeris v3.0 files into the replay buffer.
+    Import training data from astro_compass.core.ephemeris v3.0 files into the replay buffer.
     Handles 10-dimensional observation space (x, y, vx, vy, m, x_t, y_t, vx_t, vy_t, ttg).
 
     Does this without env overhead by directly setting states in the replay buffer.

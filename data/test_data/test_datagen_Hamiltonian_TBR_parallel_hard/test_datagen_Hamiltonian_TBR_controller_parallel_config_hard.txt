@@ -7,7 +7,7 @@ t_star: 5074778.662111725
 g0: 9.80665
 env_step_size: 86400
 seed_env_init: 42
-num_trajs: 4
+num_trajs: 2
 tof_scales: [0.75]
 tof_weights: [1.0]
 data_path: data\test_data\test_datagen_Hamiltonian_TBR_parallel_hard
@@ -33,5 +33,5 @@ randomize_seeds: False
 randomize_tofs: False
 randomize_limits: False
 flag_debug_h_targeter: False
-num_cores: 4
+num_cores: 2
 timeout_per_trajectory: 120

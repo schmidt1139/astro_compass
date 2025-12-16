@@ -1,6 +1,7 @@
 import os
 import random
 import sys
+import tempfile
 
 import gymnasium as gym
 import matplotlib.pyplot as plt
@@ -14,6 +15,7 @@ from stable_baselines3.common.monitor import Monitor
 # Adding python src code directory
 # Get the project root directory (parent of tests/)
 from astro_compass.utils.path_utils import PROJECT_ROOT
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 os.chdir(PROJECT_ROOT)
 print("Now working in:", os.getcwd())
@@ -135,10 +137,8 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
     # print("GPU available: ", torch.cuda.is_available())  # Should print True if GPU is available)
 
     # paths
-    path_nns = os.path.normpath(os.path.join(os.getcwd(), "data", "neural_networks"))
-    path_output = os.path.normpath(
-        os.path.join(os.getcwd(), "data", "test_data", "test_SAC_training")
-    )
+    path_nns = tempfile.mkdtemp()
+    path_output = tempfile.mkdtemp()
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
     path_output_log = os.path.join(path_output, "SAC_Training_Log.txt")
     path_output_log_truth = os.path.join(path_output, "SAC_Training_Log_truth.txt")
@@ -283,8 +283,8 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
         os.path.join(path_output, "SAC_Test_Traj_Ephem.txt"),
         mod_vector_write_frequency=1,
     )
-
-    fig_xy = eph.plot_xy()
+    vis = EphemPlotter(eph)
+    fig_xy = vis.plot_xy()
     fig_xy.savefig(os.path.join(path_output, "SAC_Test_Traj.png"))
 
     test_log = log("Complete!", test_log, flag_report_live)
@@ -304,3 +304,7 @@ def test_SAC_training(flag_report_live=False, seed_in=42):
         print("Log files match truth (with numerical tolerance):", are_same)
 
     return are_same
+
+
+if __name__ == "__main__":
+    test_SAC_training()

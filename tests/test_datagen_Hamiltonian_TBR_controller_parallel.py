@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 import matplotlib
 
@@ -8,37 +9,24 @@ matplotlib.use("Agg")  # Use non-interactive backend for headless environments
 import time
 
 from astro_compass.utils.log_utils import log, read_config_file
+from astro_compass.utils.path_utils import DATA_ROOT
 from astro_compass.utils.test_utils import compare_trajectories
 
 
-def test_datagen_Hamiltonian_TBR_parallel(flag_report_live):
+def test_datagen_Hamiltonian_TBR_parallel(flag_report_live=False):
     start_time = time.time()
 
-    # Get the workspace root (parent of tests directory)
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    workspace_root = os.path.dirname(script_dir)
-
+    test_dir = os.path.join(
+        DATA_ROOT, "test_data", "test_datagen_Hamiltonian_TBR_parallel"
+    )
     path_config = os.path.join(
-        workspace_root,
-        "data",
-        "test_data",
-        "test_datagen_Hamiltonian_TBR_parallel",
+        test_dir,
         "test_datagen_Hamiltonian_TBR_controller_parallel_config3.txt",
     )
     params = read_config_file(path_config)
 
-    # Validate and normalize data_path
-    if "data_path" not in params:
-        raise ValueError("data_path must be specified in configuration file")
-
-    # Strip whitespace and normalize path
-    data_path = params["data_path"].strip()
-
-    # Convert to absolute path if relative
-    if not os.path.isabs(data_path):
-        data_path = os.path.abspath(data_path)
-
-    params["data_path"] = os.path.normpath(data_path)
+    output_path = tempfile.mkdtemp()
+    params["data_path"] = output_path
 
     # Run parallel trajectory generation
     test_log, arr_pass_count, sa_output_ephems, sa_summary = (
@@ -51,7 +39,7 @@ def test_datagen_Hamiltonian_TBR_parallel(flag_report_live):
         # Extract filename and replace 'test_' with 'truth_'
         filename = os.path.basename(output_path)
         truth_filename = filename.replace("test_", "truth_")
-        truth_path = os.path.join(params["data_path"], "ephems", truth_filename)
+        truth_path = os.path.join(test_dir, "ephems", truth_filename)
         sa_truth_ephems.append(truth_path)
 
     # sort output files to match truth files

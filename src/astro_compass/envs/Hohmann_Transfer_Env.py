@@ -1,10 +1,10 @@
-import numpy as np
-import gymnasium as gym
-
 from typing import Optional
+
+import gymnasium as gym
+import numpy as np
 from scipy.integrate import solve_ivp
 
-from Spacecraft import Spacecraft
+from astro_compass.core.spacecraft import Spacecraft
 
 
 class HohmannTransferEnv(gym.Env):

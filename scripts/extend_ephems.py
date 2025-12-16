@@ -8,18 +8,15 @@ from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris_v2 import Ephemeris_v2
 from astro_compass.core.propagation import env_EOM_TBT_v2
 from astro_compass.core.training_data_generation import read_ephems_from_dir
+from astro_compass.utils.path_utils import PROJECT_ROOT
 
 
 def extend_ephems():
     num_ephems_to_use = 100_000
     ephem_version = 2.0
     extension_scale = 1.5
-    path_ephems = os.path.join(
-        "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\temp\\"
-    )
-    path_output = os.path.join(
-        "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\temp_out\\"
-    )
+    path_ephems = os.path.join(PROJECT_ROOT, "z_script_output", "temp")
+    path_output = os.path.join(PROJECT_ROOT, "z_script_output", "temp_out")
 
     set_ephems, filenames = read_ephems_from_dir(
         path_ephems,

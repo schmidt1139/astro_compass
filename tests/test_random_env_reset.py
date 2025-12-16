@@ -1,33 +1,29 @@
-import os
-import sys
+import tempfile
 import time
 
 import gymnasium as gym
 import matplotlib.pyplot as plt
-from astro_compass.core.epehemeris import Ephemeris
 from gymnasium import envs
 from gymnasium.envs.registration import register
 
+from astro_compass.core.ephemeris import Ephemeris
 from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
 from astro_compass.utils.state_vector_utils import polar_to_cartesian
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 # register the environment if it isn't registered
 if "TwoBody_Orb2Orb_Transfer_Env-v0" not in envs.registry.keys():
     register(
         id="TwoBody_Orb2Orb_Transfer_Env-v0",
-        entry_point="TwoBody_Orb2Orb_Transfer_Env:TwoBody_Orb2Orb_Transfer_Env",
+        entry_point="astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env:TwoBody_Orb2Orb_Transfer_Env",
     )
 
-# Adding python src code directory
-sys.path.append(os.path.abspath("../python"))
 
-# initialize the environment
-env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
+def test_random_env_rest():
+    env = gym.make("TwoBody_Orb2Orb_Transfer_Env-v0")
 
-
-def test_random_env_rest(env):
     # parameters
-    num_trajs = 100
+    num_trajs = 2
 
     # reset the evironment using set seed value and set counters
     seed_env = 42
@@ -84,14 +80,12 @@ def test_random_env_rest(env):
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.plot(arr_time, arr_rho)
             ax.set_title("Traj #" + str(count) + " Switching Function")
-            plt.show()
 
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.plot(arr_time, arr_u)
             ax.set_title(
                 "Traj #" + str(count) + " Spacecraft Thrust Throttle over Time"
             )
-            plt.show()
 
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.plot(arr_time, arr_alpha_x, label="alpha_x")
@@ -100,21 +94,19 @@ def test_random_env_rest(env):
                 "Traj #" + str(count) + " Alpha Vector (Maneuver Direction) over Time"
             )
             ax.legend()
-            plt.show()
 
             # Ephemeris plotting
             sun_rad = 6.957e8
             sma_Earth = 149598023 * 1000  # m
             sma_Mars = 2.32495e8 * 1000  # m
-            eph_out.plot_xy(sun_rad, "Traj #" + str(count))
-            eph_out.plot_xy_ref_orbit(sma_Earth, "Earth Orbit")
-            eph_out.plot_xy_ref_orbit(sma_Mars, "Mars Orbit")
-            plt.show()
+            vis = EphemPlotter(eph_out)
+            vis.plot_xy(sun_rad, "Traj #" + str(count))
+            vis.plot_xy_ref_orbit(sma_Earth, "Earth Orbit")
+            vis.plot_xy_ref_orbit(sma_Mars, "Mars Orbit")
 
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.plot(arr_time, eph_out.arr_m)
             ax.set_title("Traj #" + str(count) + " Spacecraft Mass over Time")
-            plt.show()
 
             # determine mass expenditure
             net_delta_m = eph_out.arr_m[0] - eph_out.arr_m[-1]
@@ -148,7 +140,7 @@ def test_random_env_rest(env):
             ax.plot(arr_time, arr_dm)
             ax.plot(arr_time, arr_zero)
             ax.set_title("Traj #" + str(count) + " Mass Rate over Time")
-            plt.show()
+            plt.close()
 
             if flag_positive_mass_rate:
                 print("Warning - Positive Mass Rate: ", flag_positive_mass_rate)
@@ -196,9 +188,7 @@ def test_random_env_rest(env):
     print("")
 
     # report test summary to a file
-    file_path = os.path.join(
-        "..", "..", "data", "test_data", "test_random_TBT_transfer_report.csv"
-    )
+    file_path = tempfile.NamedTemporaryFile().name
 
     with open(file_path, "w") as f:
         for line in sa_report:
@@ -218,9 +208,7 @@ def test_random_env_rest(env):
     print("")
 
     # report test summary to a file
-    file_path = os.path.join(
-        "..", "..", "data", "test_data", "test_random_TBT_transfer_report.csv"
-    )
+    file_path = tempfile.NamedTemporaryFile().name
 
     with open(file_path, "w") as f:
         for line in sa_report:
@@ -229,4 +217,5 @@ def test_random_env_rest(env):
     f.close()
 
 
-test_random_env_rest(env)
+if __name__ == "__main__":
+    test_random_env_rest()

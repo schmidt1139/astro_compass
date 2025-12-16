@@ -1,0 +1,64 @@
+# SAC TBR polar pretraining configuration
+
+[plotting]
+plot_n_most_recent_eps = 10
+
+[paths]
+tb_log_name = "SAC_TBR_training"
+output_dir = "z_script_output\\plot_buffer"
+path_training_data = ""
+path_replay_buffer = "z_script_output\\SAC_Training\\SAC_training_TBR_polar20251130_152528\\replay_buffer.pkl"
+path_SAC_model_load = ""
+
+[environment.vectorization]
+cores = 1
+
+[environment]
+env_type = "TwoBodyRendezvous_Polar_Env2"
+mu = 1.3e20
+max_T = 1.33
+ISP = 3872.0
+l_star = 149598023000.0
+m_star = 3366.0
+t_star = 5074778.662111725
+g0 = 9.80665
+env_step_size = 1209600
+
+[environment.initial]
+a_min_init_env_nd = 149598023000.0
+a_max_init_env_nd = 149598023000.0
+e_min_init_env = 0.0001
+e_max_init_env = 0.0001
+w_min_init_env_deg = 0.0
+w_max_init_env_deg = 0.0
+theta_min_init_env_deg = 0.0
+theta_max_init_env_deg = 2.0
+[environment.final]
+a_min_final_env_nd = 232495000000.0
+a_max_final_env_nd = 232495000000.0
+e_min_final_env = 0.0001
+e_max_final_env = 0.0001
+w_min_final_env_deg = 0.0
+w_max_final_env_deg = 0.0
+theta_min_final_env_deg = 180.0
+theta_max_final_env_deg = 182.0
+
+[environment.episode]
+max_episode_steps = 5000
+
+[environment.reward]
+# Weights must sum to 1
+pos_r_weight = 0.49
+vel_r_weight = 0.49
+throttle_r_weight = 0.02
+tof_weight = 1.0
+tof_scale = 1.0
+time_dist_weight = 0.02
+success_threshold_pos = 0.01
+success_threshold_vel = 0.01
+terminal_bonus = 0.0
+precision_mult = 1.0
+prop_length_scale = 1.5
+# ensure that there's always some signal
+r_dist_weight = 1.6 
+v_dist_weight = 1.6 

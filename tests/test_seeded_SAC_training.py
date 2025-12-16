@@ -1,5 +1,6 @@
 import os
 import random
+import tempfile
 
 import gymnasium as gym
 import matplotlib.pyplot as plt
@@ -12,12 +13,13 @@ from stable_baselines3.common.monitor import Monitor
 
 from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris import Ephemeris
+from astro_compass.core.rollouts import SACRolloutData
 from astro_compass.core.spacecraft import Spacecraft
 from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env_nd_obs5 import (
     TwoBody_Orb2Orb_Transfer_Env_nd_obs5,
 )
 from astro_compass.utils.log_utils import log, log_parameters
-from astro_compass.utils.plotting_utils import SACRolloutData, plot_SAC_training
+from astro_compass.utils.path_utils import DATA_ROOT
 from astro_compass.utils.rl_utils import (
     RewardLoggerCallback,
     import_training_into_replay_buffer,
@@ -25,9 +27,10 @@ from astro_compass.utils.rl_utils import (
 )
 from astro_compass.utils.state_vector_utils import cartesian_to_polar
 from astro_compass.utils.test_utils import compare_log_files_with_tolerance
+from astro_compass.vis.rollout_plotter import RolloutPlotter
 
 
-def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
+def test_seeded_SAC_training(flag_report_live=True, seed_in=42):
     test_log = []
     test_log = log("SAC Training Script", test_log, flag_report_live)
 
@@ -99,18 +102,17 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
 
     # paths
     # time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")  # e.g. "20250928_143005"
-    path_nns = os.path.normpath(os.path.join(os.getcwd(), "data", "neural_networks"))
-    path_training_data = os.path.normpath(
-        os.path.join(
-            os.getcwd(), "data", "test_data", "test_seeded_SAC_training", "input"
-        )
+    path_nns = tempfile.mkdtemp()
+    # os.path.normpath(os.path.join(DATA_ROOT, "neural_networks"))
+    truth_dir = os.path.normpath(
+        os.path.join(DATA_ROOT, "test_data", "test_seeded_SAC_training")
     )
-    path_output = os.path.normpath(
-        os.path.join(os.getcwd(), "data", "test_data", "test_seeded_SAC_training")
-    )
+    path_training_data = os.path.normpath(os.path.join(truth_dir, "input"))
+    path_output = tempfile.mkdtemp()
+
     path_SAC_model = os.path.normpath(os.path.join(path_nns, "sac_tbt_model"))
     path_output_log = os.path.join(path_output, "SAC_Training_Log.txt")
-    path_output_log_truth = os.path.join(path_output, "truth_SAC_Training_Log.txt")
+    path_output_log_truth = os.path.join(truth_dir, "truth_SAC_Training_Log.txt")
     os.makedirs(path_output, exist_ok=True)
 
     # reset the environment
@@ -324,13 +326,8 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
     test_log = log("truncated: " + str(truncated) + " ", test_log, flag_report_live)
 
     # plot the results
-    plot_SAC_training(
-        rollout_data1,
-        arr_epsisode_numbers,
-        arr_epsisode_rs,
-        path_output,
-        eph,
-    )
+    vis = RolloutPlotter(rollout_data1, path_output)
+    vis.plot(eph)
 
     env.close()
 
@@ -356,4 +353,8 @@ def test_seeded_SAC_training(flag_report_live=False, seed_in=42):
     if flag_report_live:
         print("Log files match truth (with numerical tolerance):", are_same)
 
-    return are_same
+    assert are_same
+
+
+if __name__ == "__main__":
+    test_seeded_SAC_training()

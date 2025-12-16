@@ -3,6 +3,7 @@ import numpy as np
 
 from astro_compass.core.ephemeris import Ephemeris
 from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 
 def solve_two_body_transfer_and_write_ephem(env, args):
@@ -68,13 +69,14 @@ def solve_two_body_transfer_and_write_ephem(env, args):
 
     # Ephemeris plotting
     sun_rad = 6.957e8
-    eph_out.plot_xy(sun_rad)
-    eph_out.plot_xy_ref_orbit(args["sma_target"] * 1000, "Target Orbit")
+    vis = EphemPlotter(eph_out)
+    vis.plot_xy(sun_rad)
+    vis.plot_xy_ref_orbit(args["sma_target"] * 1000, "Target Orbit")
 
     np.set_printoptions(precision=16)
     print("Solution for initial co-states: ", h_sol)
     print("Final smoothing parameter used in solution generation: ", eps)
 
     # write ephemeris file
-    eph_out.write_to_file(args["filename_ephemeris_out"], mod_vector_write_frequency=10)
+    vis.write_to_file(args["filename_ephemeris_out"], mod_vector_write_frequency=10)
     print("Ephemeris of trajectory written to: ", args["filename_ephemeris_out"])
