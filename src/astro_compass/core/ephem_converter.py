@@ -25,7 +25,7 @@ def _read_single_ephem(path, version):
         eph = Ephemeris_v3()
     else:
         raise ValueError("Unsupported ephemeris version: " + str(version))
-    eph.read_from_file(path)
+    eph.read(path)
     return eph
 
 

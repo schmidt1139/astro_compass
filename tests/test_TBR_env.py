@@ -139,7 +139,7 @@ def test_TBR_env(flag_report_live: bool = False):
 
         # load truth data for comparison
         eph_truth = Ephemeris_v2()
-        eph_truth.read_from_file(
+        eph_truth.read(
             os.path.join(DATA_ROOT, "test_data", "test_TBR", "test_traj_ephemeris_")
             + str(count_traj)
             + "_TBR_env_truth.txt"
@@ -147,7 +147,7 @@ def test_TBR_env(flag_report_live: bool = False):
 
         # re-ingest ephemeris data for comparison
         eph_comp = Ephemeris_v2()
-        eph_comp.read_from_file(output_file)
+        eph_comp.read(output_file)
         vis = EphemPlotter(eph_comp)
         vis.compare_trajectories(
             eph_truth, position_tol=1e3, velocity_tol=1e-1, verbose=flag_report_live

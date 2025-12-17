@@ -113,7 +113,7 @@ class Ephemeris:
 
         return f.closed
 
-    def read_from_file(self, file_path):
+    def read(self, file_path):
         # clear the ephemeris states
         self.reset()
 

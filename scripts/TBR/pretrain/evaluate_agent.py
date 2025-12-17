@@ -90,7 +90,7 @@ def main(params, seed_in=42):
         ephem_path = results[1]
         ephem_H = Ephemeris()
         try:
-            ephem_H.read_from_file(ephem_path)
+            ephem_H.read(ephem_path)
         except Exception as e:
             test_log = log(
                 "Error generating Hamiltonian trajectory file: " + str(e),

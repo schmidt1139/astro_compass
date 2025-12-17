@@ -18,16 +18,16 @@ def compare_trajectories(
     for ephem_file in sa_output_ephems:
         if version == 1:
             eph = Ephemeris()
-            eph.read_from_file(ephem_file)
+            eph.read(ephem_file)
 
             eph_truth = Ephemeris()
-            eph_truth.read_from_file(sa_truth_ephems[index])
+            eph_truth.read(sa_truth_ephems[index])
         elif version == 2:
             eph = Ephemeris_v2()
-            eph.read_from_file(ephem_file)
+            eph.read(ephem_file)
 
             eph_truth = Ephemeris_v2()
-            eph_truth.read_from_file(sa_truth_ephems[index])
+            eph_truth.read(sa_truth_ephems[index])
         else:
             raise ValueError("Invalid version specified for ephemeris comparison.")
 

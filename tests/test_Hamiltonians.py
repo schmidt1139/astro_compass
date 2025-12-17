@@ -107,12 +107,12 @@ def test_Hamiltonians(flag_report_live=False):
     output_file = tempfile.NamedTemporaryFile().name
     eph_out.write_to_file(output_file)
     eph1 = Ephemeris()
-    eph1.read_from_file(output_file)
+    eph1.read(output_file)
     test_log = log("Wrote test ephem", test_log, flag_report_live)
 
     # compare to truth file
     eph2 = Ephemeris()
-    eph2.read_from_file(
+    eph2.read(
         os.path.join(
             DATA_ROOT, "test_data", "test_hamiltonians", "test_H_ephem_truth.txt"
         )

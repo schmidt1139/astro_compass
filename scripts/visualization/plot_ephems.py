@@ -13,7 +13,7 @@ def ingest_ephem_and_plot(path_to_ephemeris):
     eph = Ephemeris()
 
     # read in data from the specified file
-    eph.read_from_file(path_to_ephemeris)
+    eph.read(path_to_ephemeris)
 
     print("Successfully ingested ephemeris")
     print("Number of vectors: ", eph.num_vectors)

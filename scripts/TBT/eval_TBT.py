@@ -115,7 +115,7 @@ def generate_hamiltonian_trajectory(env, params, path_output, path_ephems, obs, 
 
         try:
             print("Generated Hamiltonian trajectory for comparison...")
-            ephem_H.read_from_file(ephem_path)
+            ephem_H.read(ephem_path)
         except Exception as e:
             print("Error generating Hamiltonian trajectory file: " + str(e))
             params["flag_gen_H_traj"] = False
