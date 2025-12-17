@@ -63,7 +63,11 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         self.max_T = kwargs.get("max_T", 1.33 / 1000)  # max spacecraft thrust (in kN)
         self.ISP = kwargs.get("ISP", 3872.0)  # spacecraft specific impulse (s)
         self.C1 = kwargs.get("C1", 1.33 / 1000)  # Spacecraft max thrust (in kN)
+
         self.C2 = kwargs.get("C2", 3872.0)  # Spacecraft specific impulse (s)
+        self.C1 = self.max_T
+        self.C2 = self.ISP
+
         self.l_star = kwargs.get(
             "l_star", Constants.SMA_EARTH
         )  # characteristic length (m)
@@ -122,8 +126,7 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         self.action_space = gym.spaces.Box(low=low_array_action, high=high_array_action)
 
         # set derived parameters
-        self.C1 = self.max_T
-        self.C2 = self.ISP
+
         self.w_min_init_env_rad = np.deg2rad(self.w_min_init_env_deg)
         self.w_max_init_env_rad = np.deg2rad(self.w_max_init_env_deg)
         self.theta_min_init_env_rad = np.deg2rad(self.theta_min_init_env_deg)
