@@ -49,7 +49,6 @@ def pre_train(params, steps, batch_size, buffer_path, seed_in=42):
 
     model.load_replay_buffer(buffer_path)
 
-    # model._logger = Logger(folder=None, output_formats=[])
     critic_losses = []
     actor_losses = []
     # make this a progress bar
