@@ -59,43 +59,46 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         self._keplerian_elements_target = np.array([0, 0, 0, 0, 0, 0], dtype=np.float32)
 
         # list of default environment parameters (Sun is the central body)
-        self.mu = Constants.MU_SUN * 10**9  # in m^3/s^2
-        self.max_T = 1.33 / 1000  # max spacecraft thrust (in kN)
-        self.ISP = 3872.0  # spacecraft specific impulse (s)
-        self.C1 = 1.33 / 1000  # Spacecraft max thrust (in kN)
-        self.C2 = 3872.0  # Spacecraft specific impulse (s)
-        self.l_star = Constants.SMA_EARTH  # characteristic length (m)
-        self.t_star = 149598023000**3 / (
-            Constants.MU_SUN * 10 ** (9)
+        self.mu = kwargs.get("mu", Constants.MU_SUN * 10**9)  # in m^3/s^2
+        self.max_T = kwargs.get("max_T", 1.33 / 1000)  # max spacecraft thrust (in kN)
+        self.ISP = kwargs.get("ISP", 3872.0)  # spacecraft specific impulse (s)
+        self.C1 = kwargs.get("C1", 1.33 / 1000)  # Spacecraft max thrust (in kN)
+        self.C2 = kwargs.get("C2", 3872.0)  # Spacecraft specific impulse (s)
+        self.l_star = kwargs.get(
+            "l_star", Constants.SMA_EARTH
+        )  # characteristic length (m)
+        self.t_star = kwargs.get(
+            "t_star", 149598023000**3 / (Constants.MU_SUN * 10 ** (9))
         )  # characteristic time (s)
-        self.m_star = 3366.0  # characteristic mass (kg)
-        self.step_size = 86400  # environment step size (s)
-        self.mass_penalty = 0.0  # mass penalty factor
+        self.m_star = kwargs.get("m_star", 3366.0)  # characteristic mass (kg)
         self.arr_mu = np.array([self.mu / 10**9])  # solar mu [km^3/s^2]
+
+        self.step_size = kwargs.get("step_size", 86400)  # environment step size (s)
+        self.mass_penalty = kwargs.get("mass_penalty", 0.0)  # mass penalty factor
         self.planet_radii = np.array([Constants.RADIUS_SUN_M])  # solar radius [m]
-        self.a_min_init_env_nd = 1.0
-        self.a_max_init_env_nd = 1.5
-        self.e_min_init_env = 0.001
-        self.e_max_init_env = 0.001
-        self.w_min_init_env_deg = 0.0
-        self.w_max_init_env_deg = 360.0
-        self.theta_min_init_env_deg = 0.0
-        self.theta_max_init_env_deg = 360.0
-        self.a_min_final_env_nd = 1.0
-        self.a_max_final_env_nd = 1.5
-        self.e_min_final_env = 0.001
-        self.e_max_final_env = 0.001
-        self.w_min_final_env_deg = 0.0
-        self.w_max_final_env_deg = 360.0
-        self.pos_r_weight = 1.0
-        self.vel_r_weight = 1.0
-        self.throttle_r_weight = 0.0
-        self.tof_scale = 1.0
-        self.r_dist_weight = 1.0
-        self.v_dist_weight = 1.0
-        self.prop_length_scale = 1.0
+        self.a_min_init_env_nd = kwargs.get("a_min_init_env_nd", 1.0)
+        self.a_max_init_env_nd = kwargs.get("a_max_init_env_nd", 1.5)
+        self.e_min_init_env = kwargs.get("e_min_init_env", 0.001)
+        self.e_max_init_env = kwargs.get("e_max_init_env", 0.001)
+        self.w_min_init_env_deg = kwargs.get("w_min_init_env_deg", 0.0)
+        self.w_max_init_env_deg = kwargs.get("w_max_init_env_deg", 360.0)
+        self.theta_min_init_env_deg = kwargs.get("theta_min_init_env_deg", 0.0)
+        self.theta_max_init_env_deg = kwargs.get("theta_max_init_env_deg", 360.0)
+        self.a_min_final_env_nd = kwargs.get("a_min_final_env_nd", 1.0)
+        self.a_max_final_env_nd = kwargs.get("a_max_final_env_nd", 1.5)
+        self.e_min_final_env = kwargs.get("e_min_final_env", 0.001)
+        self.e_max_final_env = kwargs.get("e_max_final_env", 0.001)
+        self.w_min_final_env_deg = kwargs.get("w_min_final_env_deg", 0.0)
+        self.w_max_final_env_deg = kwargs.get("w_max_final_env_deg", 360.0)
+        self.pos_r_weight = kwargs.get("pos_r_weight", 1.0)
+        self.vel_r_weight = kwargs.get("vel_r_weight", 1.0)
+        self.throttle_r_weight = kwargs.get("throttle_r_weight", 0.0)
+        self.tof_scale = kwargs.get("tof_scale", 1.0)
+        self.r_dist_weight = kwargs.get("r_dist_weight", 1.0)
+        self.v_dist_weight = kwargs.get("v_dist_weight", 1.0)
+        self.prop_length_scale = kwargs.get("prop_length_scale", 1.0)
         self.TTG = 0.0
-        self.mass_initial = 3366.0  # initial mass (kg)
+        self.mass_initial = kwargs.get("mass_initial", 3366.0)  # initial mass (kg)
 
         self.elapsed_t = 0.0
         self.episode_reward = 0.0
@@ -117,13 +120,6 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         low_array_action = np.array([0.0, -1.0, -1.0], dtype=np.float32)
         high_array_action = np.array([1.0, 1.0, 1.0], dtype=np.float32)
         self.action_space = gym.spaces.Box(low=low_array_action, high=high_array_action)
-
-        # double check kwargs and assign any passed parameters
-        for key in kwargs:
-            if not hasattr(self, key):
-                raise ValueError(f"Unexpected keyword argument: {key}")
-            else:
-                setattr(self, key, kwargs[key])
 
         # set derived parameters
         self.C1 = self.max_T

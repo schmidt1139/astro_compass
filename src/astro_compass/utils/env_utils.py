@@ -95,34 +95,7 @@ def gen_rl_environment(params):
 
     elif params["env_type"] == "TwoBody_Orb2Orb_Transfer_Env_target":
         # initialize the transfer
-        env = TwoBody_Orb2Orb_Transfer_Env_target(
-            mu=params["mu"],
-            max_T=params["max_T"],
-            ISP=params["ISP"],
-            l_star=params["l_star"],
-            m_star=params["m_star"],
-            t_star=params["t_star"],
-            step_size=params["env_step_size"],
-            a_min_init_env_nd=params["a_min_init_env_nd"],
-            a_max_init_env_nd=params["a_max_init_env_nd"],
-            e_min_init_env=params["e_min_init_env"],
-            e_max_init_env=params["e_max_init_env"],
-            w_min_init_env_deg=params["w_min_init_env_deg"],
-            w_max_init_env_deg=params["w_max_init_env_deg"],
-            a_min_final_env_nd=params["a_min_final_env_nd"],
-            a_max_final_env_nd=params["a_max_final_env_nd"],
-            e_min_final_env=params["e_min_final_env"],
-            e_max_final_env=params["e_max_final_env"],
-            w_min_final_env_deg=params["w_min_final_env_deg"],
-            w_max_final_env_deg=params["w_max_final_env_deg"],
-            pos_r_weight=params.get("pos_r_weight", 1.0),
-            vel_r_weight=params.get("vel_r_weight", 1.0),
-            throttle_r_weight=params.get("throttle_r_weight", 1.0),
-            tof_scale=params.get("tof_scale", 1.0),
-            theta_min_init_env_deg=params.get("theta_min_init_env_deg", 0.0),
-            theta_max_init_env_deg=params.get("theta_max_init_env_deg", 360.0),
-            prop_length_scale=params.get("prop_length_scale", 1.0),
-        )
+        env = TwoBody_Orb2Orb_Transfer_Env_target(**params)
     else:
         raise NotImplementedError(
             f"Environment type {params['env_type']} not implemented."
