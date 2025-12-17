@@ -7,7 +7,6 @@ from tqdm import tqdm
 from astro_compass.core.ephemeris import Ephemeris
 from astro_compass.core.ephemeris_v2 import Ephemeris_v2
 from astro_compass.core.ephemeris_v3 import Ephemeris_v3
-from astro_compass.core.training_data_generation import read_ephems_from_dir
 from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env_target import (
     TwoBody_Orb2Orb_Transfer_Env_target,
 )
