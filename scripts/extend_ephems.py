@@ -18,12 +18,7 @@ def extend_ephems():
     path_ephems = os.path.join(PROJECT_ROOT, "z_script_output", "temp")
     path_output = os.path.join(PROJECT_ROOT, "z_script_output", "temp_out")
 
-    set_ephems, filenames = read_ephems(
-        path_ephems,
-        num_ephems,
-        version=ephem_version,
-        return_filenames=True,
-    )
+    set_ephems, filenames = read_ephems(path_ephems, Ephemeris_v2)
 
     print("Reading ephemerides from: " + path_ephems)
     set_ephems = set_ephems[:num_ephems]
