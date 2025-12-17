@@ -2,7 +2,7 @@ import os
 
 import matplotlib.pyplot as plt
 
-from astro_compass.core.training_data_generation import read_ephems_from_dir
+from astro_compass.core.training_data_generation import read_ephems
 from astro_compass.utils.env_utils import gen_rl_environment
 from astro_compass.utils.h_rl_fusion import calc_rewards_from_H_ephem
 from astro_compass.utils.log_utils import read_config_file
@@ -17,7 +17,7 @@ def plot_H_ephem_rewards():
     number_of_vectors = 1500
     dir_ephems = os.path.join(PROJECT_ROOT, "z_script_output", "temp")
     print("Reading ephemerides from directory: ", dir_ephems)
-    set_ephems = read_ephems_from_dir(dir_ephems, num_ephems, version=2.0)
+    set_ephems = read_ephems(dir_ephems, num_ephems, version=2.0)
     print(f"Read {len(set_ephems)} ephemerides")
     # config path
     path_config = os.path.join(

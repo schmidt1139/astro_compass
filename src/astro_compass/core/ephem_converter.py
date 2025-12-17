@@ -29,19 +29,19 @@ def _read_single_ephem(path, version):
     return eph
 
 
-def read_ephems_from_dir(
-    directory,
+def read_ephems(
+    ephem_dir,
     num_ephems_to_use=None,
     version=1.0,
     flag_return_filenames=False,
     params=None,
 ):
-    filenames = os.listdir(directory)
+    filenames = os.listdir(ephem_dir)
     end_i = len(filenames)
     if num_ephems_to_use is not None:
         end_i = min(num_ephems_to_use, len(filenames))
     filenames = filenames[:end_i]
-    paths = [os.path.join(directory, file) for file in filenames]
+    paths = [os.path.join(ephem_dir, file) for file in filenames]
 
     num_workers = params.get("cores", 1) if params is not None else 1
 

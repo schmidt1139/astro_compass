@@ -9,7 +9,7 @@ from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris_v2 import Ephemeris_v2
 from astro_compass.core.rollouts import SACRolloutData_TBR_polar
 from astro_compass.core.spacecraft import Spacecraft
-from astro_compass.core.training_data_generation import read_ephems_from_dir
+from astro_compass.core.training_data_generation import read_ephems
 from astro_compass.utils.log_utils import log
 from astro_compass.utils.state_vector_utils import (
     cartesian_to_polar,
@@ -70,7 +70,7 @@ def import_training_into_replay_buffer(
     test_log = log(
         "Using only first " + str(num_ephems_to_use) + " ephemerides", test_log, True
     )
-    set_ephems = read_ephems_from_dir(path_training_data, num_ephems_to_use)
+    set_ephems = read_ephems(path_training_data, num_ephems_to_use)
     test_log = log("Reading ephemerides", test_log, True)
 
     # count number of ephemerides
@@ -351,7 +351,7 @@ def import_training_into_replay_buffer_v2(
     num_vec_envs = params.get("num_vec_envs", 1)
 
     test_log = log(f"Reading ephemerides (version {ephem_version})", test_log, True)
-    set_ephems = read_ephems_from_dir(
+    set_ephems = read_ephems(
         path_training_data, num_ephems_to_use, version=ephem_version, params=params
     )
 

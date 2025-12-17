@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 
 from astro_compass.constants.constants import Constants
 from astro_compass.core.neural_network_controllers import NN_TBT_Controller_alpha
-from astro_compass.core.training_data_generation import read_ephems_from_dir
+from astro_compass.core.training_data_generation import read_ephems
 from astro_compass.utils.nn_utils import (
     evaluate_neural_network,
     pre_process_training_data,
@@ -101,7 +101,7 @@ def train_u_network():
     )
 
     # read ephemeris files
-    set_ephems = read_ephems_from_dir(path_training_dir)
+    set_ephems = read_ephems(path_training_dir)
     num_ephems = len(set_ephems)
     print("Reading ephems from " + path_training_dir)
     print(str(num_ephems) + " ephems loaded")
