@@ -777,9 +777,14 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
             # Nothing good or bad assigned to this
             truncated = True
 
-        env_info = {}
+        extra_info = {
+            "state": state_dict,
+            "pos_reward": pos_reward if not episode_timeout else 0.0,
+            "vel_reward": vel_reward if not episode_timeout else 0.0,
+            "throttle_reward": throttle_reward if not episode_timeout else 0.0,
+        }
 
-        return reward, terminated, truncated, env_info
+        return reward, terminated, truncated, extra_info
 
     @classmethod
     def compute_obs_fast_TBT(cls, state_dict, params, ttg):
