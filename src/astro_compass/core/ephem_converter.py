@@ -34,12 +34,10 @@ def read_ephems(
     num_ephems=None,
     version=1.0,
     return_filenames=False,
-    params=None,
+    num_workers=4,
 ):
     filenames = os.listdir(ephem_dir)
     paths = [os.path.join(ephem_dir, file) for file in filenames]
-
-    num_workers = params.get("cores", 1) if params is not None else 1
 
     list_ephems = []
     with ProcessPoolExecutor(max_workers=num_workers) as executor:

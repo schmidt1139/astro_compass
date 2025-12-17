@@ -351,9 +351,7 @@ def import_training_into_replay_buffer_v2(
     num_vec_envs = params.get("num_vec_envs", 1)
 
     test_log = log(f"Reading ephemerides (version {ephem_version})", test_log, True)
-    set_ephems = read_ephems(
-        path_training_data, num_ephems, version=ephem_version, params=params
-    )
+    set_ephems = read_ephems(path_training_data, num_ephems, version=ephem_version)
 
     num_ephems = len(set_ephems)
     test_log = log(

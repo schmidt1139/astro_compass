@@ -52,7 +52,6 @@ def test_fast_replay_buffer_seeding(flag_report_live: bool = False):
         params["num_ephems"],
         version=params["ephem_version"],
         return_filenames=True,
-        params=params,
     )
 
     test_log = log(

@@ -173,7 +173,6 @@ def convert_ephems():
         num_ephems,
         version=ephem_version,
         return_filenames=True,
-        params=params,
     )
 
     print("Reading ephemerides from: " + path_ephems)

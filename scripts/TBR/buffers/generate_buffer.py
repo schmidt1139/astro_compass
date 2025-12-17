@@ -33,7 +33,6 @@ def main(params, training_data_dir, output_dir, seed_in=42):
         params["num_ephems"],
         version=params["ephem_version"],
         return_filenames=True,
-        params=params,
     )
 
     model = SB3_SAC(
