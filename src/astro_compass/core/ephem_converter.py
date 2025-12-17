@@ -49,6 +49,7 @@ def ephems_to_rollouts(eph, params):
     reward_batch = []
     next_obs_batch = []
     done_batch = []
+    info_batch = []
 
     num_steps_per_SART = params["ephem_step_size"]
     env = TwoBody_Orb2Orb_Transfer_Env_target
@@ -83,7 +84,7 @@ def ephems_to_rollouts(eph, params):
         action = np.array([u, alpha_vr, alpha_theta], dtype=np.float32)
         u = action[0]
 
-        reward, terminated, truncated, _ = env.compute_reward_fast_TBT(
+        reward, terminated, truncated, extra_info = env.compute_reward_fast_TBT(
             state_dict,
             params,
             u,
@@ -106,13 +107,17 @@ def ephems_to_rollouts(eph, params):
             # compute polar observation
             state = np.concatenate((next_current_state, next_target_state))
             state_dict = env.decode_state(state)
-            next_obs, _ = env.compute_obs_fast_TBT(state_dict, params, next_ttg)
+            next_obs, extra_obs_info = env.compute_obs_fast_TBT(
+                state_dict, params, next_ttg
+            )
+            extra_info.update(extra_obs_info)
 
         obs_batch.append(obs)
         action_batch.append(action)
         reward_batch.append(reward)
         next_obs_batch.append(next_obs)
         done_batch.append(done)
+        info_batch.append(extra_info)
 
     # update the last done to be terminal
     if len(done_batch) > 0:
@@ -124,8 +129,7 @@ def ephems_to_rollouts(eph, params):
     reward_batch = np.array(reward_batch).reshape(-1, 1)  # shape (N, 1)
     next_obs_batch = np.stack(next_obs_batch)  # shape (N, obs_dim)
     done_batch = np.array(done_batch).reshape(-1, 1)  # shape (N, 1)
-    info_batch = [{} for _ in range(len(reward_batch))]  # empty info dicts
-
+    info_batch = info_batch  # list of dicts, length N
     rollout = {
         "obs_vec": obs_batch,
         "action_vec": action_batch,
