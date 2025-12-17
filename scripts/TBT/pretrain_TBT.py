@@ -2,7 +2,10 @@ import os
 import random
 
 import gymnasium as gym
+import pandas as pd
 import torch
+import tqdm
+from stable_baselines3.common.logger import Logger
 from stable_baselines3.common.monitor import Monitor
 
 from astro_compass.core.ephemeris import Ephemeris as Ephemeris
@@ -11,15 +14,16 @@ from astro_compass.utils.log_utils import read_toml_config_file
 from astro_compass.utils.model_utils import get_model
 from astro_compass.utils.path_utils import (
     CONFIG_ROOT,
+    DATA_ROOT,
     LOGS_ROOT,
+    RUNS_ROOT,
     get_run_paths,
 )
-from astro_compass.utils.pre_train_utils import train_on_replay_buffer
 
 print("GPU available: ", torch.cuda.is_available())
 
 
-def pre_train(params, seed_in=42):
+def pre_train(params, steps, batch_size, buffer_path, seed_in=42):
     random.seed(seed_in)
 
     # initialize the environment
@@ -27,7 +31,7 @@ def pre_train(params, seed_in=42):
     eval_env = gen_rl_environment(params)
 
     # paths
-    paths = get_run_paths(params)
+    paths = get_run_paths(RUNS_ROOT)
 
     # env wrappers
     max_episode_steps_in = params["max_episode_steps"]
@@ -41,9 +45,19 @@ def pre_train(params, seed_in=42):
 
     model = get_model(params, env, seed_in, LOGS_ROOT, model_id=None)
 
-    model.load_replay_buffer(params["path_replay_buffer"])
+    model._logger = Logger(folder=None, output_formats=[])
 
-    model = train_on_replay_buffer(model, params, env, paths)
+    model.load_replay_buffer(buffer_path)
+
+    # model._logger = Logger(folder=None, output_formats=[])
+    critic_losses = []
+    actor_losses = []
+    # make this a progress bar
+    for step in tqdm.tqdm(range(steps)):
+        model.train(gradient_steps=1, batch_size=batch_size)
+
+        critic_losses.append(model._logger.name_to_value.get("train/critic_loss", []))
+        actor_losses.append(model._logger.name_to_value.get("train/actor_loss", []))
 
     # Remove the minimal logger from pre-training so model.learn() can set up TensorBoard properly
     # This ensures TensorBoard logging works correctly during actual training
@@ -54,11 +68,35 @@ def pre_train(params, seed_in=42):
     model_path = paths["path_SAC_model"]
     model.save(model_path)
 
+    df = pd.DataFrame(
+        {
+            "critic_loss": critic_losses,
+            "actor_loss": actor_losses,
+        }
+    )
+
+    df.to_csv(os.path.join(paths["path_output"], "pretrain_losses.csv"))
+
+    # df.plot(y="critic_loss", title="Pre-training Critic Loss")
+    # df.plot(y="actor_loss", title="Pre-training Actor Loss")
+    # plt.show()
+
+    return
+
 
 def main():
     path_config = os.path.join(CONFIG_ROOT, "SAC_training_TBT_config.toml")
     params = read_toml_config_file(path_config)
-    pre_train(params)
+    steps = 50
+    batch_size = 256
+    buffer_path = os.path.join(
+        DATA_ROOT,
+        "pre-training-data",
+        "TBT",
+        "replay_buffers",
+        "replay_buffer",
+    )
+    pre_train(params, steps, batch_size, buffer_path, seed_in=42)
 
 
 if __name__ == "__main__":
