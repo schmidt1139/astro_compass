@@ -21,6 +21,8 @@ def main(text_dir, pickle_dir):
     # save each ephem as a pickle object
     for eph, filename in zip(ephems, filenames):
         path_out = os.path.join(pickle_dir, filename.replace(".txt", ".pkl"))
+        path_out = path_out.replace("test_TBR_ephem_traj_seed_", "")
+        path_out = path_out.replace("_tof_1p0_scenario_0", "")
         with open(path_out, "wb") as f:
             pickle.dump(eph, f)
 
@@ -28,4 +30,5 @@ def main(text_dir, pickle_dir):
 if __name__ == "__main__":
     text_dir = os.path.join(DATA_ROOT, "pre-training-data", "TBT", "txt")
     pickle_dir = os.path.join(DATA_ROOT, "pre-training-data", "TBT", "pickle")
+    os.makedirs(pickle_dir, exist_ok=True)
     main(text_dir, pickle_dir)
