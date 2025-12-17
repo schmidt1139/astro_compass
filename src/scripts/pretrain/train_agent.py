@@ -74,7 +74,45 @@ def main(params, seed_in=42):
         )
 
     if params["read_replay_buffer"]:
+        # Load the buffer that was created sequentially
         model.load_replay_buffer(params["path_replay_buffer"])
+        
+        # Check if buffer n_envs matches training environment
+        if model.replay_buffer.n_envs != env.num_envs:
+            print(f"Warning: Buffer has n_envs={model.replay_buffer.n_envs} but training with n_envs={env.num_envs}")
+            print(f"Recreating buffer to match training environment...")
+            
+            from stable_baselines3.common.buffers import ReplayBuffer
+            
+            # Save old buffer data
+            old_pos = model.replay_buffer.pos
+            old_full = model.replay_buffer.full
+            old_obs = model.replay_buffer.observations[:old_pos].copy()
+            old_actions = model.replay_buffer.actions[:old_pos].copy()
+            old_rewards = model.replay_buffer.rewards[:old_pos].copy()
+            old_dones = model.replay_buffer.dones[:old_pos].copy()
+            old_next_obs = model.replay_buffer.next_observations[:old_pos].copy()
+            
+            # Create new buffer with correct n_envs
+            model.replay_buffer = ReplayBuffer(
+                buffer_size=buffer_size,
+                observation_space=model.observation_space,
+                action_space=model.action_space,
+                device=model.device,
+                n_envs=env.num_envs,
+            )
+            
+            # Directly copy the buffer data arrays
+            print(f"Copying {old_pos} experiences to new buffer...")
+            model.replay_buffer.observations[:old_pos] = old_obs
+            model.replay_buffer.actions[:old_pos] = old_actions
+            model.replay_buffer.rewards[:old_pos] = old_rewards
+            model.replay_buffer.dones[:old_pos] = old_dones
+            model.replay_buffer.next_observations[:old_pos] = old_next_obs
+            model.replay_buffer.pos = old_pos
+            model.replay_buffer.full = old_full
+            
+            print(f"Successfully loaded {model.replay_buffer.pos} experiences")
 
     callback = RewardLoggerCallback(print_freq=params["print_freq"])
     # Eval callback: saves best model by mean reward on eval_env
