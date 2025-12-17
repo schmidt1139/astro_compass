@@ -7,7 +7,6 @@ from tqdm import tqdm
 from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env_target import (
     TwoBody_Orb2Orb_Transfer_Env_target,
 )
-from astro_compass.utils.log_utils import log
 from astro_compass.utils.state_vector_utils import (
     convert_attitude_from_cartesian_to_radial,
 )
@@ -43,7 +42,7 @@ def read_ephems(
     return list_ephems, filenames
 
 
-def extract_experiences_from_ephem_TBT(eph, params):
+def ephems_to_rollouts(eph, params):
     # Step through ephem and gather observations, actions, rewards, next_obs, dones
     obs_batch = []
     action_batch = []
@@ -60,7 +59,7 @@ def extract_experiences_from_ephem_TBT(eph, params):
     ):  # -1 to ensure we have next_obs
         state_vec = eph.get_vector_at_index(i)
 
-        # unpack state
+        # unpack ephemeris
         t = state_vec[0]
         current_state = state_vec[1:6]  # x, y, vx, vy, m
         target_state = state_vec[6:10]  # x_t, y_t, vx, vy
@@ -107,7 +106,7 @@ def extract_experiences_from_ephem_TBT(eph, params):
             # compute polar observation
             state = np.concatenate((next_current_state, next_target_state))
             state_dict = env.decode_state(state)
-            next_obs, _ = env.compute_obs_fast_TBT(state, params, next_ttg)
+            next_obs, _ = env.compute_obs_fast_TBT(state_dict, params, next_ttg)
 
         obs_batch.append(obs)
         action_batch.append(action)
@@ -125,11 +124,21 @@ def extract_experiences_from_ephem_TBT(eph, params):
     reward_batch = np.array(reward_batch).reshape(-1, 1)  # shape (N, 1)
     next_obs_batch = np.stack(next_obs_batch)  # shape (N, obs_dim)
     done_batch = np.array(done_batch).reshape(-1, 1)  # shape (N, 1)
+    info_batch = [{} for _ in range(len(reward_batch))]  # empty info dicts
 
-    return obs_batch, action_batch, reward_batch, next_obs_batch, done_batch
+    rollout = {
+        "obs_vec": obs_batch,
+        "action_vec": action_batch,
+        "reward_vec": reward_batch,
+        "next_obs_vec": next_obs_batch,
+        "done_vec": done_batch,
+        "info_vec": info_batch,
+    }
+
+    return rollout
 
 
-def import_training_into_replay_buffer_v3(set_ephems, test_log, model, params):
+def generate_rollouts(ephems, params):
     """
     Import training data from ephemeris v3.0 files into the replay buffer.
     Handles 10-dimensional observation space (x, y, vx, vy, m, x_t, y_t, vx_t, vy_t, ttg).
@@ -138,17 +147,15 @@ def import_training_into_replay_buffer_v3(set_ephems, test_log, model, params):
 
     Assumes ephemeris v3.0 format, which contains a moving target with full state info.
     """
+    rollouts = []
+    for ephem in ephems:
+        rollout = ephems_to_rollouts(ephem, params)
+        rollouts.append(rollout)
 
-    cores = params.get("cores", 1)
-    batches = []
-    with ProcessPoolExecutor(max_workers=cores) as executor:
-        futures = [
-            executor.submit(extract_experiences_from_ephem_TBT, eph, params)
-            for eph in set_ephems
-        ]
-        for f in tqdm(as_completed(futures), total=len(futures)):
-            batches.append(f.result())
+    return rollouts
 
+
+def format_buffer(batches):
     # Now add all experiences to replay buffer in batches
     for obs_batch, action_batch, reward_batch, next_obs_batch, done_batch in tqdm(
         batches, total=len(batches), desc="Adding experiences to replay buffer"
@@ -188,10 +195,3 @@ def import_training_into_replay_buffer_v3(set_ephems, test_log, model, params):
                 done=done,
                 infos=infos,
             )
-
-    # report updated buffer size
-    test_log = log(
-        "Updated experience buffer size: " + str(model.replay_buffer.size()),
-        test_log,
-        True,
-    )  # current number of transitions
