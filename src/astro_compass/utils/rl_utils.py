@@ -70,7 +70,7 @@ def import_training_into_replay_buffer(
     test_log = log(
         "Using only first " + str(num_ephems) + " ephemerides", test_log, True
     )
-    set_ephems = read_ephems(path_training_data, num_ephems)
+    set_ephems = read_ephems(path_training_data, Ephemeris_v2)
     test_log = log("Reading ephemerides", test_log, True)
 
     # count number of ephemerides
@@ -351,7 +351,7 @@ def import_training_into_replay_buffer_v2(
     num_vec_envs = params.get("num_vec_envs", 1)
 
     test_log = log(f"Reading ephemerides (version {ephem_version})", test_log, True)
-    set_ephems = read_ephems(path_training_data, num_ephems, version=ephem_version)
+    set_ephems = read_ephems(path_training_data, Ephemeris_v2)
 
     num_ephems = len(set_ephems)
     test_log = log(

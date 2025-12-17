@@ -6,9 +6,9 @@ from scipy.integrate import solve_ivp
 from tqdm import tqdm
 
 from astro_compass.constants.constants import Constants
+from astro_compass.core.ephem_converter import read_ephems
 from astro_compass.core.ephemeris_v3 import Ephemeris_v3
 from astro_compass.core.propagation import env_EOM_TBT_v2
-from astro_compass.core.training_data_generation import read_ephems
 from astro_compass.utils.path_utils import PROJECT_ROOT
 
 
@@ -170,9 +170,7 @@ def convert_ephems():
 
     set_ephems, filenames = read_ephems(
         path_ephems,
-        num_ephems,
-        version=ephem_version,
-        return_filenames=True,
+        eph_class=Ephemeris_v3,
     )
 
     print("Reading ephemerides from: " + path_ephems)

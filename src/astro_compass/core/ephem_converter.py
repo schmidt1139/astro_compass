@@ -4,9 +4,6 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 import numpy as np
 from tqdm import tqdm
 
-from astro_compass.core.ephemeris import Ephemeris
-from astro_compass.core.ephemeris_v2 import Ephemeris_v2
-from astro_compass.core.ephemeris_v3 import Ephemeris_v3
 from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env_target import (
     TwoBody_Orb2Orb_Transfer_Env_target,
 )
@@ -16,24 +13,15 @@ from astro_compass.utils.state_vector_utils import (
 )
 
 
-def _read_single_ephem(path, version):
-    if version == 1.0:
-        eph = Ephemeris()
-    elif version == 2.0:
-        eph = Ephemeris_v2()
-    elif version == 3.0:
-        eph = Ephemeris_v3()
-    else:
-        raise ValueError("Unsupported ephemeris version: " + str(version))
+def _read_single_ephem(path, eph_class):
+    eph = eph_class()
     eph.read(path)
     return eph
 
 
 def read_ephems(
     ephem_dir,
-    num_ephems=None,
-    version=1.0,
-    return_filenames=False,
+    eph_class=None,
     num_workers=4,
 ):
     filenames = os.listdir(ephem_dir)
@@ -41,14 +29,18 @@ def read_ephems(
 
     list_ephems = []
     with ProcessPoolExecutor(max_workers=num_workers) as executor:
-        futures = [executor.submit(_read_single_ephem, path, version) for path in paths]
+        futures = [
+            executor.submit(
+                _read_single_ephem,
+                path,
+                eph_class,
+            )
+            for path in paths
+        ]
         for f in tqdm(as_completed(futures), total=len(futures)):
             list_ephems.append(f.result())
 
-    if return_filenames:
-        return list_ephems, filenames
-    else:
-        return list_ephems
+    return list_ephems, filenames
 
 
 def extract_experiences_from_ephem_TBT(eph, params):

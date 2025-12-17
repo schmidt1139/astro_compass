@@ -5,11 +5,12 @@ import torch.nn as nn
 from matplotlib import pyplot as plt
 from stable_baselines3 import SAC as SB3_SAC
 
+from astro_compass.core.ephem_converter import import_training_into_replay_buffer_v3
+from astro_compass.core.ephemeris_v3 import Ephemeris_v3
 from astro_compass.core.training_data_generation import read_ephems
 from astro_compass.utils.env_utils import gen_rl_environment
 from astro_compass.utils.log_utils import log, read_config_file
 from astro_compass.utils.path_utils import DATA_ROOT
-from astro_compass.utils.rl_utils import import_training_into_replay_buffer_v3
 from astro_compass.utils.test_utils import binary_compare
 
 
@@ -49,9 +50,7 @@ def test_fast_replay_buffer_seeding(flag_report_live: bool = False):
     # read the ephems from directory
     set_ephems, filenames = read_ephems(
         params["path_ephems"],
-        params["num_ephems"],
-        version=params["ephem_version"],
-        return_filenames=True,
+        eph_class=Ephemeris_v3,
     )
 
     test_log = log(
