@@ -3,11 +3,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
 from multiprocessing import cpu_count
 
-from tqdm import tqdm
-
 from astro_compass.core.ephemeris import Ephemeris
-from astro_compass.core.ephemeris_v2 import Ephemeris_v2
-from astro_compass.core.ephemeris_v3 import Ephemeris_v3
 from astro_compass.core.hamiltonian_control import Hamiltonian_Controller_TBT
 
 # Adding python src code directory
@@ -85,44 +81,3 @@ def generate_nn_training_data_parallel(env, args):
             print(
                 f"Thread {thread_id}    Success: {result}   Counter: {counter}   Ephem: {filename}"
             )
-
-
-def _read_single_ephem(path, version):
-    if version == 1.0:
-        eph = Ephemeris()
-    elif version == 2.0:
-        eph = Ephemeris_v2()
-    elif version == 3.0:
-        eph = Ephemeris_v3()
-    else:
-        raise ValueError("Unsupported ephemeris version: " + str(version))
-    eph.read_from_file(path)
-    return eph
-
-
-def read_ephems_from_dir(
-    directory,
-    num_ephems_to_use=None,
-    version=1.0,
-    flag_return_filenames=False,
-    params=None,
-):
-    filenames = os.listdir(directory)
-    end_i = len(filenames)
-    if num_ephems_to_use is not None:
-        end_i = min(num_ephems_to_use, len(filenames))
-    filenames = filenames[:end_i]
-    paths = [os.path.join(directory, file) for file in filenames]
-
-    num_workers = params.get("cores", 1) if params is not None else 1
-
-    list_ephems = []
-    with ProcessPoolExecutor(max_workers=num_workers) as executor:
-        futures = [executor.submit(_read_single_ephem, path, version) for path in paths]
-        for f in tqdm(as_completed(futures), total=len(futures)):
-            list_ephems.append(f.result())
-
-    if flag_return_filenames:
-        return list_ephems, filenames
-    else:
-        return list_ephems
