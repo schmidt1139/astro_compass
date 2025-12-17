@@ -38,7 +38,7 @@ def test_fast_replay_buffer_seeding(flag_report_live: bool = False):
         flag_report_live,
     )
     test_log = log(
-        "Number of ephems to use: " + str(params["num_ephems_to_use"]),
+        "Number of ephems to use: " + str(params["num_ephems"]),
         test_log,
         flag_report_live,
     )
@@ -49,9 +49,9 @@ def test_fast_replay_buffer_seeding(flag_report_live: bool = False):
     # read the ephems from directory
     set_ephems, filenames = read_ephems(
         params["path_ephems"],
-        params["num_ephems_to_use"],
+        params["num_ephems"],
         version=params["ephem_version"],
-        flag_return_filenames=True,
+        return_filenames=True,
         params=params,
     )
 

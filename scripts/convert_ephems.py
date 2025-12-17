@@ -154,7 +154,7 @@ def convert_single_ephem(ephem, dir_out, filename_out):
 
 
 def convert_ephems():
-    num_ephems_to_use = 100_000
+    num_ephems = 100_000
     ephem_version = 2.0
     cores = 8
     params = {}
@@ -170,14 +170,14 @@ def convert_ephems():
 
     set_ephems, filenames = read_ephems(
         path_ephems,
-        num_ephems_to_use,
+        num_ephems,
         version=ephem_version,
-        flag_return_filenames=True,
+        return_filenames=True,
         params=params,
     )
 
     print("Reading ephemerides from: " + path_ephems)
-    set_ephems = set_ephems[:num_ephems_to_use]
+    set_ephems = set_ephems[:num_ephems]
     num_ephems = len(set_ephems)
     num_states = set_ephems[0].num_vectors * num_ephems
     print("Number of ephemerides: " + str(num_ephems))

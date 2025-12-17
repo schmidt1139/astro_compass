@@ -12,7 +12,7 @@ from astro_compass.utils.path_utils import PROJECT_ROOT
 
 
 def extend_ephems():
-    num_ephems_to_use = 100_000
+    num_ephems = 100_000
     ephem_version = 2.0
     extension_scale = 1.5
     path_ephems = os.path.join(PROJECT_ROOT, "z_script_output", "temp")
@@ -20,13 +20,13 @@ def extend_ephems():
 
     set_ephems, filenames = read_ephems(
         path_ephems,
-        num_ephems_to_use,
+        num_ephems,
         version=ephem_version,
-        flag_return_filenames=True,
+        return_filenames=True,
     )
 
     print("Reading ephemerides from: " + path_ephems)
-    set_ephems = set_ephems[:num_ephems_to_use]
+    set_ephems = set_ephems[:num_ephems]
     num_ephems = len(set_ephems)
     num_states = set_ephems[0].num_vectors * num_ephems
     print("Number of ephemerides: " + str(num_ephems))

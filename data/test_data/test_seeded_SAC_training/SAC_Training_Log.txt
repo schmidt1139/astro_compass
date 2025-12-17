@@ -12,7 +12,7 @@ Parameter Start:
   g0: 9.80665
   env_step_size: 86400
   flag_seed_replay_buffer: True
-  num_ephems_to_use: 10
+  num_ephems: 10
   include_callbacks_in_learn: True
   training_steps: 500
   max_episode_steps_in: 500

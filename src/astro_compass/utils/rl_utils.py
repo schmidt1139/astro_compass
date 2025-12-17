@@ -66,11 +66,11 @@ def import_training_into_replay_buffer(
     test_log = log("Importing training data into replay buffer", test_log, True)
 
     # read ephemerides from directory
-    num_ephems_to_use = params["num_ephems_to_use"]
+    num_ephems = params["num_ephems"]
     test_log = log(
-        "Using only first " + str(num_ephems_to_use) + " ephemerides", test_log, True
+        "Using only first " + str(num_ephems) + " ephemerides", test_log, True
     )
-    set_ephems = read_ephems(path_training_data, num_ephems_to_use)
+    set_ephems = read_ephems(path_training_data, num_ephems)
     test_log = log("Reading ephemerides", test_log, True)
 
     # count number of ephemerides
@@ -80,7 +80,7 @@ def import_training_into_replay_buffer(
         test_log,
         True,
     )
-    set_ephems = set_ephems[:num_ephems_to_use]
+    set_ephems = set_ephems[:num_ephems]
     num_ephems = len(set_ephems)
     num_states = set_ephems[0].num_vectors * num_ephems
     test_log = log("Number of total state vectors: " + str(num_states), test_log, True)
@@ -345,14 +345,14 @@ def import_training_into_replay_buffer_v2(
     test_log = log("Importing training data (v2.0) into replay buffer", test_log, True)
 
     # read ephemerides from directory
-    num_ephems_to_use = params.get("num_ephems_to_use", None)
+    num_ephems = params.get("num_ephems", None)
     ephem_version = params.get("ephem_version", 2.0)
     step_size = params.get("ephem_step_size", 1)  # Sample every Nth vector
     num_vec_envs = params.get("num_vec_envs", 1)
 
     test_log = log(f"Reading ephemerides (version {ephem_version})", test_log, True)
     set_ephems = read_ephems(
-        path_training_data, num_ephems_to_use, version=ephem_version, params=params
+        path_training_data, num_ephems, version=ephem_version, params=params
     )
 
     num_ephems = len(set_ephems)

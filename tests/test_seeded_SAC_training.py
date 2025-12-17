@@ -54,7 +54,7 @@ def test_seeded_SAC_training(flag_report_live=True, seed_in=42):
         "g0": Constants.G0,  # gravtational acceleration at Earth surface [m/s^2]
         "env_step_size": 3600 * 24,  # environment step size [s]
         "flag_seed_replay_buffer": True,  # flag to seed the replay buffer
-        "num_ephems_to_use": 10,  # number of ephemerides to use for seeding
+        "num_ephems": 10,  # number of ephemerides to use for seeding
         "include_callbacks_in_learn": True,  # flag to include callbacks in learn() method
         "training_steps": 500,  # number of training steps
         "max_episode_steps_in": 500,  # max steps per episode
