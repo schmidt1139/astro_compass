@@ -1,9 +1,9 @@
 import os
 
 import matplotlib.pyplot as plt
+from astro_compass.vis.ephem_plotter import EphemPlotter
 
 from astro_compass.constants.constants import Constants
-from astro_compass.vis.ephem_plotter import EphemPlotter
 
 
 class RolloutPlotter:
@@ -68,7 +68,6 @@ class RolloutPlotter:
             os.path.join(self.path_output, "SAC_Training_Reward_Per_Step.png"), dpi=300
         )
 
-    # plot throttle over time
     def plot_throttle_vs_time(self):
         plt.figure()
         plt.plot(
@@ -85,7 +84,6 @@ class RolloutPlotter:
             os.path.join(self.path_output, "SAC_Training_Throttle.png"), dpi=300
         )
 
-    # plot attitude over time
     def plot_attitude_vs_time(self):
         plt.figure()
         plt.plot(
@@ -105,7 +103,6 @@ class RolloutPlotter:
         plt.grid(True, alpha=0.3)  # Force grid on with some transparency
         plt.savefig(os.path.join(self.path_output, "SAC_Training_Alpha.png"), dpi=300)
 
-    # plot nd state over time
     def plot_state_vs_time(self):
         plt.figure()
         plt.plot(self.rollout_data.arr_time, self.rollout_data.arr_x, label="x")
@@ -119,7 +116,6 @@ class RolloutPlotter:
         plt.grid(True, alpha=0.3)  # Force grid on with some transparency
         plt.savefig(os.path.join(self.path_output, "SAC_ND_State.png"), dpi=300)
 
-    # plot sma over time
     def plot_sma_vs_time(self):
         plt.figure()
         plt.plot(
