@@ -4,6 +4,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 import numpy as np
 from tqdm import tqdm
 
+from astro_compass.core.rollouts import RolloutData
 from astro_compass.envs.TwoBody_Orb2Orb_Transfer_Env_target import (
     TwoBody_Orb2Orb_Transfer_Env_target,
 )
@@ -43,16 +44,9 @@ def read_ephems(
 
 
 def ephems_to_rollouts(eph, params):
-    # Step through ephem and gather observations, actions, rewards, next_obs, dones
-    obs_batch = []
-    action_batch = []
-    reward_batch = []
-    next_obs_batch = []
-    done_batch = []
-    info_batch = []
-
     num_steps_per_SART = params["ephem_step_size"]
     env = TwoBody_Orb2Orb_Transfer_Env_target
+    rollout = RolloutData()
 
     # Only add every num_steps_per_SART-th vector
     for i in range(
@@ -112,32 +106,18 @@ def ephems_to_rollouts(eph, params):
             )
             extra_info.update(extra_obs_info)
 
-        obs_batch.append(obs)
-        action_batch.append(action)
-        reward_batch.append(reward)
-        next_obs_batch.append(next_obs)
-        done_batch.append(done)
-        info_batch.append(extra_info)
+        data = {
+            "obs": obs,
+            "action": action,
+            "reward": reward,
+            "next_obs": next_obs,
+            "done": done,
+            "info": extra_info,
+        }
+        rollout.add_step(data)
 
     # update the last done to be terminal
-    if len(done_batch) > 0:
-        done_batch[-1] = True
-
-    # After the loop, before buffer import:
-    obs_batch = np.stack(obs_batch)  # shape (N, obs_dim)
-    action_batch = np.stack(action_batch)  # shape (N, action_dim)
-    reward_batch = np.array(reward_batch).reshape(-1, 1)  # shape (N, 1)
-    next_obs_batch = np.stack(next_obs_batch)  # shape (N, obs_dim)
-    done_batch = np.array(done_batch).reshape(-1, 1)  # shape (N, 1)
-    info_batch = info_batch  # list of dicts, length N
-    rollout = {
-        "obs_vec": obs_batch,
-        "action_vec": action_batch,
-        "reward_vec": reward_batch,
-        "next_obs_vec": next_obs_batch,
-        "done_vec": done_batch,
-        "info_vec": info_batch,
-    }
+    rollout.dones[-1] = True
 
     return rollout
 
@@ -152,50 +132,10 @@ def generate_rollouts(ephems, params):
     Assumes ephemeris v3.0 format, which contains a moving target with full state info.
     """
     rollouts = []
+    if not isinstance(ephems, list):
+        ephems = [ephems]
     for ephem in ephems:
         rollout = ephems_to_rollouts(ephem, params)
         rollouts.append(rollout)
 
     return rollouts
-
-
-def format_buffer(batches):
-    # Now add all experiences to replay buffer in batches
-    for obs_batch, action_batch, reward_batch, next_obs_batch, done_batch in tqdm(
-        batches, total=len(batches), desc="Adding experiences to replay buffer"
-    ):
-        batch_size = obs_batch.shape[0]
-        for i in range(batch_size):
-            obs = np.array(obs_batch[i], dtype=np.float32)
-            action = np.array(action_batch[i], dtype=np.float32)
-            next_obs = np.array(next_obs_batch[i], dtype=np.float32)
-            reward = np.array(reward_batch[i], dtype=np.float32)
-            done = np.array(done_batch[i], dtype=np.float32)
-
-            # If single experience, reshape to (1, dim)
-            if obs.ndim == 1:
-                obs = obs.reshape(1, -1)
-            if action.ndim == 1:
-                action = action.reshape(1, -1)
-            if next_obs.ndim == 1:
-                next_obs = next_obs.reshape(1, -1)
-            if reward.ndim == 0 or (reward.ndim == 1 and reward.shape == ()):
-                reward = np.array([reward], dtype=np.float32)
-            if reward.ndim == 1 and reward.shape[0] != obs.shape[0]:
-                reward = reward.reshape(-1, 1)
-            if done.ndim == 0 or (done.ndim == 1 and done.shape == ()):
-                done = np.array([done], dtype=np.float32)
-            if done.ndim == 1 and done.shape[0] != obs.shape[0]:
-                done = done.reshape(-1, 1)
-
-            # Info dicts: one per experience
-            infos = [{} for _ in range(obs.shape[0])]
-
-            model.replay_buffer.add(
-                obs=obs,
-                next_obs=next_obs,
-                action=action,
-                reward=reward,
-                done=done,
-                infos=infos,
-            )
