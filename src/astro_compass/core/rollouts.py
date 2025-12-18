@@ -1,61 +1,19 @@
-class SACRolloutData:
+class RolloutData:
     def __init__(self):
-        self.arr_time = []
-        self.arr_reward_tot = []
-        self.arr_reward = []
-        self.arr_throttle = []
-        self.arr_alpha_x = []
-        self.arr_alpha_y = []
-        self.arr_x = []
-        self.arr_y = []
-        self.arr_vx = []
-        self.arr_vy = []
-        self.arr_sma = []
-        self.arr_sma_target = []
-        self.arr_ecc = []
-        self.arr_ecc_target = []
-        self.arr_ecc_max = []
-        self.arr_reward_mass = []
-        self.arr_reward_distance = []
-        self.sum_reward = 0.0
+        self.obs = []
+        self.actions = []
+        self.rewards = []
+        self.next_obs = []
+        self.dones = []
+        self.infos = []
 
-    def add_step(
-        self,
-        time,
-        reward,
-        throttle,
-        alpha_x,
-        alpha_y,
-        x,
-        y,
-        vx,
-        vy,
-        sma,
-        sma_target,
-        ecc,
-        ecc_target,
-        ecc_max,
-        reward_mass,
-        reward_distance,
-    ):
-        self.arr_time.append(time)  # convert to days
-        self.arr_reward.append(reward)
-        self.arr_throttle.append(throttle)
-        self.arr_alpha_x.append(alpha_x)
-        self.arr_alpha_y.append(alpha_y)
-        self.arr_x.append(x)
-        self.arr_y.append(y)
-        self.arr_vx.append(vx)
-        self.arr_vy.append(vy)
-        self.arr_sma.append(sma)
-        self.arr_sma_target.append(sma_target)
-        self.arr_ecc.append(ecc)
-        self.arr_ecc_target.append(ecc_target)
-        self.arr_ecc_max.append(ecc_max)
-        self.sum_reward += reward
-        self.arr_reward_tot.append(self.sum_reward)
-        self.arr_reward_mass.append(reward_mass)
-        self.arr_reward_distance.append(reward_distance)
+    def add_step(self, data):
+        self.obs.append(data["obs"])
+        self.actions.append(data["action"])
+        self.rewards.append(data["reward"])
+        self.next_obs.append(data["next_obs"])
+        self.dones.append(data["done"])
+        self.infos.append(data.get("info", {}))
 
 
 class SACRolloutData_TBR:

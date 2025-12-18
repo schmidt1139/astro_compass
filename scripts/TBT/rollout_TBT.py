@@ -6,7 +6,7 @@ import torch
 
 from astro_compass.constants.constants import Constants
 from astro_compass.core.ephemeris import Ephemeris as Ephemeris
-from astro_compass.core.rollouts import SACRolloutData
+from astro_compass.core.rollouts import RolloutData
 from astro_compass.core.spacecraft import Spacecraft
 from astro_compass.utils.env_utils import gen_rl_environment
 from astro_compass.utils.log_utils import (
@@ -58,7 +58,7 @@ def rollout(
 ):
     sma_t_i = Constants.SMA_EARTH
 
-    rollout_data = SACRolloutData()
+    rollout_data = RolloutData()
     eph = Ephemeris()
     count_step = 0
     flag_continue = True
@@ -66,8 +66,9 @@ def rollout(
     truncated = False
     while flag_continue:
         # step the env
-        action, _states = model.predict(obs, deterministic=True)
-        state_dict = model.env.decode_state(obs)
+        action, states = model.predict(obs, deterministic=True)
+        obs_dict = model.env.decode_obs(obs)
+        state_dict = model.env.decode_state(states)
         throttle = action[0]
         alpha_x = action[1]
         alpha_y = action[2]
@@ -96,32 +97,23 @@ def rollout(
         )
         arr_OE = SC.calc_Planar_OE(0.0, 0.0, 0.0, 0.0, params["mu"])
 
-        obs, reward, terminated, truncated, info = env.step(action)
-        obs_dict = env.decode_observation(obs)
+        next_obs, reward, terminated, truncated, info = env.step(action)
+        next_obs_dict = env.decode_observation(next_obs)
         reward_mass_component = info.get("reward_mass_component", 0.0)
         reward_distance_component = info.get("reward_distance_component", 0.0)
 
         count_step = count_step + 1
 
         # log data
-        rollout_data.add_step(
-            time=t_i_days,
-            reward=reward,
-            throttle=throttle,
-            alpha_x=alpha_x,
-            alpha_y=alpha_y,
-            x=state_dict["x_m"],
-            y=state_dict["y_m"],
-            vx=state_dict["vx_m_s"],
-            vy=state_dict["vy_m_s"],
-            sma=arr_OE[0],
-            sma_target=sma_t_i,
-            ecc=arr_OE[1],
-            ecc_target=0.0,
-            ecc_max=1.0,
-            reward_mass=reward_mass_component,
-            reward_distance=reward_distance_component,
-        )
+        data = {
+            "obs": obs_dict,
+            "action": action,
+            "reward": reward,
+            "next_obs": next_obs_dict,
+            "done": terminated or truncated,
+            "info": info,
+        }
+        rollout_data.add_step(data)
 
         if terminated or truncated:
             break
