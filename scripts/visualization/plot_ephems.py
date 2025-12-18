@@ -13,31 +13,21 @@ class EphemPlotterExtend(EphemPlotter):
 
     def plot(self):
         fig_xy = self.plot_xy()
-        x, y, vx, vy = (
+
+        fig_xy = plot_overlay_ballistic_orbit(
             self.ephem.arr_x[0],
             self.ephem.arr_y[0],
             self.ephem.arr_vx[0],
             self.ephem.arr_vy[0],
-        )
-        fig_xy = plot_overlay_ballistic_orbit(
-            x,
-            y,
-            vx,
-            vy,
             "Initial Orbit",
             color_in="lime",
         )
-        x, y, vx, vy = (
+
+        fig_xy = plot_overlay_ballistic_orbit(
             self.ephem.arr_x[-1],
             self.ephem.arr_y[-1],
             self.ephem.arr_vx[-1],
             self.ephem.arr_vy[-1],
-        )
-        fig_xy = plot_overlay_ballistic_orbit(
-            x,
-            y,
-            vx,
-            vy,
             "Final Orbit",
             color_in="red",
         )
