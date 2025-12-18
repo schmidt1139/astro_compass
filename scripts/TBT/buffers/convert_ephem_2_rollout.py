@@ -45,20 +45,14 @@ def main(params, ephems_dir, output_dir, seed_in=42):
     rollouts = generate_rollouts(ephems, params)
 
     for rollout in rollouts:
-        obs_vec = rollout["obs_vec"]
-        action_vec = rollout["action_vec"]
-        reward_vec = rollout["reward_vec"]
-        next_obs_vec = rollout["next_obs_vec"]
-        done_vec = rollout["done_vec"]
-        info_vec = rollout["info_vec"]
-        for i in range(len(obs_vec)):
+        for i in range(len(rollout.obs)):
             model.replay_buffer.add(
-                obs=obs_vec[i].reshape(1, -1),
-                action=action_vec[i].reshape(1, -1),
-                reward=reward_vec[i].reshape(1, -1),
-                next_obs=next_obs_vec[i].reshape(1, -1),
-                done=done_vec[i].reshape(1, -1),
-                infos=[info_vec[i]],
+                obs=rollout.obs[i].reshape(1, -1),
+                action=rollout.action[i].reshape(1, -1),
+                reward=rollout.reward[i].reshape(1, -1),
+                next_obs=rollout.next_obs[i].reshape(1, -1),
+                done=rollout.done[i].reshape(1, -1),
+                infos=[rollout.info[i]],
             )
 
     path_replay_buffer = os.path.join(output_dir, "replay_buffer.pkl")
