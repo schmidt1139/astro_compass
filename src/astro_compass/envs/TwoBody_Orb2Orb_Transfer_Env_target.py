@@ -101,7 +101,7 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         self.r_dist_weight = kwargs.get("r_dist_weight", 1.0)
         self.v_dist_weight = kwargs.get("v_dist_weight", 1.0)
         self.prop_length_scale = kwargs.get("prop_length_scale", 1.0)
-        self.TTG = 0.0
+        self.TTG_dim = 0.0
         self.mass_initial = kwargs.get("mass_initial", 3366.0)  # initial mass (kg)
 
         self.elapsed_t = 0.0
@@ -330,9 +330,6 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         # scale the time of flight
         TTG_nd = TTG_nd * self.tof_scale
         TTG_dim = TTG_nd * self.t_star
-        self.TTG = TTG_dim
-
-        self.TTG_nd = TTG_nd
         self.TTG_dim = TTG_dim
 
         self.prop_duration = TTG_dim * self.prop_length_scale
@@ -380,7 +377,7 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
             state_dict,
             params_temp,
             u,
-            self.TTG,
+            self.TTG_dim,
         )
 
         for key in env_info:
@@ -397,12 +394,6 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         vy = state["vy_m_s"]
         mass = state["m_kg"]
 
-        # central body location
-        x_cb = self._arr_cb[0]
-        y_cb = self._arr_cb[1]
-        vx_cb = self._arr_cb[2]
-        vy_cb = self._arr_cb[3]
-
         # get the current spacecraft object container
         sc = self._spacecraft
 
@@ -418,9 +409,6 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
 
         self.alpha_x = alpha_x
         self.alpha_y = alpha_y
-
-        # save non-dim mass
-        mass_nd_0 = mass / self.m_star
 
         # step the spacecraft forward
         t_span = (0.0, self.step_size)
@@ -481,7 +469,7 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         )
 
         # update the time to go
-        self.TTG -= self.step_size
+        self.TTG_dim -= self.step_size
 
         # determine reward and terminated status
         reward, terminated, truncated = self.calc_reward(u)
@@ -494,7 +482,7 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         observation, env_data = self.compute_obs_fast_TBT(
             state_dict,
             self.scale_params,
-            self.TTG,
+            self.TTG_dim,
         )
 
         for key in env_data:
@@ -528,10 +516,10 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
 
         # time to go
         if ttg is None:
-            TTG_in = self.TTG
+            TTG_in = self.TTG_dim
         else:
             TTG_in = ttg
-        self.TTG = TTG_in
+        self.TTG_dim = TTG_in
 
         # update the env
         self.update_env(
@@ -548,7 +536,7 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         # construct observation
         state_dict = self.decode_state(self._state)
         observation, env_data = self.compute_obs_fast_TBT(
-            state_dict, self.scale_params, self.TTG
+            state_dict, self.scale_params, self.TTG_dim
         )
 
         for key in env_data:
@@ -565,7 +553,7 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         return self._state.copy()
 
     def get_time_to_go(self):
-        return self.TTG
+        return self.TTG_dim
 
     def update_env(self, x_0, y_0, vx_0, vy_0, mass_0, a_target, e_target, w_target):
         # calculate current orbital elements
