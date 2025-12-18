@@ -62,6 +62,7 @@ class EphemPlotter:
         radius_central_body=Constants.RADIUS_SUN_M,
         plot_label="Trajectory",
         color_in="#5c01a6",
+        new_fig=True,
     ):
         # plt.style.use("data/support_files/dark_scientific.mplstyle");
 
@@ -90,7 +91,10 @@ class EphemPlotter:
             arr_x_cb = np.append(arr_x_cb, x_cb)
             arr_y_cb = np.append(arr_y_cb, y_cb)
 
-        fig, ax = plt.subplots(figsize=(6, 6))
+        if new_fig:
+            fig, ax = plt.subplots(figsize=(6, 6))
+        else:
+            fig, ax = plt.gcf(), plt.gca()
 
         ax.set_aspect("equal")
 
