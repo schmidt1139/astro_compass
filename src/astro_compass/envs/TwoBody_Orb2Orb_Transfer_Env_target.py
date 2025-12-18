@@ -450,22 +450,14 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         # extract the final state vector from ODE solution (last column in y)
         y_final = (solution.y[:, -1]).astype(np.float32)
 
-        y_final_m = np.zeros(5, dtype=np.float32)
-        y_final_m[0] = y_final[0] * 1000  # convert x back to m
-        y_final_m[1] = y_final[1] * 1000  # convert y back to m
-        y_final_m[2] = y_final[2] * 1000  # convert vx back to m/s
-        y_final_m[3] = y_final[3] * 1000  # convert vy back to m/s
-        y_final_m[4] = y_final[4]  # mass in kg
+        scale_vec = np.array([1000, 1000, 1000, 1000, 1], dtype=np.float32)
+        y_final_m = y_final * scale_vec
+        y0_m = y0 * scale_vec
 
-        x_0 = y_final_m[0]
-        y_0 = y_final_m[1]
-        vx_0 = y_final_m[2]
-        vy_0 = y_final_m[3]
-        mass_0 = y_final_m[4]
+        x_0, y_0, vx_0, vy_0, mass_0 = y_final_m
 
         # change in state vector
-        scale_vec = np.array([1000, 1000, 1000, 1000, 1], dtype=np.float32)
-        delta_r = (y_final - y0) * scale_vec
+        delta_r = y_final_m - y0_m
 
         # update the state and elapsed time
         self.elapsed_t = self.elapsed_t + self.step_size
