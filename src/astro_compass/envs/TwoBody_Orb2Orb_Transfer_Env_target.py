@@ -249,7 +249,11 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
             "alpha_y": self.alpha_y,
         }
 
-    def reset(self, seed: Optional[int] = None, options: Optional[dict] = None):
+    def reset(
+        self,
+        seed: Optional[int] = None,
+        options: Optional[dict] = None,
+    ):
         # We need the following line to seed self.np_random
         super().reset(seed=seed)
 
@@ -284,6 +288,16 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
         a_target = self.np_random.uniform(low=a_target_range[0], high=a_target_range[1])
         e_target = self.np_random.uniform(low=e_target_range[0], high=e_target_range[1])
         w_target = self.np_random.uniform(low=w_target_range[0], high=w_target_range[1])
+
+        # MANUAL OVERRIDE VIA OPTIONS
+        if options is not None:
+            a_0 = options["a_0"]
+            e_0 = options["e_0"]
+            w_0 = options["w_0"]
+            theta_0 = options["theta_0"]
+            a_target = options["a_target"]
+            e_target = options["e_target"]
+            w_target = options["w_target"]
 
         x_0, y_0, vx_0, vy_0 = calc_cart_from_OE(
             a_0,
