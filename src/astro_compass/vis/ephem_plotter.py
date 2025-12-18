@@ -6,7 +6,7 @@ import numpy as np
 from scipy.integrate import solve_ivp
 
 from astro_compass.constants.constants import Constants
-from astro_compass.utils.path_utils import RUNS_ROOT
+from astro_compass.utils.path_utils import PLOT_ROOT, RUNS_ROOT
 
 
 def plot_overlay_ballistic_orbit(
@@ -298,6 +298,52 @@ class EphemPlotter:
         self.ephem.ax_xy = ax
 
         return self.ephem.fig_xy
+
+
+class EphemPlotterExtend(EphemPlotter):
+    def __init__(self, directory, num_ephems=1, directory_H=None):
+        self.ephems = self.load_ephems(directory, num_ephems)
+
+        if directory_H is not None:
+            self.ephems_H = self.load_ephems(directory_H, num_ephems)
+
+    def load_ephems(self, directory, num_ephems):
+        files = os.listdir(directory)
+        ephems = []
+        for file in files[:num_ephems]:
+            path_to_ephemeris = os.path.join(directory, file)
+            with open(path_to_ephemeris, "rb") as f:
+                eph = pickle.load(f)
+            ephems.append(eph)
+        return ephems
+
+    def plot(self):
+        for i in range(len(self.ephems)):
+            ephem = self.ephems[i]
+            new_fig = True if i == 0 else False
+            self.ephem = ephem
+            fig_xy = self.plot_xy(new_fig=new_fig)
+            fig_xy = self.adjust_plot_limits()
+
+            if hasattr(self, "ephems_H"):
+                ephem_H = self.ephems_H[i]
+                self.ephem = ephem_H
+                fig_xy = self.plot_xy(
+                    new_fig=False,
+                    color_in="orange",
+                    plot_label="H Trajectory",
+                )
+                fig_xy = self.adjust_plot_limits()
+
+        # limit the legend to the first 4 entries
+        legend = fig_xy.axes[0].get_legend()
+        handles = legend.legend_handles[:4]
+        labels = [handle.get_label() for handle in handles]
+        fig_xy.axes[0].legend(handles, labels)
+
+        plot_title = fig_xy.axes[0].get_title().replace(" ", "_").lower()
+        file_path = os.path.join(PLOT_ROOT, f"{plot_title}.png")
+        fig_xy.savefig(file_path, dpi=300)
 
 
 def import_ephem(model_path, idx=0):
