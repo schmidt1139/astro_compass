@@ -59,11 +59,6 @@ def main(path_to_ephemeris):
 
     plt.show()
 
-    # report the final vector
-    index = eph.num_vectors - 1
-    state_vector = eph.get_vector_at_index(index)
-    print("Final vector: ", state_vector)
-
 
 if __name__ == "__main__":
     directory = os.path.join(DATA_ROOT, "pre-training-data", "TBT", "pickle")
