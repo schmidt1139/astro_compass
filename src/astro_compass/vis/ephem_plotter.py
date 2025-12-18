@@ -3,80 +3,54 @@ import pickle
 
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.integrate import solve_ivp
 
 from astro_compass.constants.constants import Constants
 from astro_compass.utils.path_utils import RUNS_ROOT
 
 
 def plot_overlay_ballistic_orbit(
-    x, y, vx, vy, env, fig, params, vis, label_in, color_in="lime"
+    x,
+    y,
+    vx,
+    vy,
+    label,
+    color_in="lime",
 ):
-    # check env type
-    if params.get("env_type", "TwoBodyRendezvous_Env") == "TwoBodyRendezvous_Polar_Env":
-        flag_use_obs = False
-        state_in = [x, y, vx, vy, 1000.0, x, y, vx, vy, Constants.YEARS_TO_SEC * 10.0]
-    elif (
-        params.get("env_type", "TwoBodyRendezvous_Env")
-        == "TwoBodyRendezvous_Polar_Env2"
-    ):
-        flag_use_obs = False
-        state_in = [x, y, vx, vy, 1000.0, x, y, vx, vy, Constants.YEARS_TO_SEC * 10.0]
-    elif (
-        params.get("env_type", "TwoBodyRendezvous_Env")
-        == "TwoBody_Orb2Orb_Transfer_Env_target"
-    ):
-        flag_use_obs = False
-        state_in = [x, y, vx, vy, 1000.0, Constants.SMA_EARTH, 0.001, 0.0]
-    else:
-        flag_use_obs = True
-        state_in = [x, y, vx, vy, 1000.0, x, y, vx, vy, Constants.YEARS_TO_SEC * 10.0]
+    def dyn(t, x):
+        mu = Constants.MU_SUN_M
+        rx = x[0]
+        ry = x[1]
+        vx = x[2]
+        vy = x[3]
+        r = np.sqrt(rx**2 + ry**2)
+        ax = -mu * rx / r**3
+        ay = -mu * ry / r**3
+        return [vx, vy, ax, ay]
 
-    obs, info = env.reset()
-
-    state_in = [x, y, vx, vy, 1000.0, x, y, vx, vy, Constants.YEARS_TO_SEC * 10.0]
-
-    unwrapped_env = env.unwrapped
-    obs, info = unwrapped_env.set_state(state_in)
-
-    T = info["orbital_period_years"] * Constants.YEARS_TO_SEC
-
-    time = 0.0
-    flag_done = False
-    arr_x = []
-    arr_y = []
-    max_steps = 10000  # Safety limit to prevent infinite loop
-    step_count = 0
-
-    while not flag_done and step_count < max_steps:
-        obs, reward, done, truncated, info = env.step([0.0, 0.0, 0.0])
-
-        if flag_use_obs:
-            obs = obs
-            # dim state
-            x_i = obs[0] * params["l_star"]
-            y_i = obs[1] * params["l_star"]
-        else:
-            unwrapped_env = env.unwrapped
-            obs = unwrapped_env.get_cartesian_state()
-            x_i = obs[0]
-            y_i = obs[1]
-
-        if info["Elapsed time"] >= T or done or truncated:
-            flag_done = True
-
-        arr_x.append(x_i)
-        arr_y.append(y_i)
-        step_count += 1
-
-    fig = vis.overlay_ref_orbit(
-        ephem=None,
-        label=label_in,
-        color_in=color_in,
-        arr_x=arr_x,
-        arr_y=arr_y,
+    x_vec = [x, y, vx, vy]
+    sol = solve_ivp(
+        dyn,
+        [0, Constants.YEARS_TO_SEC * 10.0],
+        x_vec,
+        rtol=1e-9,
+        atol=1e-9,
+        method="DOP853",
+        max_step=Constants.DAYS_TO_SEC,
     )
 
-    return fig
+    # Convert to AU
+
+    # Convert arrays to AU before plotting
+    plt.gca().plot(
+        sol.y[0, :] / Constants.SMA_EARTH,
+        sol.y[1, :] / Constants.SMA_EARTH,
+        label=label,
+        color=color_in,
+    )
+    plt.gca().legend()  # Update legend to include the new plot
+
+    return
 
 
 class EphemPlotter:
@@ -265,45 +239,6 @@ class EphemPlotter:
 
         return figs
 
-    def overlay_ref_orbit(self, ephem, label, color_in="lime", arr_x=None, arr_y=None):
-        # Overlay a reference Keplerian orbit on the existing XY plot
-        fig = self.ephem.fig_xy
-        ax = self.ephem.ax_xy
-        flag_xy_exists = False
-
-        # Convert to AU
-        scale = Constants.SMA_EARTH
-
-        if arr_x is None or arr_y is None:
-            arr_x = np.array([])
-            arr_y = np.array([])
-            num_vecs = ephem.num_vectors
-        else:
-            arr_x = arr_x
-            arr_y = arr_y
-            num_vecs = len(arr_x)
-            flag_xy_exists = True
-
-        for i in range(0, num_vecs):
-            if not flag_xy_exists:
-                x = ephem.arr_x[i]
-                y = ephem.arr_y[i]
-            else:
-                x = arr_x[i]
-                y = arr_y[i]
-
-            arr_x = np.append(arr_x, x)
-            arr_y = np.append(arr_y, y)
-
-        # Convert arrays to AU before plotting
-        ax.plot(arr_x / scale, arr_y / scale, label=label, color=color_in)
-        ax.legend()  # Update legend to include the new plot
-
-        self.ephem.fig_xy = fig
-        self.ephem.ax_xy = ax
-
-        return self.ephem.fig_xy
-
     def adjust_plot_limits(self):
         # Adjust the plot limits of the existing XY plot based on current data
         fig = self.ephem.fig_xy
@@ -360,87 +295,6 @@ class EphemPlotter:
 
         return self.ephem.fig_xy
 
-    def compare_trajectories(
-        self, other_ephem, position_tol=1e-12, velocity_tol=1e-6, verbose=False
-    ):
-        # Compare this ephemeris trajectory to another ephemeris trajectory
-        # Returns True if all corresponding states are within the specified tolerances
-
-        if self.ephem.num_vectors != other_ephem.num_vectors:
-            if verbose == True:
-                print(
-                    f"Different number of vectors: {self.ephem.num_vectors} vs {other_ephem.num_vectors}"
-                )
-            return False  # Different number of vectors
-
-        for i in range(self.ephem.num_vectors):
-            dx = abs(self.ephem.arr_x[i] - other_ephem.arr_x[i])
-            dy = abs(self.ephem.arr_y[i] - other_ephem.arr_y[i])
-            dvx = abs(self.ephem.arr_vx[i] - other_ephem.arr_vx[i])
-            dvy = abs(self.ephem.arr_vy[i] - other_ephem.arr_vy[i])
-
-            if (
-                dx > position_tol
-                or dy > position_tol
-                or dvx > velocity_tol
-                or dvy > velocity_tol
-            ):
-                if verbose == True:
-                    print(
-                        f"Difference at index {i}: x={self.ephem.arr_x[i]}, y={self.ephem.arr_y[i]}, vx={self.ephem.arr_vx[i]}, vy={self.ephem.arr_vy[i]}"
-                    )
-                    print(
-                        f"                 vs x={other_ephem.arr_x[i]}, y={other_ephem.arr_y[i]}, vx={other_ephem.arr_vx[i]}, vy={other_ephem.arr_vy[i]}"
-                    )
-                return False  # States differ beyond tolerances
-
-        return True  # All states are within tolerances
-
-    def save_plots(self, directory_path, file_tag, params, env):
-        # Save the current XY plot to a file in the specified directory
-        figs = self.plot_all_ephemeris_data(flag_show=False)
-
-        if not os.path.exists(directory_path):
-            os.makedirs(directory_path)
-
-        for i, fig in enumerate(figs):
-            plot_title = fig.axes[0].get_title().replace(" ", "_").lower()
-            # Normalize path to handle platform differences and invalid characters
-            file_path = os.path.normpath(
-                os.path.join(directory_path, f"{file_tag}_{plot_title}.png")
-            )
-            fig.savefig(file_path, dpi=300)
-
-        fig_xy = self.plot_xy()
-        x, y, vx, vy = (
-            self.ephem.arr_x[0],
-            self.ephem.arr_y[0],
-            self.ephem.arr_vx[0],
-            self.ephem.arr_vy[0],
-        )
-        fig_xy = plot_overlay_ballistic_orbit(
-            x, y, vx, vy, env, fig_xy, params, self, "Initial Orbit", color_in="lime"
-        )
-        x, y, vx, vy = (
-            self.ephem.arr_x[-1],
-            self.ephem.arr_y[-1],
-            self.ephem.arr_vx[-1],
-            self.ephem.arr_vy[-1],
-        )
-        fig_xy = plot_overlay_ballistic_orbit(
-            x, y, vx, vy, env, fig_xy, params, self, "Final Orbit", color_in="red"
-        )
-        x, y = self.ephem.arr_x_target[-1], self.ephem.arr_y_target[-1]
-        fig_xy = self.add_target_icon(x, y)
-        fig_xy = self.adjust_plot_limits()
-
-        plot_title = fig_xy.axes[0].get_title().replace(" ", "_").lower()
-        # Normalize path to handle platform differences and invalid characters
-        file_path = os.path.normpath(
-            os.path.join(directory_path, f"{file_tag}_{plot_title}.png")
-        )
-        fig_xy.savefig(file_path, dpi=300)
-
 
 def import_ephem(model_path, idx=0):
     rollouts_dir = os.path.join(model_path, "rollouts", f"rollout_data_{idx}.pkl")
@@ -455,6 +309,7 @@ def main():
 
     vis = EphemPlotter(ephem)
     figs = vis.plot_all_ephemeris_data()
+
     plt.show()
 
 
