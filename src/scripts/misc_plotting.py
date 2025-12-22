@@ -34,7 +34,7 @@ def misc_plotting(path_plots=None):
     arr_eval_rewards = df_eval_rewards["mean_reward"].tolist()
     arr_eval_rewards_std = df_eval_rewards["std_reward"].tolist()
     arr_iters_r = list( range(1, len(arr_eval_rewards)+1) )
-    arr_iters_r = [x * 2_000 for x in arr_iters_r]  # assuming batch size of 1_000 for pre-training
+    arr_iters_r = [x * 10_000 for x in arr_iters_r]  # assuming batch size of 1_000 for pre-training
     arr_eval_rewards_upper = [m + s for m, s in zip(arr_eval_rewards, arr_eval_rewards_std)]
     arr_eval_rewards_lower = [m - s for m, s in zip(arr_eval_rewards, arr_eval_rewards_std)]
 
@@ -42,6 +42,7 @@ def misc_plotting(path_plots=None):
     ax1.plot(arr_iters, arr_actor_loss_pt, label="Actor Loss")
     ax1.set_xlabel("Pre-training Steps")
     ax1.set_ylabel("Actor Loss")
+    ax1.set_ylim([-2, 1])
     ax1.legend()
     ax1.grid(True)
 
@@ -56,6 +57,21 @@ def misc_plotting(path_plots=None):
     plt.figure()
     plt.plot(arr_iters_r, arr_eval_rewards, label="Mean Evaluation Reward")
     plt.fill_between(arr_iters_r, arr_eval_rewards_lower, arr_eval_rewards_upper, color='b', alpha=0.2, label="+/- 1 Std Dev")
+    
+    # Mark new maximum rewards with red dots
+    max_reward = float('-inf')
+    max_indices = []
+    max_rewards = []
+    max_iters = []
+    for i, reward in enumerate(arr_eval_rewards):
+        if reward > max_reward:
+            max_reward = reward
+            max_indices.append(i)
+            max_rewards.append(reward)
+            max_iters.append(arr_iters_r[i])
+    
+    plt.scatter(max_iters, max_rewards, color='red', s=10, zorder=5, label="New Max Reward")
+    
     plt.xlabel("Pre-training Steps")
     plt.ylabel("Evaluation Rewards")
     plt.legend()
@@ -64,6 +80,6 @@ def misc_plotting(path_plots=None):
     plt.close()
 
 if __name__ == "__main__":
-    path_to_data = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\Dec08\\curiosity\\Dec08\\pre_train\\SAC_training_TBR_polar20251208_192218"
+    path_to_data = "C:\\Users\\micha\\MSI_Data\\Masters_Thesis\\z_script_output\\Dec16\\pre_train\\SAC_training_TBR_polar20251216_213750"
     path_to_data = os.path.abspath(path_to_data)
     misc_plotting(path_to_data)

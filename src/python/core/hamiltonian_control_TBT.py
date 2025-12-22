@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 from scipy.optimize import root
 from scipy.integrate import solve_ivp
@@ -5,7 +7,7 @@ from constants.constants import Constants
 from envs.TwoBody_Orb2Orb_Transfer_Env_target import TwoBody_Orb2Orb_Transfer_Env_target
 from core.ephemeris_v2 import Ephemeris_v2
 from utils.state_vector_utils import compute_kep_velocities
-from core.exceptions import SpacecraftCollisionException
+from core.exceptions import SpacecraftCollisionException, FirstGuessException, TimeoutException
 
 from core.propagation import (
     Hamiltonian_EOM_TBT_v2,
@@ -381,6 +383,7 @@ class Hamiltonian_Controller_TBT:
         k = 1
         eps = self.eps_0
         self.res_norm = np.inf
+        self.timer_start = time.time()
 
         # The first step is to check the initial co-state guess, if it does not
         # lie sufficiently close to the real solution and the root finder fails,
@@ -466,6 +469,12 @@ class Hamiltonian_Controller_TBT:
 
         # assign solution to controller object and set solution flag to true
         self.final_sol = sol
+
+        # calculate elapsed time
+        timer_end = time.time()
+        elapsed_time = timer_end - self.timer_start
+        self._log_controller_info(f"Elapsed time: {elapsed_time:.4f} seconds")
+        self._log_controller_info("")
 
         if sol.status == -1 or self.flag_stop_targeting:
             self._log_controller_info(sol.message)
@@ -590,7 +599,7 @@ class Hamiltonian_Controller_TBT:
             counter_first_guess = counter_first_guess + 1
 
             if counter_first_guess > max_iters:
-                raise Exception("Cannot find good initial co-state guess")
+                raise FirstGuessException("Cannot find good initial co-state guess")
 
             # randomize the first guess if the first guess is no good
             if counter_first_guess > 1:
@@ -613,9 +622,11 @@ class Hamiltonian_Controller_TBT:
                     jac=None,
                 )
                 success = lam_sol.success
-            except SpacecraftCollisionException as e:
+            except (SpacecraftCollisionException, FirstGuessException) as e:
                 success = False
 
+            time_current = time.time()
+            delta_time = time_current - self.timer_start
             if success:
                 self._log_controller_info(
                     "Attempt "
@@ -623,6 +634,7 @@ class Hamiltonian_Controller_TBT:
                     + "   Lambda: "
                     + str(lam_guess)
                     + " passed"
+                    + f" (et: {delta_time:.4f} seconds)"
                 )
                 return lam_guess
             else:
@@ -632,7 +644,14 @@ class Hamiltonian_Controller_TBT:
                     + "   lam_guess "
                     + str(lam_guess)
                     + " failed"
+                    + f" (et: {delta_time:.4f} seconds)"
                 )
+
+                if ((self.timeout_per_trajectory is not None) and 
+                    (delta_time > self.timeout_per_trajectory)):
+                    raise TimeoutException
+
+                
 
     def _log_controller_info(self, info):
         self.log.append(info)

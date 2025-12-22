@@ -15,9 +15,6 @@ from envs.TwoBody_Orb2Orb_Transfer_Env import TwoBody_Orb2Orb_Transfer_Env
 # initialize the environment
 env = TwoBody_Orb2Orb_Transfer_Env()
 
-plot.style.use("data/support_files/light_paper.mplstyle")
-
-
 # The prescribed time of flight for the transfer trajectory [s]
 input_TOF = 1.1 * 365.25 * 24 * 60 * 60
 steps_per_traj = np.ceil(input_TOF / env.unwrapped.step_size)
@@ -85,12 +82,12 @@ traj_plot.savefig("data\\plots\\eph_" + str(eph_num) + "_traj_plot.pdf")
 # eps 0.1
 eph2 = Ephemeris()
 
-print("Targeter eps 0.1")
+print("Targeter eps 0.5")
 # compute Hamiltonian Solution
 H_controller2 = Hamiltonian_Controller_TBT(env, init_observation, init_info, input_TOF)
 
 # alter parameters
-H_controller2.eps_threshold = 0.1
+H_controller2.eps_threshold = 0.5
 H_controller2.arr_lam_0 = np.array([-0.575, -0.261, -0.407, -1.047, 0.139])
 
 # compute solution
@@ -113,12 +110,12 @@ eph_out2, arr_time2, arr_u2, arr_rho2, arr_alpha_x2, arr_alpha_y2 = (
 # eps 0.01
 eph3 = Ephemeris()
 
-print("Targeter eps 0.01")
+print("Targeter eps 0.1")
 # compute Hamiltonian Solution
 H_controller3 = Hamiltonian_Controller_TBT(env, init_observation, init_info, input_TOF)
 
 # alter parameters
-H_controller3.eps_threshold = 0.01
+H_controller3.eps_threshold = 0.1
 H_controller3.arr_lam_0 = np.array([-0.575, -0.261, -0.407, -1.047, 0.139])
 
 # compute solution
@@ -140,10 +137,10 @@ eph_out3, arr_time3, arr_u3, arr_rho3, arr_alpha_x3, arr_alpha_y3 = (
 # eps 0.001
 eph4 = Ephemeris()
 
-print("Targeter eps 0.001")
+print("Targeter eps 0.005")
 # compute Hamiltonian Solution
 H_controller4 = Hamiltonian_Controller_TBT(env, init_observation, init_info, input_TOF)
-
+H_controller4.eps_threshold = 0.05
 # alter parameters
 H_controller4.arr_lam_0 = np.array([-0.575, -0.261, -0.407, -1.047, 0.139])
 
@@ -164,15 +161,14 @@ eph_out4, arr_time4, arr_u4, arr_rho4, arr_alpha_x4, arr_alpha_y4 = (
 # -----------------------------------------------------------------------------
 
 
-# eps 0.0001
+# eps 0.001
 eph5 = Ephemeris()
 
-print("Targeter eps 0.0001")
+print("Targeter eps 0.001")
 # compute Hamiltonian Solution
 H_controller5 = Hamiltonian_Controller_TBT(env, init_observation, init_info, input_TOF)
 
-H_controller5.eps_threshold = 0.0001
-
+H_controller5.eps_threshold = 0.01
 # alter parameters
 H_controller5.arr_lam_0 = np.array([-0.575, -0.261, -0.407, -1.047, 0.139])
 
@@ -191,12 +187,13 @@ eph_out5, arr_time5, arr_u5, arr_rho5, arr_alpha_x5, arr_alpha_y5 = (
 
 
 # plotting-----------------------------------------------------------------------
+plot.style.use("data/support_files/light_paper.mplstyle")
 
 fig, ax = plot.subplots(figsize=(6, 6))
 ax.plot(eph_out.arr_et / 86400, arr_rho, label=r"$\epsilon = 1$")
-# ax.plot(eph_out2.arr_et/86400, arr_rho2, label=r"$\epsilon = 0.1$")
-# ax.plot(eph_out3.arr_et/86400, arr_rho3, label=r"$\epsilon = 0.01$")
-# ax.plot(eph_out4.arr_et/86400, arr_rho4, label=r"$\epsilon = 0.001$")
+ax.plot(eph_out2.arr_et/86400, arr_rho2, label=r"$\epsilon = 0.1$")
+ax.plot(eph_out3.arr_et/86400, arr_rho3, label=r"$\epsilon = 0.01$")
+ax.plot(eph_out4.arr_et/86400, arr_rho4, label=r"$\epsilon = 0.001$")
 ax.plot(eph_out5.arr_et / 86400, arr_rho5, label=r"$\epsilon = 0.0001$")
 ax.set_xlabel(r"Elapsed Time (days)")
 ax.set_ylabel(r"Switching Function $\rho$")
@@ -205,22 +202,18 @@ ax.set_title(r"Switching Function $\rho$")
 ax.legend(loc="upper right")
 fig.tight_layout()
 fig.savefig("data\\plots\\rho.pdf")  # Vector format
-plot.show()
 
-fig, ax = plot.subplots(figsize=(6, 6))
+fig, ax = plot.subplots(figsize=(6, 3.375))
 ax.plot(eph_out.arr_et / 86400, arr_u, label=r"$\epsilon = 1$")
-# ax.plot(eph_out2.arr_et/86400, arr_u2, label=r"$\epsilon = 0.1$")
-# ax.plot(eph_out3.arr_et/86400, arr_u3, label=r"$\epsilon = 0.01$")
-# ax.plot(eph_out4.arr_et/86400, arr_u4, label=r"$\epsilon = 0.001$")
-ax.plot(eph_out5.arr_et / 86400, arr_u5, label=r"$\epsilon = 0.0001$")
+ax.plot(eph_out2.arr_et/86400, arr_u2, label=r"$\epsilon = 0.5$")
+ax.plot(eph_out3.arr_et/86400, arr_u3, label=r"$\epsilon = 0.1$")
+ax.plot(eph_out4.arr_et/86400, arr_u4, label=r"$\epsilon = 0.05$")
+ax.plot(eph_out5.arr_et / 86400, arr_u5, label=r"$\epsilon = 0.01$")
 ax.set_xlabel(r"Elapsed Time (days)")
-ax.set_ylabel(r"$u$")
+ax.set_ylabel(r"Throttle $u$")
 fig.tight_layout()
-ax.set_title(r"Spacecraft Thrust Throttle $u$ over Time")
 ax.legend(loc="upper right")
-fig.tight_layout()
-fig.savefig("data\\plots\\throttle.pdf")  # Vector format
-plot.show()
+fig.savefig("data\\plots\\throttle.jpg", dpi=300)
 
 fig, ax = plot.subplots(figsize=(6, 6))
 ax.plot(eph_out.arr_et / 86400, eph_out.arr_m, label=r"$\epsilon = 1$")
@@ -235,7 +228,6 @@ ax.set_title(r"Spacecraft Mass over Time")
 ax.legend(loc="upper right")
 fig.tight_layout()
 fig.savefig("data\\plots\\mass.pdf")  # Vector format
-plot.show()
 
 fig, ax = plot.subplots(figsize=(6, 6))
 ax.plot(eph_out.arr_et, arr_alpha_x, label=r"$\alpha_x$")
@@ -265,7 +257,7 @@ for item in log:
 
 print("\n\n\n\n")
 
-figs = eph_out5.plot_all_ephemeris_data()
+# figs = eph_out5.plot_all_ephemeris_data()
 
 i = 0
 eph_num = 5
