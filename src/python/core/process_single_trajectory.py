@@ -202,37 +202,23 @@ def process_single_transfer(params):
     eph_output = None
 
     # Set up timeout signal (only works on Unix-like systems)
+
     try:
-
-        try:
-            flag_solved, test_log, eph_output = gen_Hamiltonian_transfer(
-                env,
-                seed_traj,
-                tof_scale,
-                params,
-                ephem_filename,
-                test_log,
-                flag_report_live=flag_print_targeter_output,
-            )
-        except TimeoutException:
-            timed_out = True
-            flag_solved = False
-
+        flag_solved, test_log, eph_output = gen_Hamiltonian_transfer(
+            env,
+            seed_traj,
+            tof_scale,
+            params,
+            ephem_filename,
+            test_log,
+            flag_report_live=flag_print_targeter_output,
+        )
+    except TimeoutException:
+        timed_out = True
+        flag_solved = False
     except (AttributeError, ValueError):
-        # signal.SIGALRM not available on Windows, fall back to no timeout enforcement
-        try:
-            flag_solved, test_log, eph_output = gen_Hamiltonian_transfer(
-                env,
-                seed_traj,
-                tof_scale,
-                params,
-                ephem_filename,
-                test_log,
-                flag_report_live=flag_print_targeter_output,
-            )
-        except TimeoutException:
-            timed_out = True
-            flag_solved = False
+        flag_solved = False
+
 
     str_gen_time = time.strftime("%b %d %Y %H:%M:%S")
 
