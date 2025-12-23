@@ -12,3 +12,7 @@ data/output/*
 /src/python/astro_compass.egg-info/requires.txt
 /src/python/astro_compass.egg-info/SOURCES.txt
 /src/python/astro_compass.egg-info/top_level.txt
+
+# Packaging metadata
+*.egg-info/
+*.dist-info/
