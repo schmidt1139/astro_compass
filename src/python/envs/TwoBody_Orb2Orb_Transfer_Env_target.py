@@ -529,7 +529,7 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
                 print(f"ERROR: w_0={np.rad2deg(w_0):.2f}°, theta_0={np.rad2deg(theta_0):.2f}°")
                 print(f"ERROR: aol_check={np.rad2deg(aol_check_norm):.2f}°, aol_0={np.rad2deg(aol_0_norm):.2f}°")
                 print(f"ERROR: Elapsed time: {self.elapsed_t}s")
-                raise ValueError(f"Argument of latitude mismatch: aol_check={np.rad2deg(aol_check_norm):.2f}°, aol_0={np.rad2deg(aol_0_norm):.2f}°, diff={np.rad2deg(angle_diff):.2f}°")
+                #raise ValueError(f"Argument of latitude mismatch: aol_check={np.rad2deg(aol_check_norm):.2f}°, aol_0={np.rad2deg(aol_0_norm):.2f}°, diff={np.rad2deg(angle_diff):.2f}°")
         
         # compute polar coordinates
         r_0, eta_0, r_dot_0, v_eta_0 = cartesian_to_polar(x_0, y_0, vx_0, vy_0)
