@@ -1475,16 +1475,18 @@ def compute_reward_fast_TBT(state, params, u, TTG):
 
     terminated = False
     truncated = False
+    exceeded_min = r_nd_0 < 0.1  # too close to sun
+    exceeded_max = r_nd_0 > 5.0  # too far from sun
 
     # calculate distance to target
     d_r_nd = np.sqrt((x_nd - x_target_nd) ** 2 + (y_nd - y_target_nd) ** 2)
     d_v_nd = np.sqrt((vx_nd - vx_target_nd) ** 2 + (vy_nd - vy_target_nd) ** 2)
 
-    if ( r_nd_0 < 0.01 ):
-        reward = 0.0
+    if ( exceeded_min or exceeded_max ):
+        reward = -10.0
         terminated = True
         truncated = False
-    elif ( e >= 1.0 ):
+    elif ( e >= 0.9 ):
         reward = 0.0
         terminated = True
         truncated = False

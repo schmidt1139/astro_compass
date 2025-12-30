@@ -526,9 +526,22 @@ class TwoBody_Orb2Orb_Transfer_Env_target(gym.Env):
             
             # Check orbital element consistency
             if angle_diff > 0.05:  # ~2.9 degrees tolerance - accounts for numerical precision near wraparound
+                a_nd = a_0 / self.l_star
+
+                
+                params_temp = {
+                    "l_star": self.l_star,
+                    "t_star": self.t_star,
+                    "m_star": self.m_star,
+                }
+                observation, env_data = compute_obs_fast_TBT(self._state, params_temp, self.TTG)
+
+                print(f"ERROR: SMA_nd={a_nd:.4f}, e_0={e_0:.4f}")
                 print(f"ERROR: w_0={np.rad2deg(w_0):.2f}°, theta_0={np.rad2deg(theta_0):.2f}°")
                 print(f"ERROR: aol_check={np.rad2deg(aol_check_norm):.2f}°, aol_0={np.rad2deg(aol_0_norm):.2f}°")
-                print(f"ERROR: Elapsed time: {self.elapsed_t}s")
+                print(f"ERROR: Elapsed time: {self.elapsed_t/self.step_size} steps")
+                print(f"ERROR: Observation: {observation}")
+                print("")
                 #raise ValueError(f"Argument of latitude mismatch: aol_check={np.rad2deg(aol_check_norm):.2f}°, aol_0={np.rad2deg(aol_0_norm):.2f}°, diff={np.rad2deg(angle_diff):.2f}°")
         
         # compute polar coordinates
