@@ -14,8 +14,21 @@ def polar_to_cartesian(r, theta, v_r, v_theta):
 def cartesian_to_polar(x, y, vx, vy):
     r = (x**2 + y**2) ** 0.5
     theta = np.atan2(y, x)
-    v_r = (x * vx + y * vy) / r
-    v_theta = (x * vy - y * vx) / r
+    
+    # Safe handling of r=0
+    if np.isscalar(r):
+        if r < 1e-10:  # Treat near-zero as zero
+            v_r = 0.0
+            v_theta = 0.0
+        else:
+            v_r = (x * vx + y * vy) / r
+            v_theta = (x * vy - y * vx) / r
+    else:
+        v_r = np.zeros_like(r)
+        v_theta = np.zeros_like(r)
+        mask = r >= 1e-10
+        v_r[mask] = (x[mask] * vx[mask] + y[mask] * vy[mask]) / r[mask]
+        v_theta[mask] = (x[mask] * vy[mask] - y[mask] * vx[mask]) / r[mask]
 
     return r, theta, v_r, v_theta
 
@@ -56,6 +69,15 @@ def calc_OE_from_cart(x, y, vx, vy, mu_cb):
     r_km = (x_rel_km**2 + y_rel_km**2) ** 0.5
     r = r_km * 1000  # convert back to m
 
+    flag_non_kep = False
+    
+    # Safe handling of r=0
+    if r < 1e-10:
+        print(f"Impact detected at position: x={x}, y={y}")
+        print(f"Current state vector: x={x}, y={y}, vx={vx}, vy={vy}")
+        flag_non_kep = True
+        #raise ValueError("Position radius is zero or near-zero. Cannot calculate orbital elements.")
+
     # spacecraft position and velocity vectors
     sc_pos = np.array([x, y, 0.0])
     sc_vel = np.array([vx, vy, 0.0])
@@ -64,36 +86,50 @@ def calc_OE_from_cart(x, y, vx, vy, mu_cb):
     # angular momentum
     h_vec = np.cross(sc_pos, sc_vel)
     h = np.linalg.norm(h_vec)
-    h_hat = h_vec / h
+    
+    # Safe handling of h=0 (degenerate orbit)
+    if h < 1e-10:
+        print(f"Degenerate orbit detected at position: x={x}, y={y}")
+        print(f"Current state vector: x={x}, y={y}, vx={vx}, vy={vy}")
+        flag_non_kep = True
+        #raise ValueError("Angular momentum is zero or near-zero. Orbit is degenerate (radial motion only).")
+    
+    if not flag_non_kep:
+        h_hat = h_vec / h
 
-    # eccentricity vector
-    e_vec = np.cross(sc_vel, h_vec) / mu_cb - sc_pos / r
-    e = np.linalg.norm(e_vec)
+        # eccentricity vector
+        e_vec = np.cross(sc_vel, h_vec) / mu_cb - sc_pos / r
+        e = np.linalg.norm(e_vec)
 
-    # If e is zero, we will get an error dividing by zero, so the ecc vector
-    # is set at {0,0,0} if the magnitude is zero.
-    if e == 0.0:
-        e_hat = e_vec * 0.0
+        # If e is zero, we will get an error dividing by zero, so the ecc vector
+        # is set at {0,0,0} if the magnitude is zero.
+        if e == 0.0:
+            e_hat = e_vec * 0.0
+        else:
+            e_hat = e_vec / e
+
+        # semi major axis
+        rp = h**2 / mu_cb / (1 + e * np.cos(0))
+        ra = h**2 / mu_cb / (1 + e * np.cos(np.pi))
+        a = 1 / 2 * (rp + ra)
+
+        # argument of periapsis - for planar orbit, angle from x-axis to eccentricity vector
+        w = np.arctan2(e_vec[1], e_vec[0])
+        if w < 0:
+            w = w + 2 * np.pi
+
+        # true anomaly - extra error handling included,
+        # mainly needed for hyperbolic instances
+        # Compute true anomaly using atan2 for proper quadrant handling
+        r_vec = np.array([x, y, 0.0])
+        theta = np.arctan2(np.dot(h_hat, np.cross(e_hat, r_vec)), np.dot(e_hat, r_vec))
+        if theta < 0:
+            theta = theta + 2 * np.pi
     else:
-        e_hat = e_vec / e
-
-    # semi major axis
-    rp = h**2 / mu_cb / (1 + e * np.cos(0))
-    ra = h**2 / mu_cb / (1 + e * np.cos(np.pi))
-    a = 1 / 2 * (rp + ra)
-
-    # argument of periapsis - for planar orbit, angle from x-axis to eccentricity vector
-    w = np.arctan2(e_vec[1], e_vec[0])
-    if w < 0:
-        w = w + 2 * np.pi
-
-    # true anomaly - extra error handling included,
-    # mainly needed for hyperbolic instances
-    # Compute true anomaly using atan2 for proper quadrant handling
-    r_vec = np.array([x, y, 0.0])
-    theta = np.arctan2(np.dot(h_hat, np.cross(e_hat, r_vec)), np.dot(e_hat, r_vec))
-    if theta < 0:
-        theta = theta + 2 * np.pi
+        a = 0.0
+        e = 0.0
+        w = 0.0
+        theta = 0.0
 
     return a, e, w, theta
 
@@ -162,13 +198,14 @@ def convert_alpha_from_cart_to_fpa(x, y, vx, vy, alpha_x, alpha_y):
     alpha_r = alpha_x * np.cos(theta) + alpha_y * np.sin(theta)
     alpha_theta = -alpha_x * np.sin(theta) + alpha_y * np.cos(theta)
 
+    # Safe handling of v=0 (stationary object)
+    v_mag = np.sqrt(v_r**2 + v_theta**2)
+    if v_mag < 1e-10:
+        raise ValueError("Velocity magnitude is zero or near-zero. Cannot convert to FPA frame.")
+
     # convert to fpa frame
-    alpha_fpa_cos = (v_r * alpha_r + v_theta * alpha_theta) / np.sqrt(
-        v_r**2 + v_theta**2
-    )
-    alpha_fpa_sin = (v_theta * alpha_r - v_r * alpha_theta) / np.sqrt(
-        v_r**2 + v_theta**2
-    )
+    alpha_fpa_cos = (v_r * alpha_r + v_theta * alpha_theta) / v_mag
+    alpha_fpa_sin = (v_theta * alpha_r - v_r * alpha_theta) / v_mag
 
     return alpha_fpa_cos, alpha_fpa_sin
 
@@ -176,13 +213,14 @@ def convert_alpha_from_cart_to_fpa(x, y, vx, vy, alpha_x, alpha_y):
 def convert_alpha_from_fpa_to_cart(x, y, vx, vy, alpha_fpa_cos, alpha_fpa_sin):
     r, theta, v_r, v_theta = cartesian_to_polar(x, y, vx, vy)
 
+    # Safe handling of v=0 (stationary object)
+    v_mag = np.sqrt(v_r**2 + v_theta**2)
+    if v_mag < 1e-10:
+        raise ValueError("Velocity magnitude is zero or near-zero. Cannot convert from FPA frame.")
+
     # convert to radial/tangential frame
-    alpha_r = (v_r * alpha_fpa_cos - v_theta * alpha_fpa_sin) / np.sqrt(
-        v_r**2 + v_theta**2
-    )
-    alpha_theta = (v_theta * alpha_fpa_cos + v_r * alpha_fpa_sin) / np.sqrt(
-        v_r**2 + v_theta**2
-    )
+    alpha_r = (v_r * alpha_fpa_cos - v_theta * alpha_fpa_sin) / v_mag
+    alpha_theta = (v_theta * alpha_fpa_cos + v_r * alpha_fpa_sin) / v_mag
 
     # rotate alpha components to cartesian frame
     alpha_x = alpha_r * np.cos(theta) - alpha_theta * np.sin(theta)
