@@ -581,7 +581,12 @@ def env_EOM_TBT_v2(t, state, params):
 
     # state vector derivative calculations
     dr_vec = v_vec
-    dv_vec = -mu / r**3 * r_vec + u * T_max / m * alpha_vec
+    #safe guard against division by zero
+    if r < 0.000001:
+        dv_vec = np.array([0.0, 0.0])
+    else:
+        dv_vec = -mu / r**3 * r_vec + u * T_max / m * alpha_vec
+        
     dm = -T_max * u / ISP / g0
 
     derivs = np.array(

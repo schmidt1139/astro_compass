@@ -2,7 +2,6 @@ import os
 from turtle import done
 from core.ephemeris_v3 import Ephemeris_v3
 from core.spacecraft import Spacecraft
-from StateVectorUtilities import cartesian_to_polar
 from core.ephemeris_v2 import Ephemeris_v2
 import torch
 import torch.nn as nn
@@ -11,13 +10,13 @@ from core.ephemeris_v2 import Ephemeris_v2
 from core.training_data_generation import read_ephems_from_dir
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.evaluation import evaluate_policy
-from StateVectorUtilities import cartesian_to_polar
 from tqdm import tqdm
 from constants.constants import Constants
 from utils.log_utils import log
 from utils.plotting_utils import SACRolloutData_TBR_polar, SACRolloutData_TBT_polar
 from utils.state_vector_utils import convert_alpha_from_cart_to_fpa, convert_attitude_from_cartesian_to_radial
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from utils.state_vector_utils import cartesian_to_polar
 
 def log_training_perf(
     test_log, callback, eval_callback, model, training_steps, flag_verbose
